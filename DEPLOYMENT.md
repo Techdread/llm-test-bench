@@ -38,14 +38,14 @@ Official references:
 - https://developers.cloudflare.com/pages/framework-guides/deploy-anything/
 - https://developers.cloudflare.com/pages/get-started/git-integration/
 
-## 3. Add the preview domain
+## 3. Add the production domain
 
-Use `testbench.neuroviz.uk` for the first custom-domain test rather than replacing anything already served from `neuroviz.uk`.
+The project owner has approved replacing the existing site served from `neuroviz.uk`. Before confirming the change, record the current apex DNS entry so it can be restored if a rollback is needed. The previous Neural Pathways source remains available at `Techdread/portfolio-neural`.
 
 1. Open the Pages project in Cloudflare.
 2. Go to **Custom domains → Set up a domain**.
-3. Enter `testbench.neuroviz.uk` and continue.
-4. Because the domain is already managed by Cloudflare, confirm the DNS record Cloudflare proposes.
+3. Enter `neuroviz.uk` and continue.
+4. Because the domain is already managed by Cloudflare, review and confirm the replacement DNS record Cloudflare proposes.
 5. Wait for the domain and certificate to become active, then repeat the browser checks.
 
 Start this process from the Pages project's **Custom domains** screen. Do not manually create a Pages CNAME first; Cloudflare warns that skipping the Pages association can produce a `522` error.

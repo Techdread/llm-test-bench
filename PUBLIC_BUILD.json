@@ -4,10 +4,10 @@
     "title": "LLM Test Bench",
     "slug": "llm-test-bench",
     "domain": "neuroviz.uk",
-    "suggestedPreviewHost": "testbench.neuroviz.uk",
+    "suggestedPreviewHost": "neuroviz.uk",
     "repositoryUrl": "https://github.com/Techdread/llm-test-bench"
   },
-  "generatedAt": "2026-08-15T14:33:17.455Z",
+  "generatedAt": "2026-08-15T20:14:44.524Z",
   "apps": [
     {
       "source": "prompt-gallery",
