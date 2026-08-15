@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" data-distribution="public" data-cross-app-handoffs="off">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Gallery</title>
+
+  <!-- Theme + theme-pack bootstrap (must run before stylesheet load to avoid FOUC) -->
+  <script src="../shared/styles/theme-bootstrap.js"></script>
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="../shared/lib/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Ace Editor -->
+  <script src="../shared/lib/ace/1.32.6/src-min-noconflict/ace.js"></script>
+
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="../shared/lib/highlight.js/11.9.0/styles/github-dark.min.css" id="hljs-theme">
+  <script src="../shared/lib/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="../shared/lib/highlight.js/11.9.0/languages/xml.min.js"></script>
+
+  <!-- Marked (markdown rendering) -->
+  <script src="../shared/lib/marked/11.1.1/marked.min.js"></script>
+
+  <!-- Shared base styles + app-specific styles -->
+  <link rel="stylesheet" href="../shared/styles/base.css">
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Import map for ES modules -->
+  <script type="importmap">
+  {
+    "imports": {
+      "preact": "../shared/lib/preact/10.19.3/preact.mjs",
+      "preact/hooks": "../shared/lib/preact/10.19.3/hooks.mjs",
+      "htm/preact": "../shared/lib/htm/3.1.1/preact.mjs"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

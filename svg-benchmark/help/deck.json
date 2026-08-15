@@ -1,0 +1,79 @@
+{
+  "version": "hub-help-deck-v1",
+  "title": "SVG Benchmark",
+  "generatedFrom": "HELP.md",
+  "generatedBy": "help-decks",
+  "generatedAt": "2026-08-14T11:19:59.583Z",
+  "slides": [
+    {
+      "kind": "title",
+      "title": "SVG Benchmark",
+      "html": "<p>A tool for generating, scoring, and comparing SVG outputs across different AI models. Create prompts, generate SVGs, compare them against reference images, and track results in organised benchmarks.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Getting started",
+      "html": "<ol>\n<li>Connect a working directory (folder icon in the toolbar) to save benchmarks to disk — Chrome or Edge required for the File System Access API.</li>\n<li>Optional: set an API key and pick a model via the key/server icons. Multiple providers are supported (OpenRouter, LM Studio, etc.).</li>\n<li>Write a prompt describing the SVG you want, then click <strong>Generate</strong>.</li>\n<li>Optionally paste or drop a reference image, then run <strong>Auto-score</strong> to get a pixel-diff similarity percentage.</li>\n<li>Click <strong>Save</strong> (or Ctrl+S) to persist the submission inside a benchmark folder.</li>\n</ol>"
+    },
+    {
+      "kind": "text",
+      "title": "Create view",
+      "html": "<p>The main workspace is split into three columns:</p>\n<ul>\n<li><strong>Left</strong> — Prompt input and the Ace code editor showing the raw SVG source.</li>\n<li><strong>Centre</strong> — Live SVG preview. When a reference image is loaded, the <strong>Diff</strong> overlay (Ctrl+D) composites the SVG over the reference so you can spot differences.</li>\n<li><strong>Right</strong> — Reference image panel and score panel (auto-score + manual 1–9 rating).</li>\n</ul>\n<p>The bottom bar has <strong>GIF</strong> (export the current SVG as a GIF image), <strong>Clear</strong> (reset all fields), and <strong>Save</strong> (persist the current submission).</p>"
+    },
+    {
+      "kind": "text",
+      "title": "CLI agent generation",
+      "html": "<p>Click <strong>CLI agent</strong> in Create to use Claude Code, Codex, Antigravity, or Grok in place\nof the selected in-app model. The agent must write a standalone <code>output.svg</code>;\nthe editor and preview update as that file changes. If <strong>Attach reference to\nprompt</strong> is enabled, the image is copied into the isolated workspace as\n<code>reference.png</code> for the agent to inspect.</p>\n<p>CLI agents use their own installed login and require\n<code>python3 serve.py 8080</code>. Runs are path-jailed under\n<code>&lt;data-root&gt;/svg-benchmark/runs/&lt;run-id&gt;/project/</code>, remain append-only, and save\ntheir request, event trace, output, and provenance for recovery.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Benchmarks view",
+      "html": "<p>Lists all saved benchmarks as cards. Each benchmark groups every submission made for the same prompt.</p>\n<ul>\n<li>Click a card to see all submissions for that benchmark.</li>\n<li>Use <strong>Compare</strong> to view submissions side-by-side with the reference image.</li>\n<li><strong>Add Submission</strong> loads the benchmark&#39;s prompt into the Create view so you can generate with a different model.</li>\n<li><strong>Morph</strong> sends a benchmark prompt or submission to Code Morph Lab v3. When you use <strong>Send back</strong> there, SVG Benchmark saves the returned SVG as a new submission on the same benchmark.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Batch Run",
+      "html": "<p>The <strong>Batch</strong> button (top toolbar) runs one model over many benchmark prompts in\na row — a fast way to fill out a benchmark for a newly added model.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Batch Run (cont.)",
+      "html": "<ul>\n<li>The dialog shows the currently-loaded model; pick one if none is selected.</li>\n<li>It lists every benchmark prompt (all ticked by default); untick any you want to\nskip, then press <strong>Go</strong>. Each generated SVG is auto-saved as a submission under\nthat benchmark, tagged <code>ai-gen</code> + <code>batch</code>.</li>\n<li>Benchmarks that have a <strong>reference image</strong> are auto-scored as they run, so a\nbatch also produces comparison scores.</li>\n<li><strong>Auto-fix invalid SVG</strong> (off by default) re-asks the model to repair any output\nthat isn&#39;t well-formed SVG, up to 1–3 times, keeping both the original and the\nfixed version. Other options: skip prompts already run for this model, retry on\nAPI failure, and a delay between prompts for rate-limited providers.</li>\n<li>A live preview follows the current generation; a summary at the end reports how\nmany were generated, scored, fixed, skipped, and failed.</li>\n<li>When the run finishes you can <strong>flick through everything it produced</strong>: the\narrows (or the ← / → keys) step through each generated SVG, clicking a row in\nthe list jumps straight to it, and <strong>Open</strong> takes you to that benchmark.</li>\n<li><strong>Past Runs</strong> (dialog header) rebuilds every earlier batch run from the saved\nsubmissions — pick a run by model/date and flick through its SVGs the same way.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Batch Run (cont.)",
+      "html": "<h3>Parameters and sweeps</h3>\n<p>The <strong>Parameters</strong> section controls sampling per request. Leave a field blank to\nuse the model&#39;s own settings in LM Studio (that&#39;s the default, and it keeps old\nresults comparable). Type one value to pin it, or a <strong>comma-separated list to\nsweep it</strong>: <code>0, 0.7, 1.2</code> on Temperature runs every selected prompt three times,\nonce per value. Sweeping several fields multiplies out — the dialog shows the\nresulting number of generations before you commit.</p>\n<p>Each submission records the parameters used plus what actually happened:\ntokens/sec, time-to-first-token, token counts, whether the model <strong>thought</strong> (and\nhow many reasoning tokens it spent), and the finish reason. That&#39;s what makes\n&quot;which settings suit this model + quant&quot; answerable from the saved data.</p>\n<p>Two gotchas worth knowing:</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Batch Run (cont.)",
+      "html": "<ul>\n<li><strong>Max Tokens is dangerous with thinking models.</strong> A reasoning model can spend\nthe entire budget thinking and return empty content — the run reports this\nexplicitly rather than as a mysterious &quot;empty response&quot;. Leave it blank unless\nyou mean it.</li>\n<li><strong>Thinking often can&#39;t be switched off.</strong> <code>Thinking: false</code> and\n<code>Reasoning Effort</code> are only honoured by models that expose them; Gemma 4, for\ninstance, thinks regardless. The app records what the model <em>did</em>, not what was\nasked of it.</li>\n</ul>\n<p>Thinking output (<code>&lt;think&gt;…&lt;/think&gt;</code>) and markdown fences are stripped before the\nSVG is validated, so a model&#39;s monologue no longer corrupts the artwork.</p>\n<p>The prompt set ships with the app (<code>data/prompts.json</code>, harvested from the\nbenchmarks) so batch works even on a fresh data root — missing benchmarks are\ncreated automatically.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Scoring",
+      "html": "<ul>\n<li><strong>Auto-score</strong> — renders both the SVG and the reference image to canvas, runs a pixel-level comparison, and returns a 0–100 % similarity score.</li>\n<li><strong>Manual score</strong> — press 1–9 on the keyboard (outside of text inputs) to quickly rate a submission.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Record video",
+      "html": "<p>Use <strong>Record</strong> in the toolbar to capture an SVG authoring session, benchmark\nreview or side-by-side run comparison. Choose 30 or 60 FPS and optionally\nrequest tab/system audio; Chrome always presents its capture-source picker.\nPause, resume and stop are available from the floating recording controls.</p>\n<p><strong>MP4 · H.264</strong> is the default upload-friendly format. WebM is also available\nand becomes the automatic fallback when the browser cannot encode MP4 natively.</p>\n<p>Download the result directly or save it append-only under\n<code>&lt;root&gt;/svg-benchmark/recordings/&lt;recording-id&gt;/</code>. Its metadata records the\nactive benchmark, prompt, scores, provider and model when available.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Tips",
+      "html": "<ul>\n<li>Use descriptive, specific prompts — models produce better SVGs when given clear constraints (dimensions, colour palette, style).</li>\n<li>Save a reference image first, then generate with multiple models and compare scores to find the best one.</li>\n<li>The benchmark folder structure is plain files on disk (<code>prompt.txt</code>, <code>reference.png</code>, per-submission SVG + metadata JSON), so you can version-control or share them easily.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Keyboard",
+      "html": "<ul>\n<li><strong>Ctrl+S</strong> — Save current submission.</li>\n<li><strong>Ctrl+G</strong> — Jump to Benchmarks view.</li>\n<li><strong>Ctrl+D</strong> — Toggle diff overlay.</li>\n<li><strong>1–9</strong> — Set manual score (when not focused on a text input).</li>\n<li><strong>Escape</strong> — Close any dialog.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Troubleshooting",
+      "html": "<ul>\n<li><em>&quot;No SVG code to save&quot;</em> — generate or paste SVG code before saving.</li>\n<li><em>Auto-score not available</em> — you need both an SVG and a reference image loaded.</li>\n<li><em>Directory not connected</em> — click the folder icon to pick a working directory. Only Chromium-based browsers support the File System Access API.</li>\n<li><em>Model list empty</em> — open Provider Settings (server icon) and enable at least one provider with a valid API key or endpoint.</li>\n</ul>"
+    }
+  ]
+}

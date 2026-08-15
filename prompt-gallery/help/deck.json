@@ -1,0 +1,59 @@
+{
+  "version": "hub-help-deck-v1",
+  "title": "Prompt Gallery — Help",
+  "generatedFrom": "HELP.md",
+  "generatedBy": "help-decks",
+  "generatedAt": "2026-08-14T11:19:59.556Z",
+  "slides": [
+    {
+      "kind": "title",
+      "title": "Prompt Gallery — Help",
+      "html": "<p>A searchable library of prompts you can browse, run, save, and refine.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Prompts tab",
+      "html": "<ul>\n<li>Browse curated starter prompts plus your own saved ones.</li>\n<li><strong>Search by name or prompt</strong> text, and filter with <strong>tags</strong>.</li>\n<li>Open a prompt to see its full text (Markdown supported), notes, target models,\nand run history.</li>\n<li><strong>Run</strong> a prompt against your configured provider/model to try it.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Saving your own",
+      "html": "<ul>\n<li>Add a prompt with a name (e.g. <code>landing-page-v1</code>), the prompt body, tags, and\nnotes. Your entries live in a user layer; the curated seeds are never\noverwritten.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "CLI agent generation",
+      "html": "<ul>\n<li>Claude Code, Codex, and Antigravity appear in the normal model dropdown under\ntheir own headings. Pick one and press <strong>Generate</strong> as usual — there is no\nseparate button.</li>\n<li>The agent writes a portable <code>index.html</code> in a fresh append-only run folder;\nits messages, file edits, and shell commands stream inline while the Create\npreview updates.</li>\n<li>CLI agents use their own installed login and require the hub to be running\nwith <code>python3 serve.py 8080</code>. Each run is jailed to\n<code>&lt;data-root&gt;/prompt-gallery/runs/&lt;run-id&gt;/project/</code> and remains on disk with\nits request, trace, and result metadata.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Batch Run",
+      "html": "<ul>\n<li>The <strong>Batch</strong> button (top toolbar) runs one model over many prompts in a row.</li>\n<li>The dialog shows the currently-loaded model; if none is selected you must pick\none before it will start. Tick the prompts to include (all are pre-selected)\nand press <strong>Go</strong>.</li>\n<li>Each generation is auto-saved with <code>ai-gen</code> + <code>batch</code> tags under the folder\nderived from the prompt&#39;s title, so nothing needs naming by hand.</li>\n<li><strong>Self-heal</strong> (off by default) re-runs any page that throws a runtime error\nthrough the model up to 1–3 times; both the original and the healed version\nare kept. Other options: skip prompts already run for this model, retry on API\nfailure, and a delay between prompts for rate-limited providers.</li>\n<li>A live preview follows the current generation; a summary at the end reports how\nmany were generated, healed, skipped, and failed, with a jump to the Gallery.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Refine tab",
+      "html": "<ul>\n<li>Take an existing prompt and <strong>heal/improve</strong> it in a sandbox. Refinements are\nverified before being saved as a new <code>derivedFrom</code> variant — the original is\nleft untouched, so you can compare versions.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Gallery tab",
+      "html": "<ul>\n<li><strong>Projects</strong> is the default view. It groups all generations made from the\nsame saved prompt, showing the best-rated preview, model count, variant\ncount, and the newest run.</li>\n<li>Open a project to review its original prompt and compare its variants by\nmodel, rating, timestamp, tags, and refinement status.</li>\n<li>Use <strong>Variants</strong> when you need one chronological list across every project.</li>\n<li>Search includes project names, original prompt text, model names, tags, and\nnotes. Filter by model, tag, minimum rating, or a review collection.</li>\n<li><strong>Unreviewed</strong>, <strong>Favorites</strong>, <strong>Recent</strong>, <strong>Refined</strong>, and <strong>Archived</strong> make\nit easy to return to a useful subset of the work.</li>\n<li>Archiving hides a generation from normal browsing without deleting its HTML\nor metadata. Open the Archived collection to restore it.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Compare tab",
+      "html": "<ul>\n<li>Generations are grouped under the prompt they came from, so the picker reads\nas &quot;this prompt, these models&quot; rather than one long list.</li>\n<li><strong>Line up models</strong> on a prompt selects up to four of its runs — one per model,\nbest rated first — and opens the comparison in a single click.</li>\n<li><strong>Search</strong> matches prompt text, model, provider, tags, and notes; the model,\nrating, and sort controls narrow it further, and the archive toggle brings\narchived runs back into view.</li>\n<li>The picked tray stays visible while you search, so filtering never loses a\nselection you have already made. Click a chip to drop it.</li>\n<li>Each column is headed with its model, provider, date, and rating, and opens\nfull screen from the arrow icon.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Record video",
+      "html": "<p>Use <strong>Record</strong> in the toolbar to capture this tab, another window or a display.\nChoose 30 or 60 FPS and optionally request tab/system audio; Chrome always asks\nyou to choose the capture source. Floating controls provide pause, resume and\nstop, followed by an in-app preview.</p>\n<p>The default <strong>MP4 · H.264</strong> format is intended for common video-upload services;\nWebM remains selectable and is the automatic fallback when MP4 is unavailable.</p>\n<p>Recordings can be downloaded immediately or saved append-only under\n<code>&lt;root&gt;/prompt-gallery/recordings/&lt;recording-id&gt;/</code>. Saved metadata includes the\ncurrent route, generation, prompt and model when available.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Tips",
+      "html": "<ul>\n<li>Tag consistently (e.g. <code>css-animation</code>, <code>no-libraries</code>) so the gallery stays\nsearchable as it grows.</li>\n<li>Use the run stats to see which prompts have worked well for you before.</li>\n</ul>"
+    }
+  ]
+}

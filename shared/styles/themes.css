@@ -1,0 +1,492 @@
+/* ── Theme Packs ──
+ *
+ * Each pack is `[data-theme-pack="<id>"]` plus an optional dark-mode
+ * variant `[data-theme-pack="<id>"][data-theme="dark"]`. Packs only
+ * override variables defined by base.css — they never restate the full
+ * palette, so light/dark behaviour keeps working.
+ *
+ * To add a pack:
+ *   1) add a `[data-theme-pack="<id>"]` block here (and a dark variant)
+ *   2) add `{ id: '<id>', name: '...' }` in shared/services/theme-pack.js.
+ */
+
+/* ── Demo: Cyberpunk ──────────────────────────────────────────────── */
+/* Validates the cascade visually. Light + dark coexist. */
+[data-theme-pack="demo-cyberpunk"] {
+  --accent: #ec4899;
+  --accent-hover: #db2777;
+  --accent-light: #fce7f3;
+  --tab-active-bg: #ec4899;
+  --split-handle-hover: #ec4899;
+}
+
+[data-theme-pack="demo-cyberpunk"][data-theme="dark"] {
+  --bg-primary: #0f0a1a;
+  --bg-secondary: #161028;
+  --bg-tertiary: #1f1738;
+  --bg-hover: #2a1f4d;
+  --text-primary: #f0e9ff;
+  --text-secondary: #c4b5fd;
+  --text-muted: #7c6ba8;
+  --border-color: #4c1d95;
+  --accent: #f0abfc;
+  --accent-hover: #e879f9;
+  --accent-light: #2e1065;
+  --toolbar-bg: #161028;
+  --toolbar-border: #4c1d95;
+  --code-bg: #0f0a1a;
+  --tab-active-bg: #f0abfc;
+  --tab-active-text: #0f0a1a;
+}
+
+/* ── Linear ───────────────────────────────────────────────────────── */
+/* Dark-native product UI. Inter-based, indigo-violet accent, achromatic
+ * near-black canvas. Ref: awesome-design-md/design-md/linear.app. */
+[data-theme-pack="linear"] {
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Berkeley Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --accent: #5e6ad2;
+  --accent-hover: #4f5abf;
+  --accent-light: #e6e8fb;
+  --split-handle-hover: #5e6ad2;
+  --tab-active-bg: #5e6ad2;
+  --tab-active-text: #ffffff;
+}
+
+[data-theme-pack="linear"][data-theme="dark"] {
+  --bg-primary: #08090a;
+  --bg-secondary: #0f1011;
+  --bg-tertiary: #191a1b;
+  --bg-hover: #28282c;
+  --text-primary: #f7f8f8;
+  --text-secondary: #d0d6e0;
+  --text-muted: #8a8f98;
+  --border-color: #23252a;
+  --accent: #7170ff;
+  --accent-hover: #828fff;
+  --accent-light: rgba(94, 106, 210, 0.18);
+  --toolbar-bg: #0f1011;
+  --toolbar-border: #23252a;
+  --code-bg: #0f1011;
+  --tab-active-bg: #7170ff;
+  --tab-active-text: #ffffff;
+  --split-handle: #23252a;
+  --split-handle-hover: #7170ff;
+}
+
+/* ── Notion ───────────────────────────────────────────────────────── */
+/* Warm-neutral canvas with Notion Blue accent. Inter fallback for the
+ * custom NotionInter. Ref: awesome-design-md/design-md/notion. */
+[data-theme-pack="notion"] {
+  --font-family: 'Inter', -apple-system, system-ui, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f5f4;
+  --bg-tertiary: #edece8;
+  --bg-hover: #e6e4df;
+  --text-primary: #0f0e0c;
+  --text-secondary: #615d59;
+  --text-muted: #a39e98;
+  --border-color: #e6e4df;
+  --accent: #0075de;
+  --accent-hover: #005bab;
+  --accent-light: #f2f9ff;
+  --toolbar-bg: #ffffff;
+  --toolbar-border: #e6e4df;
+  --code-bg: #f6f5f4;
+  --tab-active-bg: #0075de;
+  --tab-active-text: #ffffff;
+  --split-handle: #e6e4df;
+  --split-handle-hover: #0075de;
+}
+
+[data-theme-pack="notion"][data-theme="dark"] {
+  --bg-primary: #191918;
+  --bg-secondary: #25231f;
+  --bg-tertiary: #31302e;
+  --bg-hover: #3d3c3a;
+  --text-primary: #f6f5f4;
+  --text-secondary: #c9c5be;
+  --text-muted: #87847e;
+  --border-color: #3d3c3a;
+  --accent: #62aef0;
+  --accent-hover: #4599e3;
+  --accent-light: rgba(9, 127, 232, 0.18);
+  --toolbar-bg: #25231f;
+  --toolbar-border: #3d3c3a;
+  --code-bg: #191918;
+  --tab-active-bg: #62aef0;
+  --tab-active-text: #0f0e0c;
+  --split-handle: #3d3c3a;
+  --split-handle-hover: #62aef0;
+}
+
+/* ── Claude ───────────────────────────────────────────────────────── */
+/* Warm parchment canvas, serif headlines, terracotta brand.
+ * Ref: awesome-design-md/design-md/claude. */
+[data-theme-pack="claude"] {
+  --font-family: 'Georgia', 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --bg-primary: #f5f4ed;
+  --bg-secondary: #faf9f5;
+  --bg-tertiary: #e8e6dc;
+  --bg-hover: #dedbce;
+  --text-primary: #141413;
+  --text-secondary: #5e5d59;
+  --text-muted: #87867f;
+  --border-color: #e8e6dc;
+  --accent: #c96442;
+  --accent-hover: #b5593a;
+  --accent-light: #f4e4d6;
+  --toolbar-bg: #faf9f5;
+  --toolbar-border: #e8e6dc;
+  --code-bg: #f0eee6;
+  --tab-active-bg: #c96442;
+  --tab-active-text: #faf9f5;
+  --split-handle: #e8e6dc;
+  --split-handle-hover: #c96442;
+}
+
+[data-theme-pack="claude"][data-theme="dark"] {
+  --bg-primary: #141413;
+  --bg-secondary: #1f1e1c;
+  --bg-tertiary: #30302e;
+  --bg-hover: #3d3d3a;
+  --text-primary: #faf9f5;
+  --text-secondary: #b0aea5;
+  --text-muted: #87867f;
+  --border-color: #30302e;
+  --accent: #d97757;
+  --accent-hover: #e08b6e;
+  --accent-light: rgba(201, 100, 66, 0.18);
+  --toolbar-bg: #1f1e1c;
+  --toolbar-border: #30302e;
+  --code-bg: #141413;
+  --tab-active-bg: #d97757;
+  --tab-active-text: #141413;
+  --split-handle: #30302e;
+  --split-handle-hover: #d97757;
+}
+
+/* ── Stripe ───────────────────────────────────────────────────────── */
+/* Light-first premium fintech. Deep navy text, saturated violet accent.
+ * Ref: awesome-design-md/design-md/stripe. */
+[data-theme-pack="stripe"] {
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono: 'Source Code Pro', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f9fc;
+  --bg-tertiary: #eef2f7;
+  --bg-hover: #e3e9f0;
+  --text-primary: #061b31;
+  --text-secondary: #425466;
+  --text-muted: #8898aa;
+  --border-color: #e3e9f0;
+  --accent: #533afd;
+  --accent-hover: #3e27db;
+  --accent-light: #ece9ff;
+  --toolbar-bg: #ffffff;
+  --toolbar-border: #e3e9f0;
+  --code-bg: #f6f9fc;
+  --tab-active-bg: #533afd;
+  --tab-active-text: #ffffff;
+  --split-handle: #e3e9f0;
+  --split-handle-hover: #533afd;
+}
+
+[data-theme-pack="stripe"][data-theme="dark"] {
+  --bg-primary: #0d253d;
+  --bg-secondary: #1c1e54;
+  --bg-tertiary: #252765;
+  --bg-hover: #2e3076;
+  --text-primary: #f6f9fc;
+  --text-secondary: #a4b1c6;
+  --text-muted: #7a88a0;
+  --border-color: #2e3076;
+  --accent: #8a7dff;
+  --accent-hover: #a094ff;
+  --accent-light: rgba(83, 58, 253, 0.22);
+  --toolbar-bg: #1c1e54;
+  --toolbar-border: #2e3076;
+  --code-bg: #0d253d;
+  --tab-active-bg: #8a7dff;
+  --tab-active-text: #0d253d;
+  --split-handle: #2e3076;
+  --split-handle-hover: #8a7dff;
+}
+
+/* ── Vercel ───────────────────────────────────────────────────────── */
+/* Gallery-minimal mono palette. Inter subs for Geist Sans.
+ * Ref: awesome-design-md/design-md/vercel. */
+[data-theme-pack="vercel"] {
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-tertiary: #f2f2f2;
+  --bg-hover: #ebebeb;
+  --text-primary: #171717;
+  --text-secondary: #525252;
+  --text-muted: #8f8f8f;
+  --border-color: #ebebeb;
+  --accent: #171717;
+  --accent-hover: #000000;
+  --accent-light: #f2f2f2;
+  --toolbar-bg: #ffffff;
+  --toolbar-border: #ebebeb;
+  --code-bg: #fafafa;
+  --tab-active-bg: #171717;
+  --tab-active-text: #ffffff;
+  --split-handle: #ebebeb;
+  --split-handle-hover: #0a72ef;
+}
+
+[data-theme-pack="vercel"][data-theme="dark"] {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #171717;
+  --bg-hover: #262626;
+  --text-primary: #ededed;
+  --text-secondary: #a1a1a1;
+  --text-muted: #737373;
+  --border-color: #262626;
+  --accent: #ededed;
+  --accent-hover: #ffffff;
+  --accent-light: rgba(237, 237, 237, 0.1);
+  --toolbar-bg: #0a0a0a;
+  --toolbar-border: #262626;
+  --code-bg: #0a0a0a;
+  --tab-active-bg: #ededed;
+  --tab-active-text: #000000;
+  --split-handle: #262626;
+  --split-handle-hover: #0a72ef;
+}
+
+/* ── Supabase ─────────────────────────────────────────────────────── */
+/* Dark-native developer platform, emerald accent.
+ * Ref: awesome-design-md/design-md/supabase. */
+[data-theme-pack="supabase"] {
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Source Code Pro', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --accent: #00c573;
+  --accent-hover: #009c5a;
+  --accent-light: #d4f5e6;
+  --tab-active-bg: #00c573;
+  --split-handle-hover: #3ecf8e;
+}
+
+[data-theme-pack="supabase"][data-theme="dark"] {
+  --bg-primary: #171717;
+  --bg-secondary: #1c1c1c;
+  --bg-tertiary: #242424;
+  --bg-hover: #2e2e2e;
+  --text-primary: #ededed;
+  --text-secondary: #a1a1a1;
+  --text-muted: #898989;
+  --border-color: #2e2e2e;
+  --accent: #3ecf8e;
+  --accent-hover: #60dca5;
+  --accent-light: rgba(62, 207, 142, 0.18);
+  --toolbar-bg: #1c1c1c;
+  --toolbar-border: #2e2e2e;
+  --code-bg: #0f0f0f;
+  --tab-active-bg: #3ecf8e;
+  --tab-active-text: #0f0f0f;
+  --split-handle: #2e2e2e;
+  --split-handle-hover: #3ecf8e;
+}
+
+/* ── Spotify ──────────────────────────────────────────────────────── */
+/* Content-first darkness, Spotify Green accent. Circular has no good
+ * free sub; use Inter. Ref: awesome-design-md/design-md/spotify. */
+[data-theme-pack="spotify"] {
+  --font-family: 'Inter', 'CircularSp', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --accent: #1db954;
+  --accent-hover: #169c45;
+  --accent-light: #d8f3e3;
+  --tab-active-bg: #1db954;
+  --tab-active-text: #ffffff;
+  --split-handle-hover: #1ed760;
+}
+
+[data-theme-pack="spotify"][data-theme="dark"] {
+  --bg-primary: #121212;
+  --bg-secondary: #181818;
+  --bg-tertiary: #1f1f1f;
+  --bg-hover: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: #cbcbcb;
+  --text-muted: #b3b3b3;
+  --border-color: #2a2a2a;
+  --accent: #1ed760;
+  --accent-hover: #1fdf64;
+  --accent-light: rgba(30, 215, 96, 0.18);
+  --toolbar-bg: #181818;
+  --toolbar-border: #2a2a2a;
+  --code-bg: #121212;
+  --tab-active-bg: #1ed760;
+  --tab-active-text: #121212;
+  --split-handle: #2a2a2a;
+  --split-handle-hover: #1ed760;
+}
+
+/* ── Raycast ──────────────────────────────────────────────────────── */
+/* Blue-tinted near-black with Raycast Red punctuation. Inter + Geist Mono.
+ * Ref: awesome-design-md/design-md/raycast. */
+[data-theme-pack="raycast"] {
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --accent: #ff6363;
+  --accent-hover: #e74e4e;
+  --accent-light: #ffe3e3;
+  --tab-active-bg: #ff6363;
+  --split-handle-hover: #ff6363;
+}
+
+[data-theme-pack="raycast"][data-theme="dark"] {
+  --bg-primary: #07080a;
+  --bg-secondary: #0e1014;
+  --bg-tertiary: #15181e;
+  --bg-hover: #1e222a;
+  --text-primary: #f0f1f4;
+  --text-secondary: #b4b8c2;
+  --text-muted: #6a6f7a;
+  --border-color: #1e222a;
+  --accent: #ff6363;
+  --accent-hover: #ff8585;
+  --accent-light: rgba(255, 99, 99, 0.18);
+  --toolbar-bg: #0e1014;
+  --toolbar-border: #1e222a;
+  --code-bg: #07080a;
+  --tab-active-bg: #ff6363;
+  --tab-active-text: #07080a;
+  --split-handle: #1e222a;
+  --split-handle-hover: #ff6363;
+}
+
+/* ── Airbnb ───────────────────────────────────────────────────────── */
+/* Warm white canvas with Rausch Red as singular accent. Cereal subs
+ * via Inter. Ref: awesome-design-md/design-md/airbnb. */
+[data-theme-pack="airbnb"] {
+  --font-family: 'Inter', 'Circular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f7;
+  --bg-tertiary: #ebebeb;
+  --bg-hover: #dddddd;
+  --text-primary: #222222;
+  --text-secondary: #717171;
+  --text-muted: #b0b0b0;
+  --border-color: #ebebeb;
+  --accent: #ff385c;
+  --accent-hover: #e31c5f;
+  --accent-light: #ffe1e7;
+  --toolbar-bg: #ffffff;
+  --toolbar-border: #ebebeb;
+  --code-bg: #f7f7f7;
+  --tab-active-bg: #ff385c;
+  --tab-active-text: #ffffff;
+  --split-handle: #ebebeb;
+  --split-handle-hover: #ff385c;
+}
+
+[data-theme-pack="airbnb"][data-theme="dark"] {
+  --bg-primary: #1c1c1c;
+  --bg-secondary: #222222;
+  --bg-tertiary: #2b2b2b;
+  --bg-hover: #363636;
+  --text-primary: #f7f7f7;
+  --text-secondary: #b0b0b0;
+  --text-muted: #717171;
+  --border-color: #363636;
+  --accent: #ff5a7a;
+  --accent-hover: #ff7591;
+  --accent-light: rgba(255, 56, 92, 0.18);
+  --toolbar-bg: #222222;
+  --toolbar-border: #363636;
+  --code-bg: #1c1c1c;
+  --tab-active-bg: #ff5a7a;
+  --tab-active-text: #1c1c1c;
+  --split-handle: #363636;
+  --split-handle-hover: #ff5a7a;
+}
+
+/* ── Framer ───────────────────────────────────────────────────────── */
+/* Pure-black void canvas, Framer Blue electric accent. GT Walsheim subs
+ * via Inter. Ref: awesome-design-md/design-md/framer. */
+[data-theme-pack="framer"] {
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --accent: #0099ff;
+  --accent-hover: #007acc;
+  --accent-light: #d6eeff;
+  --tab-active-bg: #0099ff;
+  --split-handle-hover: #0099ff;
+}
+
+[data-theme-pack="framer"][data-theme="dark"] {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #141414;
+  --bg-hover: #1f1f1f;
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-muted: #666666;
+  --border-color: #1f1f1f;
+  --accent: #0099ff;
+  --accent-hover: #33adff;
+  --accent-light: rgba(0, 153, 255, 0.18);
+  --toolbar-bg: #0a0a0a;
+  --toolbar-border: #1f1f1f;
+  --code-bg: #000000;
+  --tab-active-bg: #0099ff;
+  --tab-active-text: #000000;
+  --split-handle: #1f1f1f;
+  --split-handle-hover: #0099ff;
+}
+
+/* ── PostHog ──────────────────────────────────────────────────────── */
+/* Warm sage cream canvas with olive neutrals and hidden orange accent.
+ * IBM Plex Sans. Ref: awesome-design-md/design-md/posthog. */
+[data-theme-pack="posthog"] {
+  --font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --bg-primary: #fdfdf8;
+  --bg-secondary: #f5f4ea;
+  --bg-tertiary: #eceadb;
+  --bg-hover: #e2dfcb;
+  --text-primary: #1e1f23;
+  --text-secondary: #44474d;
+  --text-muted: #8a8d7e;
+  --border-color: #bfc1b7;
+  --accent: #f54e00;
+  --accent-hover: #d94500;
+  --accent-light: #ffdfcf;
+  --toolbar-bg: #fdfdf8;
+  --toolbar-border: #bfc1b7;
+  --code-bg: #f5f4ea;
+  --tab-active-bg: #1e1f23;
+  --tab-active-text: #fdfdf8;
+  --split-handle: #bfc1b7;
+  --split-handle-hover: #f54e00;
+}
+
+[data-theme-pack="posthog"][data-theme="dark"] {
+  --bg-primary: #1e1f23;
+  --bg-secondary: #262830;
+  --bg-tertiary: #2f323c;
+  --bg-hover: #3a3d48;
+  --text-primary: #f5f4ea;
+  --text-secondary: #bfc1b7;
+  --text-muted: #8a8d7e;
+  --border-color: #3a3d48;
+  --accent: #ff7a33;
+  --accent-hover: #ff9559;
+  --accent-light: rgba(245, 78, 0, 0.2);
+  --toolbar-bg: #262830;
+  --toolbar-border: #3a3d48;
+  --code-bg: #1e1f23;
+  --tab-active-bg: #ff7a33;
+  --tab-active-text: #1e1f23;
+  --split-handle: #3a3d48;
+  --split-handle-hover: #ff7a33;
+}

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Open browser tools for comparing LLM-generated HTML, p5.js sketches, and SVG artwork.">
+  <title>LLM Test Bench</title>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="LLM Test Bench home">
+      <span class="brand-mark">LT</span>
+      <span>LLM Test Bench</span>
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="#tools">Tools</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Open-source creative model evaluation</p>
+      <h1>Generate it. Compare it. Keep the evidence.</h1>
+      <p class="hero-copy">A browser-based workbench for testing how language models turn the same idea into interactive HTML, p5.js sketches, and SVG artwork.</p>
+      <div class="hero-actions">
+        <a class="button primary" href="prompt-gallery/">Open Prompt Gallery</a>
+        <a class="button" href="#how-it-works">How it works</a>
+      </div>
+      <div class="trust-row" aria-label="Privacy and platform notes">
+        <span>Bring your own API key</span>
+        <span>Files stay in your chosen folder</span>
+        <span>No account required</span>
+      </div>
+    </section>
+
+    <section class="tools-section" id="tools" aria-labelledby="tools-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">First public release</p>
+          <h2 id="tools-title">Three focused test benches</h2>
+        </div>
+        <p>Start with 141 bundled prompt ideas, then save your own results append-only to a folder you control.</p>
+      </div>
+
+      <div class="tool-grid">
+        <article class="tool-card prompt-card">
+          <div class="card-kicker"><span class="dot"></span> HTML + JavaScript</div>
+          <h3>Prompt Gallery</h3>
+          <p>Run one prompt through different models, preview the generated page safely, compare variants, refine failures, and record a walkthrough.</p>
+          <ul>
+            <li>62 starter prompts</li>
+            <li>Streaming generation and batch runs</li>
+            <li>Gallery, comparison, ratings, and metadata</li>
+          </ul>
+          <a class="card-link" href="prompt-gallery/">Launch Prompt Gallery <span aria-hidden="true">→</span></a>
+        </article>
+
+        <article class="tool-card p5-card">
+          <div class="card-kicker"><span class="dot"></span> Creative coding</div>
+          <h3>p5 Sketch Gallery</h3>
+          <p>Generate instance-mode p5.js sketches, tune their parameters and seeds, inspect lineages, compare runs, and capture video.</p>
+          <ul>
+            <li>24 ambitious starter prompts</li>
+            <li>Sandboxed live canvas preview</li>
+            <li>Remix, explain, compare, and record</li>
+          </ul>
+          <a class="card-link" href="p5-sketch-gallery/">Launch p5 Sketch Gallery <span aria-hidden="true">→</span></a>
+        </article>
+
+        <article class="tool-card svg-card">
+          <div class="card-kicker"><span class="dot"></span> Vector evaluation</div>
+          <h3>SVG Generation Gallery</h3>
+          <p>Generate SVG submissions, compare them with reference images, inspect structure, score visual similarity, and export results.</p>
+          <ul>
+            <li>55 starter prompts</li>
+            <li>Pixel-diff and manual scoring</li>
+            <li>SVG, GIF, comparison, and recording</li>
+          </ul>
+          <a class="card-link" href="svg-benchmark/">Launch SVG bench <span aria-hidden="true">→</span></a>
+        </article>
+      </div>
+    </section>
+
+    <section class="workflow" id="how-it-works" aria-labelledby="workflow-title">
+      <div>
+        <p class="eyebrow">Your data, your models</p>
+        <h2 id="workflow-title">A local-first website</h2>
+        <p>The site is hosted, but your working files are not uploaded to us. In Chrome or Edge, choose a folder on your own computer. The apps read and write inside that folder with your permission.</p>
+      </div>
+      <ol>
+        <li><strong>Choose a folder</strong><span>The browser remembers the handle and asks before restoring access.</span></li>
+        <li><strong>Add a provider</strong><span>Use your own OpenRouter key or another supported endpoint.</span></li>
+        <li><strong>Generate and compare</strong><span>Prompts go only to the provider you select; saved outputs remain in your folder.</span></li>
+      </ol>
+    </section>
+
+    <aside class="browser-note">
+      <strong>Best in Chrome or Edge.</strong>
+      Folder access and screen recording depend on browser APIs that are not equally available everywhere. Local CLI agents and cross-app handoffs belong to the full local DevTools Hub and are intentionally absent from this hosted edition.
+    </aside>
+  </main>
+
+  <footer>
+    <span>LLM Test Bench · MIT licensed</span>
+    <span>Experimental software — review generated code before sharing it.</span>
+  </footer>
+</body>
+</html>

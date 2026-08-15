@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" data-distribution="public" data-cross-app-handoffs="off">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG Generation Benchmark</title>
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="../shared/lib/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Ace Editor -->
+  <script src="../shared/lib/ace/1.32.6/src-min-noconflict/ace.js"></script>
+
+  <!-- Shared base styles + app-specific styles -->
+  <!-- Theme + theme-pack bootstrap (must run before stylesheet load to avoid FOUC) -->
+  <script src="../shared/styles/theme-bootstrap.js"></script>
+
+  <link rel="stylesheet" href="../shared/styles/base.css">
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Import map for ES modules -->
+  <script type="importmap">
+  {
+    "imports": {
+      "preact": "../shared/lib/preact/10.19.3/preact.mjs",
+      "preact/hooks": "../shared/lib/preact/10.19.3/hooks.mjs",
+      "htm/preact": "../shared/lib/htm/3.1.1/preact.mjs"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+{
+  "version": "hub-help-deck-v1",
+  "title": "p5 Sketch Gallery",
+  "generatedFrom": "HELP.md",
+  "generatedBy": "help-decks",
+  "generatedAt": "2026-08-14T11:19:59.542Z",
+  "slides": [
+    {
+      "kind": "title",
+      "title": "p5 Sketch Gallery",
+      "html": "<p>A creative-coding library: store, preview, tag and remix p5.js sketches as living\ncanvases (not static HTML). Same collect-and-compare loop as Prompt Gallery,\nbut with tunable parameters, fixed seeds, motion thumbnails and remix lineage.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Getting started",
+      "html": "<ol>\n<li>Open <strong>Settings → Data Root</strong> and pick the folder where your sketches will live.\nThe app stores everything under <code>&lt;root&gt;/p5-sketch-gallery/projects/&lt;sketch-id&gt;/</code>.</li>\n<li>Click the <strong>🔑 key icon</strong> in the toolbar to paste a free OpenRouter API key\n(only needed if you want to generate or explain sketches with an LLM).</li>\n<li>Pick a model in the dropdown.</li>\n<li>Type a prompt (e.g. <em>&quot;flocking arrows on a dark grid that react to mouse&quot;</em>)\nand hit <strong>⚡ Generate</strong>, or just edit the default sketch on the left and watch\nthe canvas in the centre update live.</li>\n<li>Tweak parameters in the right rail; numeric params get sliders for free.\nThe panel is rebuilt from the sketch itself on every generation — see below.</li>\n<li><strong>Save</strong> writes a folder containing <code>sketch.js</code>, <code>prompt.md</code>, <code>params.json</code>,\n<code>metadata.json</code> and a <code>thumb.png</code> captured from the live canvas.</li>\n</ol>"
+    },
+    {
+      "kind": "text",
+      "title": "The Save dialog",
+      "html": "<ul>\n<li>The top panel shows how the sketch was made — <strong>AI generated</strong> / <strong>Hand\nwritten</strong> / <strong>Built-in example</strong> — plus the model and provider that produced\nit and when. That comes from the generation itself, so you never have to\nremember which model you were on; the ✏️ button lets you correct it.</li>\n<li><strong>Title</strong>, <strong>Description</strong> and <strong>Tags</strong> each have a 🪄 wand that asks the\ncurrently selected model to write that field from your prompt and sketch\nsource. <strong>Auto-fill empty</strong> does all three at once and only touches fields\nyou left blank — it never overwrites what you typed.</li>\n<li>The description is saved as the sketch notes, so it shows up in the gallery\nand comes back when you reopen the sketch.</li>\n<li>Suggestions need a model selected and a prompt or some source to read. If a\nsuggestion comes back empty, the model returned no text (some thinking models\ndo this) — try another one.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "The Create screen",
+      "html": "<ul>\n<li><strong>Left</strong> — prompt + sketch source code (Ace editor, JS mode).</li>\n<li><strong>Centre</strong> — live canvas preview with FPS overlay and a runtime-error banner.</li>\n<li><strong>Right rail</strong> — playback (play/pause/restart/seed), parameters (JSON +\nper-numeric sliders), tags, notes, and AI helpers.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Parameters come from the code",
+      "html": "<p>A sketch declares its own controls by reading them:</p>\n<pre><code class=\"language-js\">const wingSpeed = ctx.params.wingSpeed ?? 0.35;   // slider: wingSpeed, default 0.35\nconst glow      = ctx.params.glow ?? true;        // no slider (not a number), still in the JSON\n</code></pre>\n<p>The default must be a plain literal — <code>80</code>, <code>0.35</code>, <code>true</code>, <code>&quot;left&quot;</code> — because\nthe app reads those literals out of your source to build the panel.\nDestructuring (<code>const { speed = 1.2 } = ctx.params</code>) works too.</p>\n<ul>\n<li><strong>After a generation</strong> the panel is rebuilt from the new sketch, using that\nsketch&#39;s own defaults. Knobs from the previous sketch disappear, because they\nno longer drive anything.</li>\n<li><strong>The ⟳ button</strong> in the Parameters header re-reads the code on demand — use it\nafter hand-editing a sketch. It keeps values you have already tuned and just\nadds or removes knobs.</li>\n<li>If a sketch touches <code>ctx.params</code> in a way the app can&#39;t parse (a computed key,\nsay), the panel is left alone rather than wrongly emptied.</li>\n<li><strong>Remix params</strong> only retunes knobs the sketch actually reads; invented keys\nare ignored so dead sliders can&#39;t pile up.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Sketch format",
+      "html": "<p>User code must define an instance-mode function with this signature:</p>\n<pre><code class=\"language-js\">function sketch(p, ctx) {\n  p.setup = () =&gt; {\n    p.createCanvas(480, 480);\n    p.randomSeed(ctx.seed);\n    p.noiseSeed(ctx.seed);\n  };\n  p.draw = () =&gt; {\n    // ... use ctx.params.foo to read parameters ...\n  };\n}\n</code></pre>\n<ul>\n<li><code>p</code> is a p5 instance — call methods on it (<code>p.background</code>, <code>p.line</code>, …).</li>\n<li><code>ctx.seed</code> is the deterministic seed; pass it to <code>p.randomSeed</code> /\n<code>p.noiseSeed</code> in <code>setup</code> so reloads reproduce the same picture.</li>\n<li><code>ctx.params</code> is the tunable object from the right rail. Read defaults with\n<code>ctx.params.count ?? 80</code>.</li>\n</ul>\n<p>The runner wraps <code>setup</code>/<code>draw</code> so runtime errors surface in the bottom red\nbanner instead of locking the page; the iframe is fully sandboxed.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Gallery",
+      "html": "<ul>\n<li>Cards show the still thumbnail captured at save time, the model badge, tags\nand a small lineage arrow (⤷) for remixes.</li>\n<li><strong>Filter</strong> by title/notes; <strong>Tag</strong> dropdown narrows further.</li>\n<li>Card actions: open, add to compare, <strong>remix</strong> (loads as a child sketch — when\nyou save it, it becomes a new sketch with the parent recorded), and delete.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Curated prompts",
+      "html": "<p>Open the <strong>Prompts</strong> tab for a searchable catalogue of ambitious p5.js ideas,\ngrouped into emergence, physics, WebGL and shaders, interactive tools, games,\nand data/sound. These prompts are written for this app&#39;s <code>sketch(p, ctx)</code> format\nand call out the algorithms, interactions, performance constraints and tunable\nparameters that make each result interesting.</p>\n<ul>\n<li><strong>Use</strong> loads the prompt, title, tags and notes into Create so you can edit it.</li>\n<li><strong>Generate</strong> loads it and immediately runs the selected model.</li>\n<li>Click a prompt description to expand it and read the design notes.</li>\n<li>When a data root is connected, the tab also scans <code>projects/</code> and adds unique\nprompts from your saved sketches. Exact and near-duplicate generations are\ncollapsed into one card with a count, so repeated runs do not swamp the list.</li>\n<li><strong>Rescan gallery</strong> picks up prompts saved while the tab is already open.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Batch generation",
+      "html": "<p>The <strong>Batch</strong> button runs one selected model across many prompt-library entries\nin sequence and saves every successful result as a new gallery project.</p>\n<ol>\n<li>Select the prompts to run. <strong>All</strong> and <strong>None</strong> make large selections quick.</li>\n<li>Choose the provider/model in the dialog.</li>\n<li>Optionally skip prompts already generated by that exact provider/model,\nretry temporary API failures, add a rate-limit delay, or disable thumbnails.</li>\n<li>Press <strong>Run</strong>. Code streams into a live p5 canvas while the queue reports\ngeneration, validation, rendering and save progress. <strong>Stop</strong> finishes the\ncurrent request and leaves later prompts untouched.</li>\n</ol>\n<p>Thumbnail capture waits for each valid sketch to animate before taking a frame;\nadjust <strong>Warm-up</strong> for simulations that need longer to become visually useful.\nEvery save is append-only and records the shared batch id, prompt, model/provider,\nsampling parameters, token telemetry, sketch parameters and deterministic seed.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Batch generation (cont.)",
+      "html": "<p>Open <strong>Generation parameters</strong> to pin provider settings or enter comma-separated\nvalues for a sweep. For example, Temperature <code>0.2, 0.8</code> runs every selected prompt\ntwice. The dialog shows the full prompt × parameter-set job count before starting.</p>\n<p>After completion, review every live sketch with the arrow buttons and open any\nresult in Create. The <strong>Runs</strong> tab reconstructs earlier batches from project\nmetadata, so run history survives reloads and remains usable as metadata evolves.\nOpen one run for a live sketch-by-sketch review, or select 2–9 runs to compare\nmatching prompts and parameter sweeps side by side.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Compare",
+      "html": "<ul>\n<li>Pick 2–4 sketches. They run side by side in synced iframes.</li>\n<li><strong>Pause / Play all</strong> stops or starts every pane together.</li>\n<li><strong>Restart all</strong> rebuilds every pane with the current shared seed — so two\nsketches keyed on the same seed render reproducibly.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Record video",
+      "html": "<p>The toolbar <strong>Record</strong> button captures a browser tab, window or display using\nChrome&#39;s built-in sharing picker. Choose 30 or 60 FPS and optionally request tab\nor system audio. Chrome always asks which surface to share; the app cannot grant\nitself permanent screen-recording permission.</p>\n<p><strong>MP4 · H.264</strong> is selected by default for straightforward uploads to services\nsuch as YouTube and Reddit. WebM remains available and is used automatically if\nthe browser cannot encode MP4 directly.</p>\n<p>While recording, the floating controls show elapsed time and let you pause,\nresume or stop. The controls themselves are visible if you record the current\ntab. When recording ends, preview the video and either download it or save it\nappend-only under <code>&lt;root&gt;/p5-sketch-gallery/recordings/&lt;recording-id&gt;/</code> with a\nmetadata file recording the route, current sketch, dimensions, codec and timing.\nDownload remains available when no data root is connected.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "AI helpers",
+      "html": "<ul>\n<li><strong>Generate</strong> — produces a full <code>sketch(p, ctx)</code> from your prompt.</li>\n<li><strong>Explain</strong> — walks through <em>this</em> sketch by name (variables, params, helpers)\nrather than generic creative-coding advice.</li>\n<li><strong>Remix params</strong> — proposes 4 parameter presets you can apply with one click.</li>\n<li><strong>💡 Brainstorm prompts</strong> (lightbulb icon in the prompt header) — opens a dialog\nwhere you give the model a theme (e.g. <em>&quot;organic textures&quot;</em>, <em>&quot;escher tiling&quot;</em>)\nand it returns ten concrete sketch prompts. Click any chip to drop it into the\nprompt field.</li>\n<li><strong>✨ More like this</strong> (sparkles icon in the prompt header) — uses your current\nprompt as the seed and returns six neighbouring variations. Disabled until you\nhave a prompt typed.</li>\n</ul>\n<p>All five stream over the model you&#39;ve selected in the toolbar.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Keyboard",
+      "html": "<ul>\n<li><strong>Ctrl/Cmd + S</strong> — open the Save dialog.</li>\n<li><strong>Ctrl/Cmd + G</strong> — jump to Gallery.</li>\n<li><strong>Space</strong> — play/pause the live preview (when not typing in a field).</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Troubleshooting",
+      "html": "<ul>\n<li><em>&quot;Sketch must define a function named sketch(p, ctx).&quot;</em> — your code defines\n<code>setup()</code>/<code>draw()</code> as globals instead of attaching them to <code>p</code>. Wrap the body\nin <code>function sketch(p, ctx) { p.setup = ... }</code>.</li>\n<li><em>Errors in the red banner</em> — they include a stack trace; the loop is paused\nuntil you change the code.</li>\n<li><em>No models in the picker</em> — you haven&#39;t pasted an API key, or the configured\nprovider is unreachable. Visit Settings → Providers to enable LM Studio or\nOpenRouter.</li>\n</ul>"
+    }
+  ]
+}

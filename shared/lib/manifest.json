@@ -1,0 +1,101 @@
+{
+  "generatedAt": "2026-08-15T14:33:17.454Z",
+  "root": "shared/lib",
+  "notes": [
+    "Minimal vendored runtime set for the LLM Test Bench public distribution."
+  ],
+  "libraries": {
+    "preact": {
+      "10.19.3": {
+        "path": "preact/10.19.3",
+        "sources": [
+          "npm:preact@10.19.3"
+        ]
+      }
+    },
+    "htm": {
+      "3.1.1": {
+        "path": "htm/3.1.1",
+        "sources": [
+          "npm:htm@3.1.1"
+        ]
+      }
+    },
+    "@fortawesome/fontawesome-free": {
+      "6.5.1": {
+        "path": "font-awesome/6.5.1",
+        "sources": [
+          "npm:@fortawesome/fontawesome-free@6.5.1"
+        ]
+      }
+    },
+    "ace-builds": {
+      "1.32.6": {
+        "path": "ace/1.32.6",
+        "sources": [
+          "npm:ace-builds@1.32.6"
+        ]
+      }
+    },
+    "highlight.js": {
+      "11.9.0": {
+        "path": "highlight.js/11.9.0",
+        "sources": [
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/ruby.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css",
+          "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+        ]
+      }
+    },
+    "marked": {
+      "12": {
+        "path": "marked/12",
+        "sources": [
+          "https://cdn.jsdelivr.net/npm/marked@12/marked.min.js",
+          "https://esm.sh/marked@12?bundle"
+        ]
+      },
+      "11.1.1": {
+        "path": "marked/11.1.1",
+        "sources": [
+          "https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"
+        ]
+      }
+    },
+    "dompurify": {
+      "3": {
+        "path": "dompurify/3",
+        "sources": [
+          "https://esm.sh/dompurify@3?bundle"
+        ]
+      }
+    },
+    "p5.js": {
+      "1.9.4": {
+        "path": "p5.js/1.9.4",
+        "sources": [
+          "https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"
+        ]
+      }
+    },
+    "gifenc": {
+      "1.0.3": {
+        "path": "gifenc/1.0.3",
+        "sources": [
+          "https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js"
+        ]
+      }
+    }
+  }
+}

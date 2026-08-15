@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "title": "LLM Test Bench",
+    "slug": "llm-test-bench",
+    "domain": "neuroviz.uk",
+    "suggestedPreviewHost": "testbench.neuroviz.uk",
+    "repositoryUrl": "https://github.com/Techdread/llm-test-bench"
+  },
+  "generatedAt": "2026-08-15T14:33:17.455Z",
+  "apps": [
+    {
+      "source": "prompt-gallery",
+      "publicPath": "prompt-gallery",
+      "title": "Prompt Gallery"
+    },
+    {
+      "source": "p5-sketch-gallery",
+      "publicPath": "p5-sketch-gallery",
+      "title": "p5 Sketch Gallery"
+    },
+    {
+      "source": "svg-benchmark",
+      "publicPath": "svg-benchmark",
+      "title": "SVG Generation Gallery / Benchmark"
+    }
+  ],
+  "sharedModuleCount": 40,
+  "hostedLimitations": [
+    "Local CLI agents require the private/local serve.py bridge and are not part of this static distribution.",
+    "Cross-app Code Morph and Bugfix handoffs are disabled because their target apps are not included."
+  ]
+}
