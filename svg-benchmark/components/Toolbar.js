@@ -9,6 +9,7 @@ export function Toolbar({
   onNavigate,
   onToggleTheme,
   hasDirectory,
+  directoryName,
   onPickDirectory,
   // Provider/model props
   allModels,
@@ -120,11 +121,12 @@ export function Toolbar({
         </button>
         <${RecordVideoButton} ...${recordingProps} />
         <button
-          class="btn-icon"
+          class="btn btn-directory"
           onClick=${onPickDirectory}
-          title=${hasDirectory ? 'Change working directory' : 'Connect a directory to save benchmarks'}
+          title=${hasDirectory ? `Benchmark folder: ${directoryName} (click to change)` : 'Connect a folder to save your work'}
         >
-          <i class=${`fa-solid fa-folder${hasDirectory ? '-open' : ''}`}></i>
+          <i class=${`fa-solid ${hasDirectory ? 'fa-folder-open' : 'fa-folder-plus'}`}></i>
+          <span class="btn-label directory-name">${hasDirectory ? directoryName : 'Connect folder'}</span>
         </button>
         <button class="btn-icon" onClick=${onHelpClick} title="Help">
           <i class="fa-solid fa-circle-question"></i>

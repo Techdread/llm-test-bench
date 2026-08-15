@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   crossAppHandoffsEnabled,
   distributionName,
+  isPublicDistribution,
 } from '../services/distribution.js';
 
 function documentWith(dataset = {}) {
@@ -12,12 +13,14 @@ function documentWith(dataset = {}) {
 
 test('private hub is the backwards-compatible default', () => {
   assert.equal(distributionName(documentWith()), 'private-hub');
+  assert.equal(isPublicDistribution(documentWith()), false);
   assert.equal(crossAppHandoffsEnabled(documentWith()), true);
 });
 
 test('public distributions disable cross-app handoffs by default', () => {
   const doc = documentWith({ distribution: 'public' });
   assert.equal(distributionName(doc), 'public');
+  assert.equal(isPublicDistribution(doc), true);
   assert.equal(crossAppHandoffsEnabled(doc), false);
 });
 

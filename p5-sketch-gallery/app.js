@@ -19,7 +19,8 @@ import { RunsView } from './components/RunsView.js';
 
 import { ProviderSettingsDialog } from '../shared/components/ProviderSettingsDialog.js';
 import { HelpDialog } from '../shared/components/HelpDialog.js';
-import { ensureAppNamespace, getRoot, connectRoot } from '../shared/services/data-root-manager.js';
+import { ensureAppNamespace, getRoot, connectRoot, setRoot } from '../shared/services/data-root-manager.js';
+import { isPublicDistribution } from '../shared/services/distribution.js';
 import * as modelProviders from '../shared/services/model-providers.js';
 
 import { defaultSketchCode, defaultParams } from './services/runtime/sketchRunner.js';
@@ -249,12 +250,14 @@ function App() {
 
   const handlePickDirectory = useCallback(async () => {
     try {
-      const root = await connectRoot();
+      const root = isPublicDistribution() ? await setRoot() : await connectRoot();
       if (!root) { addToast('No data root configured — go to Settings → Data Root.', 'error'); return; }
       const appHandle = await ensureAppNamespace(APP_ID);
       setRootHandle(appHandle);
       addToast('Directory connected', 'success');
-    } catch (e) { addToast('Failed to connect: ' + e.message, 'error'); }
+    } catch (e) {
+      if (e?.name !== 'AbortError') addToast('Failed to connect: ' + e.message, 'error');
+    }
   }, [addToast]);
 
   function loadIntoEditor(proj, isRemix) {

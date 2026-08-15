@@ -17,7 +17,7 @@ import { Toast } from './components/Toast.js';
 import { ProviderSettingsDialog } from '../shared/components/ProviderSettingsDialog.js';
 import { HelpDialog } from '../shared/components/HelpDialog.js';
 import { AgentRunTrace, useCodingAgentRun } from '../shared/components/CodingAgentRun.js';
-import { ensureAppNamespace, getRoot, connectRoot } from '../shared/services/data-root-manager.js';
+import { ensureAppNamespace, getRoot, connectRoot, setRoot } from '../shared/services/data-root-manager.js';
 import { extractSvgText } from '../shared/services/output-sanitizer.js';
 import { paramsSignature } from '../shared/services/gen-params.js';
 import {
@@ -36,7 +36,7 @@ import * as benchmarks from './services/benchmarks.js';
 import { loadSeedPrompts } from './services/promptLibrary.js';
 import { analyzeSvg, compareSvgToReference } from './services/pixeldiff.js';
 import { exportSvgAsGif } from '../shared/services/gif-export.js';
-import { crossAppHandoffsEnabled } from '../shared/services/distribution.js';
+import { crossAppHandoffsEnabled, isPublicDistribution } from '../shared/services/distribution.js';
 
 const CODE_MORPH_SOURCE = 'svg-benchmark';
 
@@ -290,7 +290,7 @@ function App() {
 
   const handlePickDirectory = useCallback(async () => {
     try {
-      const root = await connectRoot();
+      const root = isPublicDistribution() ? await setRoot() : await connectRoot();
       if (!root) {
         addToast('No data root configured — go to Settings → Data Root.', 'error');
         return;
@@ -300,7 +300,7 @@ function App() {
       hydrateAppPrefs(APP_ID, { defaults: PREFS_DEFAULTS });
       addToast('Directory connected', 'success');
     } catch (e) {
-      addToast('Failed to connect directory', 'error');
+      if (e?.name !== 'AbortError') addToast('Failed to connect directory: ' + e.message, 'error');
     }
   }, [addToast]);
 
@@ -984,6 +984,7 @@ function App() {
       onNavigate=${navigate}
       onToggleTheme=${toggleTheme}
       hasDirectory=${!!rootHandle}
+      directoryName=${rootHandle?.name || ''}
       onPickDirectory=${handlePickDirectory}
       allModels=${allModels}
       selectedProviderId=${selectedProviderId}

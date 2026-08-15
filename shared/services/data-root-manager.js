@@ -97,8 +97,9 @@ export async function getRootStatus() {
 /**
  * Prompt the user to pick a directory, save it as the global root, and
  * ensure the registry file exists.
- * @deprecated Use only from the Settings page. Individual apps should call
- * connectRoot() instead so they cannot change the shared data root.
+ * Private Hub apps should use connectRoot() so they cannot change the shared
+ * root. A Settings page or an explicitly marked standalone/public distribution
+ * may call this from a direct user gesture.
  */
 export async function setRoot() {
   const handle = await window.showDirectoryPicker({ mode: 'readwrite' });

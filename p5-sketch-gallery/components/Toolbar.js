@@ -100,10 +100,10 @@ export function Toolbar({
         <button
           class="btn btn-directory"
           onClick=${onPickDirectory}
-          title=${hasDirectory ? `Sketch folder: ${directoryName}` : 'Connect data root'}
+          title=${hasDirectory ? `Sketch folder: ${directoryName} (click to change)` : 'Connect a folder to save your work'}
         >
           <i class=${`fa-solid ${hasDirectory ? 'fa-folder-open' : 'fa-folder-plus'}`}></i>
-          <span class="btn-label directory-name">${hasDirectory ? directoryName : 'No folder'}</span>
+          <span class="btn-label directory-name">${hasDirectory ? directoryName : 'Connect folder'}</span>
         </button>
         <button class="btn btn-batch" onClick=${onBatch} title="Run one model over selected prompt-library entries">
           <i class="fa-solid fa-layer-group"></i>

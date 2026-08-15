@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   getAgentModelEffort,
   groupAgentModelOptions,
+  isAgentRunsPayload,
   resolveAgentModelSelection,
   saveAgentModelEffort,
 } from '../services/agent-backend.js';
@@ -12,6 +13,13 @@ globalThis.localStorage = {
   getItem: key => preferenceStore.get(key) ?? null,
   setItem: (key, value) => preferenceStore.set(key, String(value)),
 };
+
+test('agent bridge detection rejects a static host HTML fallback', () => {
+  assert.equal(isAgentRunsPayload({ runs: [], activeCount: 0 }), true);
+  assert.equal(isAgentRunsPayload('<!doctype html>'), false);
+  assert.equal(isAgentRunsPayload({}), false);
+  assert.equal(isAgentRunsPayload({ runs: [] }), false);
+});
 
 const catalogue = [
   { id: 'gemini-3.7-flash-high', label: 'Gemini 3.7 Flash (High)' },

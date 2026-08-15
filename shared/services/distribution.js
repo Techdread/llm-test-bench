@@ -12,9 +12,13 @@ export function distributionName(documentRef = globalThis.document) {
   return documentRef?.documentElement?.dataset?.distribution || 'private-hub';
 }
 
+export function isPublicDistribution(documentRef = globalThis.document) {
+  return distributionName(documentRef) === 'public';
+}
+
 export function crossAppHandoffsEnabled(documentRef = globalThis.document) {
   const value = documentRef?.documentElement?.dataset?.crossAppHandoffs;
   if (value === 'on') return true;
   if (value === 'off') return false;
-  return distributionName(documentRef) !== 'public';
+  return !isPublicDistribution(documentRef);
 }

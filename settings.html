@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Connect the local data folder used by LLM Test Bench.">
+  <title>Settings · LLM Test Bench</title>
+  <link rel="stylesheet" href="site.css">
+  <script type="module" src="settings.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./"><span class="brand-mark">LT</span><span>LLM Test Bench</span></a>
+    <nav aria-label="Main navigation">
+      <a href="./">Home</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a>
+    </nav>
+  </header>
+
+  <main class="settings-page">
+    <p class="eyebrow">Browser storage setup</p>
+    <h1>Connect your data folder</h1>
+    <p class="settings-intro">Choose one folder on your computer for prompts, generated projects, metadata, recordings, and app settings. The files stay on your device and are not uploaded to LLM Test Bench.</p>
+
+    <section class="settings-card" aria-labelledby="folder-title">
+      <div class="setting-heading">
+        <div>
+          <p class="setting-label">Data root</p>
+          <h2 id="folder-title">Your working folder</h2>
+        </div>
+        <span class="local-badge">Local only</span>
+      </div>
+
+      <div class="folder-status" id="folder-status" role="status" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        <div>
+          <strong id="status-title">Checking folder access…</strong>
+          <p id="status-detail">Looking for a folder previously connected to this website.</p>
+        </div>
+      </div>
+
+      <button class="button primary folder-button" id="choose-folder" type="button" disabled>Choose folder</button>
+      <p class="setting-help" id="browser-help">Chrome or Edge will show a secure system folder picker. You can revoke access later in your browser's site settings.</p>
+    </section>
+
+    <section class="folder-explainer" aria-labelledby="created-title">
+      <div>
+        <p class="eyebrow">What happens next</p>
+        <h2 id="created-title">One root, separate app folders</h2>
+      </div>
+      <p>LLM Test Bench creates a small registry file and separate <code>prompt-gallery</code>, <code>p5-sketch-gallery</code>, and <code>svg-benchmark</code> folders as you use the tools. Saving is append-only by default.</p>
+    </section>
+
+    <div class="settings-actions" aria-label="Open a tool">
+      <a class="button" href="prompt-gallery/">Open Prompt Gallery</a>
+      <a class="button" href="p5-sketch-gallery/">Open p5 Sketch Gallery</a>
+      <a class="button" href="svg-benchmark/">Open SVG Gallery</a>
+    </div>
+  </main>
+
+  <footer><span>LLM Test Bench · MIT licensed</span><span><a href="privacy.html">Privacy</a></span></footer>
+</body>
+</html>

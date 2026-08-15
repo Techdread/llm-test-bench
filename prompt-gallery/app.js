@@ -21,7 +21,7 @@ import { Toast } from './components/Toast.js';
 import { ApiKeyDialog } from './components/ApiKeyDialog.js';
 import { ProviderSettingsDialog } from '../shared/components/ProviderSettingsDialog.js';
 import { clearHandle } from '../shared/services/storage.js';
-import { ensureAppNamespace, getRoot, connectRoot } from '../shared/services/data-root-manager.js';
+import { ensureAppNamespace, getRoot, connectRoot, setRoot } from '../shared/services/data-root-manager.js';
 import {
   peekPromptGalleryReturnHandoff,
   clearPromptGalleryReturnHandoff,
@@ -42,7 +42,7 @@ import { AGENTS } from '../shared/services/agent-backend.js';
 import * as modelProviders from '../shared/services/model-providers.js';
 import { prefs, hydrateAppPrefs, setPref, setPrefs, subscribeAppPrefs } from '../shared/services/app-prefs.js';
 import { subscribeSuite } from '../shared/services/suite-prefs.js';
-import { crossAppHandoffsEnabled } from '../shared/services/distribution.js';
+import { crossAppHandoffsEnabled, isPublicDistribution } from '../shared/services/distribution.js';
 
 function getRoute() {
   const hash = window.location.hash || '#/create';
@@ -399,7 +399,7 @@ function App() {
 
   const handlePickDirectory = useCallback(async () => {
     try {
-      const root = await connectRoot();
+      const root = isPublicDistribution() ? await setRoot() : await connectRoot();
       if (!root) {
         addToast('No data root configured — go to Settings → Data Root.', 'error');
         return;
@@ -409,7 +409,7 @@ function App() {
       hydrateAppPrefs(APP_ID, { defaults: PREFS_DEFAULTS });
       addToast('Directory connected', 'success');
     } catch (e) {
-      addToast('Failed to connect directory', 'error');
+      if (e?.name !== 'AbortError') addToast('Failed to connect directory: ' + e.message, 'error');
     }
   }, [addToast]);
 

@@ -49,17 +49,29 @@ const STALL_MS = 20000;
 const STALL_CHECK_MS = 10000;
 
 /**
- * True only when the serve.py agent bridge is actually answering. A plain
- * static server resolves the fetch with a 404, so `res.ok` is the real test.
+ * True only when the serve.py agent bridge is actually answering. Static hosts
+ * sometimes return their HTML fallback with status 200 for unknown paths, so
+ * the response must also have the bridge's JSON shape.
  * Cached per page load; pass `{ refresh: true }` to re-probe.
  */
 export function isAgentBridgeReachable({ refresh = false } = {}) {
   if (!bridgeProbe || refresh) {
     bridgeProbe = fetch('/__agent/runs')
-      .then(res => res.ok)
+      .then(async (res) => {
+        if (!res.ok) return false;
+        try {
+          return isAgentRunsPayload(await res.json());
+        } catch {
+          return false;
+        }
+      })
       .catch(() => false);
   }
   return bridgeProbe;
+}
+
+export function isAgentRunsPayload(payload) {
+  return Boolean(payload && Array.isArray(payload.runs) && Number.isFinite(payload.activeCount));
 }
 
 export async function listAgentRuns() {
