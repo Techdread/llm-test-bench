@@ -1,7 +1,8 @@
 {
-  "version": 1,
+  "version": 2,
   "harvestedFrom": "svg-data/benchmarks",
   "harvestedAt": "2026-07-12",
+  "curatedAdditionsAt": "2026-08-15",
   "prompts": [
     {
       "id": "seed-a-stapler-on-a-table",
@@ -662,6 +663,102 @@
       "notes": "",
       "existingSubmissions": 3,
       "createdAt": "2026-04-02T22:16:18.837Z"
+    },
+    {
+      "id": "curated-isometric-neighbourhood",
+      "slug": "isometric-neighbourhood-four-seasons",
+      "title": "Isometric Neighbourhood",
+      "category": "places",
+      "difficulty": "complex",
+      "tags": ["isometric", "architecture", "lighting"],
+      "prompt": "Create a detailed isometric neighbourhood block in a square SVG viewBox. Include four small buildings, tree-lined pavements, parked bicycles, cast shadows, and subtle signs of all four seasons in separate corners. Use a restrained editorial colour palette and crisp vector geometry.",
+      "notes": "Tests spatial consistency, depth ordering, repeated structures, and restrained detail.",
+      "existingSubmissions": 0,
+      "createdAt": "2026-08-15T00:00:00.000Z"
+    },
+    {
+      "id": "curated-transit-map",
+      "slug": "fictional-metro-transit-map",
+      "title": "Fictional Metro Map",
+      "category": "symbols",
+      "difficulty": "complex",
+      "tags": ["information-design", "typography", "diagram"],
+      "prompt": "Design a legible fictional metro map as SVG with four colour-coded lines, twelve named stations, two river crossings, interchange symbols, a compact legend, and a clear visual hierarchy. Use only vector shapes and text; keep labels readable without overlaps.",
+      "notes": "Tests information hierarchy, labels, path routing, and alignment.",
+      "existingSubmissions": 0,
+      "createdAt": "2026-08-15T00:00:01.000Z"
+    },
+    {
+      "id": "curated-weather-dashboard-icons",
+      "slug": "weather-dashboard-icon-system",
+      "title": "Weather Icon System",
+      "category": "technology",
+      "difficulty": "moderate",
+      "tags": ["icons", "design-system", "grid"],
+      "prompt": "Create a cohesive SVG weather icon system arranged on a 3 by 3 grid: sunny, cloudy, rain, storm, snow, fog, windy, moonlit, and partly cloudy. Give every icon consistent stroke weight, optical size, spacing, and a small accessible text label.",
+      "notes": "Tests consistency across a family of related symbols.",
+      "existingSubmissions": 0,
+      "createdAt": "2026-08-15T00:00:02.000Z"
+    },
+    {
+      "id": "curated-botanical-poster",
+      "slug": "botanical-poster-wildflowers",
+      "title": "Botanical Wildflower Poster",
+      "category": "nature",
+      "difficulty": "artistic",
+      "tags": ["poster", "botanical", "typography"],
+      "prompt": "Illustrate a vintage botanical field-guide poster in SVG showing six distinct British wildflowers with stems, leaves, roots, numbered specimen markers, delicate ink-style outlines, muted watercolour fills, and a refined title panel reading WILDFLOWERS.",
+      "notes": "Tests organic geometry, repeated illustration style, and poster composition.",
+      "existingSubmissions": 0,
+      "createdAt": "2026-08-15T00:00:03.000Z"
+    },
+    {
+      "id": "curated-mechanical-watch-cutaway",
+      "slug": "mechanical-watch-cutaway",
+      "title": "Mechanical Watch Cutaway",
+      "category": "objects",
+      "difficulty": "complex",
+      "tags": ["technical", "gears", "cutaway"],
+      "prompt": "Draw a precision cutaway illustration of a mechanical wristwatch movement as SVG. Show interlocking brass gears, ruby bearings, balance wheel, mainspring barrel, steel screws, case outline, and five fine leader-line annotations. Keep the mechanism believable and visually layered.",
+      "notes": "Tests dense geometry, occlusion, fine detail, and annotation layout.",
+      "existingSubmissions": 0,
+      "createdAt": "2026-08-15T00:00:04.000Z"
+    },
+    {
+      "id": "curated-aurora-landscape",
+      "slug": "aurora-over-mountain-lake",
+      "title": "Aurora Mountain Landscape",
+      "category": "nature",
+      "difficulty": "artistic",
+      "tags": ["landscape", "gradients", "reflection"],
+      "prompt": "Create a cinematic SVG landscape of an aurora sweeping above a snow-covered mountain lake at night. Include layered mountain silhouettes, pine trees, stars, luminous green and violet sky ribbons, and a softened mirrored reflection in the water using gradients and masks.",
+      "notes": "Tests gradients, masks, atmosphere, depth, and reflection.",
+      "existingSubmissions": 0,
+      "createdAt": "2026-08-15T00:00:05.000Z"
+    },
+    {
+      "id": "curated-robot-mascot-sheet",
+      "slug": "friendly-robot-mascot-expression-sheet",
+      "title": "Robot Mascot Expression Sheet",
+      "category": "technology",
+      "difficulty": "complex",
+      "tags": ["character", "mascot", "expressions"],
+      "prompt": "Design a friendly rounded robot mascot as an SVG character sheet with six consistent poses: waving, thinking, celebrating, surprised, carrying a parcel, and sleeping. Preserve the same proportions and signature details in every pose and arrange the set on a clean labelled grid.",
+      "notes": "Tests character consistency across repeated poses.",
+      "existingSubmissions": 0,
+      "createdAt": "2026-08-15T00:00:06.000Z"
+    },
+    {
+      "id": "curated-stained-glass-phoenix",
+      "slug": "stained-glass-phoenix-window",
+      "title": "Stained-glass Phoenix",
+      "category": "animals",
+      "difficulty": "artistic",
+      "tags": ["stained-glass", "symmetry", "ornament"],
+      "prompt": "Create an ornate arched stained-glass window in SVG featuring a rising phoenix with spread wings. Build the image from jewel-toned segmented panes separated by dark lead lines, include flame motifs and a decorative border, and use subtle gradients to suggest transmitted light.",
+      "notes": "Tests segmentation, symmetry, colour harmony, and ornamental detail.",
+      "existingSubmissions": 0,
+      "createdAt": "2026-08-15T00:00:07.000Z"
     }
   ]
 }

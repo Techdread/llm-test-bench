@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'preact/hooks'
 import { Toolbar } from './components/Toolbar.js';
 import { BatchRunDialog } from './components/BatchRunDialog.js';
 import { PromptPanel } from './components/PromptPanel.js';
+import { PromptLibraryView } from './components/PromptLibraryView.js';
 import { SvgEditor } from './components/SvgEditor.js';
 import { SvgPreview } from './components/SvgPreview.js';
 import { ReferencePanel } from './components/ReferencePanel.js';
@@ -244,7 +245,7 @@ function App() {
 
   // Load benchmarks when directory is available and route changes
   useEffect(() => {
-    if (rootHandle && (route.name === 'benchmarks' || route.name === 'benchmark')) {
+    if (rootHandle && (route.name === 'prompts' || route.name === 'benchmarks' || route.name === 'benchmark')) {
       refreshBenchmarks();
     }
   }, [rootHandle, route.name]);
@@ -430,9 +431,10 @@ function App() {
   );
   const visionSupport = openrouter.modelSupportsVision(selectedModel); // true | false | null
 
-  const handleGenerate = useCallback(async () => {
-    const hasImage = attachReference && !!referenceUrl;
-    if (!prompt.trim() && !hasImage) {
+  const handleGenerate = useCallback(async (promptOverride, generationOptions = {}) => {
+    const requestedPrompt = typeof promptOverride === 'string' ? promptOverride : prompt;
+    const hasImage = !generationOptions.ignoreReference && attachReference && !!referenceUrl;
+    if (!requestedPrompt.trim() && !hasImage) {
       addToast('Enter a prompt first', 'error');
       return;
     }
@@ -467,7 +469,7 @@ function App() {
         const completed = await agentRun.start({
           agentId: selectedAgentId,
           modelId: agentModelId,
-          task: buildSvgBenchmarkAgentTask(prompt, { hasReference: hasImage }),
+          task: buildSvgBenchmarkAgentTask(requestedPrompt, { hasReference: hasImage }),
           outputFile: SVG_BENCHMARK_AGENT_OUTPUT,
           initialFiles,
           onOutput: onPartial,
@@ -486,9 +488,9 @@ function App() {
       }
 
       if (hasImage) {
-        await openrouter.generateSvgWithImage(prompt, referenceUrl, selectedProviderId, selectedModelId, onPartial);
+        await openrouter.generateSvgWithImage(requestedPrompt, referenceUrl, selectedProviderId, selectedModelId, onPartial);
       } else {
-        await openrouter.generateSvg(prompt, selectedProviderId, selectedModelId, onPartial);
+        await openrouter.generateSvg(requestedPrompt, selectedProviderId, selectedModelId, onPartial);
       }
       addToast('SVG generation complete', 'success');
     } catch (e) {
@@ -675,9 +677,12 @@ function App() {
     const bySlug = new Map();
     for (const s of seedPrompts) {
       bySlug.set(s.slug, {
-        slug: s.slug, title: s.title, prompt: s.prompt,
+        id: s.id, slug: s.slug, title: s.title, prompt: s.prompt,
         category: s.category, difficulty: s.difficulty,
-        existingSubmissions: s.existingSubmissions || 0, submissionModels: [],
+        tags: s.tags || [], notes: s.notes || '', source: s.source || 'seed',
+        // Harvest counts describe the private source collection, not this
+        // user's data root. Only live benchmarks count as represented here.
+        existingSubmissions: 0, submissionModels: [], hasReference: false,
       });
     }
     for (const b of benchmarkList) {
@@ -686,10 +691,14 @@ function App() {
         slug: b.slug,
         title: existing?.title || deriveTitle(b.prompt, b.slug),
         prompt: b.prompt || existing?.prompt || '',
-        category: b.meta?.category || existing?.category || 'general',
-        difficulty: b.meta?.difficulty || existing?.difficulty || 'moderate',
+        category: existing?.category || b.meta?.category || 'general',
+        difficulty: existing?.difficulty || b.meta?.difficulty || 'moderate',
+        tags: existing?.tags || [],
+        notes: existing?.notes || '',
+        source: existing ? 'seed' : 'saved',
         existingSubmissions: b.submissionCount || 0,
         submissionModels: b.submissionModels || [],
+        hasReference: !!b.hasReference,
       });
     }
     return Array.from(bySlug.values()).sort((a, b) => a.title.localeCompare(b.title));
@@ -810,6 +819,30 @@ function App() {
     setShowBatchDialog(true);
   }, [rootHandle, handlePickDirectory, refreshBenchmarks, addToast]);
 
+  const loadLibraryPrompt = useCallback((item) => {
+    setPrompt(item.prompt || '');
+    setSvgCode('');
+    setReferenceUrl(null);
+    setManualScore(0);
+    setAutoScore(null);
+    setSvgAnalysis(null);
+    setCurrentBenchmarkSlug('');
+    benchmarkPromptRef.current = '';
+    setLastGenerator(null);
+    setShowDiff(false);
+    navigate('create');
+  }, [navigate]);
+
+  const handleUseLibraryPrompt = useCallback((item) => {
+    loadLibraryPrompt(item);
+    addToast(`Loaded prompt: ${item.title}`, 'success');
+  }, [loadLibraryPrompt, addToast]);
+
+  const handleRunLibraryPrompt = useCallback((item) => {
+    loadLibraryPrompt(item);
+    handleGenerate(item.prompt || '', { ignoreReference: true });
+  }, [loadLibraryPrompt, handleGenerate]);
+
   const handleCloseBatch = useCallback(() => {
     setShowBatchDialog(false);
     refreshBenchmarks();
@@ -846,6 +879,15 @@ function App() {
 
   const renderContent = () => {
     switch (route.name) {
+      case 'prompts':
+        return html`<${PromptLibraryView}
+          prompts=${batchPrompts}
+          onUse=${handleUseLibraryPrompt}
+          onRun=${handleRunLibraryPrompt}
+          onBatch=${handleOpenBatch}
+          isGenerating=${isGenerating}
+        />`;
+
       case 'benchmarks':
         return html`<${BenchmarkGrid}
           benchmarks=${benchmarkList}

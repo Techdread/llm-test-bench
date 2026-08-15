@@ -20,6 +20,22 @@ The main workspace is split into three columns:
 
 The bottom bar has **GIF** (export the current SVG as a GIF image), **Clear** (reset all fields), and **Save** (persist the current submission).
 
+## Prompts
+
+Open **Prompts** in the main toolbar to browse the same challenge catalogue used
+by Batch mode. Search by title, prompt text or technique, then filter by category
+and difficulty.
+
+- **Use prompt** fills the Create workspace so you can edit the wording before generating.
+- **Generate** fills the prompt and immediately runs it through the selected model.
+- **Batch these prompts** opens Batch mode with the complete shared catalogue.
+- Cards show how many saved submissions already represent each challenge and
+  whether its benchmark has a reference image.
+
+The hosted catalogue includes harvested benchmarks plus curated challenges for
+information design, icon consistency, complex geometry, character consistency,
+gradients, masks and artistic composition.
+
 ## CLI agent generation
 
 Click **CLI agent** in Create to use Claude Code, Codex, Antigravity, or Grok in place

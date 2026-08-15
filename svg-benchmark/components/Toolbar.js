@@ -100,6 +100,12 @@ export function Toolbar({
           <i class="fa-solid fa-plus"></i> Create
         </button>
         <button
+          class=${`nav-tab ${route === 'prompts' ? 'active' : ''}`}
+          onClick=${() => onNavigate('prompts')}
+        >
+          <i class="fa-solid fa-book-open"></i> Prompts
+        </button>
+        <button
           class=${`nav-tab ${route === 'benchmarks' ? 'active' : ''}`}
           onClick=${() => onNavigate('benchmarks')}
         >
