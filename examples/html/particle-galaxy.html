@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Particle Galaxy</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --cyan: #8fe9ff;
+    --violet: #9b7cff;
+    --text: rgba(238, 244, 255, .92);
+    --muted: rgba(190, 204, 236, .56);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #02030a;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  body {
+    position: relative;
+    color: var(--text);
+  }
+
+  #scene {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at center, transparent 34%, rgba(1, 2, 9, .2) 62%, rgba(1, 2, 9, .9) 100%),
+      linear-gradient(115deg, rgba(77, 68, 180, .08), transparent 38%, rgba(24, 133, 189, .05));
+    mix-blend-mode: screen;
+  }
+
+  .hud {
+    position: fixed;
+    top: 30px;
+    left: 34px;
+    z-index: 2;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 13px;
+    color: var(--cyan);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+  }
+
+  .pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 14px var(--cyan);
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(28px, 4vw, 54px);
+    line-height: .95;
+    font-weight: 300;
+    letter-spacing: -.055em;
+    text-shadow: 0 0 35px rgba(137, 147, 255, .25);
+  }
+
+  .subtitle {
+    max-width: 330px;
+    margin: 15px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.65;
+    letter-spacing: .025em;
+  }
+
+  .stats {
+    position: fixed;
+    right: 34px;
+    bottom: 30px;
+    z-index: 2;
+    min-width: 148px;
+    padding: 15px 17px;
+    border: 1px solid rgba(165, 181, 255, .16);
+    border-radius: 12px;
+    background: rgba(11, 13, 32, .4);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .22), inset 0 1px rgba(255,255,255,.05);
+    backdrop-filter: blur(14px);
+    pointer-events: none;
+  }
+
+  .stat {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 22px;
+    padding: 4px 0;
+  }
+
+  .stat + .stat {
+    border-top: 1px solid rgba(175, 189, 255, .1);
+  }
+
+  .stat-label {
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    color: #f2f4ff;
+    font-variant-numeric: tabular-nums;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+
+  .hint {
+    position: fixed;
+    right: 34px;
+    top: 34px;
+    z-index: 2;
+    color: rgba(199, 210, 242, .45);
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    pointer-events: none;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: .45; transform: scale(.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  @media (max-width: 600px) {
+    .hud { top: 22px; left: 22px; }
+    .hint { display: none; }
+    .stats { right: 20px; bottom: 20px; }
+    .subtitle { max-width: 245px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<div class="vignette"></div>
+
+<section class="hud">
+  <div class="eyebrow"><span class="pulse"></span> Deep space / 07</div>
+  <h1>Andromeda<br>Drift</h1>
+  <p class="subtitle">A living field of starlight, suspended between gravity and time. Move your cursor to explore the parallax.</p>
+</section>
+
+<div class="hint">Move to navigate · 240K particles</div>
+
+<div class="stats">
+  <div class="stat">
+    <span class="stat-label">Particles</span>
+    <span class="stat-value" id="particleCount">240,000</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Frame rate</span>
+    <span class="stat-value"><span id="fps">--</span> FPS</span>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  const canvas = document.getElementById('scene');
+  const count = 240000;
+  const arms = 5;
+
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    antialias: false,
+    alpha: false,
+    powerPreference: 'high-performance'
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x02030a, 1);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.set(0, 0.18, 8.7);
+
+  const galaxy = new THREE.Group();
+  galaxy.rotation.x = 0.28;
+  galaxy.rotation.z = -0.12;
+  scene.add(galaxy);
+
+  let seed = 739391;
+  function random() {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  }
+
+  function gaussian() {
+    const u = Math.max(random(), 0.000001);
+    const v = random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(Math.PI * 2 * v);
+  }
+
+  const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+  const sizes = new Float32Array(count);
+
+  const core = new THREE.Color();
+  const outer = new THREE.Color();
+
+  for (let i = 0; i < count; i++) {
+    const t = i / count;
+    const isCore = random() < 0.18;
+    const radius = isCore
+      ? Math.pow(random(), 1.8) * 1.7
+      : 0.52 + Math.pow(random(), 0.58) * 5.4;
+
+    const arm = i % arms;
+    const winding = radius * 0.82;
+    const armAngle = (arm / arms) * Math.PI * 2 + winding;
+    const spread = isCore ? 0.72 : (0.09 + radius * 0.032);
+    const angle = armAngle + gaussian() * spread;
+
+    const ellipticalNoise = gaussian() * (isCore ? 0.12 : 0.055);
+    const x = Math.cos(angle) * radius + Math.cos(angle + Math.PI / 2) * ellipticalNoise;
+    const y = Math.sin(angle) * radius + Math.sin(angle + Math.PI / 2) * ellipticalNoise;
+    const z = gaussian() * (isCore ? 0.17 : 0.055 + radius * 0.012);
+
+    const p = i * 3;
+    positions[p] = x;
+    positions[p + 1] = y;
+    positions[p + 2] = z;
+
+    const normalizedRadius = Math.min(radius / 5.9, 1);
+    const brightness = 0.72 + random() * 0.28;
+    let hue, saturation, lightness;
+
+    if (normalizedRadius < 0.24) {
+      const q = normalizedRadius / 0.24;
+      hue = 0.10 + q * 0.47;
+      saturation = 0.52 + q * 0.34;
+      lightness = 0.86 - q * 0.14;
+    } else {
+      const q = (normalizedRadius - 0.24) / 0.76;
+      hue = 0.62 + q * 0.10;
+      saturation = 0.82;
+      lightness = 0.68 - q * 0.22;
+    }
+
+    core.setHSL(hue, saturation, Math.min(0.94, lightness * brightness));
+    colors[p] = core.r;
+    colors[p + 1] = core.g;
+    colors[p + 2] = core.b;
+    sizes[i] = (isCore ? 0.055 : 0.025) + random() * (isCore ? 0.075 : 0.055);
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+  geometry.computeBoundingSphere();
+
+  const material = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    uniforms: {
+      uPixelRatio: { value: renderer.getPixelRatio() },
+      uTime: { value: 0 }
+    },
+    vertexShader: `
+      attribute vec3 aColor;
+      attribute float aSize;
+      varying vec3 vColor;
+      varying float vTwinkle;
+      uniform float uPixelRatio;
+      uniform float uTime;
+
+      void main() {
+        vColor = aColor;
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        float shimmer = 0.88 + 0.12 * sin(uTime * 1.4 + position.x * 7.0 + position.y * 4.0);
+        vTwinkle = shimmer;
+        gl_PointSize = aSize * uPixelRatio * (340.0 / max(1.0, -mvPosition.z)) * shimmer;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vColor;
+      varying float vTwinkle;
+
+      void main() {
+        vec2 uv = gl_PointCoord - vec2(0.5);
+        float distanceFromCenter = length(uv);
+        float glow = 1.0 - smoothstep(0.05, 0.5, distanceFromCenter);
+        float core = 1.0 - smoothstep(0.0, 0.18, distanceFromCenter);
+        if (glow < 0.01) discard;
+        gl_FragColor = vec4(vColor * (0.72 + core * 0.75) * vTwinkle, glow * 0.78);
+      }
+    `
+  });
+
+  const points = new THREE.Points(geometry, material);
+  galaxy.add(points);
+
+  const glowGeometry = new THREE.BufferGeometry();
+  glowGeometry.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3));
+  const glowMaterial = new THREE.PointsMaterial({
+    color: 0x9bb9ff,
+    size: 1.45,
+    transparent: true,
+    opacity: 0.075,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    sizeAttenuation: true
+  });
+  const glow = new THREE.Points(glowGeometry, glowMaterial);
+  galaxy.add(glow);
+
+  const mouse = new THREE.Vector2();
+  const targetCamera = new THREE.Vector3();
+  window.addEventListener('pointermove', (event) => {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    material.uniforms.uPixelRatio.value = renderer.getPixelRatio();
+  });
+
+  const fpsElement = document.getElementById('fps');
+  let frameCount = 0;
+  let fpsTime = performance.now();
+
+  function animate(now) {
+    requestAnimationFrame(animate);
+
+    const elapsed = now * 0.001;
+    material.uniforms.uTime.value = elapsed;
+
+    galaxy.rotation.y = elapsed * 0.018;
+    galaxy.rotation.z += 0.00018;
+
+    targetCamera.set(mouse.x * 0.42, 0.18 + mouse.y * 0.3, 8.7);
+    camera.position.lerp(targetCamera, 0.025);
+    camera.lookAt(0, 0, 0);
+
+    renderer.render(scene, camera);
+
+    frameCount++;
+    if (now - fpsTime > 600) {
+      fpsElement.textContent = Math.round(frameCount * 1000 / (now - fpsTime));
+      frameCount = 0;
+      fpsTime = now;
+    }
+  }
+
+  requestAnimationFrame(animate);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terrain Editor</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #1a1a2e; font-family: 'Segoe UI', system-ui, sans-serif; overflow: hidden; color: #e0e0e0; }
+#canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
+#ui-panel {
+  position: fixed; top: 16px; left: 16px; width: 260px;
+  background: rgba(15, 15, 35, 0.92); backdrop-filter: blur(12px);
+  border-radius: 16px; padding: 20px; z-index: 100;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  max-height: calc(100vh - 32px); overflow-y: auto;
+}
+#ui-panel::-webkit-scrollbar { width: 4px; }
+#ui-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+#ui-panel h2 { font-size: 18px; margin-bottom: 16px; color: #fff; letter-spacing: 0.5px; }
+#ui-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #888; margin: 16px 0 10px; }
+.brush-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+.brush-btn {
+  padding: 10px 8px; border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04); color: #ccc; border-radius: 10px;
+  cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s;
+  text-align: center;
+}
+.brush-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.brush-btn.active { background: rgba(100, 140, 255, 0.25); border-color: rgba(100, 140, 255, 0.5); color: #fff; }
+.slider-group { margin-bottom: 12px; }
+.slider-group label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: #aaa; }
+.slider-group label span { color: #fff; font-weight: 600; }
+input[type="range"] {
+  -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.1); outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%;
+  background: #6488ff; cursor: pointer; border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+#minimap-container {
+  margin-top: 12px; border-radius: 10px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+#minimap-container canvas { width: 100%; display: block; }
+#export-btn {
+  width: 100%; padding: 12px; margin-top: 12px;
+  background: linear-gradient(135deg, #6488ff, #4a6cf7);
+  border: none; color: #fff; border-radius: 10px; cursor: pointer;
+  font-size: 13px; font-weight: 700; transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+#export-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(100,136,255,0.4); }
+#info-bar {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  background: rgba(15, 15, 35, 0.85); backdrop-filter: blur(8px);
+  padding: 10px 24px; border-radius: 30px; z-index: 100;
+  font-size: 12px; color: #888; border: 1px solid rgba(255,255,255,0.06);
+  white-space: nowrap;
+}
+#info-bar span { color: #fff; }
+#brush-cursor {
+  position: fixed; pointer-events: none; z-index: 99;
+  border: 2px solid rgba(255,255,255,0.5); border-radius: 50%;
+  transform: translate(-50%, -50%); display: none;
+  box-shadow: 0 0 10px rgba(100,136,255,0.3);
+}
+.mode-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<div id="ui-panel">
+  <h2>⛰️ Terrain Editor</h2>
+
+  <h3>Brush Mode</h3>
+  <div class="brush-modes">
+    <div class="brush-btn active" data-mode="raise"><span class="mode-icon">⬆</span>Raise</div>
+    <div class="brush-btn" data-mode="lower"><span class="mode-icon">⬇</span>Lower</div>
+    <div class="brush-btn" data-mode="smooth"><span class="mode-icon">〰</span>Smooth</div>
+    <div class="brush-btn" data-mode="flatten"><span class="mode-icon">▬</span>Flatten</div>
+  </div>
+
+  <h3>Brush Settings</h3>
+  <div class="slider-group">
+    <label>Size <span id="size-val">12</span></label>
+    <input type="range" id="brush-size" min="2" max="30" value="12">
+  </div>
+  <div class="slider-group">
+    <label>Strength <span id="strength-val">0.15</span></label>
+    <input type="range" id="brush-strength" min="1" max="50" value="15">
+  </div>
+
+  <h3>Water</h3>
+  <div class="slider-group">
+    <label>Level <span id="water-val">0.0</span></label>
+    <input type="range" id="water-level" min="-2" max="8" step="0.1" value="0">
+  </div>
+
+  <h3>View</h3>
+  <div class="slider-group">
+    <label>Wireframe <span id="wire-val">Off</span></label>
+    <input type="range" id="wireframe-toggle" min="0" max="1" step="1" value="0">
+  </div>
+
+  <h3>Export</h3>
+  <button id="export-btn">📥 Export Heightmap as PNG</button>
+
+  <h3>Minimap</h3>
+  <div id="minimap-container">
+    <canvas id="minimap" width="220" height="220"></canvas>
+  </div>
+</div>
+
+<div id="info-bar">
+  <span>Left-click</span> paint &nbsp;|&nbsp; <span>Right-drag</span> orbit &nbsp;|&nbsp; <span>Scroll</span> zoom &nbsp;|&nbsp; <span>Shift+Click</span> smooth
+</div>
+
+<div id="brush-cursor"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function() {
+  // --- Configuration ---
+  const GRID_SIZE = 128;
+  const GRID_SPAN = 60;
+  const CELL_SIZE = GRID_SPAN / GRID_SIZE;
+
+  // --- State ---
+  let heights = new Float32Array((GRID_SIZE + 1) * (GRID_SIZE + 1));
+  let currentMode = 'raise';
+  let brushSize = 12;
+  let brushStrength = 0.15;
+  let waterLevel = 0;
+  let isMouseDown = false;
+  let mouseOnTerrain = false;
+
+  // --- Three.js Setup ---
+  const container = document.getElementById('canvas-container');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87CEEB);
+  scene.fog = new THREE.FogExp2(0x87CEEB, 0.008);
+
+  const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 500);
+  camera.position.set(30, 35, 40);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = Math.PI / 2.1;
+  controls.minDistance = 10;
+  controls.maxDistance = 120;
+
+  // --- Lighting ---
+  const ambientLight = new THREE.AmbientLight(0x6688aa, 0.5);
+  scene.add(ambientLight);
+
+  const hemiLight = new THREE.HemisphereLight(0x88bbff, 0x445522, 0.6);
+  scene.add(hemiLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffeedd, 1.0);
+  dirLight.position.set(30, 50, 20);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.set(2048, 2048);
+  dirLight.shadow.camera.left = -40;
+  dirLight.shadow.camera.right = 40;
+  dirLight.shadow.camera.top = 40;
+  dirLight.shadow.camera.bottom = -40;
+  scene.add(dirLight);
+
+  // --- Terrain Mesh ---
+  const geometry = new THREE.PlaneGeometry(GRID_SPAN, GRID_SPAN, GRID_SIZE, GRID_SIZE);
+  geometry.rotateX(-Math.PI / 2);
+
+  const vertexCount = (GRID_SIZE + 1) * (GRID_SIZE + 1);
+  const colors = new Float32Array(vertexCount * 3);
+  const positionAttr = geometry.getAttribute('position');
+
+  // Initialize heights
+  for (let i = 0; i < heights.length; i++) heights[i] = 0;
+
+  function getVertexIndex(x, z) {
+    return x * (GRID_SIZE + 1) + z;
+  }
+
+  function setVertexHeight(x, z, h) {
+    if (x < 0 || x > GRID_SIZE || z < 0 || z > GRID_SIZE) return;
+    heights[x * (GRID_SIZE + 1) + z] = h;
+  }
+
+  function getVertexHeight(x, z) {
+    if (x < 0 || x > GRID_SIZE || z < 0 || z > GRID_SIZE) return 0;
+    return heights[x * (GRID_SIZE + 1) + z];
+  }
+
+  function updateGeometry() {
+    const pos = geometry.getAttribute('position');
+    const colorAttr = new THREE.BufferAttribute(colors, 3);
+
+    for (let x = 0; x <= GRID_SIZE; x++) {
+      for (let z = 0; z <= GRID_SIZE; z++) {
+        const idx = getVertexIndex(x, z);
+        const h = heights[idx];
+        const vertIdx = x * (GRID_SIZE + 1) + z;
+        pos.setXYZ(vertIdx,
+          (x - GRID_SIZE / 2) * CELL_SIZE,
+          h,
+          (z - GRID_SIZE / 2) * CELL_SIZE
+        );
+
+        // Color by altitude
+        let r, g, b;
+        if (h < waterLevel) {
+          r = 0.15; g = 0.25; b = 0.35;
+        } else if (h < waterLevel + 0.5) {
+          r = 0.55; g = 0.52; b = 0.38;
+        } else if (h < 3) {
+          r = 0.25; g = 0.6; b = 0.2;
+        } else if (h < 5) {
+          const t = (h - 3) / 2;
+          r = 0.25 + t * 0.3;
+          g = 0.6 - t * 0.25;
+          b = 0.2 + t * 0.15;
+        } else if (h < 7) {
+          const t = (h - 5) / 2;
+          r = 0.55 + t * 0.35;
+          g = 0.35 - t * 0.15;
+          b = 0.35 + t * 0.35;
+        } else {
+          const t = Math.min(1, (h - 7) / 3);
+          r = 0.9 + t * 0.1;
+          g = 0.2 + t * 0.8;
+          b = 0.7 + t * 0.3;
+        }
+        colors[vertIdx * 3] = r;
+        colors[vertIdx * 3 + 1] = g;
+        colors[vertIdx * 3 + 2] = b;
+      }
+    }
+
+    pos.needsUpdate = true;
+    if (!geometry.getAttribute('color')) {
+      geometry.setAttribute('color', colorAttr);
+    } else {
+      geometry.getAttribute('color').needsUpdate = true;
+    }
+    geometry.computeVertexNormals();
+  }
+
+  updateGeometry();
+
+  const terrainMaterial = new THREE.MeshStandardMaterial({
+    vertexColors: true,
+    roughness: 0.85,
+    metalness: 0.05,
+    flatShading: false,
+  });
+
+  const terrain = new THREE.Mesh(geometry, terrainMaterial);
+  terrain.receiveShadow = true;
+  terrain.castShadow = true;
+  scene.add(terrain);
+
+  // --- Water Plane ---
+  const waterGeo = new THREE.PlaneGeometry(GRID_SPAN + 20, GRID_SPAN + 20);
+  waterGeo.rotateX(-Math.PI / 2);
+  const waterMat = new THREE.MeshStandardMaterial({
+    color: 0x2266aa,
+    transparent: true,
+    opacity: 0.65,
+    roughness: 0.1,
+    metalness: 0.3,
+  });
+  const water = new THREE.Mesh(waterGeo, waterMat);
+  water.position.y = waterLevel;
+  scene.add(water);
+
+  // --- Brush Cursor ---
+  const brushCursor = document.getElementById('brush-cursor');
+
+  // --- Minimap ---
+  const minimapCanvas = document.getElementById('minimap');
+  const minimapCtx = minimapCanvas.getContext('2d');
+  const minimapSize = 220;
+
+  function updateMinimap() {
+    const imgData = minimapCtx.createImageData(minimapSize, minimapSize);
+    const step = Math.max(1, Math.floor((GRID_SIZE + 1) / minimapSize));
+
+    for (let my = 0; my < minimapSize; my++) {
+      for (let mx = 0; mx < minimapSize; mx++) {
+        const gx = Math.floor(mx * step);
+        const gz = Math.floor(my * step);
+        const h = getVertexHeight(gx, gz);
+        const idx = (my * minimapSize + mx) * 4;
+
+        let r, g, b;
+        if (h < waterLevel) {
+          r = 30; g = 60; b = 140;
+        } else if (h < 3) {
+          r = 40; g = 120; b = 30;
+        } else if (h < 5) {
+          r = 100; g = 85; b = 50;
+        } else {
+          r = 200; g = 200; b = 210;
+        }
+        imgData.data[idx] = r;
+        imgData.data[idx + 1] = g;
+        imgData.data[idx + 2] = b;
+        imgData.data[idx + 3] = 255;
+      }
+    }
+    minimapCtx.putImageData(imgData, 0, 0);
+
+    // Draw brush position on minimap
+    if (mouseOnTerrain && brushWorldPos) {
+      const bx = ((brushWorldPos.x + GRID_SPAN / 2) / GRID_SPAN) * minimapSize;
+      const bz = ((brushWorldPos.z + GRID_SPAN / 2) / GRID_SPAN) * minimapSize;
+      minimapCtx.beginPath();
+      minimapCtx.arc(bx, bz, brushSize * 1.5, 0, Math.PI * 2);
+      minimapCtx.strokeStyle = 'rgba(255,255,255,0.7)';
+      minimapCtx.lineWidth = 1.5;
+      minimapCtx.stroke();
+      minimapCtx.fillStyle = 'rgba(255,255,255,0.15)';
+      minimapCtx.fill();
+    }
+  }
+
+  // --- Raycaster ---
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  let brushWorldPos = null;
+
+  function getTerrainIntersection(clientX, clientY) {
+    mouse.x = (clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObject(terrain);
+    if (intersects.length > 0) {
+      return intersects[0].point;
+    }
+    return null;
+  }
+
+  // --- Brush Operations ---
+  function applyBrush(worldPos) {
+    const gx = worldPos.x / CELL_SIZE + GRID_SIZE / 2;
+    const gz = worldPos.z / CELL_SIZE + GRID_SIZE / 2;
+    const radius = brushSize;
+
+    if (currentMode === 'smooth') {
+      smoothTerrain(gx, gz, radius);
+    } else if (currentMode === 'flatten') {
+      flattenTerrain(gx, gz, radius);
+    } else {
+      for (let dx = -Math.ceil(radius); dx <= Math.ceil(radius); dx++) {
+        for (let dz = -Math.ceil(radius); dz <= Math.ceil(radius); dz++) {
+          const dist = Math.sqrt(dx * dx + dz * dz);
+          if (dist > radius) continue;
+          const factor = Math.max(0, 1 - dist / radius);
+          const falloff = factor * factor * factor; // cubic falloff
+
+          const tx = Math.round(gx + dx);
+          const tz = Math.round(gz + dz);
+          if (tx < 0 || tx > GRID_SIZE || tz < 0 || tz > GRID_SIZE) continue;
+
+          if (currentMode === 'raise') {
+            heights[getVertexIndex(tx, tz)] += brushStrength * falloff;
+          } else if (currentMode === 'lower') {
+            heights[getVertexIndex(tx, tz)] -= brushStrength * falloff;
+          }
+        }
+      }
+    }
+
+    updateGeometry();
+  }
+
+  function smoothTerrain(cx, cz, radius) {
+    const r = Math.ceil(radius);
+    const tempHeights = new Float32Array(heights.length);
+    tempHeights.set(heights);
+
+    for (let dx = -r; dx <= r; dx++) {
+      for (let dz = -r; dz <= r; dz++) {
+        const tx = Math.round(cx + dx);
+        const tz = Math.round(cz + dz);
+        if (tx < 0 || tx > GRID_SIZE || tz < 0 || tz > GRID_SIZE) continue;
+
+        let sum = 0;
+        let count = 0;
+        const sr = Math.ceil(radius * 0.8);
+        for (let sx = -sr; sx <= sr; sx++) {
+          for (let sz = -sr; sz <= sr; sz++) {
+            const nx = tx + sx;
+            const nz = tz + sz;
+            if (nx >= 0 && nx <= GRID_SIZE && nz >= 0 && nz <= GRID_SIZE) {
+              const dd = Math.sqrt(sx * sx + sz * sz);
+              if (dd <= sr) {
+                const w = 1 - dd / (sr + 1);
+                sum += heights[getVertexIndex(nx, nz)] * w;
+                count += w;
+              }
+            }
+          }
+        }
+        const avg = sum / count;
+        const blend = brushStrength * 0.3;
+        heights[getVertexIndex(tx, tz)] = heights[getVertexIndex(tx, tz)] * (1 - blend) + avg * blend;
+      }
+    }
+  }
+
+  function flattenTerrain(cx, cz, radius) {
+    const r = Math.ceil(radius);
+    let sum = 0;
+    let count = 0;
+
+    for (let dx = -r; dx <= r; dx++) {
+      for (let dz = -r; dz <= r; dz++) {
+        const tx = Math.round(cx + dx);
+        const tz = Math.round(cz + dz);
+        if (tx < 0 || tx > GRID_SIZE || tz < 0 || tz > GRID_SIZE) continue;
+        sum += heights[getVertexIndex(tx, tz)];
+        count++;
+      }
+    }
+    const avg = sum / count;
+    const blend = brushStrength * 0.4;
+
+    for (let dx = -r; dx <= r; dx++) {
+      for (let dz = -r; dz <= r; dz++) {
+        const tx = Math.round(cx + dx);
+        const tz = Math.round(cz + dz);
+        if (tx < 0 || tx > GRID_SIZE || tz < 0 || tz > GRID_SIZE) continue;
+        heights[getVertexIndex(tx, tz)] = heights[getVertexIndex(tx, tz)] * (1 - blend) + avg * blend;
+      }
+    }
+  }
+
+  // --- Event Handlers ---
+  renderer.domElement.addEventListener('mousedown', (e) => {
+    if (e.button === 0) {
+      isMouseDown = true;
+      const pos = getTerrainIntersection(e.clientX, e.clientY);
+      if (pos) {
+        brushWorldPos = pos;
+        applyBrush(pos);
+      }
+    }
+  });
+
+  renderer.domElement.addEventListener('mousemove', (e) => {
+    const pos = getTerrainIntersection(e.clientX, e.clientY);
+    if (pos) {
+      mouseOnTerrain = true;
+      brushWorldPos = pos;
+
+      const sx = ((pos.x + GRID_SPAN / 2) / GRID_SPAN) * window.innerWidth;
+      const sz = ((pos.z + GRID_SPAN / 2) / GRID_SPAN) * window.innerHeight;
+      brushCursor.style.left = sx + 'px';
+      brushCursor.style.top = sz + 'px';
+      brushCursor.style.width = (brushSize * CELL_SIZE * 2) + 'px';
+      brushCursor.style.height = (brushSize * CELL_SIZE * 2) + 'px';
+      brushCursor.style.display = 'block';
+    } else {
+      mouseOnTerrain = false;
+      brushCursor.style.display = 'none';
+    }
+
+    if (isMouseDown && pos) {
+      applyBrush(pos);
+    }
+  });
+
+  renderer.domElement.addEventListener('mouseup', () => { isMouseDown = false; });
+  renderer.domElement.addEventListener('mouseleave', () => {
+    isMouseDown = false;
+    mouseOnTerrain = false;
+    brushCursor.style.display = 'none';
+  });
+
+  // Touch support
+  renderer.domElement.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      isMouseDown = true;
+      const pos = getTerrainIntersection(t.clientX, t.clientY);
+      if (pos) {
+        brushWorldPos = pos;
+        applyBrush(pos);
+      }
+    }
+  }, { passive: true });
+
+  renderer.domElement.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1 && isMouseDown) {
+      const t = e.touches[0];
+      const pos = getTerrainIntersection(t.clientX, t.clientY);
+      if (pos) {
+        brushWorldPos = pos;
+        applyBrush(pos);
+      }
+    }
+  }, { passive: true });
+
+  renderer.domElement.addEventListener('touchend', () => { isMouseDown = false; });
+
+  // --- UI Controls ---
+  document.querySelectorAll('.brush-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.brush-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+    });
+  });
+
+  document.getElementById('brush-size').addEventListener('input', (e) => {
+    brushSize = parseInt(e.target.value);
+    document.getElementById('size-val').textContent = brushSize;
+  });
+
+  document.getElementById('brush-strength').addEventListener('input', (e) => {
+    brushStrength = parseInt(e.target.value) / 100;
+    document.getElementById('strength-val').textContent = brushStrength.toFixed(2);
+  });
+
+  document.getElementById('water-level').addEventListener('input', (e) => {
+    waterLevel = parseFloat(e.target.value);
+    document.getElementById('water-val').textContent = waterLevel.toFixed(1);
+    water.position.y = waterLevel;
+    updateGeometry();
+  });
+
+  document.getElementById('wireframe-toggle').addEventListener('input', (e) => {
+    const val = parseInt(e.target.value);
+    terrainMaterial.wireframe = val === 1;
+    document.getElementById('wire-val').textContent = val === 1 ? 'On' : 'Off';
+  });
+
+  // --- Export ---
+  document.getElementById('export-btn').addEventListener('click', () => {
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = GRID_SIZE + 1;
+    exportCanvas.height = GRID_SIZE + 1;
+    const ctx = exportCanvas.getContext('2d');
+    const imgData = ctx.createImageData(GRID_SIZE + 1, GRID_SIZE + 1);
+
+    // Find min/max heights for normalization
+    let minH = Infinity, maxH = -Infinity;
+    for (let i = 0; i < heights.length; i++) {
+      if (heights[i] < minH) minH = heights[i];
+      if (heights[i] > maxH) maxH = heights[i];
+    }
+    const range = maxH - minH || 1;
+
+    for (let x = 0; x <= GRID_SIZE; x++) {
+      for (let z = 0; z <= GRID_SIZE; z++) {
+        const h = heights[x * (GRID_SIZE + 1) + z];
+        const normalized = (h - minH) / range;
+        const val = Math.round(normalized * 255);
+        const idx = (z * (GRID_SIZE + 1) + x) * 4;
+        imgData.data[idx] = val;
+        imgData.data[idx + 1] = val;
+        imgData.data[idx + 2] = val;
+        imgData.data[idx + 3] = 255;
+      }
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+    const link = document.createElement('a');
+    link.download = 'heightmap.png';
+    link.href = exportCanvas.toDataURL('image/png');
+    link.click();
+  });
+
+  // --- Resize ---
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // --- Animation Loop ---
+  let frameCount = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+
+    // Subtle water animation
+    const time = Date.now() * 0.001;
+    water.position.y = waterLevel + Math.sin(time * 0.5) * 0.05;
+
+    // Update minimap every few frames
+    frameCount++;
+    if (frameCount % 6 === 0) {
+      updateMinimap();
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+  updateMinimap();
+
+  // --- Generate some initial terrain variation ---
+  function generateTerrain() {
+    const gridSize = GRID_SIZE + 1;
+    // Simple multi-octave noise
+    for (let x = 0; x < gridSize; x++) {
+      for (let z = 0; z < gridSize; z++) {
+        const nx = x / gridSize;
+        const nz = z / gridSize;
+        let h = 0;
+        // Low hills
+        h += Math.sin(nx * 6 + 1) * Math.cos(nz * 5 + 2) * 2;
+        h += Math.sin(nx * 12 + 3) * Math.cos(nz * 10 + 1) * 0.8;
+        h += Math.sin(nx * 24 + 5) * Math.cos(nz * 20 + 4) * 0.3;
+        // Edge falloff
+        const edgeDist = Math.min(nx, 1 - nx, nz, 1 - nz);
+        const falloff = Math.min(1, edgeDist * 6);
+        h *= falloff;
+        setVertexHeight(x, z, h);
+      }
+    }
+    updateGeometry();
+  }
+
+  generateTerrain();
+  updateMinimap();
+
+})();
+</script>
+</body>
+</html>

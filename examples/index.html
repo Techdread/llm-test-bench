@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore live HTML, p5.js, and SVG generations made with LLM Test Bench.">
+  <title>Generated examples — LLM Test Bench</title>
+  <link rel="stylesheet" href="../site.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="../" aria-label="LLM Test Bench home">
+      <span class="brand-mark">LT</span>
+      <span>LLM Test Bench</span>
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="../#tools">Tools</a>
+      <a href="../settings.html">Settings</a>
+      <a href="https://github.com/Techdread/llm-test-bench">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="examples-page">
+    <section class="examples-hero">
+      <p class="eyebrow">Generated showcase</p>
+      <h1>See what the bench makes.</h1>
+      <p>These are real outputs saved during model tests—not polished templates. Open any generation to interact with it, then launch the matching bench to try the same workflow with your own model.</p>
+      <div class="hero-actions">
+        <a class="button primary" href="../settings.html">Connect your model</a>
+        <a class="button" href="../#tools">Choose a test bench</a>
+      </div>
+    </section>
+
+    <section class="sample-section" aria-labelledby="html-samples">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Prompt Gallery</p>
+          <h2 id="html-samples">Interactive HTML</h2>
+        </div>
+        <p>Single-page applications generated from one prompt and previewed in the browser.</p>
+      </div>
+      <div class="sample-grid sample-grid-wide">
+        <article class="sample-card">
+          <iframe class="sample-preview wide" src="html/particle-galaxy.html" loading="lazy" sandbox="allow-scripts" title="Live preview of Particle Galaxy"></iframe>
+          <div class="sample-copy">
+            <span class="sample-kind">HTML · OpenRouter</span>
+            <h3>Particle Galaxy</h3>
+            <p>A GPU particle galaxy with orbiting stars, depth, glow, and pointer interaction.</p>
+            <div class="sample-meta">OpenAI GPT-5.6 Luna</div>
+            <a class="sample-link" href="html/particle-galaxy.html" target="_blank" rel="noopener">Open live generation <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+        <article class="sample-card">
+          <iframe class="sample-preview wide" src="html/terrain-painter.html" loading="lazy" sandbox="allow-scripts" title="Live preview of Terrain Painter"></iframe>
+          <div class="sample-copy">
+            <span class="sample-kind">HTML · Local model</span>
+            <h3>Terrain Painter</h3>
+            <p>An editable low-poly landscape with sculpting tools, camera controls, and export.</p>
+            <div class="sample-meta">LM Studio · Qwen3.6 35B A3B</div>
+            <a class="sample-link" href="html/terrain-painter.html" target="_blank" rel="noopener">Open live generation <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="sample-section" aria-labelledby="p5-samples">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">p5 Sketch Gallery</p>
+          <h2 id="p5-samples">Creative coding</h2>
+        </div>
+        <p>Animated p5.js sketches stored with their prompt, seed, parameters, and model provenance.</p>
+      </div>
+      <div class="sample-grid">
+        <article class="sample-card">
+          <iframe class="sample-preview square" src="p5/neon-hyperspace.html" loading="lazy" sandbox="allow-scripts" title="Live preview of Neon Hyperspace"></iframe>
+          <div class="sample-copy">
+            <span class="sample-kind">p5.js · OpenRouter</span>
+            <h3>Neon Hyperspace</h3>
+            <p>Pink and cyan light streaks spiral through a pulsing particle tunnel.</p>
+            <div class="sample-meta">Z.ai GLM 5.1 · seed 88</div>
+            <a class="sample-link" href="p5/neon-hyperspace.html" target="_blank" rel="noopener">Open live generation <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+        <article class="sample-card">
+          <iframe class="sample-preview square" src="p5/frog-lily-pads.html" loading="lazy" sandbox="allow-scripts" title="Live preview of Frog and Lily Pads"></iframe>
+          <div class="sample-copy">
+            <span class="sample-kind">p5.js · CLI agent</span>
+            <h3>Frog and Lily Pads</h3>
+            <p>A tiny frog hops around a pond with squash, stretch, shadows, and landing ripples.</p>
+            <div class="sample-meta">Gemini 3.7 Flash · seed 26234</div>
+            <a class="sample-link" href="p5/frog-lily-pads.html" target="_blank" rel="noopener">Open live generation <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="sample-section" aria-labelledby="svg-samples">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">SVG Generation Gallery</p>
+          <h2 id="svg-samples">Vector artwork</h2>
+        </div>
+        <p>Raw SVG submissions that can be inspected, compared, scored, and downloaded.</p>
+      </div>
+      <div class="sample-grid">
+        <article class="sample-card">
+          <a class="sample-image-link" href="svg/typewriter.svg" target="_blank" rel="noopener">
+            <img class="sample-preview square" src="svg/typewriter.svg" loading="lazy" alt="Generated close-up illustration of typewriter keys">
+          </a>
+          <div class="sample-copy">
+            <span class="sample-kind">SVG · Local model</span>
+            <h3>Typewriter Keys</h3>
+            <p>A detailed close-up of the familiar A, S, D, and F keys with metallic depth.</p>
+            <div class="sample-meta">LM Studio · Qwen3.8 27B</div>
+            <a class="sample-link" href="svg/typewriter.svg" target="_blank" rel="noopener">Open SVG <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+        <article class="sample-card">
+          <a class="sample-image-link" href="svg/robot-arm.svg" target="_blank" rel="noopener">
+            <img class="sample-preview square" src="svg/robot-arm.svg" loading="lazy" alt="Generated industrial robot arm holding a glowing bulb">
+          </a>
+          <div class="sample-copy">
+            <span class="sample-kind">SVG · OpenRouter</span>
+            <h3>Industrial Robot Arm</h3>
+            <p>Hydraulic joints, mechanical details, and a carefully framed light bulb.</p>
+            <div class="sample-meta">OpenAI GPT-5.6 Luna</div>
+            <a class="sample-link" href="svg/robot-arm.svg" target="_blank" rel="noopener">Open SVG <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <aside class="browser-note">
+      <strong>Generated code is experimental.</strong>
+      These examples are published for evaluation and may contain imperfections. Outputs are credited to the provider and model recorded at generation time.
+    </aside>
+  </main>
+
+  <footer>
+    <span>LLM Test Bench · MIT licensed</span>
+    <span><a href="../privacy.html">Privacy</a> · <a href="https://github.com/Techdread/llm-test-bench">Contribute on GitHub</a></span>
+  </footer>
+</body>
+</html>

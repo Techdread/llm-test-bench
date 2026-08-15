@@ -1,0 +1,119 @@
+<svg viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17232b"/>
+      <stop offset="1" stop-color="#34434a"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f07b24"/>
+      <stop offset=".45" stop-color="#ba4819"/>
+      <stop offset="1" stop-color="#6e2415"/>
+    </linearGradient>
+    <linearGradient id="metalLight" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff9a38"/>
+      <stop offset=".5" stop-color="#d85a1d"/>
+      <stop offset="1" stop-color="#8b2e16"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d3d9d8"/>
+      <stop offset=".35" stop-color="#68757a"/>
+      <stop offset=".7" stop-color="#27353a"/>
+      <stop offset="1" stop-color="#a9b4b4"/>
+    </linearGradient>
+    <linearGradient id="darkSteel" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#59686b"/>
+      <stop offset=".5" stop-color="#1d292d"/>
+      <stop offset="1" stop-color="#0c1417"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop stop-color="#fffbd0" stop-opacity=".95"/>
+      <stop offset=".35" stop-color="#ffe76a" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#ffd22e" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fffbd0"/>
+      <stop offset=".3" stop-color="#ffe978"/>
+      <stop offset=".75" stop-color="#ffb72d"/>
+      <stop offset="1" stop-color="#e47613"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+    <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+  </defs>
+
+  <rect width="800" height="800" fill="url(#bg)"/>
+  <path d="M0 650H800V800H0Z" fill="#111b20"/>
+  <path d="M0 650H800" stroke="#46575b" stroke-width="3"/>
+  <g opacity=".14" stroke="#a6b0ae" stroke-width="2">
+    <path d="M35 80H765M35 140H765M35 200H765M35 260H765"/>
+    <path d="M90 35V600M180 35V600M270 35V600M360 35V600M450 35V600M540 35V600M630 35V600M720 35V600"/>
+  </g>
+
+  <ellipse cx="491" cy="689" rx="205" ry="28" fill="#000" opacity=".48" filter="url(#shadow)"/>
+
+  <g id="robot-arm">
+    <path d="M420 653H628L663 684L646 710H391L371 686Z" fill="url(#darkSteel)" stroke="#10191c" stroke-width="7"/>
+    <path d="M445 625H603L631 651L618 680H419L405 653Z" fill="url(#steel)" stroke="#182326" stroke-width="7"/>
+    <path d="M460 625V581H589V625" fill="#263438" stroke="#121b1e" stroke-width="7"/>
+    <path d="M463 585C468 545 474 517 488 489L565 490C581 518 587 548 589 585Z" fill="url(#metal)" stroke="#351912" stroke-width="8"/>
+    <ellipse cx="527" cy="493" rx="48" ry="22" fill="#222d31" stroke="#0e1518" stroke-width="7"/>
+    <ellipse cx="527" cy="493" rx="28" ry="11" fill="#9ca7a5"/>
+
+    <path d="M486 484L367 302L426 266L548 448Z" fill="url(#metal)" stroke="#351912" stroke-width="9"/>
+    <path d="M501 458L399 302L420 289L534 447Z" fill="#ff9b37" opacity=".42"/>
+    <path d="M366 303L350 286L374 249L431 268L427 296Z" fill="url(#steel)" stroke="#182326" stroke-width="8"/>
+    <circle cx="390" cy="280" r="29" fill="#263337" stroke="#10181b" stroke-width="8"/>
+    <circle cx="390" cy="280" r="13" fill="#aeb8b5" stroke="#455256" stroke-width="5"/>
+
+    <path d="M366 294L242 315L231 257L361 239Z" fill="url(#metalLight)" stroke="#351912" stroke-width="9"/>
+    <path d="M350 279L245 295L240 270L352 253Z" fill="#ffad49" opacity=".36"/>
+    <path d="M242 315L218 326L198 288L231 257Z" fill="url(#steel)" stroke="#182326" stroke-width="8"/>
+    <circle cx="227" cy="291" r="26" fill="#263337" stroke="#10181b" stroke-width="8"/>
+    <circle cx="227" cy="291" r="11" fill="#b8c0bd"/>
+
+    <g id="upper-hydraulic-cylinder">
+      <path d="M476 469L388 323" stroke="#141d20" stroke-width="28" stroke-linecap="round"/>
+      <path d="M476 469L388 323" stroke="url(#steel)" stroke-width="19" stroke-linecap="round"/>
+      <path d="M393 331L353 272" stroke="#d2d7d3" stroke-width="9" stroke-linecap="round"/>
+      <path d="M343 265L369 251L392 276L365 291Z" fill="#293639" stroke="#11191c" stroke-width="5"/>
+    </g>
+
+    <g id="forearm-piston">
+      <path d="M349 292L252 292" stroke="#131c1f" stroke-width="27" stroke-linecap="round"/>
+      <path d="M349 292L252 292" stroke="url(#steel)" stroke-width="17" stroke-linecap="round"/>
+      <path d="M254 292L205 292" stroke="#d2d8d4" stroke-width="8" stroke-linecap="round"/>
+      <path d="M197 278L218 278L226 307L200 309Z" fill="#303d40" stroke="#11191c" stroke-width="5"/>
+    </g>
+
+    <path d="M214 289L174 272L156 292L195 315Z" fill="url(#darkSteel)" stroke="#11191c" stroke-width="7"/>
+    <circle cx="176" cy="292" r="15" fill="#aab5b2" stroke="#202b2e" stroke-width="6"/>
+  </g>
+
+  <g id="bulb" transform="translate(0 2)">
+    <circle cx="143" cy="213" r="111" fill="url(#glow)" filter="url(#softGlow)"/>
+    <path d="M143 135C104 135 78 162 80 197C81 222 93 235 106 250C115 260 117 270 119 281H167C169 269 172 258 181 247C194 232 205 217 206 197C207 162 182 135 143 135Z" fill="url(#glass)" stroke="#ffcf49" stroke-width="6"/>
+    <path d="M119 280H168V309C168 321 159 331 146 331H141C128 331 119 321 119 309Z" fill="#a8a9a0" stroke="#343d3c" stroke-width="6"/>
+    <path d="M119 287H168M119 298H168M122 309H165" stroke="#424b48" stroke-width="6"/>
+    <path d="M143 153C127 166 121 182 124 205C126 219 132 230 143 241C154 230 161 218 162 202C164 181 157 166 143 153Z" fill="#fff7b3" opacity=".72"/>
+    <path d="M112 209C123 194 132 188 143 187C155 188 166 195 175 210" fill="none" stroke="#fff9c3" stroke-width="5" opacity=".9"/>
+    <path d="M103 168C96 180 94 194 98 207" fill="none" stroke="#fff9d0" stroke-width="8" stroke-linecap="round" opacity=".8"/>
+    <path d="M126 337H160" stroke="#172124" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <g id="gripper" fill="url(#steel)" stroke="#131d20" stroke-width="8" stroke-linejoin="round">
+    <path d="M190 267L174 230L185 207L205 215L208 249Z"/>
+    <path d="M190 267L169 291L174 320L197 317L207 284Z"/>
+    <path d="M181 207L204 213L213 195L193 187L178 194Z" fill="#273538"/>
+    <path d="M169 320L193 317L199 334L176 342L164 333Z" fill="#273538"/>
+  </g>
+  <path d="M185 220L197 245M180 296L191 310" stroke="#e4e8df" stroke-width="4" opacity=".7"/>
+
+  <g opacity=".75">
+    <circle cx="700" cy="105" r="4" fill="#ff982e"/>
+    <circle cx="700" cy="105" r="15" fill="none" stroke="#ff982e" stroke-width="2" opacity=".4"/>
+    <path d="M674 105H650M750 105H726M700 79V55M700 155V131" stroke="#ff982e" stroke-width="2" opacity=".4"/>
+  </g>
+</svg>

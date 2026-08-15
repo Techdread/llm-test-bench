@@ -8,6 +8,8 @@ LLM Test Bench is a local-first collection of browser tools for comparing model-
 
 The hosted site is static. There are no user accounts and no project database: in Chrome or Edge, you choose a local data folder and the apps save there through the File System Access API.
 
+The hosted edition also includes a read-only showcase of six real generations—two interactive HTML pages, two live p5.js sketches, and two SVG submissions—so you can see representative output before connecting a folder or model. Each example includes its recorded model attribution.
+
 ## Try it locally
 
 No install or build step is required.

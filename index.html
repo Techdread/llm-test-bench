@@ -15,6 +15,7 @@
     </a>
     <nav aria-label="Main navigation">
       <a href="#tools">Tools</a>
+      <a href="examples/">Examples</a>
       <a href="settings.html">Settings</a>
       <a href="privacy.html">Privacy</a>
       <a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a>
@@ -28,6 +29,7 @@
       <p class="hero-copy">A browser-based workbench for testing how language models turn the same idea into interactive HTML, p5.js sketches, and SVG artwork.</p>
       <div class="hero-actions">
         <a class="button primary" href="prompt-gallery/">Open Prompt Gallery</a>
+        <a class="button" href="examples/">View generations</a>
         <a class="button" href="settings.html">Connect folder + local models</a>
         <a class="button" href="#how-it-works">How it works</a>
       </div>
@@ -84,6 +86,31 @@
           <a class="card-link" href="svg-benchmark/">Launch SVG bench <span aria-hidden="true">→</span></a>
         </article>
       </div>
+    </section>
+
+    <section class="featured-section" aria-labelledby="featured-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Made in the test bench</p>
+          <h2 id="featured-title">Real generations, ready to explore</h2>
+        </div>
+        <p>Open live outputs from local and hosted models before connecting anything of your own.</p>
+      </div>
+      <div class="featured-grid">
+        <article class="featured-card">
+          <iframe class="featured-preview" src="examples/html/particle-galaxy.html" loading="lazy" sandbox="allow-scripts" title="Particle Galaxy live preview"></iframe>
+          <div><span>Prompt Gallery</span><strong>Particle Galaxy</strong><a href="examples/html/particle-galaxy.html" target="_blank" rel="noopener">Open ↗</a></div>
+        </article>
+        <article class="featured-card">
+          <iframe class="featured-preview" src="examples/p5/frog-lily-pads.html" loading="lazy" sandbox="allow-scripts" title="Frog and Lily Pads live preview"></iframe>
+          <div><span>p5 Sketch Gallery</span><strong>Frog and Lily Pads</strong><a href="examples/p5/frog-lily-pads.html" target="_blank" rel="noopener">Open ↗</a></div>
+        </article>
+        <article class="featured-card">
+          <a href="examples/svg/typewriter.svg" target="_blank" rel="noopener"><img class="featured-preview" src="examples/svg/typewriter.svg" loading="lazy" alt="Generated typewriter keys"></a>
+          <div><span>SVG Gallery</span><strong>Typewriter Keys</strong><a href="examples/svg/typewriter.svg" target="_blank" rel="noopener">Open ↗</a></div>
+        </article>
+      </div>
+      <a class="showcase-link" href="examples/">Browse all six examples <span aria-hidden="true">→</span></a>
     </section>
 
     <section class="workflow" id="how-it-works" aria-labelledby="workflow-title">
