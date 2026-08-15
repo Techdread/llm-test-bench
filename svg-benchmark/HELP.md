@@ -151,4 +151,4 @@ active benchmark, prompt, scores, provider and model when available.
 - *"No SVG code to save"* — generate or paste SVG code before saving.
 - *Auto-score not available* — you need both an SVG and a reference image loaded.
 - *Directory not connected* — click the folder icon to pick a working directory. Only Chromium-based browsers support the File System Access API.
-- *Model list empty* — open Provider Settings (server icon) and enable at least one provider with a valid API key or endpoint.
+- *Model list empty* — open Provider Settings (server icon) and enable at least one provider with a valid API key or endpoint. For hosted LM Studio, enable CORS (`lms server start --cors`), use `http://localhost:1234`, press **Test**, and allow Chrome/Edge local-network access when prompted.

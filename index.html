@@ -28,11 +28,11 @@
       <p class="hero-copy">A browser-based workbench for testing how language models turn the same idea into interactive HTML, p5.js sketches, and SVG artwork.</p>
       <div class="hero-actions">
         <a class="button primary" href="prompt-gallery/">Open Prompt Gallery</a>
-        <a class="button" href="settings.html">Connect your folder</a>
+        <a class="button" href="settings.html">Connect folder + local models</a>
         <a class="button" href="#how-it-works">How it works</a>
       </div>
       <div class="trust-row" aria-label="Privacy and platform notes">
-        <span>Bring your own API key</span>
+        <span>Run your own local models</span>
         <span>Files stay in your chosen folder</span>
         <span>No account required</span>
       </div>
@@ -94,14 +94,14 @@
       </div>
       <ol>
         <li><strong><a href="settings.html">Choose a folder</a></strong><span>The browser remembers the handle and asks before restoring access.</span></li>
-        <li><strong>Add a provider</strong><span>Use your own OpenRouter key or another supported endpoint.</span></li>
+        <li><strong><a href="settings.html">Connect a model</a></strong><span>Use your local LM Studio/OpenAI-compatible server or your own OpenRouter key.</span></li>
         <li><strong>Generate and compare</strong><span>Prompts go only to the provider you select; saved outputs remain in your folder.</span></li>
       </ol>
     </section>
 
     <aside class="browser-note">
       <strong>Best in Chrome or Edge.</strong>
-      Folder access and screen recording depend on browser APIs that are not equally available everywhere. Local CLI agents and cross-app handoffs belong to the full local DevTools Hub and are intentionally absent from this hosted edition.
+      Folder access, local-network permission, and screen recording depend on browser APIs that are not equally available everywhere. Local model servers work directly from the hosted site; CLI coding agents and cross-app handoffs belong to the full local DevTools Hub.
     </aside>
   </main>
 

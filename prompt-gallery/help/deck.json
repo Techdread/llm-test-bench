@@ -3,7 +3,7 @@
   "title": "Prompt Gallery — Help",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-08-14T11:19:59.556Z",
+  "generatedAt": "2026-08-15T23:04:36.677Z",
   "slides": [
     {
       "kind": "title",
@@ -19,6 +19,11 @@
       "kind": "text",
       "title": "Saving your own",
       "html": "<ul>\n<li>Add a prompt with a name (e.g. <code>landing-page-v1</code>), the prompt body, tags, and\nnotes. Your entries live in a user layer; the curated seeds are never\noverwritten.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Local models",
+      "html": "<p>The hosted edition can generate directly through a model running on your own\ncomputer. Open the server/provider button in the toolbar, add an LM Studio or\nOpenAI-compatible endpoint, and test it. LM Studio normally uses\n<code>http://localhost:1234</code> and must have CORS enabled in its Developer server\nsettings (or be started with <code>lms server start --cors</code>).</p>\n<p>Chrome or Edge may ask whether this website can access your local network;\nchoose <strong>Allow</strong>. Once connected, every model reported by the endpoint appears\nin the normal model picker and works with Create, Refine, Save suggestions, and\nBatch. The browser talks directly to the local server—the hosted site does not\nrelay prompts or responses.</p>"
     },
     {
       "kind": "text",

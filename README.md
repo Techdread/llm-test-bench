@@ -24,11 +24,20 @@ Do not open the HTML files directly with a `file://` URL. Browser modules and fo
 
 Open a tool, select the key/provider control, and add your own provider credentials. OpenRouter is the default. Keys are stored in browser storage and are sent only to the configured provider when you make a request.
 
+Local models are supported directly from both the hosted site and a local checkout. For LM Studio:
+
+1. Load a model and start the local server with CORS enabled (Developer settings, or `lms server start --cors`).
+2. Open the website's **Settings** page and add `http://localhost:1234`.
+3. Click **Add & test** and allow the browser's local-network permission when prompted.
+4. Open a gallery and choose the discovered local model from its normal model picker. Batch mode uses the same selection.
+
+The browser connects straight to the endpoint; prompts and responses are not relayed through the hosted site. Other OpenAI-compatible local servers can use the LM Studio endpoint type when they expose `/v1/models` and `/v1/chat/completions` and permit the website origin through CORS.
+
 Never commit an API key. Never paste one into an issue, screenshot, recording, or sample file.
 
 ## Hosted edition versus the private development hub
 
-The public edition includes the features that can run safely in a static HTTPS website. Local CLI agents and cross-app handoffs are not included because they depend on the private hub's local Python bridge or apps outside this release. Their absence is intentional, not a failed connection.
+The public edition includes the features that can run safely in a static HTTPS website. Local model servers are supported. Local **CLI coding agents** and cross-app handoffs are not included because they depend on the private hub's Python bridge or apps outside this release; local models and local CLI agents are different connection types.
 
 ## Project layout
 

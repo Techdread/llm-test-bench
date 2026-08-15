@@ -16,6 +16,20 @@ A searchable library of prompts you can browse, run, save, and refine.
   notes. Your entries live in a user layer; the curated seeds are never
   overwritten.
 
+## Local models
+
+The hosted edition can generate directly through a model running on your own
+computer. Open the server/provider button in the toolbar, add an LM Studio or
+OpenAI-compatible endpoint, and test it. LM Studio normally uses
+`http://localhost:1234` and must have CORS enabled in its Developer server
+settings (or be started with `lms server start --cors`).
+
+Chrome or Edge may ask whether this website can access your local network;
+choose **Allow**. Once connected, every model reported by the endpoint appears
+in the normal model picker and works with Create, Refine, Save suggestions, and
+Batch. The browser talks directly to the local server—the hosted site does not
+relay prompts or responses.
+
 ## CLI agent generation
 
 - Claude Code, Codex, and Antigravity appear in the normal model dropdown under

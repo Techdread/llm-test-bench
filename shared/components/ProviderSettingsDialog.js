@@ -16,6 +16,7 @@ import {
   saveApiKey as saveUnslothStudioApiKey,
 } from '../services/providers-unsloth-studio.js';
 import { prefs as readPrefs, setPref as setAppPref } from '../services/app-prefs.js';
+import { isPublicDistribution } from '../services/distribution.js';
 
 const LOCAL_PROVIDER_META = {
   lmstudio: {
@@ -50,6 +51,10 @@ function localProviderMeta(type) {
 
 export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
   const isPerApp = !!appId;
+  // The private hub has a full global Settings app, so its per-app dialogs only
+  // control visibility. The small public distribution has no provider manager;
+  // let visitors add/edit shared endpoints directly from any gallery instead.
+  const canManageProviders = !isPerApp || isPublicDistribution();
   const [providerList, setProviderList] = useState(() => providers.getProviders());
   const [disabledForApp, setDisabledForApp] = useState(() => {
     if (!isPerApp) return [];
@@ -112,7 +117,7 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
   // Global mode: flips provider.enabled in the registry (affects every app).
   // Per-app mode: adds/removes the provider id from prefs(appId).disabledProviders.
   const handleToggle = useCallback((id) => {
-    if (isPerApp) {
+    if (isPerApp && !canManageProviders) {
       setDisabledForApp(prev => {
         const next = prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id];
         setAppPref(appId, 'disabledProviders', next).catch(e => {
@@ -127,17 +132,17 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
     if (!p) return;
     providers.updateProvider(id, { enabled: !p.enabled });
     reload();
-  }, [isPerApp, appId, providerList, reload, onProvidersChanged]);
+  }, [isPerApp, canManageProviders, appId, providerList, reload, onProvidersChanged]);
 
   const isProviderOnForApp = useCallback((p) => {
     if (!p) return false;
-    if (isPerApp) {
+    if (isPerApp && !canManageProviders) {
       // In per-app mode, only providers globally enabled count; the per-app
       // list further opts them out.
       return p.enabled !== false && !disabledForApp.includes(p.id);
     }
     return p.enabled !== false;
-  }, [isPerApp, disabledForApp]);
+  }, [isPerApp, canManageProviders, disabledForApp]);
 
   // ── Remove provider ──
   const handleRemove = useCallback((id) => {
@@ -251,7 +256,9 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
 
   // In per-app mode we only surface globally-enabled providers — there's
   // nothing for the user to toggle on a provider they've turned off in /settings/.
-  const visibleList = isPerApp ? providerList.filter(p => p.enabled !== false) : providerList;
+  const visibleList = isPerApp && !canManageProviders
+    ? providerList.filter(p => p.enabled !== false)
+    : providerList;
   const openRouterProvider = visibleList.find(p => p.type === 'openrouter');
   const localProviders = visibleList.filter(p => p.type !== 'openrouter');
 
@@ -259,14 +266,14 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
     <div class="modal-overlay">
       <div class="modal provider-settings-modal" onClick=${e => e.stopPropagation()} style=${{ maxWidth: '620px', width: '90vw' }}>
         <div class="modal-header">
-          <h2><i class="fa-solid fa-server" style=${{ marginRight: '8px', color: 'var(--accent)' }}></i>${isPerApp ? 'Models in this app' : 'Model Providers'}</h2>
+          <h2><i class="fa-solid fa-server" style=${{ marginRight: '8px', color: 'var(--accent)' }}></i>${canManageProviders ? 'Model Providers' : 'Models in this app'}</h2>
           <button class="btn-icon" onClick=${onClose}>
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
         <div class="modal-body" style=${{ gap: '18px' }}>
-          ${isPerApp && html`
+          ${isPerApp && !canManageProviders && html`
             <div class="provider-perapp-hint" style=${{
               padding: '10px 12px',
               borderRadius: '8px',
@@ -315,7 +322,7 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
               </div>
             `}
 
-            ${!isPerApp && html`
+            ${canManageProviders && html`
               <div class="form-group">
                 <label>API Key</label>
                 <div style=${{ display: 'flex', gap: '6px' }}>
@@ -345,7 +352,7 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
           <div class="provider-section">
             <div class="provider-section-header">
               <h3><i class="fa-solid fa-network-wired" style=${{ marginRight: '6px' }}></i> Local OpenAI-compatible Endpoints</h3>
-              ${!isPerApp && html`
+              ${canManageProviders && html`
                 <div style=${{ display: 'flex', gap: '6px' }}>
                   <button class="btn btn-sm btn-primary" onClick=${() => startAddEndpoint('lmstudio')}>
                     <i class="fa-solid fa-plus"></i> LM Studio
@@ -357,6 +364,22 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
               `}
             </div>
 
+            ${canManageProviders && html`
+              <div class="provider-perapp-hint" style=${{
+                padding: '10px 12px',
+                borderRadius: '8px',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-secondary)',
+                fontSize: '12px',
+                lineHeight: 1.5,
+              }}>
+                <i class="fa-solid fa-shield-halved" style=${{ marginRight: '6px', color: 'var(--accent)' }}></i>
+                LM Studio users: enable CORS in the Developer server settings or start it with
+                <code>lms server start --cors</code>. When your browser asks whether this site may
+                access the local network, choose <strong>Allow</strong>. Endpoints stay in your local settings.
+              </div>
+            `}
+
             ${localProviders.length === 0 && !showAddForm && html`
               <div class="provider-empty">
                 <i class="fa-solid fa-desktop" style=${{ opacity: 0.4, fontSize: '24px' }}></i>
@@ -367,7 +390,7 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
               </div>
             `}
 
-            ${localProviders.map(p => (!isPerApp && editingId === p.id) ? html`
+            ${localProviders.map(p => (canManageProviders && editingId === p.id) ? html`
               <!-- Inline edit form -->
               <div class="provider-card editing" key=${p.id}>
                 <div class="form-group">
@@ -425,7 +448,7 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
                     <button class="btn-icon btn-sm" onClick=${() => handleRefreshModels(p)} disabled=${testing[`refresh-${p.id}`]} title="Refresh models">
                       <i class=${`fa-solid ${testing[`refresh-${p.id}`] ? 'fa-spinner fa-spin' : 'fa-arrows-rotate'}`}></i>
                     </button>
-                    ${!isPerApp && html`
+                    ${canManageProviders && html`
                       <button class="btn-icon btn-sm" onClick=${() => handleStartEdit(p)} title="Edit">
                         <i class="fa-solid fa-pen"></i>
                       </button>
@@ -451,7 +474,7 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
             `)}
 
             <!-- Add Form -->
-            ${!isPerApp && showAddForm && !editingId && html`
+            ${canManageProviders && showAddForm && !editingId && html`
               <div class="provider-card editing">
                 <div class="form-group">
                   <label>Name</label>

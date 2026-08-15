@@ -3,7 +3,7 @@
   "title": "SVG Benchmark",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-08-15T22:33:27.845Z",
+  "generatedAt": "2026-08-15T23:04:36.666Z",
   "slides": [
     {
       "kind": "title",
@@ -78,7 +78,7 @@
     {
       "kind": "text",
       "title": "Troubleshooting",
-      "html": "<ul>\n<li><em>&quot;No SVG code to save&quot;</em> — generate or paste SVG code before saving.</li>\n<li><em>Auto-score not available</em> — you need both an SVG and a reference image loaded.</li>\n<li><em>Directory not connected</em> — click the folder icon to pick a working directory. Only Chromium-based browsers support the File System Access API.</li>\n<li><em>Model list empty</em> — open Provider Settings (server icon) and enable at least one provider with a valid API key or endpoint.</li>\n</ul>"
+      "html": "<ul>\n<li><em>&quot;No SVG code to save&quot;</em> — generate or paste SVG code before saving.</li>\n<li><em>Auto-score not available</em> — you need both an SVG and a reference image loaded.</li>\n<li><em>Directory not connected</em> — click the folder icon to pick a working directory. Only Chromium-based browsers support the File System Access API.</li>\n<li><em>Model list empty</em> — open Provider Settings (server icon) and enable at least one provider with a valid API key or endpoint. For hosted LM Studio, enable CORS (<code>lms server start --cors</code>), use <code>http://localhost:1234</code>, press <strong>Test</strong>, and allow Chrome/Edge local-network access when prompted.</li>\n</ul>"
     }
   ]
 }

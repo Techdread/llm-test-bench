@@ -199,5 +199,7 @@ All five stream over the model you've selected in the toolbar.
 - *Errors in the red banner* — they include a stack trace; the loop is paused
   until you change the code.
 - *No models in the picker* — you haven't pasted an API key, or the configured
-  provider is unreachable. Visit Settings → Providers to enable LM Studio or
-  OpenRouter.
+  provider is unreachable. For a hosted-site connection to LM Studio, start the
+  server with CORS enabled (`lms server start --cors`), add
+  `http://localhost:1234` through the server button or public Settings page,
+  press **Test**, and allow Chrome/Edge local-network access when prompted.

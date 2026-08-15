@@ -2,6 +2,8 @@
 // Unsloth Studio exposes an OpenAI-compatible API, but unlike most LAN-only
 // LM Studio setups it normally requires a bearer token.
 
+import { localNetworkFetch } from './local-network.js';
+
 export const PROVIDER_TYPE = 'unsloth-studio';
 
 const DEFAULT_TIMEOUT = 30000;
@@ -133,7 +135,7 @@ export async function testConnection(provider) {
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
   const timeout = provider.timeoutMs || DEFAULT_TIMEOUT;
   try {
-    const res = await fetch(`${baseUrl}/v1/models`, {
+    const res = await localNetworkFetch(`${baseUrl}/v1/models`, {
       headers: authHeaders(provider),
       signal: AbortSignal.timeout(Math.min(timeout, 10000)),
     });
@@ -151,7 +153,7 @@ export async function testConnection(provider) {
 export async function fetchModels(provider) {
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
   const timeout = provider.timeoutMs || DEFAULT_TIMEOUT;
-  const res = await fetch(`${baseUrl}/v1/models`, {
+  const res = await localNetworkFetch(`${baseUrl}/v1/models`, {
     headers: authHeaders(provider),
     signal: AbortSignal.timeout(timeout),
   });
@@ -194,7 +196,7 @@ export async function completeChat({ provider, modelId, systemPrompt, userPrompt
 export async function chatCompletion({ provider, modelId, messages, tools }) {
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
   const timeout = provider.generationTimeoutMs || DEFAULT_GENERATION_TIMEOUT;
-  const res = await fetch(`${baseUrl}/v1/chat/completions`, {
+  const res = await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
     method: 'POST',
     headers: authHeaders(provider, { 'Content-Type': 'application/json' }),
     body: JSON.stringify(chatBody({ modelId, messages, tools, stream: false })),
@@ -230,7 +232,7 @@ export async function streamChatCompletion({ provider, modelId, messages, tools,
   resetInactivityTimer();
   let res;
   try {
-    res = await fetch(`${baseUrl}/v1/chat/completions`, {
+    res = await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: authHeaders(provider, { 'Content-Type': 'application/json' }),
       body: JSON.stringify(chatBody({ modelId, messages, tools, stream: true })),

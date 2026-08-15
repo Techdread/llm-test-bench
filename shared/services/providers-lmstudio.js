@@ -2,6 +2,7 @@
 // Supports one or more LAN LM Studio instances with OpenAI-compatible API
 
 import { applyParams, withUsageReporting, createRunStats } from './gen-params.js';
+import { localNetworkFetch } from './local-network.js';
 
 export const PROVIDER_TYPE = 'lmstudio';
 
@@ -202,7 +203,7 @@ async function chatCompletionNative({ provider, modelId, messages, signal }) {
 
   let res;
   try {
-    res = await fetch(`${baseUrl}/api/v1/chat`, {
+    res = await localNetworkFetch(`${baseUrl}/api/v1/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -247,7 +248,7 @@ async function streamChatCompletionNative({ provider, modelId, messages, onChunk
   resetInactivityTimer();
   let res;
   try {
-    res = await fetch(`${baseUrl}/api/v1/chat`, {
+    res = await localNetworkFetch(`${baseUrl}/api/v1/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(nativeChatBodyFromMessages(modelId, messages, { stream: true })),
@@ -394,7 +395,7 @@ export async function testConnection(provider) {
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
   const timeout = provider.timeoutMs || DEFAULT_TIMEOUT;
   try {
-    const res = await fetch(`${baseUrl}/v1/models`, {
+    const res = await localNetworkFetch(`${baseUrl}/v1/models`, {
       signal: AbortSignal.timeout(Math.min(timeout, 10000)),
     });
     if (!res.ok) {
@@ -418,7 +419,7 @@ export async function fetchModels(provider) {
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
   const timeout = provider.timeoutMs || DEFAULT_TIMEOUT;
 
-  const res = await fetch(`${baseUrl}/v1/models`, {
+  const res = await localNetworkFetch(`${baseUrl}/v1/models`, {
     signal: AbortSignal.timeout(timeout),
   });
 
@@ -453,7 +454,7 @@ export async function fetchModels(provider) {
 // {} so model loading never depends on this enrichment endpoint existing.
 async function fetchLmStudioModelTypes(baseUrl, timeout) {
   try {
-    const res = await fetch(`${baseUrl}/api/v0/models`, {
+    const res = await localNetworkFetch(`${baseUrl}/api/v0/models`, {
       signal: AbortSignal.timeout(timeout || DEFAULT_TIMEOUT),
     });
     if (!res.ok) return {};
@@ -535,7 +536,7 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
     let body = applyParams({ model: modelId, messages, stream: !!onChunk }, params, PROVIDER_TYPE);
     if (onChunk) body = withUsageReporting(body, PROVIDER_TYPE);
 
-    res = await fetch(`${baseUrl}/v1/chat/completions`, {
+    res = await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -669,7 +670,7 @@ export async function chatCompletion({ provider, modelId, messages, tools, toolC
 
   let res;
   try {
-    res = await fetch(`${baseUrl}/v1/chat/completions`, {
+    res = await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -740,7 +741,7 @@ export async function streamChatCompletion({ provider, modelId, messages, tools,
   resetInactivityTimer();
   let res;
   try {
-    res = await fetch(`${baseUrl}/v1/chat/completions`, {
+    res = await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

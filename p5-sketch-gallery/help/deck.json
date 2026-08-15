@@ -3,7 +3,7 @@
   "title": "p5 Sketch Gallery",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-08-14T11:19:59.542Z",
+  "generatedAt": "2026-08-15T23:04:36.698Z",
   "slides": [
     {
       "kind": "title",
@@ -78,7 +78,7 @@
     {
       "kind": "text",
       "title": "Troubleshooting",
-      "html": "<ul>\n<li><em>&quot;Sketch must define a function named sketch(p, ctx).&quot;</em> — your code defines\n<code>setup()</code>/<code>draw()</code> as globals instead of attaching them to <code>p</code>. Wrap the body\nin <code>function sketch(p, ctx) { p.setup = ... }</code>.</li>\n<li><em>Errors in the red banner</em> — they include a stack trace; the loop is paused\nuntil you change the code.</li>\n<li><em>No models in the picker</em> — you haven&#39;t pasted an API key, or the configured\nprovider is unreachable. Visit Settings → Providers to enable LM Studio or\nOpenRouter.</li>\n</ul>"
+      "html": "<ul>\n<li><em>&quot;Sketch must define a function named sketch(p, ctx).&quot;</em> — your code defines\n<code>setup()</code>/<code>draw()</code> as globals instead of attaching them to <code>p</code>. Wrap the body\nin <code>function sketch(p, ctx) { p.setup = ... }</code>.</li>\n<li><em>Errors in the red banner</em> — they include a stack trace; the loop is paused\nuntil you change the code.</li>\n<li><em>No models in the picker</em> — you haven&#39;t pasted an API key, or the configured\nprovider is unreachable. For a hosted-site connection to LM Studio, start the\nserver with CORS enabled (<code>lms server start --cors</code>), add\n<code>http://localhost:1234</code> through the server button or public Settings page,\npress <strong>Test</strong>, and allow Chrome/Edge local-network access when prompted.</li>\n</ul>"
     }
   ]
 }

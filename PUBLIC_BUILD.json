@@ -7,7 +7,7 @@
     "suggestedPreviewHost": "neuroviz.uk",
     "repositoryUrl": "https://github.com/Techdread/llm-test-bench"
   },
-  "generatedAt": "2026-08-15T22:35:54.351Z",
+  "generatedAt": "2026-08-15T23:04:52.386Z",
   "apps": [
     {
       "source": "prompt-gallery",
@@ -25,7 +25,7 @@
       "title": "SVG Generation Gallery / Benchmark"
     }
   ],
-  "sharedModuleCount": 40,
+  "sharedModuleCount": 41,
   "hostedLimitations": [
     "Local CLI agents require the private/local serve.py bridge and are not part of this static distribution.",
     "Cross-app Code Morph and Bugfix handoffs are disabled because their target apps are not included."

@@ -2,6 +2,7 @@
 // Lemonade exposes an OpenAI-compatible local API at /v1.
 
 import { applyParams, withUsageReporting, createRunStats } from './gen-params.js';
+import { localNetworkFetch } from './local-network.js';
 
 export const PROVIDER_TYPE = 'lemonade';
 
@@ -106,7 +107,7 @@ export async function testConnection(provider) {
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
   const timeout = provider.timeoutMs || DEFAULT_TIMEOUT;
   try {
-    const res = await fetch(`${baseUrl}/v1/models`, {
+    const res = await localNetworkFetch(`${baseUrl}/v1/models`, {
       headers: requestHeaders(provider),
       signal: AbortSignal.timeout(Math.min(timeout, 10000)),
     });
@@ -125,7 +126,7 @@ export async function testConnection(provider) {
 export async function fetchModels(provider) {
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
   const timeout = provider.timeoutMs || DEFAULT_TIMEOUT;
-  const res = await fetch(`${baseUrl}/v1/models`, {
+  const res = await localNetworkFetch(`${baseUrl}/v1/models`, {
     headers: requestHeaders(provider),
     signal: AbortSignal.timeout(timeout),
   });
@@ -165,7 +166,7 @@ async function postChat(provider, body, { stream = false, signal } = {}) {
     : timeout);
 
   try {
-    return await fetch(`${baseUrl}/v1/chat/completions`, {
+    return await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: requestHeaders(provider),
       body: JSON.stringify(body),
