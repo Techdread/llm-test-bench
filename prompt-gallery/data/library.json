@@ -1,0 +1,567 @@
+{
+  "version": 1,
+  "prompts": [
+    {
+      "id": "threejs-space-shooter",
+      "title": "Space Shooter",
+      "category": "threejs",
+      "tags": ["game", "space-themed", "neon-glow"],
+      "prompt": "Build a single-page Three.js space shooter game. The player controls a spaceship that can move in all directions and shoot projectiles at incoming enemy waves. Include particle effects for explosions, a starfield background, score display, health bar, and progressive difficulty. Enemies should have different movement patterns and the game should have a game-over screen with restart.",
+      "notes": "Watch for: no collision detection; enemies don't vary; no game-over state; poor performance with many particles.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-tower-defense",
+      "title": "Tower Defense",
+      "category": "threejs",
+      "tags": ["game", "grid-based", "cartoon"],
+      "prompt": "Build a single-page Three.js tower defense game on a grid-based map. Players place different tower types along a path to stop waves of enemies from reaching the base. Include tower upgrade mechanics, enemy health bars, a currency system, wave counter, and speed controls. Towers should have visible attack ranges and projectile animations.",
+      "notes": "Watch for: enemies ignore path; towers don't target correctly; no economy balance; performance drops with many enemies.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-cloth-sim",
+      "title": "Cloth Physics Simulator",
+      "category": "threejs",
+      "tags": ["simulation", "physics", "wireframe"],
+      "prompt": "Build a single-page Three.js cloth simulation using a spring-mass model. Render a rectangular cloth mesh pinned at the top corners that responds to gravity and wind. The user can drag cloth vertices with the mouse, adjust wind direction/strength with sliders, and toggle pins on/off. Include self-collision detection and a wireframe toggle.",
+      "notes": "Watch for: cloth stretches infinitely; no self-collision; simulation unstable at high wind; mouse drag doesn't raycast correctly.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-solar-orrery",
+      "title": "Solar System Orrery",
+      "category": "threejs",
+      "tags": ["simulation", "space-themed", "educational"],
+      "prompt": "Create a single-page Three.js solar system simulation with accurate relative planet sizes and orbital periods. Include all 8 planets with orbits shown as elliptical lines, a time speed control, planet labels that face the camera, click-to-focus on any planet with smooth camera transition, and an info panel showing the selected planet's data. Add a toggleable asteroid belt and moon orbits for Earth and Jupiter.",
+      "notes": "Watch for: planets overlap due to scale; orbits not elliptical; camera transition jarring; labels unreadable at distance.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-voxel-sculptor",
+      "title": "Voxel Sculpting Tool",
+      "category": "threejs",
+      "tags": ["tool", "editor", "grid-based"],
+      "prompt": "Build a single-page Three.js voxel sculpting tool with brush size controls, multiple materials (at least 6 colors), undo/redo with Ctrl+Z/Ctrl+Y, and JSON export of the voxel data. Include a material palette, brush size slider (1-5 voxels), eraser mode, grid visualization toggle, and camera orbit controls. The tool should support click-to-place and click-drag-to-paint workflows.",
+      "notes": "Watch for: missing undo; slow updates with many voxels; weak raycasting on faces; paint bleeds to wrong face.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-terrain-painter",
+      "title": "Terrain Painter",
+      "category": "threejs",
+      "tags": ["tool", "editor", "low-poly", "nature-themed"],
+      "prompt": "Create a single-page Three.js terrain editor with height painting. Start with a flat grid plane that the user can sculpt by painting height values. Include raise/lower/smooth/flatten brush modes, adjustable brush size and strength, texture layers (grass, rock, snow) painted by altitude, water level slider, and a minimap showing the terrain from above. Export the heightmap as an image.",
+      "notes": "Watch for: normals not updated after edit; brush doesn't follow terrain surface; smooth mode doesn't work; performance with large grid.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-fractal-explorer",
+      "title": "Fractal Explorer",
+      "category": "threejs",
+      "tags": ["generative-art", "raymarching", "shader"],
+      "prompt": "Build a single-page Three.js 3D fractal explorer. Render a Mandelbulb or Menger sponge using raymarching in a fragment shader displayed on a full-screen quad. Include zoom controls, iteration depth slider, color palette selection (at least 4 palettes), orbit camera, cross-section plane that slices through the fractal, and a screenshot button. Show render time per frame.",
+      "notes": "Watch for: shader compilation errors; raymarching artifacts at edges; too slow without adaptive stepping; cross-section doesn't work.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-underwater",
+      "title": "Underwater Exploration",
+      "category": "threejs",
+      "tags": ["game", "exploration", "nature-themed", "organic"],
+      "prompt": "Build a single-page Three.js underwater exploration scene. The player swims through a coral reef environment using WASD + mouse look. Include procedurally generated coral formations, schools of fish using boid behavior, caustic light patterns on the sea floor, floating particle effects (bubbles, plankton), depth-based fog that increases with depth, and an oxygen meter that depletes over time. Find hidden treasure items scattered in the reef.",
+      "notes": "Watch for: fish swim through coral; no sense of being underwater; caustics look wrong; oxygen timer feels arbitrary.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-neon-city-flythrough",
+      "title": "Neon City Flythrough",
+      "category": "threejs",
+      "tags": ["scene", "synthwave", "procedural", "first-person"],
+      "prompt": "Create a single-page Three.js scene of a synthwave neon city made from procedural box buildings. Include animated camera flythrough, emissive windows, atmospheric fog, and a starfield background. Add keyboard controls (WASD + mouse look), and expose fly speed, fog density, and building density in a small on-screen control panel. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: controls fighting the automated camera; repetitive buildings; excessive bloom or fog hiding the scene; pointer lock not explained or released cleanly.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-procedural-terrain-biomes",
+      "title": "Procedural Terrain Biomes",
+      "category": "threejs",
+      "tags": ["generative-art", "terrain", "nature-themed", "simulation"],
+      "prompt": "Create a single-page Three.js terrain generator using layered noise. Include mountains, plains, and valleys with color-by-height biome shading, directional sunlight, soft shadows, and orbit controls. Add a smooth day/night cycle that changes sky and fog color. Provide sliders for noise scale, octave count, and water level. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: controls that do not regenerate terrain; abrupt biome bands; mismatched water and terrain levels; expensive geometry rebuilds on every slider event.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-audio-reactive-crystal-field",
+      "title": "Audio-Reactive Crystal Field",
+      "category": "threejs",
+      "tags": ["audio", "generative-art", "particles", "interactive"],
+      "prompt": "Create a single-page Three.js experience with hundreds of crystal spikes that react to audio frequency bands from the Web Audio API. Animate scale, hue, and emissive intensity from bass/mid/treble ranges. Include fallback demo animation if mic permission is denied. Keep frame rate smooth and output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: no user-gesture audio unlock; all crystals reacting identically; missing microphone-denied fallback; excessive material or draw-call overhead.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-exploding-modular-cube",
+      "title": "Exploding Modular Cube",
+      "category": "threejs",
+      "tags": ["animation", "interaction", "raycasting", "product-demo"],
+      "prompt": "Build a single-page Three.js demo of a segmented cube that explodes outward on click and reassembles with easing. Add raycast hover highlighting, piece spin animation, and user controls for explosion strength and reset. Keep visuals clean with shadows and soft ambient fill. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: pieces reassembling in the wrong orientation; hover state sticking; explosion direction not based on each piece position; animation state breaking on repeated clicks.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-gpu-galaxy-particles",
+      "title": "GPU Galaxy Particles",
+      "category": "threejs",
+      "tags": ["particles", "space-themed", "buffer-geometry", "performance"],
+      "prompt": "Create a single-page Three.js particle galaxy with at least 200k points using BufferGeometry. Add spiral arms, color gradients from core to rim, subtle rotation, and mouse parallax camera movement. Include a small HUD showing particle count and FPS. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: constructing one object per particle; inaccurate FPS or particle HUD values; flat random-disc distribution instead of spiral arms; unnecessary per-frame buffer uploads.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-portal-chamber",
+      "title": "Portal Chamber",
+      "category": "threejs",
+      "tags": ["scene", "shader", "sci-fi", "cinematic"],
+      "prompt": "Create a single-page Three.js sci-fi chamber with a central portal ring and animated portal surface distortion. Use shader material effects (or UV distortion) for swirling energy, emissive rim lighting, drifting dust particles, and a slow cinematic camera. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: a static portal texture; blown-out emissive materials; transparent effects sorting incorrectly; camera framing that clips the chamber.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-jelly-cube",
+      "title": "Jelly Cube",
+      "category": "threejs",
+      "tags": ["simulation", "soft-body", "interaction", "pbr"],
+      "prompt": "Build a single-page Three.js soft-body illusion: a cube mesh with vertex wobble, spring damping, and mouse-proximity deformation. Add a reflective floor, balanced PBR lighting, and a toggle between wireframe and shaded mode. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: cumulative vertex drift; deformation calculated in the wrong coordinate space; unstable spring motion; reflections overwhelming the object.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-rainy-cyber-alley",
+      "title": "Rainy Cyber Alley",
+      "category": "threejs",
+      "tags": ["scene", "cyberpunk", "weather", "cinematic"],
+      "prompt": "Create a single-page Three.js rainy cyberpunk alley with falling rain particles, animated neon signs, puddle reflections, and drifting steam quads. Add occasional lightning flashes that momentarily increase scene exposure. Include orbit + slight walk controls. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: rain passing visibly through roofs; fake reflections that do not align with the scene; transparent steam artifacts; walk and orbit controls conflicting.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-mini-planet",
+      "title": "Mini Planet",
+      "category": "threejs",
+      "tags": ["low-poly", "procedural", "nature-themed", "camera"],
+      "prompt": "Build a single-page Three.js low-poly tiny planet scene with procedural placement of trees, houses, and rocks on a sphere. Include rotating clouds, toon-style shading, and click-to-focus camera transitions. Keep assets fully procedural (no external models). Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: props not aligned to the sphere normal; overlapping placements; click targets too small; camera transitions passing through the planet.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-fractal-tunnel",
+      "title": "Fractal Tunnel",
+      "category": "threejs",
+      "tags": ["generative-art", "abstract", "camera", "looping-animation"],
+      "prompt": "Create a single-page Three.js abstract fractal tunnel ride with repeated geometric segments, color pulses, and forward camera travel. Add controls for speed, palette, and pulse frequency. Ensure the animation loops smoothly. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: visible popping at the loop boundary; camera clipping through segments; flickering high-frequency colour pulses; unbounded geometry growth.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-magnetic-marbles",
+      "title": "Magnetic Marbles",
+      "category": "threejs",
+      "tags": ["simulation", "physics", "interactive", "motion-trails"],
+      "prompt": "Build a single-page Three.js marble playground with simplified physics (velocity + damping + collisions). Let users place attractor/repulsor points by clicking. Render motion trails and add reset/randomize controls. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: singular forces launching marbles at close range; unstable collision resolution; trails causing unbounded allocations; unclear attractor versus repulsor feedback.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-hologram-showcase",
+      "title": "Hologram Showcase",
+      "category": "threejs",
+      "tags": ["product-demo", "hologram", "interaction", "cinematic"],
+      "prompt": "Create a single-page Three.js product pedestal viewer with a floating object, hologram scanline effect, rim lights, and hotspot labels. Add smooth click-to-focus transitions and auto-rotation toggle. Keep layout minimal and cinematic. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: hotspot labels drifting from their anchors; scanlines ignoring object depth; auto-rotation fighting focus transitions; poor text contrast.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-voxel-builder",
+      "title": "Voxel Builder",
+      "category": "threejs",
+      "tags": ["tool", "editor", "voxel", "raycasting"],
+      "prompt": "Build a single-page Three.js voxel editor where users place/remove blocks with raycasting and grid snapping. Include color picker, ghost preview cube, save/load from localStorage, and clear scene button. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: placing blocks inside occupied cells; removing the wrong face; ghost preview not matching grid placement; malformed localStorage data breaking startup.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-lava-planet",
+      "title": "Lava Planet",
+      "category": "threejs",
+      "tags": ["space-themed", "shader", "procedural", "cinematic"],
+      "prompt": "Create a single-page Three.js lava planet with animated emissive cracks, atmosphere shell glow, and orbiting debris. Add configurable rotation speed and glow intensity. Keep materials dramatic and high contrast. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: cracks that rotate independently of the surface; atmosphere rendered as an opaque shell; excessive glow losing surface detail; debris intersecting the planet.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-endless-runner-prototype",
+      "title": "Endless Runner Prototype",
+      "category": "threejs",
+      "tags": ["game", "procedural", "collision-detection", "arcade"],
+      "prompt": "Build a single-page Three.js endless runner prototype with procedural track chunks, moving obstacles, score counter, and collision detection. Add jump/slide keyboard actions and restart flow. Keep it compact but polished. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: gaps between recycled track chunks; frame-rate-dependent movement; unreliable jump or slide hitboxes; restart leaving stale obstacles or timers.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-dna-sculpture",
+      "title": "DNA Sculpture",
+      "category": "threejs",
+      "tags": ["visualization", "generative-art", "educational", "animation"],
+      "prompt": "Create a single-page Three.js animated DNA helix made from spheres and connecting cylinders, with gradient color mapping and gentle camera orbit. Add controls for helix pitch, radius, and rotation speed. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: connector cylinders not oriented between bases; control changes rebuilding excessive geometry; incorrect paired-strand phase; motion that causes nausea.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-origami-fold",
+      "title": "Origami Fold",
+      "category": "threejs",
+      "tags": ["animation", "geometry", "timeline", "wireframe"],
+      "prompt": "Build a single-page Three.js origami-inspired folding animation transforming a flat mesh into a complex abstract shape over time. Provide a timeline scrubber and play/pause controls. Include wireframe overlay option. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: linear vertex morphing that does not resemble folding; timeline and playback falling out of sync; self-intersecting faces; wireframe z-fighting.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-storm-ocean",
+      "title": "Storm Ocean",
+      "category": "threejs",
+      "tags": ["scene", "water", "weather", "shader"],
+      "prompt": "Create a single-page Three.js storm ocean scene with wave displacement, moody sky dome, and random lightning flashes affecting global lighting. Add camera drift and wind intensity controls. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: waves moving without updated normals; lightning that only changes the background; horizon seams; camera clipping below the water surface.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-scifi-hangar-drones",
+      "title": "Sci-Fi Hangar Drones",
+      "category": "threejs",
+      "tags": ["scene", "sci-fi", "animation", "cinematic"],
+      "prompt": "Build a single-page Three.js sci-fi hangar with hovering drones, animated warning lights, emissive runway strips, and subtle volumetric-style fog planes. Include drone formation toggle and cinematic camera path. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: drones clipping into one another during formation changes; fog planes visibly intersecting geometry; warning lights not affecting nearby surfaces; camera leaving the hangar.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-3d-ribbon-painter",
+      "title": "3D Ribbon Painter",
+      "category": "threejs",
+      "tags": ["tool", "drawing", "generative-art", "additive-blending"],
+      "prompt": "Create a single-page Three.js interactive ribbon painter where mouse movement generates 3D ribbon trails with additive blending and fade-out. Add color picker, trail width control, clear button, and screenshot button. Output one self-contained HTML file with inline JavaScript.",
+      "notes": "Watch for: ribbons twisting or collapsing at sharp turns; unbounded geometry growth; fade-out only changing material opacity globally; screenshots omitting the WebGL canvas.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-3d-gravity-well-simulation",
+      "title": "3D Gravity Well Simulation",
+      "category": "threejs",
+      "tags": ["simulation", "physics", "educational", "interactive"],
+      "prompt": "Create an interactive 3D simulation of a gravity well using Three.js, HTML, and CSS. The simulation should feature a deformable 3D grid representing spacetime. Allow the user to place multiple massive objects (e.g., stars, black holes) at arbitrary locations on the grid. Each massive object should visually deform the grid based on its mass, demonstrating spacetime curvature. Implement the ability to launch small particles with adjustable initial velocities. Display the trajectories of these particles as they move through the warped spacetime, bending realistically around the massive objects. Include controls to adjust the mass and initial velocity of objects and particles. The visual style should be clean and intuitive, clearly illustrating the effect of gravity on the fabric of spacetime. Ensure the application is a single HTML page with embedded CSS and JavaScript (Three.js).",
+      "notes": "Watch for: grid deformation presented as the particle physics itself; unstable integration near massive objects; trajectories growing without bounds; controls not applying to the selected object or particle.",
+      "createdAt": "2026-07-10T00:00:00Z"
+    },
+    {
+      "id": "threejs-gta-6-game",
+      "title": "GTA 6 Game",
+      "category": "threejs",
+      "tags": ["game", "open-world", "driving", "third-person", "action"],
+      "prompt": "Build a polished single-page Three.js open-world crime-action game inspired by GTA 6, set in an original neon coastal city. Deliver one standalone HTML file with embedded CSS and JavaScript; Three.js may be loaded from a public CDN, but do not use copyrighted logos, named characters, map data, audio, or ripped assets. Create all visuals from performant low-poly procedural geometry and simple generated textures. The game must be immediately playable and include: a third-person character with responsive WASD movement, sprint, jump, mouse-controlled camera, basic raycast shooting, health, and the ability to enter or exit nearby vehicles with E; arcade vehicle handling with acceleration, braking, reverse, steering, collisions, vehicle durability, and a smooth chase camera; a compact explorable city containing roads and intersections, varied buildings, a beach and ocean, palm trees, neon nightlife areas, ramps, streetlights, and recognizable landmarks; ambient traffic following road routes and pedestrians wandering on pavements with lightweight avoidance behavior; and a mission loop with clear objectives such as reaching a contact, stealing a marked car, collecting packages, escaping a pursuit, and delivering the vehicle to a safehouse for a cash reward. Add a 0-to-5-star wanted system: reckless driving, attacking civilians, or shooting raises the level; police cars spawn at sensible road positions, pursue the player, and search nearby after losing sight; the wanted level falls only after the player evades police for a visible cooldown. Include a polished HUD with health, vehicle durability, cash, wanted stars, current mission text, contextual control prompts, and a rotating minimap showing roads, the player, mission waypoint, police, and nearby vehicles. Add a warm sunset-to-night lighting cycle with neon signs becoming brighter after dark, shadows, atmospheric fog, subtle ocean animation, tyre smoke, collision sparks, muzzle flashes, and restrained screen shake. Provide a title/start overlay, concise controls guide, pause support, game-over and mission-complete states, and a restart button. Use delta-time movement, object pooling for transient effects, capped NPC counts, simple collision volumes, and distance-based updates so the game remains smooth. Avoid placeholder buttons, TODOs, or purely decorative systems: every displayed control and gameplay feature must work.",
+      "notes": "Watch for: a static city with no real gameplay loop; entering vehicles that breaks player or camera state; frame-rate-dependent driving; traffic and police ignoring roads; wanted stars that never decay; missions that cannot complete; minimap markers using the wrong orientation; excessive meshes, shadows, or NPC updates causing poor performance.",
+      "createdAt": "2026-08-13T00:00:00Z"
+    },
+
+    {
+      "id": "p5js-flow-field-painter",
+      "title": "Flow Field Painter",
+      "category": "p5js",
+      "tags": ["generative-art", "particles", "perlin-noise"],
+      "prompt": "Create a single-page p5.js sketch: a Perlin-noise flow field painter. Thousands of particles follow the field and leave fading translucent trails that build up into a painting. Include sliders for noise scale, particle count, and trail opacity, a colour palette selector with at least 4 curated palettes, click-to-reseed with a new field, and a button to save the canvas as a PNG. The result should stay smooth at 60fps with at least 2000 particles.",
+      "notes": "Watch for: trails erased every frame instead of accumulating; particles cluster at edges; frame rate collapse at high counts; palettes look muddy.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "p5js-falling-sand",
+      "title": "Falling Sand Automaton",
+      "category": "p5js",
+      "tags": ["simulation", "cellular-automaton", "sandbox"],
+      "prompt": "Create a single-page p5.js falling-sand cellular automaton. Implement at least five elements with distinct behaviours: sand (falls and piles), water (flows sideways), stone (static), fire (rises, burns wood and dies out), and wood (flammable, static). Provide an element picker, adjustable brush size, an eraser, pause/step controls, and a clear button. The grid should be at least 200x150 cells and update smoothly.",
+      "notes": "Watch for: sand falls through water unrealistically; water never levels out; fire spreads instantly or never; update order artifacts (left-to-right bias).",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "p5js-audio-visualizer",
+      "title": "Audio-Reactive Visualizer",
+      "category": "p5js",
+      "tags": ["audio", "generative-art", "interactive"],
+      "prompt": "Create a single-page p5.js audio-reactive visualizer using microphone input. Show a circular FFT spectrum, a waveform ring, and a particle system that pulses on detected beats. Include a sensitivity slider, at least 3 visual themes, and a smooth idle animation plus a clear message when microphone access is denied or unavailable. Audio must only start after a user gesture (click to start).",
+      "notes": "Watch for: no user-gesture audio unlock; crash when mic denied; beat detection that just maps volume; visuals not actually driven by FFT bands.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "p5js-boids",
+      "title": "Boids Flocking Playground",
+      "category": "p5js",
+      "tags": ["simulation", "boids", "interactive"],
+      "prompt": "Create a single-page p5.js boids flocking simulation with at least 200 boids at 60fps. Provide live sliders for separation, alignment, and cohesion weights plus perception radius. Holding the mouse button spawns a predator at the cursor that the flock flees from. Include wrap-around edges, a toggle to visualize one boid's perception radius and neighbours, and a boid count slider.",
+      "notes": "Watch for: O(n^2) neighbour search killing the frame rate; boids jitter instead of flocking; sliders that don't visibly change behaviour; predator ignored.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "p5js-seasonal-tree",
+      "title": "Recursive Seasonal Tree",
+      "category": "p5js",
+      "tags": ["generative-art", "fractal", "nature-themed"],
+      "prompt": "Create a single-page p5.js sketch of a recursive fractal tree that cycles through the four seasons: spring buds, lush summer leaves, autumn colours with falling leaves, and a bare winter tree with falling snow. Branches should sway gently in the wind. Include sliders for branch angle and recursion depth, a season speed control, and click-to-regrow a new randomized tree. Render at least 8 levels of recursion smoothly.",
+      "notes": "Watch for: tree redrawn identically every frame (no randomness persistence); falling leaves not tied to the tree; recursion depth slider causing freezes; wind sway rotating the whole tree rigidly.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "p5js-kaleidoscope",
+      "title": "Kaleidoscope Drawing App",
+      "category": "p5js",
+      "tags": ["tool", "drawing", "symmetry"],
+      "prompt": "Create a single-page p5.js kaleidoscope drawing app. Strokes drawn with the mouse are mirrored across an adjustable number of symmetry segments (4 to 16, with optional reflection within each segment). Include a brush size slider, a colour mode that slowly cycles hue while drawing, an undo button for the last stroke, clear, and save-as-PNG. Show a subtle guide overlay of the symmetry segments that can be toggled off.",
+      "notes": "Watch for: mirroring math wrong off-centre; undo clears everything; hue cycling resets every stroke; guide lines baked into the saved PNG.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "p5js-double-pendulum",
+      "title": "Double Pendulum Chaos",
+      "category": "p5js",
+      "tags": ["simulation", "physics", "chaos"],
+      "prompt": "Create a single-page p5.js double pendulum simulation using the real equations of motion (not faked). Show three pendulums started with infinitesimally different initial angles in different colours to demonstrate chaotic divergence, each leaving a fading trail. Allow dragging either bob to set new initial conditions (which resets all three), a trail length slider, a gravity slider, and a readout of total energy to show the integration is stable.",
+      "notes": "Watch for: energy blowing up (bad integrator); pendulums not actually diverging (same seeds); drag interaction fighting the physics; trails drawn as connected lines across resets.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "p5js-metaball-lava-lamp",
+      "title": "Metaball Lava Lamp",
+      "category": "p5js",
+      "tags": ["generative-art", "metaballs", "ambient"],
+      "prompt": "Create a single-page p5.js lava lamp using metaballs. Blobs rise and fall with heat-driven buoyancy, merge and split visually using a proper field-threshold technique (marching squares or per-pixel field evaluation — not just overlapping circles). The mouse gently attracts nearby blobs. Include a blob count slider, at least 4 colour themes with smooth gradients, and a glass-lamp silhouette frame around the simulation.",
+      "notes": "Watch for: blobs are plain circles that overlap without merging; per-pixel evaluation too slow at full resolution; blobs escaping the lamp; buoyancy looks like random drift.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+
+    {
+      "id": "htmljs-wordle",
+      "title": "Wordle Clone",
+      "category": "html-js",
+      "tags": ["game", "word-game", "no-libraries"],
+      "prompt": "Build a complete Wordle clone as a single HTML page using only vanilla JavaScript and CSS — no libraries. Embed a word list of at least 300 common 5-letter words. Include the 6-guess grid with flip animations, an on-screen keyboard that mirrors letter states (correct/present/absent), physical keyboard support, invalid-word shake feedback, a share button that copies the emoji result grid, and win/loss statistics persisted in localStorage.",
+      "notes": "Watch for: duplicate-letter colouring wrong (the classic bug); word list too small or invalid words accepted; keyboard state not updating; stats not persisting.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "htmljs-asteroids",
+      "title": "Canvas Asteroids",
+      "category": "html-js",
+      "tags": ["game", "canvas", "retro", "no-libraries"],
+      "prompt": "Build the classic Asteroids game on a single HTML page with vanilla JavaScript and a canvas — no libraries. Vector-line aesthetic, ship with rotation and thrust momentum, screen wrap-around, asteroids that split into smaller pieces when shot, occasional UFO, hyperspace jump on a key press, progressive levels, lives, score, and a localStorage high-score table. Add simple retro sound effects synthesized with the Web Audio API (no audio files).",
+      "notes": "Watch for: no momentum/inertia on the ship; collision detection using bounding boxes on rotated shapes; asteroids spawning on top of the player; audio context not unlocked by user gesture.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "htmljs-pixel-editor",
+      "title": "Pixel Art Editor",
+      "category": "html-js",
+      "tags": ["tool", "editor", "canvas", "no-libraries"],
+      "prompt": "Build a pixel art editor as a single HTML page in vanilla JavaScript — no libraries. Support 16x16, 32x32, and 64x64 canvases, a default palette plus a custom colour picker, pencil, flood fill, eraser, and eyedropper tools, undo/redo (Ctrl+Z / Ctrl+Y), a live preview at actual size, grid toggle, save/load named drawings via localStorage, and PNG export at a selectable scale (1x/4x/8x). Drawing should work with click and drag, including outside-the-lines drag handling.",
+      "notes": "Watch for: flood fill stack overflow or filling the whole canvas; undo history capturing every drag pixel as a separate step; export ignoring the chosen scale; mouseup outside the canvas leaving the tool stuck down.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "htmljs-synth-keyboard",
+      "title": "WebAudio Synth Keyboard",
+      "category": "html-js",
+      "tags": ["tool", "audio", "music", "no-libraries"],
+      "prompt": "Build a playable synthesizer as a single HTML page using the Web Audio API and vanilla JavaScript — no libraries or audio files. Two octaves of on-screen piano keys playable by mouse/touch and computer keyboard (with the key map shown), waveform selector (sine/square/saw/triangle), ADSR envelope sliders, a low-pass filter cutoff/resonance control, a delay effect with feedback, polyphony, and a real-time oscilloscope display of the output. Audio must start only after a user gesture.",
+      "notes": "Watch for: clicks/pops from missing envelope ramps; notes sticking when keys are released outside the element; no polyphony (one oscillator reused); oscilloscope not connected to the actual output chain.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "htmljs-tetris",
+      "title": "Tetris",
+      "category": "html-js",
+      "tags": ["game", "canvas", "retro", "no-libraries"],
+      "prompt": "Build a full-featured Tetris as a single HTML page in vanilla JavaScript — no libraries. Include the 7 standard tetrominoes with correct colours, SRS-style wall kicks, hold piece, next-piece queue showing 3 pieces, ghost piece, soft and hard drop, line-clear animation, levels that speed up, standard scoring (single/double/triple/tetris with level multiplier), pause, game over with restart, and a localStorage high score. Support both keyboard controls and on-screen buttons for touch.",
+      "notes": "Watch for: rotation near walls failing (no kicks); hold allowing infinite swaps; gravity tied to frame rate instead of a timer; line clear removing wrong rows.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "htmljs-typing-test",
+      "title": "Typing Speed Test",
+      "category": "html-js",
+      "tags": ["tool", "game", "no-libraries"],
+      "prompt": "Build a typing speed test as a single HTML page in vanilla JavaScript — no libraries. Show a flowing stream of random common words; typed characters are marked correct/incorrect in place with a caret that advances. Offer 30s and 60s modes, live WPM and accuracy that update while typing, and a results screen with final WPM, accuracy, a per-key error breakdown, and a canvas line graph of WPM over the duration of the test. Store past results in localStorage and chart the history on a separate tab.",
+      "notes": "Watch for: WPM computed from characters without the /5 convention; backspace handling corrupting the comparison; timer starting before the first keystroke; results graph axes unlabeled or unscaled.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "htmljs-markdown-previewer",
+      "title": "Markdown Previewer (Own Parser)",
+      "category": "html-js",
+      "tags": ["tool", "parser", "no-libraries"],
+      "prompt": "Build a split-pane markdown previewer as a single HTML page where you must write the markdown parser yourself in vanilla JavaScript — absolutely no libraries. Support headings, bold, italic, inline code, fenced code blocks, links, images, ordered and unordered lists with nesting, blockquotes, horizontal rules, and tables. The preview updates live as you type, scroll position stays roughly synchronized between panes, and the output must be HTML-escaped so script tags in the input cannot execute. Pre-fill the editor with a document demonstrating every supported feature.",
+      "notes": "Watch for: nested lists broken; bold/italic regex greediness mangling text; raw HTML injection (XSS) not escaped; code blocks having their contents parsed as markdown.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "htmljs-kanban",
+      "title": "Kanban Board",
+      "category": "html-js",
+      "tags": ["tool", "productivity", "drag-drop", "no-libraries"],
+      "prompt": "Build a kanban board as a single HTML page in vanilla JavaScript — no libraries. Columns can be added, renamed, reordered, and deleted; cards support a title, description, coloured labels, and a due date that highlights when overdue. Cards drag and drop between and within columns using native HTML5 drag-and-drop with a clear drop indicator. Everything persists to localStorage, and there are export-to-JSON and import-from-JSON buttons. Include sensible empty states and keyboard access for adding/editing cards.",
+      "notes": "Watch for: drop position always appending to the end; dragover not preventing default (drop never fires); state not persisted after every mutation; deleting a column orphaning its cards silently.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+
+    {
+      "id": "shader-mandelbulb",
+      "title": "Raymarched Mandelbulb",
+      "category": "shader",
+      "tags": ["raymarching", "fractal", "raw-webgl"],
+      "prompt": "Create a single HTML page that renders a raymarched Mandelbulb fractal in a full-screen WebGL fragment shader. Write all the WebGL boilerplate in plain JavaScript — no libraries. Include mouse-drag orbit and scroll zoom, a power slider (2–12) that morphs the fractal, at least 3 colour palettes based on orbit traps or iteration count, soft shadows or ambient occlusion for depth, and an FPS counter. The shader must compile cleanly and degrade gracefully (lower max steps) when slow.",
+      "notes": "Watch for: shader compile errors (the #1 failure); banding/overstep artifacts; camera math gimbal-locking; fractal silhouette but no surface detail.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "shader-voronoi-flow",
+      "title": "Animated Voronoi Flow",
+      "category": "shader",
+      "tags": ["generative-art", "voronoi", "raw-webgl"],
+      "prompt": "Create a single HTML page with a full-screen WebGL fragment shader showing animated Voronoi cells whose seed points drift smoothly over time. Write all WebGL boilerplate in plain JavaScript — no libraries. Cell edges should glow, cell interiors should shade by distance to the seed, and the pattern near the mouse cursor should ripple or distort. Include sliders for cell density and animation speed, and a colour scheme selector with at least 3 schemes.",
+      "notes": "Watch for: cell edges aliased/flickering; seeds jumping instead of drifting (no smooth hash animation); mouse uniform in wrong coordinate space; density slider requiring recompile.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "shader-water-caustics",
+      "title": "Water Caustics Pool",
+      "category": "shader",
+      "tags": ["water", "raymarching", "raw-webgl"],
+      "prompt": "Create a single HTML page with a full-screen WebGL fragment shader of looking down into a sunlit swimming pool: a tiled floor with animated caustic light patterns, subtle surface refraction distorting the tiles, and volumetric light shafts. Write all WebGL boilerplate in plain JavaScript — no libraries. Clicking spawns an expanding ripple ring that distorts the caustics, with several simultaneous ripples supported via uniforms. Include a sun-angle slider and a water-depth slider.",
+      "notes": "Watch for: caustics that are just scrolling noise; ripples not affecting the refraction; tile pattern without perspective; click coordinates flipped vertically.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "shader-clouds",
+      "title": "Raymarched Clouds",
+      "category": "shader",
+      "tags": ["volumetric", "raymarching", "raw-webgl"],
+      "prompt": "Create a single HTML page with a full-screen WebGL fragment shader rendering volumetric clouds over a gradient sky using raymarched FBM noise. Write all WebGL boilerplate in plain JavaScript — no libraries. The clouds should drift slowly, be lit by a sun whose direction follows the mouse position, and show silver-lining scattering when backlit. Include a time-of-day slider that moves the sun from dawn through midday to dusk with appropriate sky colours, and a cloud-coverage slider.",
+      "notes": "Watch for: clouds looking like flat noise (no lighting integration along the ray); frame rate collapse from too many octaves/steps; sun direction not matching the visual sun position; banding without dithering.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "shader-fire",
+      "title": "Procedural Fire",
+      "category": "shader",
+      "tags": ["fire", "noise", "raw-webgl"],
+      "prompt": "Create a single HTML page with a full-screen WebGL fragment shader of a procedural torch flame: noise-driven flame body with a believable hot-core-to-smoke colour ramp (white/yellow core, orange mid, red edges, dark smoke), upward advection, flickering, and drifting spark particles. Write all WebGL boilerplate in plain JavaScript — no libraries. Include a wind slider that bends the flame, an intensity/fuel slider that changes flame height, and a button cycling between torch, campfire, and candle presets.",
+      "notes": "Watch for: flame that scrolls uniformly upward like a texture; colour ramp with hard bands; wind translating the whole flame instead of bending it; sparks on a visible grid.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "shader-crt",
+      "title": "CRT Post-Processing",
+      "category": "shader",
+      "tags": ["post-processing", "retro", "raw-webgl"],
+      "prompt": "Create a single HTML page that renders a simple animated test scene (bouncing shapes or scrolling text drawn to an offscreen canvas or framebuffer) and then applies a CRT post-processing shader: scanlines, barrel/curvature distortion with darkened corners, RGB phosphor mask, chromatic aberration, slight bloom, occasional horizontal sync wobble, and animated noise/grain. Write all WebGL boilerplate in plain JavaScript — no libraries. Provide individual toggles and strength sliders for each effect and a master 'CRT off' bypass for comparison.",
+      "notes": "Watch for: effects applied to a black screen (source scene never rendered into the texture); curvature sampling outside the texture leaving smears; scanlines aliasing with the display resolution; toggles that don't actually isolate effects.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "shader-game-of-life",
+      "title": "Shader Game of Life",
+      "category": "shader",
+      "tags": ["cellular-automaton", "feedback-buffer", "raw-webgl"],
+      "prompt": "Create a single HTML page implementing Conway's Game of Life entirely on the GPU using ping-pong framebuffers and a WebGL fragment shader. Write all WebGL boilerplate in plain JavaScript — no libraries. The grid should be at least 512x512. Drawing with the mouse paints live cells (with adjustable brush size), and cells are coloured by age (newborn bright, old cells fading through a palette). Include play/pause, single-step, speed control, randomize, clear, and a couple of classic pattern stamps (glider gun, pulsar) placeable at the cursor.",
+      "notes": "Watch for: reading and writing the same texture (no ping-pong, corrupt state); neighbour sampling off by half a texel; mouse painting in the wrong place due to coordinate flip; age colouring lost because state is binary.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "shader-seascape",
+      "title": "Ocean Seascape",
+      "category": "shader",
+      "tags": ["water", "raymarching", "raw-webgl"],
+      "prompt": "Create a single HTML page with a full-screen WebGL fragment shader rendering an open ocean: layered FBM or Gerstner-style waves with proper normals, sun glint and specular reflection, sky reflection that varies with viewing angle (fresnel), foam on wave crests, and atmospheric haze toward the horizon. Write all WebGL boilerplate in plain JavaScript — no libraries. Mouse Y controls camera height from just above the surface to a high vantage, and a storm slider morphs the sea from calm glass to heavy swell with matching sky.",
+      "notes": "Watch for: waves that are just scrolling bump noise with no horizon; missing fresnel so water looks like plastic; foam painted everywhere; horizon line curving or breaking at screen edges.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+
+    {
+      "id": "games-flappy-bird",
+      "title": "Flappy Bird Clone",
+      "category": "games-graphics",
+      "tags": ["game", "canvas", "arcade", "no-libraries"],
+      "prompt": "Build a Flappy Bird clone as a single HTML page with vanilla JavaScript and canvas — no libraries or image assets; draw the bird, pipes, ground, and parallax background in code. Include tap/click/spacebar flapping with believable gravity and rotation, randomized pipe gaps, score with medal tiers on the game-over screen, a localStorage best score, day/night alternating backgrounds, and a subtle screen shake on death. The game must be restartable instantly.",
+      "notes": "Watch for: physics tied to frame rate; hitboxes much larger than the drawn bird; pipes spawning unwinnable gaps; no idle/ready state before the first flap.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "games-ragdoll",
+      "title": "Verlet Ragdoll Playground",
+      "category": "games-graphics",
+      "tags": ["physics", "sandbox", "canvas", "no-libraries"],
+      "prompt": "Build a 2D ragdoll physics playground as a single HTML page using verlet integration in vanilla JavaScript and canvas — no physics libraries. A humanoid ragdoll made of particles and distance constraints (with joint angle limits so limbs don't fold backwards) can be grabbed and thrown with the mouse. Include static obstacles (ramps, pegs, a seesaw), a gravity slider, a button to spawn additional ragdolls, a rope and a cloth banner to show off the same constraint system, and a slow-motion toggle.",
+      "notes": "Watch for: constraints exploding under fast drags; limbs hyper-extending (no angle limits); collision only with the floor, not obstacles; multiple ragdolls tangling into one.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "games-roguelike",
+      "title": "ASCII Roguelike",
+      "category": "games-graphics",
+      "tags": ["game", "roguelike", "procedural", "no-libraries"],
+      "prompt": "Build a turn-based ASCII roguelike as a single HTML page in vanilla JavaScript — no libraries. Procedurally generate dungeons with connected rooms and corridors across at least 5 descending levels. Include field-of-view with fog of war (explored-but-unseen areas dimmed), monsters with simple chase AI that take turns when you move, melee combat with HP/attack/defense, healing potions and weapon pickups, an inventory, a message log, stairs down, a final goal item, and permadeath with a run summary. Render in a monospace grid with colour.",
+      "notes": "Watch for: disconnected rooms (unreachable areas); FOV seeing through walls; monsters moving on the player's turn or not at all; combat math with no feedback in the log.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "games-2048",
+      "title": "2048",
+      "category": "games-graphics",
+      "tags": ["game", "puzzle", "no-libraries"],
+      "prompt": "Build the game 2048 as a single HTML page in vanilla JavaScript — no libraries. Tiles must slide with smooth animations and merge correctly (each tile merges at most once per move), with new tiles spawning in random empty cells. Support arrow keys and touch swipes, score plus localStorage best score, a single-use undo per move, a win state at 2048 with the option to continue, and a game-over detection that only triggers when no moves remain. Match the classic tile colour scheme.",
+      "notes": "Watch for: double merges in one move (4-4-4-4 becoming 16); moves registered when nothing can slide; animations desynced from the logical grid; game over declared with merges still available.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "games-iso-city",
+      "title": "Isometric City Builder",
+      "category": "games-graphics",
+      "tags": ["game", "simulation", "isometric", "no-libraries"],
+      "prompt": "Build a small isometric city builder as a single HTML page in vanilla JavaScript and canvas — no libraries or image assets; draw all isometric tiles in code. On a 20x20 grid the player places roads, houses, shops, parks, and power plants, each with a cost. Houses only grow population if connected to a road and powered; shops generate income from nearby population. Run a simulation tick every few seconds updating money and population shown in a HUD, include bulldoze mode, hover highlighting with valid/invalid placement feedback, and save/load to localStorage.",
+      "notes": "Watch for: isometric screen-to-tile picking off by half a tile; depth sorting drawing back tiles over front ones; road connectivity never checked; economy that only goes up.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "games-fireworks",
+      "title": "Fireworks Display",
+      "category": "games-graphics",
+      "tags": ["particles", "canvas", "ambient", "no-libraries"],
+      "prompt": "Build a fireworks display as a single HTML page in vanilla JavaScript and canvas — no libraries. Rockets launch from the bottom with a trail, arc realistically, and explode into distinct types: peony (sphere), willow (long drooping trails), crackle (secondary mini-explosions), and ring. Click to launch at the cursor, plus an auto-show mode with varied timing and a grand finale button. Render over a night-city silhouette with the display reflected in water at the bottom, and synthesize launch whistles and boom sounds with the Web Audio API (gated behind a first click).",
+      "notes": "Watch for: particles without gravity or drag (static starbursts); all explosion types looking identical; reflection just a mirrored copy at full brightness; thousands of particles allocated per frame causing GC stutter.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "games-chess",
+      "title": "Chess with AI",
+      "category": "games-graphics",
+      "tags": ["game", "board-game", "ai", "no-libraries"],
+      "prompt": "Build a complete chess game as a single HTML page in vanilla JavaScript — no libraries; draw the pieces with Unicode chess characters or in code. Enforce all rules: legal move generation with check detection, castling, en passant, pawn promotion with a piece picker, stalemate, checkmate, and draw by insufficient material. Include click-or-drag moving with legal-move highlighting, a minimax AI opponent with alpha-beta pruning searching at least 3 plies with adjustable difficulty, algebraic move notation in a scrollable list, board flip, and an undo button.",
+      "notes": "Watch for: moves allowed that leave the king in check; castling/en passant missing or wrong; AI taking forever (no pruning) or playing randomly; promotion auto-queening with no choice.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "games-million-particles",
+      "title": "Million Particle Field",
+      "category": "games-graphics",
+      "tags": ["webgl2", "particles", "performance"],
+      "prompt": "Build a single HTML page that renders up to 1,000,000 particles at interactive frame rates using WebGL2 in plain JavaScript — no libraries. Use GPU-friendly techniques (instancing or transform feedback; do not update particles one-by-one on the CPU). The mouse acts as an attractor, switching to a repulsor while the button is held. Colour particles by speed, add slight motion blur or trail fading, and include a particle count selector (10k / 100k / 1M), an FPS counter, and a force-strength slider. It should remain above 30fps at 1M particles on a typical discrete GPU.",
+      "notes": "Watch for: CPU-side per-particle loops (instant failure at 1M); requiring WebGL2 without a fallback message; attractor force exploding velocities; FPS counter measuring the wrong thing.",
+      "createdAt": "2026-06-10T00:00:00Z"
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Connect a data folder and local AI models to LLM Test Bench.">
+  <title>Settings · LLM Test Bench</title>
+  <link rel="stylesheet" href="site.css">
+  <script type="module" src="settings.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./"><span class="brand-mark">LT</span><span>LLM Test Bench</span></a>
+    <nav aria-label="Main navigation">
+      <a href="./">Home</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a>
+    </nav>
+  </header>
+
+  <main class="settings-page">
+    <p class="eyebrow">Local workspace setup</p>
+    <h1>Connect your tools</h1>
+    <p class="settings-intro">Choose a data folder and connect an optional local model server. Your files, endpoint details, and generated work stay on your device.</p>
+
+    <section class="settings-card" aria-labelledby="folder-title">
+      <div class="setting-heading">
+        <div>
+          <p class="setting-label">Data root</p>
+          <h2 id="folder-title">Your working folder</h2>
+        </div>
+        <span class="local-badge">Local only</span>
+      </div>
+
+      <div class="folder-status" id="folder-status" role="status" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        <div>
+          <strong id="status-title">Checking folder access…</strong>
+          <p id="status-detail">Looking for a folder previously connected to this website.</p>
+        </div>
+      </div>
+
+      <button class="button primary folder-button" id="choose-folder" type="button" disabled>Choose folder</button>
+      <p class="setting-help" id="browser-help">Chrome or Edge will show a secure system folder picker. You can revoke access later in your browser's site settings.</p>
+    </section>
+
+    <section class="settings-card model-settings-card" aria-labelledby="models-title">
+      <div class="setting-heading">
+        <div>
+          <p class="setting-label">Local AI</p>
+          <h2 id="models-title">Your local model server</h2>
+        </div>
+        <span class="local-badge">Direct connection</span>
+      </div>
+
+      <p class="setting-help model-intro">The browser talks directly to your own LM Studio or OpenAI-compatible endpoint. Requests are not relayed through LLM Test Bench.</p>
+
+      <ol class="model-setup-steps">
+        <li>Start the server and load a model. For LM Studio, enable CORS in Developer settings or run <code>lms server start --cors</code>.</li>
+        <li>Add the endpoint below—LM Studio normally uses <code>http://localhost:1234</code>.</li>
+        <li>Click <strong>Add &amp; test</strong>, then choose <strong>Allow</strong> if Chrome or Edge asks for local-network access.</li>
+      </ol>
+
+      <form class="model-endpoint-form" id="model-endpoint-form">
+        <label>
+          <span>Server type</span>
+          <select id="model-provider-type">
+            <option value="lmstudio">LM Studio / OpenAI-compatible</option>
+            <option value="unsloth-studio">Unsloth Studio</option>
+          </select>
+        </label>
+        <label>
+          <span>Display name</span>
+          <input id="model-provider-name" value="LM Studio" autocomplete="off">
+        </label>
+        <label class="endpoint-url-field">
+          <span>Base URL</span>
+          <input id="model-provider-url" type="url" value="http://localhost:1234" required spellcheck="false">
+        </label>
+        <label class="endpoint-key-field" id="endpoint-key-field" hidden>
+          <span>API key</span>
+          <input id="model-provider-key" type="password" autocomplete="off" placeholder="Optional local token">
+        </label>
+        <button class="button primary" id="add-model-provider" type="submit">Add &amp; test</button>
+      </form>
+
+      <div class="model-connect-status" id="model-connect-status" role="status" aria-live="polite"></div>
+      <div class="model-provider-list" id="model-provider-list" aria-live="polite"></div>
+    </section>
+
+    <section class="folder-explainer" aria-labelledby="created-title">
+      <div>
+        <p class="eyebrow">What happens next</p>
+        <h2 id="created-title">One root, separate app folders</h2>
+      </div>
+      <p>LLM Test Bench creates a small registry file and separate <code>prompt-gallery</code>, <code>p5-sketch-gallery</code>, and <code>svg-benchmark</code> folders as you use the tools. Saving is append-only by default.</p>
+    </section>
+
+    <div class="settings-actions" aria-label="Open a tool">
+      <a class="button" href="prompt-gallery/">Open Prompt Gallery</a>
+      <a class="button" href="p5-sketch-gallery/">Open p5 Sketch Gallery</a>
+      <a class="button" href="svg-benchmark/">Open SVG Gallery</a>
+    </div>
+  </main>
+
+  <footer><span>LLM Test Bench · MIT licensed</span><span><a href="privacy.html">Privacy</a></span></footer>
+</body>
+</html>
