@@ -97,7 +97,6 @@ async function throwOpenRouterError(res, context = {}) {
       userPromptLength: typeof context.userPrompt === 'string' ? context.userPrompt.length : null,
       userPromptPreview: typeof context.userPrompt === 'string' ? context.userPrompt.slice(0, 120) : null,
     });
-    console.warn('[OpenRouter] Full API key being sent (sensitive):', context.apiKey || '');
     const keyLabel = keyInfo.present
       ? `${keyInfo.prefix}${keyInfo.suffix ? `...${keyInfo.suffix}` : ''} (${keyInfo.length} chars)`
       : 'missing';
