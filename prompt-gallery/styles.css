@@ -2529,8 +2529,14 @@ body {
   font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
-/* In a full-page review the list + preview should fill available height. */
-.runs-view .batch-run-body { flex: 1; min-height: 0; grid-template-columns: 320px 1fr; }
+/* In a full-page review the list + preview should fill available height.
+   The explicit minmax(0, 1fr) row matters: without it the implicit auto row is
+   sized to the (arbitrarily long) run list and overflows the page instead of
+   letting the list scroll inside it. */
+.runs-view .batch-run-body {
+  flex: 1; min-height: 0; grid-template-columns: 320px 1fr;
+  grid-template-rows: minmax(0, 1fr);
+}
 .runs-view .batch-run-list-done { max-height: none; }
 .runs-view .batch-run-left { align-self: stretch; }
 .runs-view .batch-run-left .batch-run-list-done { flex: 1; min-height: 0; }
@@ -2538,7 +2544,8 @@ body {
 /* Compare layout: prompt list on the left, columns of runs on the right.
    Namespaced (rcmp-) so it never collides with the pick-2 CompareView. */
 .rcmp-body {
-  display: grid; grid-template-columns: 260px 1fr; gap: 12px; min-height: 0; flex: 1;
+  display: grid; grid-template-columns: 260px 1fr; grid-template-rows: minmax(0, 1fr);
+  gap: 12px; min-height: 0; flex: 1;
 }
 .rcmp-prompt-list { align-self: stretch; min-height: 0; max-height: none; overflow-y: auto; }
 .rcmp-panel { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; }
@@ -2604,7 +2611,10 @@ body {
 .html-lightbox-stage { flex: 1; min-height: 0; background: #fff; }
 
 @media (max-width: 900px) {
-  .rcmp-body { grid-template-columns: 1fr; }
+  /* Stacked: the list gets a capped height of its own, so hand the rows back
+     to auto sizing rather than squeezing both into one 1fr track. */
+  .rcmp-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
   .rcmp-prompt-list { max-height: 180px; }
-  .runs-view .batch-run-body { grid-template-columns: 1fr; }
+  .runs-view .batch-run-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .runs-view .batch-run-left { max-height: 40vh; }
 }
