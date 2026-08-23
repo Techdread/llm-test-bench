@@ -22,6 +22,7 @@ import { HelpDialog } from '../shared/components/HelpDialog.js';
 import { ensureAppNamespace, getRoot, connectRoot, setRoot } from '../shared/services/data-root-manager.js';
 import { isPublicDistribution } from '../shared/services/distribution.js';
 import * as modelProviders from '../shared/services/model-providers.js';
+import { consumeShowcaseRoute } from '../shared/services/showcase.js';
 
 import { defaultSketchCode, defaultParams } from './services/runtime/sketchRunner.js';
 import { extractParams, syncParamsWithCode } from './services/runtime/paramExtract.js';
@@ -153,6 +154,19 @@ function App() {
     const onHash = () => setRoute(getRoute());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  // Showcase deep-link: a tile on the landing page opens this app with the
+  // sketch already loaded. No directory needed — it lands in the editor.
+  useEffect(() => {
+    let cancelled = false;
+    consumeShowcaseRoute().then((item) => {
+      if (cancelled || !item) return;
+      setPrompt(item.prompt || '');
+      setCode(item.code);
+      setRoute(getRoute());
+    });
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {

@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback } from 'preact/hooks';
 import * as providers from '../services/model-providers.js';
 import { getApiKey, saveApiKey, hasApiKey } from '../services/providers-openrouter.js';
 import { createProvider as createLmStudioProvider } from '../services/providers-lmstudio.js';
+import { createProvider as createOpenAiCompatibleProvider } from '../services/providers-openai-compatible.js';
 import {
   createProvider as createUnslothStudioProvider,
   getApiKey as getUnslothStudioApiKey,
@@ -30,6 +31,23 @@ const LOCAL_PROVIDER_META = {
     emptyText: 'No LM Studio endpoints configured',
     needsKey: false,
     create: createLmStudioProvider,
+  },
+  'openai-compatible': {
+    title: 'OpenAI-Compatible',
+    pluralTitle: 'OpenAI-Compatible Endpoints',
+    icon: 'fa-plug',
+    defaultName: 'OpenAI-Compatible',
+    defaultUrl: 'http://127.0.0.1:8080',
+    placeholderName: 'Qwen box (Tailscale)',
+    placeholderUrl: 'http://qwen-box.tailnet.ts.net:8081',
+    emptyText: 'No OpenAI-compatible endpoints configured',
+    // Optional here: plenty of local servers take no key at all.
+    needsKey: true,
+    keyOnProvider: true,
+    keyPlaceholder: 'Optional — leave blank if the server takes no key',
+    supportsModelIds: true,
+    supportsProxy: true,
+    create: createOpenAiCompatibleProvider,
   },
   'unsloth-studio': {
     title: 'Unsloth Studio',
@@ -69,6 +87,8 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
   const [newUrl, setNewUrl] = useState('');
   const [newType, setNewType] = useState('lmstudio');
   const [newApiKey, setNewApiKey] = useState('');
+  const [newModelIds, setNewModelIds] = useState('');
+  const [newUseProxy, setNewUseProxy] = useState(true);
   const [newTags, setNewTags] = useState('');
   const [newTimeout, setNewTimeout] = useState('30000');
   const [editingId, setEditingId] = useState(null);
@@ -156,6 +176,8 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
     setNewName('');
     setNewUrl('');
     setNewApiKey('');
+    setNewModelIds('');
+    setNewUseProxy(true);
     setNewTags('');
     setNewTimeout('30000');
   }, []);
@@ -167,6 +189,8 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
     setNewName(meta.defaultName);
     setNewUrl(meta.defaultUrl);
     setNewApiKey('');
+    setNewModelIds('');
+    setNewUseProxy(true);
     setNewTags('');
     setNewTimeout('30000');
     setShowAddForm(true);
@@ -177,21 +201,27 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
     if (!newUrl.trim()) return;
     const meta = localProviderMeta(newType);
     const tags = newTags.trim() ? newTags.split(',').map(t => t.trim()).filter(Boolean) : [];
-    const provider = meta.create({
+    const cfg = {
       name: newName.trim() || meta.defaultName,
       baseUrl: newUrl.trim(),
       tags,
       timeoutMs: parseInt(newTimeout) || 30000,
-    });
+    };
+    // Types that keep their key on the provider record rather than in the
+    // Unsloth key store, and that can pin model ids / route via the hub proxy.
+    if (meta.keyOnProvider) cfg.apiKey = newApiKey.trim();
+    if (meta.supportsModelIds) cfg.modelIds = newModelIds.trim();
+    if (meta.supportsProxy) cfg.useProxy = newUseProxy;
+    const provider = meta.create(cfg);
     try {
       providers.addProvider(provider);
-      if (meta.needsKey) saveUnslothStudioApiKey(provider, newApiKey);
+      if (meta.needsKey && !meta.keyOnProvider) saveUnslothStudioApiKey(provider, newApiKey);
       resetEndpointForm();
       reload();
     } catch (e) {
       alert(e.message);
     }
-  }, [newType, newName, newUrl, newApiKey, newTags, newTimeout, resetEndpointForm, reload]);
+  }, [newType, newName, newUrl, newApiKey, newModelIds, newUseProxy, newTags, newTimeout, resetEndpointForm, reload]);
 
   // ── Edit local endpoint ──
   const handleStartEdit = useCallback((provider) => {
@@ -201,7 +231,10 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
     setNewType(provider.type);
     setNewName(provider.name || '');
     setNewUrl(provider.baseUrl || '');
-    setNewApiKey(meta.needsKey ? getUnslothStudioApiKey(provider) : '');
+    setNewApiKey(meta.keyOnProvider ? (provider.apiKey || '')
+      : (meta.needsKey ? getUnslothStudioApiKey(provider) : ''));
+    setNewModelIds(Array.isArray(provider.modelIds) ? provider.modelIds.join(', ') : (provider.modelIds || ''));
+    setNewUseProxy(provider.useProxy !== false);
     setNewTags((provider.tags || []).join(', '));
     setNewTimeout(String(provider.timeoutMs || 30000));
   }, []);
@@ -211,17 +244,21 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
     const current = providerList.find(p => p.id === editingId);
     const meta = localProviderMeta(current?.type || newType);
     const tags = newTags.trim() ? newTags.split(',').map(t => t.trim()).filter(Boolean) : [];
-    providers.updateProvider(editingId, {
+    const cfg = {
       name: newName.trim() || meta.defaultName,
       baseUrl: newUrl.trim(),
       tags,
       timeoutMs: parseInt(newTimeout) || 30000,
-    });
-    if (meta.needsKey) saveUnslothStudioApiKey(editingId, newApiKey);
+    };
+    if (meta.keyOnProvider) cfg.apiKey = newApiKey.trim();
+    if (meta.supportsModelIds) cfg.modelIds = newModelIds.trim();
+    if (meta.supportsProxy) cfg.useProxy = newUseProxy;
+    providers.updateProvider(editingId, cfg);
+    if (meta.needsKey && !meta.keyOnProvider) saveUnslothStudioApiKey(editingId, newApiKey);
     resetEndpointForm();
     setEditingId(null);
     reload();
-  }, [editingId, providerList, newType, newName, newUrl, newApiKey, newTags, newTimeout, resetEndpointForm, reload]);
+  }, [editingId, providerList, newType, newName, newUrl, newApiKey, newModelIds, newUseProxy, newTags, newTimeout, resetEndpointForm, reload]);
 
   const handleCancelEdit = useCallback(() => {
     resetEndpointForm();
@@ -259,6 +296,36 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
   const visibleList = isPerApp && !canManageProviders
     ? providerList.filter(p => p.enabled !== false)
     : providerList;
+  // Fields only some endpoint types carry. Rendered by both the add form and
+  // the inline edit form, so they stay in step.
+  const endpointExtras = (type) => {
+    const meta = localProviderMeta(type);
+    return html`
+      ${meta.supportsModelIds && html`
+        <div class="form-group">
+          <label>Model IDs (comma-separated, optional)</label>
+          <input class="form-input" value=${newModelIds}
+            onInput=${e => setNewModelIds(e.target.value)}
+            placeholder="qwen3.8-27b — only if the server has no /v1/models" />
+        </div>
+      `}
+      ${meta.supportsProxy && html`
+        <div class="form-group">
+          <label style=${{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input type="checkbox" checked=${newUseProxy}
+              onChange=${e => setNewUseProxy(e.target.checked)} />
+            <span>Route through this hub (fixes CORS)</span>
+          </label>
+          <div style=${{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', lineHeight: 1.5 }}>
+            Most local model servers send no CORS headers, so the browser blocks a direct
+            call even when curl works. Leave this on unless the endpoint sets
+            <code>Access-Control-Allow-Origin</code> itself. Needs the page served by <code>serve.py</code>.
+          </div>
+        </div>
+      `}
+    `;
+  };
+
   const openRouterProvider = visibleList.find(p => p.type === 'openrouter');
   const localProviders = visibleList.filter(p => p.type !== 'openrouter');
 
@@ -357,6 +424,9 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
                   <button class="btn btn-sm btn-primary" onClick=${() => startAddEndpoint('lmstudio')}>
                     <i class="fa-solid fa-plus"></i> LM Studio
                   </button>
+                  <button class="btn btn-sm btn-primary" onClick=${() => startAddEndpoint('openai-compatible')}>
+                    <i class="fa-solid fa-plug"></i> OpenAI-Compatible
+                  </button>
                   <button class="btn btn-sm btn-primary" onClick=${() => startAddEndpoint('unsloth-studio')}>
                     <i class="fa-solid fa-plus"></i> Unsloth Studio
                   </button>
@@ -406,11 +476,12 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
                     <label>API Key</label>
                     <input class="form-input" type="password" value=${newApiKey}
                       onInput=${e => setNewApiKey(e.target.value)}
-                      placeholder="sk-unsloth-..."
+                      placeholder=${localProviderMeta(p.type).keyPlaceholder || 'sk-unsloth-...'}
                       style=${{ fontFamily: 'monospace', fontSize: '13px' }}
                     />
                   </div>
                 `}
+                ${endpointExtras(p.type)}
                 <div style=${{ display: 'flex', gap: '8px' }}>
                   <div class="form-group" style=${{ flex: 1 }}>
                     <label>Tags</label>
@@ -491,11 +562,12 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
                     <label>API Key</label>
                     <input class="form-input" type="password" value=${newApiKey}
                       onInput=${e => setNewApiKey(e.target.value)}
-                      placeholder="sk-unsloth-..."
+                      placeholder=${localProviderMeta(newType).keyPlaceholder || 'sk-unsloth-...'}
                       style=${{ fontFamily: 'monospace', fontSize: '13px' }}
                     />
                   </div>
                 `}
+                ${endpointExtras(newType)}
                 <div style=${{ display: 'flex', gap: '8px' }}>
                   <div class="form-group" style=${{ flex: 1 }}>
                     <label>Tags (comma-separated)</label>

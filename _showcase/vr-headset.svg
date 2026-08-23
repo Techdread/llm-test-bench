@@ -1,0 +1,82 @@
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#0a0a0e"/>
+  
+  <!-- Glow Filter for HUD and Visor light -->
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    
+    <linearGradient id="visorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#001a33" />
+      <stop offset="50%" stop-color="#004d99" />
+      <stop offset="100%" stop-color="#001a33" />
+    </linearGradient>
+
+    <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#444" />
+      <stop offset="50%" stop-color="#222" />
+      <stop offset="100%" stop-color="#333" />
+    </linearGradient>
+
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00ffff" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#00ffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Headset Straps (Sides) -->
+  <path d="M220 300 Q 150 300 120 450 L 160 460 Q 180 340 240 340 Z" fill="#1a1a1a" />
+  <path d="M580 300 Q 650 300 680 450 L 640 460 Q 620 340 560 340 Z" fill="#1a1a1a" />
+
+  <!-- Main Headset Body -->
+  <rect x="220" y="260" width="360" height="180" rx="50" fill="url(#edgeGrad)" />
+  
+  <!-- Visor Frame (Bezel) -->
+  <rect x="245" y="285" width="310" height="130" rx="35" fill="#111" />
+
+  <!-- The Visor Display Area -->
+  <rect x="255" y="295" width="290" height="110" rx="30" fill="url(#visorGrad)" />
+
+  <!-- Digital Content (HUD Elements) Inside Visor -->
+  <!-- Large soft center light -->
+  <circle cx="400" cy="350" r="60" fill="url(#centerGlow)" filter="url(#glow)" />
+  
+  <!-- Grid pattern -->
+  <g stroke="#00ffff" stroke-opacity="0.15">
+    <line x1="270" y1="320" x2="530" y2="320" />
+    <line x1="270" y1="350" x2="530" y2="350" />
+    <line x1="270" y1="380" x2="530" y2="380" />
+    <line x1="300" y1="295" x2="300" y2="405" />
+    <line x1="360" y1="295" x2="360" y2="405" />
+    <line x1="420" y1="295" x2="420" y2="405" />
+    <line x1="480" y1="295" x2="480" y2="405" />
+  </g>
+
+  <!-- Data Lines/Shapes -->
+  <g filter="url(#glow)">
+    <!-- Floating scanning line -->
+    <rect x="260" y="348" width="280" height="2" fill="#00ffff" opacity="0.6">
+       <animate attributeName="y" values="300;400;300" dur="5s" repeatCount="indefinite" />
+    </rect>
+
+    <!-- Small data blocks -->
+    <rect x="280" y="315" width="15" height="5" fill="#00ffff" opacity="0.8" />
+    <rect x="280" y="325" width="10" height="5" fill="#00ffff" opacity="0.5" />
+    
+    <rect x="490" y="375" width="20" height="5" fill="#00ffff" opacity="0.8" />
+    <circle cx="505" cy="365" r="3" fill="#00ffff" opacity="0.6" />
+
+    <!-- Geometric HUD circle -->
+    <circle cx="470" cy="340" r="20" fill="none" stroke="#00ffff" stroke-width="1" stroke-dasharray="5,3" opacity="0.7" />
+  </g>
+
+  <!-- Highlights on the Plastic Body -->
+  <path d="M240 280 Q 400 260 560 280" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.1" />
+  <path d="M240 430 Q 400 450 560 430" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.05" />
+
+  <!-- Final blue glow bloom around the whole headset -->
+  <rect x="220" y="260" width="360" height="180" rx="50" fill="#00ffff" opacity="0.05" filter="url(#glow)" />
+</svg>

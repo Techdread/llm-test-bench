@@ -1998,6 +1998,40 @@ body[data-wallpaper="grid"]::before {
   color: var(--text-muted);
 }
 
+/* The token tail of the block being written right now. It is provisional text,
+   so it reads dimmer than settled history and clamps to a few lines — the whole
+   block arrives as an ordinary event row the moment it finishes. */
+.coding-agent-event-live {
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.coding-agent-event-live > i {
+  color: var(--accent);
+}
+
+.coding-agent-live-reasoning > i {
+  color: var(--text-muted);
+}
+
+.coding-agent-live-text {
+  opacity: 0.9;
+}
+
+/* A caret so a long silent stretch still reads as "arriving", not "stalled". */
+.coding-agent-live-text::after {
+  content: '▌';
+  animation: coding-agent-live-caret 1s steps(2) infinite;
+}
+
+@keyframes coding-agent-live-caret {
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coding-agent-live-text::after { animation: none; }
+}
+
 .coding-agent-activity {
   position: relative;
 }

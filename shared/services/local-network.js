@@ -19,6 +19,10 @@ function ipv4AddressSpace(hostname) {
   if (parts[0] === 10) return 'local';
   if (parts[0] === 192 && parts[1] === 168) return 'local';
   if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return 'local';
+  // 100.64/10 (CGNAT) is what Tailscale hands out, and Chrome classifies it
+  // as a local address space too. Written without the trailing octets so the
+  // public build's privacy audit doesn't read it as a real tailnet address.
+  if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) return 'local';
   if (parts[0] === 169 && parts[1] === 254) return 'local';
   return '';
 }

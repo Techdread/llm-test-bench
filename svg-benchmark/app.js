@@ -38,6 +38,7 @@ import { loadSeedPrompts } from './services/promptLibrary.js';
 import { analyzeSvg, compareSvgToReference } from './services/pixeldiff.js';
 import { exportSvgAsGif } from '../shared/services/gif-export.js';
 import { crossAppHandoffsEnabled, isPublicDistribution } from '../shared/services/distribution.js';
+import { consumeShowcaseRoute } from '../shared/services/showcase.js';
 
 const CODE_MORPH_SOURCE = 'svg-benchmark';
 
@@ -164,6 +165,19 @@ function App() {
     const onHash = () => setRoute(getRoute());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  // Showcase deep-link: a tile on the landing page opens this app with the
+  // submission already loaded. No directory needed — it lands in the editor.
+  useEffect(() => {
+    let cancelled = false;
+    consumeShowcaseRoute().then((item) => {
+      if (cancelled || !item) return;
+      setPrompt(item.prompt || '');
+      setSvgCode(item.code);
+      setRoute(getRoute());
+    });
+    return () => { cancelled = true; };
   }, []);
 
   // Theme

@@ -1,0 +1,191 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0a2e"/>
+      <stop offset="100%" stop-color="#1a1a4e"/>
+    </linearGradient>
+    <linearGradient id="flameOuter" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff6600"/>
+      <stop offset="100%" stop-color="#ffcc00" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="flameInner" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="100%" stop-color="#ffdd44" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bodyGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e8e8e8"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#d0d0d0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="500" height="600" fill="url(#bg)"/>
+
+  <!-- Stars -->
+  <g fill="#ffffff">
+    <circle cx="50" cy="80" r="1.5" opacity="0.8"/>
+    <circle cx="120" cy="40" r="1" opacity="0.6"/>
+    <circle cx="200" cy="100" r="2" opacity="0.9"/>
+    <circle cx="350" cy="60" r="1.2" opacity="0.7"/>
+    <circle cx="420" cy="120" r="1.5" opacity="0.5"/>
+    <circle cx="80" cy="200" r="1" opacity="0.6"/>
+    <circle cx="450" cy="250" r="2" opacity="0.8"/>
+    <circle cx="30" cy="350" r="1.3" opacity="0.7"/>
+    <circle cx="480" cy="400" r="1" opacity="0.5"/>
+    <circle cx="150" cy="300" r="1.8" opacity="0.9"/>
+    <circle cx="380" cy="320" r="1.1" opacity="0.6"/>
+    <circle cx="100" cy="500" r="1.5" opacity="0.8"/>
+    <circle cx="400" cy="520" r="1" opacity="0.4"/>
+    <circle cx="250" cy="50" r="1.2" opacity="0.7"/>
+    <circle cx="460" cy="180" r="1.6" opacity="0.8"/>
+    <circle cx="60" cy="450" r="1" opacity="0.5"/>
+    <circle cx="320" cy="480" r="1.4" opacity="0.7"/>
+    <circle cx="180" cy="420" r="1.1" opacity="0.6"/>
+    <circle cx="390" cy="200" r="1.7" opacity="0.9"/>
+    <circle cx="140" cy="150" r="1.3" opacity="0.7"/>
+    <circle cx="430" cy="350" r="1" opacity="0.5"/>
+    <circle cx="40" cy="280" r="1.8" opacity="0.8"/>
+    <circle cx="280" cy="180" r="1" opacity="0.6"/>
+    <circle cx="360" cy="450" r="1.5" opacity="0.7"/>
+    <circle cx="220" cy="550" r="1.2" opacity="0.5"/>
+    <circle cx="500" cy="100" r="1.4" opacity="0.6"/>
+  </g>
+
+  <!-- Twinkling stars (small bright ones) -->
+  <g fill="#fffde0" opacity="0.9">
+    <circle cx="200" cy="100" r="3">
+      <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="450" cy="250" r="2.5">
+      <animate attributeName="opacity" values="0.7;0.2;0.7" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="150" cy="300" r="2">
+      <animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="390" cy="200" r="3">
+      <animate attributeName="opacity" values="0.9;0.4;0.9" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="40" cy="450" r="2.5">
+      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2.2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Speed / motion lines -->
+  <g stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.3">
+    <line x1="30" y1="150" x2="80" y2="100"/>
+    <line x1="350" y1="80" x2="410" y2="20"/>
+    <line x1="100" y1="250" x2="150" y2="200"/>
+    <line x1="400" y1="300" x2="460" y2="240"/>
+    <line x1="50" y1="400" x2="100" y2="350"/>
+    <line x1="380" y1="450" x2="440" y2="390"/>
+    <line x1="200" y1="500" x2="260" y2="440"/>
+    <line x1="150" y1="100" x2="200" y2="50"/>
+    <line x1="300" y1="550" x2="360" y2="490"/>
+  </g>
+
+  <g stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.2">
+    <line x1="60" y1="200" x2="110" y2="150"/>
+    <line x1="430" y1="150" x2="480" y2="100"/>
+    <line x1="180" y1="350" x2="230" y2="300"/>
+    <line x1="450" y1="400" x2="500" y2="350"/>
+    <line x1="80" y1="500" x2="130" y2="450"/>
+    <line x1="320" y1="500" x2="370" y2="450"/>
+  </g>
+
+  <!-- Smoke puffs at bottom -->
+  <g fill="#ccccdd" opacity="0.6">
+    <ellipse cx="120" cy="560" rx="60" ry="25"/>
+    <ellipse cx="200" cy="570" rx="70" ry="20"/>
+    <ellipse cx="300" cy="565" rx="65" ry="22"/>
+    <ellipse cx="380" cy="555" rx="55" ry="18"/>
+    <ellipse cx="160" cy="575" rx="50" ry="20"/>
+    <ellipse cx="260" cy="578" rx="55" ry="18"/>
+    <ellipse cx="340" cy="572" rx="45" ry="16"/>
+  </g>
+  <g fill="#dddddd" opacity="0.4">
+    <ellipse cx="100" cy="570" rx="40" ry="18"/>
+    <ellipse cx="180" cy="580" rx="45" ry="15"/>
+    <ellipse cx="260" cy="582" rx="40" ry="14"/>
+    <ellipse cx="340" cy="575" rx="35" ry="12"/>
+    <ellipse cx="400" cy="565" rx="30" ry="14"/>
+  </g>
+
+  <!-- Rocket group - angled toward top right -->
+  <g transform="translate(250, 320) rotate(-40)">
+    <!-- Exhaust flames -->
+    <g>
+      <!-- Outer flame -->
+      <path d="M -25 70 Q -30 120 -15 170 Q -10 190 -5 200 Q 0 195 5 200 Q 10 190 15 170 Q 30 120 25 70 Z" fill="url(#flameOuter)" opacity="0.9">
+        <animate attributeName="d" values="M -25 70 Q -30 120 -15 170 Q -10 190 -5 200 Q 0 195 5 200 Q 10 190 15 170 Q 30 120 25 70 Z;M -25 70 Q -28 115 -12 160 Q -8 180 -4 195 Q 0 190 4 195 Q 8 180 12 160 Q 28 115 25 70 Z;M -25 70 Q -30 120 -15 170 Q -10 190 -5 200 Q 0 195 5 200 Q 10 190 15 170 Q 30 120 25 70 Z" dur="0.3s" repeatCount="indefinite"/>
+      </path>
+      <!-- Inner flame -->
+      <path d="M -15 70 Q -18 100 -8 140 Q -5 155 -3 165 Q 0 162 3 165 Q 5 155 8 140 Q 18 100 15 70 Z" fill="url(#flameInner)" opacity="0.95">
+        <animate attributeName="d" values="M -15 70 Q -18 100 -8 140 Q -5 155 -3 165 Q 0 162 3 165 Q 5 155 8 140 Q 18 100 15 70 Z;M -15 70 Q -17 95 -7 130 Q -4 150 -2 160 Q 0 158 2 160 Q 4 150 7 130 Q 17 95 15 70 Z;M -15 70 Q -18 100 -8 140 Q -5 155 -3 165 Q 0 162 3 165 Q 5 155 8 140 Q 18 100 15 70 Z" dur="0.25s" repeatCount="indefinite"/>
+      </path>
+      <!-- Flame sparks -->
+      <circle cx="-10" cy="180" r="3" fill="#ffdd44" opacity="0.8">
+        <animate attributeName="cy" values="180;220;180" dur="0.5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.8;0;0.8" dur="0.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="10" cy="170" r="2.5" fill="#ffaa00" opacity="0.7">
+        <animate attributeName="cy" values="170;210;170" dur="0.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.7;0;0.7" dur="0.4s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="0" cy="190" r="2" fill="#ffee88" opacity="0.9">
+        <animate attributeName="cy" values="190;230;190" dur="0.35s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.9;0;0.9" dur="0.35s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+
+    <!-- Left fin -->
+    <path d="M -30 40 Q -55 60 -65 90 Q -60 95 -35 80 Z" fill="#e63946" stroke="#c1121f" stroke-width="1.5"/>
+    <!-- Right fin -->
+    <path d="M 30 40 Q 55 60 65 90 Q 60 95 35 80 Z" fill="#e63946" stroke="#c1121f" stroke-width="1.5"/>
+    <!-- Top fin (center) -->
+    <path d="M -5 65 L -8 85 L 0 90 L 8 85 L 5 65 Z" fill="#e63946" stroke="#c1121f" stroke-width="1.5"/>
+
+    <!-- Rocket body -->
+    <path d="M 0 -120 Q -35 -80 -35 40 L 35 40 Q 35 -80 0 -120 Z" fill="url(#bodyGrad)" stroke="#bbb" stroke-width="1.5"/>
+
+    <!-- Nose cone -->
+    <path d="M 0 -120 Q -35 -80 -35 -50 Q 0 -60 35 -50 Q 35 -80 0 -120 Z" fill="#e63946" stroke="#c1121f" stroke-width="1.5"/>
+
+    <!-- Red stripe -->
+    <path d="M -34 10 Q 0 15 34 10 L 34 22 Q 0 27 -34 22 Z" fill="#e63946" stroke="#c1121f" stroke-width="1"/>
+
+    <!-- Second stripe -->
+    <path d="M -34 28 Q 0 33 34 28 L 34 38 Q 0 43 -34 38 Z" fill="#e63946" stroke="#c1121f" stroke-width="1"/>
+
+    <!-- Window -->
+    <circle cx="0" cy="-10" r="16" fill="#457b9d" stroke="#2a5a7a" stroke-width="2.5"/>
+    <!-- Window shine -->
+    <ellipse cx="-4" cy="-14" rx="6" ry="3" fill="#a8dadc" opacity="0.7" transform="rotate(-20, -4, -14)"/>
+    <circle cx="-6" cy="-16" r="2" fill="#ffffff" opacity="0.8"/>
+
+    <!-- Body highlight -->
+    <path d="M -20 -90 Q -22 -30 -18 30" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.4" stroke-linecap="round"/>
+
+    <!-- Small decorative dots -->
+    <circle cx="-12" cy="50" r="2.5" fill="#e63946"/>
+    <circle cx="12" cy="50" r="2.5" fill="#e63946"/>
+    <circle cx="0" cy="55" r="2.5" fill="#e63946"/>
+  </g>
+
+  <!-- Extra motion trails behind rocket -->
+  <g opacity="0.15">
+    <line x1="380" y1="480" x2="430" y2="530" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <line x1="360" y1="460" x2="410" y2="510" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    <line x1="400" y1="500" x2="450" y2="550" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Shooting star -->
+  <g opacity="0.6">
+    <line x1="450" y1="50" x2="400" y2="100" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+    <circle cx="450" cy="50" r="2" fill="#fff"/>
+  </g>
+  <g opacity="0.4">
+    <line x1="350" y1="30" x2="310" y2="70" stroke="#ffffff" stroke-width="1" stroke-linecap="round"/>
+    <circle cx="350" cy="30" r="1.5" fill="#fff"/>
+  </g>
+</svg>

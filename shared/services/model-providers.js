@@ -14,6 +14,7 @@ import * as openrouterAdapter from './providers-openrouter.js';
 import * as lmstudioAdapter from './providers-lmstudio.js';
 import * as lemonadeAdapter from './providers-lemonade.js';
 import * as unslothStudioAdapter from './providers-unsloth-studio.js';
+import * as openAiCompatibleAdapter from './providers-openai-compatible.js';
 import * as cliAgentAdapter from './providers-cli-agent.js';
 import { isAgentBridgeReachable } from './agent-backend.js';
 import {
@@ -47,6 +48,7 @@ const adapters = {
   lmstudio: lmstudioAdapter,
   lemonade: lemonadeAdapter,
   'unsloth-studio': unslothStudioAdapter,
+  [openAiCompatibleAdapter.PROVIDER_TYPE]: openAiCompatibleAdapter,
   [cliAgentAdapter.PROVIDER_TYPE]: cliAgentAdapter,
 };
 

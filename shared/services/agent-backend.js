@@ -7,7 +7,7 @@
 export const AGENTS = [
   { id: 'claude-code', label: 'Claude Code', shell: true },
   { id: 'codex', label: 'Codex', shell: true, models: true, effort: true },
-  { id: 'antigravity', label: 'Antigravity', shell: true, proseOnly: true, models: true, effort: true },
+  { id: 'antigravity', label: 'Antigravity', shell: true, models: true, effort: true },
   { id: 'grok', label: 'Grok', shell: true, models: true },
 ];
 
@@ -173,7 +173,7 @@ export function resolveAgentModelSelection(modelId, effort, choices = []) {
 }
 
 /** Start a run, then attach to its normalized SSE event stream. */
-export async function runAgent({ agent, prompt, projectDir, options, budgets, onStart, onEvent, signal }) {
+export async function runAgent({ agent, prompt, projectDir, options, budgets, onStart, onEvent, onLive, signal }) {
   const res = await fetch('/__agent/run', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -188,11 +188,19 @@ export async function runAgent({ agent, prompt, projectDir, options, budgets, on
   }
   const { runId } = await res.json();
   onStart?.(runId);
-  return attachAgentRun({ runId, onEvent, signal });
+  return attachAgentRun({ runId, onEvent, onLive, signal });
 }
 
-/** Attach or reattach to a bridge stream, optionally after persisted events. */
-export function attachAgentRun({ runId, onEvent, signal, fromIndex = 0 }) {
+/**
+ * Attach or reattach to a bridge stream, optionally after persisted events.
+ *
+ * `onLive` receives `{ text, kind }` — the rolling tail of the content block the
+ * agent is composing right now, for showing tokens as they arrive. It is
+ * deliberately separate from `onEvent`: the tail is ephemeral and is superseded
+ * by the ordinary `message`/`reasoning` event, so it belongs in a live view
+ * rather than in a trace or an appended event list.
+ */
+export function attachAgentRun({ runId, onEvent, onLive, signal, fromIndex = 0 }) {
   return new Promise((resolve, reject) => {
     // Always request the original stream URL. Older bridge processes treat a
     // query string as part of the id, so replay skipping stays client-side.
@@ -248,6 +256,22 @@ export function attachAgentRun({ runId, onEvent, signal, fromIndex = 0 }) {
       onEvent?.(event);
       if (event.type === 'done') finish({ runId, doneEvent: event });
     };
+    // Named event, so it never advances eventIndex and old bridges that never
+    // send one simply leave the live view empty. Optional on the source object
+    // too: callers that need no live view pass a bare onmessage-only stub.
+    if (onLive && typeof es.addEventListener === 'function') {
+      es.addEventListener('live', (message) => {
+        if (done) return;
+        let frame;
+        try { frame = JSON.parse(message.data); } catch { return; }
+        lastEventAt = Date.now();
+        onLive({
+          text: frame.text || '',
+          kind: frame.kind || 'text',
+          thinkingTokens: frame.thinkingTokens || 0,
+        });
+      });
+    }
     es.onerror = async () => {
       // EventSource reconnects automatically. Settle only after the bridge
       // confirms completion or has become definitively unreachable.

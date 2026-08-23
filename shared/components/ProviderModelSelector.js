@@ -126,6 +126,8 @@ export function ProviderModelSelector({ models, providerId, modelId, onChange, d
     if (type === 'cli-agent') return 'fa-terminal';
     if (type === 'openrouter') return 'fa-cloud';
     if (type === 'unsloth-studio') return 'fa-bolt';
+    if (type === 'openai-compatible') return 'fa-plug';
+    if (type === 'lemonade') return 'fa-lemon';
     return 'fa-network-wired';
   };
 

@@ -1,0 +1,58 @@
+{
+ "showcase": [
+  {
+   "id": "mini-planet",
+   "bench": "prompt-gallery",
+   "title": "Mini Planet",
+   "note": "Antigravity CLI / Gemini 3.7 Flash (High)",
+   "rating": "5/5",
+   "poster": "mini-planet.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "fourier-drawing-machine",
+   "bench": "p5-sketch-gallery",
+   "title": "Fourier Drawing Machine",
+   "note": "Antigravity CLI / Gemini 3.7 Flash (High)",
+   "rating": "",
+   "poster": "fourier-drawing-machine.png",
+   "ext": ".js"
+  },
+  {
+   "id": "vr-headset",
+   "bench": "svg-benchmark",
+   "title": "VR Headset",
+   "note": "LM Studio AI-Max / Gemma 4 26b A4b",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "ascii-roguelike",
+   "bench": "prompt-gallery",
+   "title": "Ascii Roguelike",
+   "note": "LM Studio 3090 / Qwen3.6 27b Mtp",
+   "rating": "5/5",
+   "poster": "ascii-roguelike.png",
+   "ext": ".html"
+  },
+  {
+   "id": "barnes-hut-galaxy-forge",
+   "bench": "p5-sketch-gallery",
+   "title": "Barnes Hut Galaxy Forge",
+   "note": "Codex CLI / GPT-5.6-Sol",
+   "rating": "",
+   "poster": "barnes-hut-galaxy-forge.png",
+   "ext": ".js"
+  },
+  {
+   "id": "rocket-ship",
+   "bench": "svg-benchmark",
+   "title": "Rocket Ship",
+   "note": "LM Studio AI-Max / Qwen3.6 35b A3b@Q8 0",
+   "rating": "8/10",
+   "poster": "",
+   "ext": ".svg"
+  }
+ ]
+}

@@ -43,6 +43,7 @@ import * as modelProviders from '../shared/services/model-providers.js';
 import { prefs, hydrateAppPrefs, setPref, setPrefs, subscribeAppPrefs } from '../shared/services/app-prefs.js';
 import { subscribeSuite } from '../shared/services/suite-prefs.js';
 import { crossAppHandoffsEnabled, isPublicDistribution } from '../shared/services/distribution.js';
+import { consumeShowcaseRoute } from '../shared/services/showcase.js';
 
 function getRoute() {
   const hash = window.location.hash || '#/create';
@@ -153,6 +154,19 @@ function App() {
     const onHash = () => setRoute(getRoute());
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+
+  // Showcase deep-link: a tile on the landing page opens this app with the
+  // generation already loaded. No directory needed — it lands in the editor.
+  useEffect(() => {
+    let cancelled = false;
+    consumeShowcaseRoute().then((item) => {
+      if (cancelled || !item) return;
+      setPrompt(item.prompt || '');
+      setResponse(item.code);
+      setRoute(getRoute());
+    });
+    return () => { cancelled = true; };
   }, []);
 
   // Theme

@@ -23,18 +23,31 @@
 
   <main>
     <section class="hero">
-      <p class="eyebrow">Open-source creative model evaluation</p>
-      <h1>Generate it. Compare it. Keep the evidence.</h1>
-      <p class="hero-copy">A browser-based workbench for testing how language models turn the same idea into interactive HTML, p5.js sketches, and SVG artwork.</p>
-      <div class="hero-actions">
-        <a class="button primary" href="prompt-gallery/">Open Prompt Gallery</a>
-        <a class="button" href="settings.html">Connect folder + local models</a>
-        <a class="button" href="#how-it-works">How it works</a>
+      <div class="hero-copy-col">
+        <p class="eyebrow">Open-source creative model evaluation</p>
+        <h1><span class="l">Generate it.</span><span class="l">Compare it.</span><span class="l l3">Keep the evidence.</span></h1>
+        <p class="hero-copy">A browser-based workbench for testing how language models turn the same idea into interactive HTML, p5.js sketches, and SVG artwork.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="prompt-gallery/">Open Prompt Gallery</a>
+          <a class="button" href="settings.html">Connect folder + local models</a>
+          <a class="text-link" href="#how-it-works">How it works <span aria-hidden="true">&rarr;</span></a>
+        </div>
+        <div class="trust-row" aria-label="Privacy and platform notes">
+          <span>Run your own local models</span>
+          <span>Files stay in your chosen folder</span>
+          <span>No account required</span>
+        </div>
       </div>
-      <div class="trust-row" aria-label="Privacy and platform notes">
-        <span>Run your own local models</span>
-        <span>Files stay in your chosen folder</span>
-        <span>No account required</span>
+
+      <!-- Populated from _showcase/index.json by showcase.js; the whole panel
+           is removed if the build carries no showcase. -->
+      <div class="showcase" id="showcase" hidden>
+        <div class="showcase-head">
+          <span class="showcase-label">Real output &middot; click to open</span>
+          <span class="showcase-badge" id="showcase-count"></span>
+        </div>
+        <p class="showcase-intro">Generations from all three benches &mdash; each tile opens its prompt and code in the bench that made it.</p>
+        <div class="showcase-grid" id="showcase-grid"></div>
       </div>
     </section>
 
@@ -109,5 +122,6 @@
     <span>LLM Test Bench · MIT licensed</span>
     <span>Experimental software — review generated code before sharing it.</span>
   </footer>
+  <script src="showcase.js"></script>
 </body>
 </html>

@@ -1,0 +1,2338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Planet Terraria // Procedural Low-Poly Tiny World</title>
+  
+  <!-- Three.js r128 & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #38bdf8;
+      --primary-glow: rgba(56, 189, 248, 0.35);
+      --accent: #f59e0b;
+      --accent-glow: rgba(245, 158, 11, 0.35);
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --bg-dark: #080e1a;
+      --glass-bg: rgba(15, 23, 42, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-glow: rgba(56, 189, 248, 0.15);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      cursor: grab;
+    }
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+    #canvas-container.plant-mode {
+      cursor: crosshair !important;
+    }
+
+    /* UI Overlay Layer */
+    .ui-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .interactive {
+      pointer-events: auto;
+    }
+
+    /* Glass Panels */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.22);
+      box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45), 0 0 20px var(--glass-glow);
+    }
+
+    /* Header */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-pill {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.7) 100%);
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0ea5e9, #10b981);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 15px rgba(14, 165, 233, 0.5);
+      animation: pulse-icon 4s ease-in-out infinite;
+    }
+    @keyframes pulse-icon {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(14, 165, 233, 0.6)); }
+      50% { transform: scale(1.06); filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.8)); }
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(to right, #ffffff, #93c5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-live {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Top Controls Bar */
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition: all 0.2s ease;
+    }
+    .btn-icon:hover {
+      background: rgba(30, 41, 59, 0.85);
+      border-color: var(--primary);
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25);
+    }
+    .btn-icon:active {
+      transform: translateY(0);
+    }
+    .btn-icon.active {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(16, 185, 129, 0.3));
+      border-color: var(--primary);
+      color: #38bdf8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+    }
+
+    /* Floating Side Panel */
+    .side-panel {
+      position: absolute;
+      top: 90px;
+      right: 20px;
+      width: 320px;
+      max-height: calc(100vh - 180px);
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      z-index: 20;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+      transform: translateX(0);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+    }
+    .side-panel.collapsed {
+      transform: translateX(360px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .panel-section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .biome-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .biome-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 6px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      font-size: 0.72rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .biome-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    .biome-btn.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(16, 185, 129, 0.25));
+      border-color: var(--primary);
+      color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+    }
+    .biome-btn .emoji {
+      font-size: 1.25rem;
+    }
+
+    /* Slider Group */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .control-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #cbd5e1;
+    }
+    .control-val {
+      font-family: var(--font-mono);
+      color: var(--primary);
+      font-size: 0.75rem;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      transition: background 0.2s;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--primary-glow);
+      transition: transform 0.15s ease;
+    }
+    input[type=range]::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+    }
+
+    /* Toggle switches */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 42px;
+      height: 22px;
+      display: inline-block;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider-toggle {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(255, 255, 255, 0.15);
+      transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 22px;
+    }
+    .slider-toggle:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 50%;
+    }
+    input:checked + .slider-toggle {
+      background-color: #0ea5e9;
+      box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+    }
+    input:checked + .slider-toggle:before {
+      transform: translateX(20px);
+    }
+
+    /* Bottom Landmark Dock */
+    .bottom-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .dock-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+      overflow-x: auto;
+      max-width: 100%;
+      scrollbar-width: none;
+    }
+    .dock-container::-webkit-scrollbar { display: none; }
+
+    .landmark-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #e2e8f0;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .landmark-chip:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--primary);
+      color: #ffffff;
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 6px 16px rgba(56, 189, 248, 0.25);
+    }
+    .landmark-chip.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(16, 185, 129, 0.3));
+      border-color: var(--primary);
+      color: #38bdf8;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+    }
+
+    /* Interactive Info Card / Tooltip */
+    #focus-card {
+      position: absolute;
+      top: 100px;
+      left: 30px;
+      width: 280px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 30;
+      opacity: 0;
+      transform: translateY(15px) scale(0.95);
+      pointer-events: none;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #focus-card.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .focus-badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.18);
+      color: var(--primary);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      display: inline-block;
+      align-self: flex-start;
+    }
+
+    .focus-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .focus-desc {
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    .focus-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+    }
+    .focus-stat-item span:first-child {
+      color: var(--text-muted);
+      display: block;
+    }
+    .focus-stat-item span:last-child {
+      color: #f1f5f9;
+      font-weight: 600;
+    }
+
+    .focus-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .btn-action {
+      flex: 1;
+      padding: 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .btn-action:hover {
+      background: var(--primary);
+      color: #04101e;
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    /* Instruction Hint */
+    .instruction-hint {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.5);
+      padding: 5px 12px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Audio Mute & Speed Quick Controls */
+    .time-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 8px 14px;
+      border-radius: 14px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .ui-layer { padding: 12px; }
+      .brand-text h1 { font-size: 1rem; }
+      .brand-text p { display: none; }
+      .side-panel {
+        width: calc(100vw - 24px);
+        right: 12px;
+        top: 75px;
+        max-height: 55vh;
+      }
+      #focus-card {
+        top: auto;
+        bottom: 90px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+      .dock-container {
+        padding: 6px 8px;
+        border-radius: 16px;
+      }
+      .landmark-chip {
+        padding: 6px 10px;
+        font-size: 0.72rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- WebGL Container -->
+  <div id="canvas-container"></div>
+
+  <!-- UI Overlay -->
+  <div class="ui-layer">
+    
+    <!-- Top Header -->
+    <header class="header-bar">
+      <div class="glass-card brand-pill interactive">
+        <div class="brand-icon">🪐</div>
+        <div class="brand-text">
+          <h1>Planet Terraria</h1>
+          <p><span class="badge-live"></span> PROCEDURAL WORLD ENGINE</p>
+        </div>
+      </div>
+
+      <div class="top-controls interactive">
+        <div class="time-indicator" id="time-display">
+          <span>☀️</span>
+          <span id="time-label">12:00 PM</span>
+        </div>
+
+        <button class="btn-icon" id="btn-audio" title="Toggle Procedural Audio">
+          <span id="audio-icon">🔇</span>
+        </button>
+
+        <button class="btn-icon" id="btn-reseed" title="Generate New Planet Seed">
+          <span>🎲</span>
+          <span class="desktop-only">Reseed</span>
+        </button>
+
+        <button class="btn-icon" id="btn-settings" title="Toggle Planet Customizer">
+          <span>⚙️</span>
+          <span class="desktop-only">Customize</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Interactive Focus Info Popup -->
+    <div id="focus-card" class="glass-card interactive">
+      <span class="focus-badge" id="card-badge">LANDMARK</span>
+      <h2 class="focus-title" id="card-title">Elder Windmill</h2>
+      <p class="focus-desc" id="card-desc">An ancient wooden windmill atop the grassy highlands catching the equatorial trade winds.</p>
+      <div class="focus-stats">
+        <div class="focus-stat-item">
+          <span>COORDINATES</span>
+          <span id="card-coords">32°N, 45°E</span>
+        </div>
+        <div class="focus-stat-item">
+          <span>ELEVATION</span>
+          <span id="card-elev">142m ASL</span>
+        </div>
+      </div>
+      <div class="focus-actions">
+        <button class="btn-action" id="card-inspect-btn">✨ Inspect</button>
+        <button class="btn-action" id="card-orbit-btn">🔄 Reset View</button>
+      </div>
+    </div>
+
+    <!-- Right Settings Drawer -->
+    <aside class="glass-card side-panel interactive" id="settings-panel">
+      <div>
+        <div class="panel-section-title">
+          <span>Biome Presets</span>
+          <span style="color:var(--primary); font-size:0.68rem;">6 THEMES</span>
+        </div>
+        <div class="biome-grid">
+          <button class="biome-btn active" data-biome="verdant">
+            <span class="emoji">🌿</span>
+            <span>Verdant</span>
+          </button>
+          <button class="biome-btn" data-biome="autumn">
+            <span class="emoji">🍁</span>
+            <span>Autumn</span>
+          </button>
+          <button class="biome-btn" data-biome="sakura">
+            <span class="emoji">🌸</span>
+            <span>Sakura</span>
+          </button>
+          <button class="biome-btn" data-biome="alpine">
+            <span class="emoji">❄️</span>
+            <span>Alpine</span>
+          </button>
+          <button class="biome-btn" data-biome="tropic">
+            <span class="emoji">🏝️</span>
+            <span>Tropical</span>
+          </button>
+          <button class="biome-btn" data-biome="mystic">
+            <span class="emoji">🔮</span>
+            <span>Mystic</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Time of Day Slider -->
+      <div class="control-group">
+        <div class="control-header">
+          <span>Sun Orbital Angle</span>
+          <span class="control-val" id="sun-val">12:00</span>
+        </div>
+        <input type="range" id="sun-slider" min="0" max="360" value="70">
+      </div>
+
+      <!-- Terrain Parameters -->
+      <div class="control-group">
+        <div class="control-header">
+          <span>Mountain Roughness</span>
+          <span class="control-val" id="roughness-val">1.2</span>
+        </div>
+        <input type="range" id="roughness-slider" min="0.4" max="2.4" step="0.1" value="1.2">
+      </div>
+
+      <div class="control-group">
+        <div class="control-header">
+          <span>Ocean Water Level</span>
+          <span class="control-val" id="sea-val">0.98</span>
+        </div>
+        <input type="range" id="sea-slider" min="0.88" max="1.08" step="0.01" value="0.98">
+      </div>
+
+      <div class="control-group">
+        <div class="control-header">
+          <span>Vegetation Density</span>
+          <span class="control-val" id="tree-val">140</span>
+        </div>
+        <input type="range" id="tree-slider" min="30" max="250" step="10" value="140">
+      </div>
+
+      <div class="control-group">
+        <div class="control-header">
+          <span>Settlement Density</span>
+          <span class="control-val" id="house-val">24</span>
+        </div>
+        <input type="range" id="house-slider" min="6" max="50" step="2" value="24">
+      </div>
+
+      <!-- Toggles -->
+      <div style="display:flex; flex-direction:column; gap:10px; border-top:1px solid rgba(255,255,255,0.08); padding-top:12px;">
+        <div class="toggle-row">
+          <span>Auto Orbit Camera</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-autospin" checked>
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Drifting Clouds</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-clouds" checked>
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Toon Cel Outlines</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-toon" checked>
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <span>Planting Mode (Click Planet)</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-plantmode">
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Bottom Landmarks & Hints -->
+    <footer class="bottom-bar">
+      <div class="instruction-hint">
+        <span>💡</span>
+        <span>Click any house, tree, rock, or landmark to focus smoothly • Drag to orbit • Scroll to zoom</span>
+      </div>
+
+      <nav class="dock-container interactive" id="landmark-dock">
+        <button class="landmark-chip active" data-target="overview">
+          <span>🌍</span> Overview
+        </button>
+        <button class="landmark-chip" data-target="windmill">
+          <span>🌾</span> Windmill Ridge
+        </button>
+        <button class="landmark-chip" data-target="lighthouse">
+          <span>🏮</span> Beacon Point
+        </button>
+        <button class="landmark-chip" data-target="village">
+          <span>🏡</span> Sunnydale Village
+        </button>
+        <button class="landmark-chip" data-target="cherry">
+          <span>🌸</span> Sakura Sanctuary
+        </button>
+        <button class="landmark-chip" data-target="crystals">
+          <span>💎</span> Crystal Hollow
+        </button>
+        <button class="landmark-chip" data-target="port">
+          <span>⛵</span> Blue Bay Port
+        </button>
+        <button class="landmark-chip" data-target="balloon">
+          <span>🎈</span> Explorer's Balloon
+        </button>
+      </nav>
+    </footer>
+
+  </div>
+
+  <!-- MAIN SCRIPT -->
+  <script>
+    /* =========================================================================
+       PROCEDURAL SIMPLEX NOISE IMPLEMENTATION (SELF-CONTAINED)
+       ========================================================================= */
+    const SimplexNoise = (function() {
+      const F3 = 1.0 / 3.0, G3 = 1.0 / 6.0;
+      function Simplex(seed = Math.random()) {
+        this.p = new Uint8Array(256);
+        for (let i = 0; i < 256; i++) this.p[i] = i;
+        let s = seed * 16807 % 2147483647;
+        for (let i = 255; i > 0; i--) {
+          s = (s * 16807) % 2147483647;
+          const j = (s % (i + 1));
+          const t = this.p[i]; this.p[i] = this.p[j]; this.p[j] = t;
+        }
+        this.perm = new Uint8Array(512);
+        this.permMod12 = new Uint8Array(512);
+        for (let i = 0; i < 512; i++) {
+          this.perm[i] = this.p[i & 255];
+          this.permMod12[i] = this.perm[i] % 12;
+        }
+      }
+      const grad3 = new Float32Array([
+        1,1,0, -1,1,0, 1,-1,0, -1,-1,0,
+        1,0,1, -1,0,1, 1,0,-1, -1,0,-1,
+        0,1,1, 0,-1,1, 0,1,-1, 0,-1,-1
+      ]);
+      Simplex.prototype.noise3D = function(xin, yin, zin) {
+        let n0, n1, n2, n3;
+        const s = (xin + yin + zin) * F3;
+        const i = Math.floor(xin + s);
+        const j = Math.floor(yin + s);
+        const k = Math.floor(zin + s);
+        const t = (i + j + k) * G3;
+        const X0 = i - t; const Y0 = j - t; const Z0 = k - t;
+        const x0 = xin - X0; const y0 = yin - Y0; const z0 = zin - Z0;
+        let i1, j1, k1, i2, j2, k2;
+        if (x0 >= y0) {
+          if (y0 >= z0) { i1=1; j1=0; k1=0; i2=1; j2=1; k2=0; }
+          else if (x0 >= z0) { i1=1; j1=0; k1=0; i2=1; j2=0; k2=1; }
+          else { i1=0; j1=0; k1=1; i2=1; j2=0; k2=1; }
+        } else {
+          if (y0 < z0) { i1=0; j1=0; k1=1; i2=0; j2=1; k2=1; }
+          else if (x0 < z0) { i1=0; j1=1; k1=0; i2=0; j2=1; k2=1; }
+          else { i1=0; j1=1; k1=0; i2=1; j2=1; k2=0; }
+        }
+        const x1 = x0 - i1 + G3, y1 = y0 - j1 + G3, z1 = z0 - k1 + G3;
+        const x2 = x0 - i2 + 2.0*G3, y2 = y0 - j2 + 2.0*G3, z2 = z0 - k2 + 2.0*G3;
+        const x3 = x0 - 1.0 + 3.0*G3, y3 = y0 - 1.0 + 3.0*G3, z3 = z0 - 1.0 + 3.0*G3;
+        const ii = i & 255, jj = j & 255, kk = k & 255;
+        const gi0 = this.permMod12[ii + this.perm[jj + this.perm[kk]]] * 3;
+        const gi1 = this.permMod12[ii + i1 + this.perm[jj + j1 + this.perm[kk + k1]]] * 3;
+        const gi2 = this.permMod12[ii + i2 + this.perm[jj + j2 + this.perm[kk + k2]]] * 3;
+        const gi3 = this.permMod12[ii + 1 + this.perm[jj + 1 + this.perm[kk + 1]]] * 3;
+        let t0 = 0.6 - x0*x0 - y0*y0 - z0*z0;
+        if (t0 < 0) n0 = 0.0; else { t0 *= t0; n0 = t0 * t0 * (grad3[gi0]*x0 + grad3[gi0+1]*y0 + grad3[gi0+2]*z0); }
+        let t1 = 0.6 - x1*x1 - y1*y1 - z1*z1;
+        if (t1 < 0) n1 = 0.0; else { t1 *= t1; n1 = t1 * t1 * (grad3[gi1]*x1 + grad3[gi1+1]*y1 + grad3[gi1+2]*z1); }
+        let t2 = 0.6 - x2*x2 - y2*y2 - z2*z2;
+        if (t2 < 0) n2 = 0.0; else { t2 *= t2; n2 = t2 * t2 * (grad3[gi2]*x2 + grad3[gi2+1]*y2 + grad3[gi2+2]*z2); }
+        let t3 = 0.6 - x3*x3 - y3*y3 - z3*z3;
+        if (t3 < 0) n3 = 0.0; else { t3 *= t3; n3 = t3 * t3 * (grad3[gi3]*x3 + grad3[gi3+1]*y3 + grad3[gi3+2]*z3); }
+        return 32.0 * (n0 + n1 + n2 + n3);
+      };
+      return Simplex;
+    })();
+
+    /* =========================================================================
+       AUDIO SYNTHESIZER (WEB AUDIO API - PEACEFUL PROCEDURAL AMBIENCE)
+       ========================================================================= */
+    const SoundEngine = {
+      ctx: null,
+      enabled: false,
+      gainMaster: null,
+      windNode: null,
+
+      init() {
+        if (this.ctx) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioCtx();
+        this.gainMaster = this.ctx.createGain();
+        this.gainMaster.gain.setValueAtTime(0.15, this.ctx.currentTime);
+        this.gainMaster.connect(this.ctx.destination);
+        this.startWindAmbience();
+      },
+
+      toggle() {
+        if (!this.ctx) this.init();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        this.enabled = !this.enabled;
+        if (this.gainMaster) {
+          this.gainMaster.gain.setTargetAtTime(this.enabled ? 0.15 : 0, this.ctx.currentTime, 0.1);
+        }
+        return this.enabled;
+      },
+
+      startWindAmbience() {
+        if (!this.ctx) return;
+        const bufferSize = this.ctx.sampleRate * 2;
+        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.0168980;
+          output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+          output[i] *= 0.11;
+          b6 = white * 0.115926;
+        }
+        const whiteNoise = this.ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(320, this.ctx.currentTime);
+
+        const lfo = this.ctx.createOscillator();
+        lfo.frequency.setValueAtTime(0.12, this.ctx.currentTime);
+        const lfoGain = this.ctx.createGain();
+        lfoGain.gain.setValueAtTime(140, this.ctx.currentTime);
+        lfo.connect(lfoGain);
+        lfoGain.connect(filter.frequency);
+
+        whiteNoise.connect(filter);
+        filter.connect(this.gainMaster);
+        whiteNoise.start(0);
+        lfo.start(0);
+      },
+
+      playChime(freq = 520, type = 'sine') {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.5, this.ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.6);
+        osc.connect(gain);
+        gain.connect(this.gainMaster);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.65);
+      },
+
+      playPop() {
+        if (!this.enabled || !this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(260, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+        osc.connect(gain);
+        gain.connect(this.gainMaster);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.12);
+      }
+    };
+
+    /* =========================================================================
+       COLOR PALETTES & BIOMES
+       ========================================================================= */
+    const BIOMES = {
+      verdant: {
+        name: 'Verdant Meadow',
+        waterDeep: 0x1e40af,
+        waterShallow: 0x38bdf8,
+        sand: 0xfef08a,
+        grassLow: 0x4ade80,
+        grassHigh: 0x15803d,
+        rock: 0x64748b,
+        snow: 0xf8fafc,
+        foliage: [0x22c55e, 0x16a34a, 0x15803d, 0x84cc16],
+        skyBg: 0x07111e,
+        sunColor: 0xfff7ed,
+        ambience: 0x93c5fd
+      },
+      autumn: {
+        name: 'Golden Autumn',
+        waterDeep: 0x1e3a8a,
+        waterShallow: 0x0284c7,
+        sand: 0xfde047,
+        grassLow: 0xd97706,
+        grassHigh: 0xb45309,
+        rock: 0x78716c,
+        snow: 0xfef3c7,
+        foliage: [0xef4444, 0xf97316, 0xf59e0b, 0xd97706],
+        skyBg: 0x1a0f0a,
+        sunColor: 0xffedd5,
+        ambience: 0xfdba74
+      },
+      sakura: {
+        name: 'Sakura Sanctuary',
+        waterDeep: 0x312e81,
+        waterShallow: 0x38bdf8,
+        sand: 0xfbcfe8,
+        grassLow: 0x86efac,
+        grassHigh: 0x4ade80,
+        rock: 0x64748b,
+        snow: 0xfdf2f8,
+        foliage: [0xf472b6, 0xfb7185, 0xf9a8d4, 0xfbcfe8],
+        skyBg: 0x150b18,
+        sunColor: 0xfff1f2,
+        ambience: 0xf472b6
+      },
+      alpine: {
+        name: 'Alpine Frost',
+        waterDeep: 0x0f172a,
+        waterShallow: 0x38bdf8,
+        sand: 0x94a3b8,
+        grassLow: 0x64748b,
+        grassHigh: 0x475569,
+        rock: 0x334155,
+        snow: 0xffffff,
+        foliage: [0x0f766e, 0x115e59, 0x134e4a, 0x2dd4bf],
+        skyBg: 0x050b14,
+        sunColor: 0xe0f2fe,
+        ambience: 0x7dd3fc
+      },
+      tropic: {
+        name: 'Tropical Isles',
+        waterDeep: 0x0369a1,
+        waterShallow: 0x06b6d4,
+        sand: 0xfef08a,
+        grassLow: 0x10b981,
+        grassHigh: 0x059669,
+        rock: 0xca8a04,
+        snow: 0xfef9c3,
+        foliage: [0x10b981, 0x14b8a6, 0x84cc16, 0x065f46],
+        skyBg: 0x041b24,
+        sunColor: 0xfef08a,
+        ambience: 0x22d3ee
+      },
+      mystic: {
+        name: 'Crystal Mystic',
+        waterDeep: 0x3b0764,
+        waterShallow: 0xa855f7,
+        sand: 0xc084fc,
+        grassLow: 0x6366f1,
+        grassHigh: 0x4338ca,
+        rock: 0x475569,
+        snow: 0xf5d0fe,
+        foliage: [0xa855f7, 0xec4899, 0x8b5cf6, 0x06b6d4],
+        skyBg: 0x0d031c,
+        sunColor: 0xf5d0fe,
+        ambience: 0xc084fc
+      }
+    };
+
+    /* =========================================================================
+       WORLD CONFIGURATION STATE
+       ========================================================================= */
+    const STATE = {
+      seed: Math.random() * 1000,
+      biomeKey: 'verdant',
+      planetRadius: 18,
+      roughness: 1.2,
+      seaLevel: 0.98,
+      treeCount: 140,
+      houseCount: 24,
+      rockCount: 65,
+      cloudCount: 22,
+      autoSpin: true,
+      cloudsEnabled: true,
+      toonOutlines: true,
+      plantMode: false,
+      sunAngle: 70
+    };
+
+    let simplex = new SimplexNoise(STATE.seed);
+
+    /* =========================================================================
+       THREE.JS SCENE SETUP & TOON TEXTURE
+       ========================================================================= */
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(BIOMES.verdant.skyBg);
+    scene.fog = new THREE.FogExp2(BIOMES.verdant.skyBg, 0.008);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.5, 1000);
+    camera.position.set(0, 24, 62);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    container.appendChild(renderer.domElement);
+
+    let controls;
+    if (THREE.OrbitControls) {
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.minDistance = 24;
+      controls.maxDistance = 110;
+      controls.maxPolarAngle = Math.PI * 0.95;
+      controls.autoRotate = STATE.autoSpin;
+      controls.autoRotateSpeed = 0.6;
+    }
+
+    function createToonGradient() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 4;
+      canvas.height = 1;
+      const ctx = canvas.getContext('2d');
+      const colors = ['#444444', '#888888', '#cccccc', '#ffffff'];
+      for (let i = 0; i < 4; i++) {
+        ctx.fillStyle = colors[i];
+        ctx.fillRect(i, 0, 1, 1);
+      }
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.minFilter = THREE.NearestFilter;
+      tex.magFilter = THREE.NearestFilter;
+      return tex;
+    }
+    const toonGradient = createToonGradient();
+
+    /* =========================================================================
+       LIGHTING & CELESTIAL BODIES
+       ========================================================================= */
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.65);
+    scene.add(hemiLight);
+
+    const sunPivot = new THREE.Group();
+    scene.add(sunPivot);
+
+    const sunLight = new THREE.DirectionalLight(0xfff7ed, 1.3);
+    sunLight.position.set(0, 45, 60);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 10;
+    sunLight.shadow.camera.far = 160;
+    const d = 35;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    sunLight.shadow.bias = -0.0005;
+    sunPivot.add(sunLight);
+
+    const sunGeo = new THREE.SphereGeometry(3.2, 16, 16);
+    const sunMat = new THREE.MeshBasicMaterial({ color: 0xffedd5 });
+    const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+    sunMesh.position.copy(sunLight.position);
+    sunPivot.add(sunMesh);
+
+    const moonGeo = new THREE.SphereGeometry(1.8, 16, 16);
+    const moonMat = new THREE.MeshBasicMaterial({ color: 0x93c5fd });
+    const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+    moonMesh.position.set(0, -45, -60);
+    sunPivot.add(moonMesh);
+
+    const moonLight = new THREE.DirectionalLight(0x818cf8, 0.25);
+    moonLight.position.copy(moonMesh.position);
+    sunPivot.add(moonLight);
+
+    function createStarfield() {
+      const starGeo = new THREE.BufferGeometry();
+      const count = 1000;
+      const pos = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      for (let i = 0; i < count; i++) {
+        const r = 180 + Math.random() * 120;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(Math.random() * 2 - 1);
+        pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+        pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+        pos[i * 3 + 2] = r * Math.cos(phi);
+        const col = Math.random() > 0.3 ? 0xffffff : 0x7dd3fc;
+        const c = new THREE.Color(col);
+        colors[i * 3] = c.r;
+        colors[i * 3 + 1] = c.g;
+        colors[i * 3 + 2] = c.b;
+      }
+      starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      starGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const starMat = new THREE.PointsMaterial({
+        size: 1.4,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8
+      });
+      const stars = new THREE.Points(starGeo, starMat);
+      scene.add(stars);
+      return stars;
+    }
+    const starsMesh = createStarfield();
+
+    /* =========================================================================
+       PLANET GENERATION & PROPS STORAGE
+       ========================================================================= */
+    const planetGroup = new THREE.Group();
+    scene.add(planetGroup);
+
+    let planetMesh = null;
+    let oceanMesh = null;
+    let cloudGroup = new THREE.Group();
+    let propsGroup = new THREE.Group();
+    let dynamicProps = [];
+    let interactiveObjects = [];
+    let landmarks = {};
+
+    planetGroup.add(cloudGroup);
+    planetGroup.add(propsGroup);
+
+    function getToonMaterial(color, emissive = 0x000000, flat = true) {
+      return new THREE.MeshToonMaterial({
+        color: color,
+        gradientMap: STATE.toonOutlines ? toonGradient : null,
+        flatShading: flat,
+        emissive: emissive,
+        emissiveIntensity: emissive === 0x000000 ? 0 : 0.6
+      });
+    }
+
+    function buildPlanetTerrain() {
+      if (planetMesh) planetGroup.remove(planetMesh);
+
+      const R = STATE.planetRadius;
+      const biome = BIOMES[STATE.biomeKey];
+      const detail = 38;
+      const geo = new THREE.IcosahedronGeometry(R, detail);
+      const pos = geo.attributes.position;
+      const count = pos.count;
+      const colors = new Float32Array(count * 3);
+
+      const v = new THREE.Vector3();
+      const col = new THREE.Color();
+
+      const cDeep = new THREE.Color(biome.waterDeep);
+      const cSand = new THREE.Color(biome.sand);
+      const cGrassLow = new THREE.Color(biome.grassLow);
+      const cGrassHigh = new THREE.Color(biome.grassHigh);
+      const cRock = new THREE.Color(biome.rock);
+      const cSnow = new THREE.Color(biome.snow);
+
+      for (let i = 0; i < count; i++) {
+        v.fromBufferAttribute(pos, i);
+        v.normalize();
+
+        const nx = v.x * 0.8, ny = v.y * 0.8, nz = v.z * 0.8;
+        let elev = simplex.noise3D(nx, ny, nz);
+        elev += 0.5 * simplex.noise3D(nx * 2.2, ny * 2.2, nz * 2.2);
+        elev += 0.25 * simplex.noise3D(nx * 4.5, ny * 4.5, nz * 4.5);
+
+        const ridge = Math.pow(Math.max(0, simplex.noise3D(nx * 1.8 + 10, ny * 1.8 + 10, nz * 1.8 + 10)), 2.2);
+        elev += ridge * 1.4;
+
+        const heightMultiplier = 1.0 + (elev * 0.12 * STATE.roughness);
+        const finalRadius = R * heightMultiplier;
+        v.multiplyScalar(finalRadius);
+        pos.setXYZ(i, v.x, v.y, v.z);
+
+        const normH = (finalRadius - R) / (R * 0.25 * STATE.roughness);
+        const polar = Math.abs(v.y) / R;
+
+        if (normH < -0.04) {
+          col.copy(cDeep);
+        } else if (normH < 0.08) {
+          col.copy(cSand);
+        } else if (normH < 0.35) {
+          col.lerpColors(cGrassLow, cGrassHigh, normH / 0.35);
+        } else if (normH < 0.72 && polar < 0.75) {
+          col.copy(cRock);
+        } else {
+          col.copy(cSnow);
+        }
+
+        colors[i * 3] = col.r;
+        colors[i * 3 + 1] = col.g;
+        colors[i * 3 + 2] = col.b;
+      }
+
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geo.computeVertexNormals();
+
+      const mat = new THREE.MeshToonMaterial({
+        vertexColors: true,
+        gradientMap: STATE.toonOutlines ? toonGradient : null,
+        flatShading: true
+      });
+
+      planetMesh = new THREE.Mesh(geo, mat);
+      planetMesh.receiveShadow = true;
+      planetMesh.castShadow = true;
+      planetMesh.name = "PlanetSurface";
+      planetGroup.add(planetMesh);
+
+      buildOcean();
+    }
+
+    function buildOcean() {
+      if (oceanMesh) planetGroup.remove(oceanMesh);
+      const biome = BIOMES[STATE.biomeKey];
+      const oceanGeo = new THREE.IcosahedronGeometry(STATE.planetRadius * STATE.seaLevel, 24);
+      const oceanMat = new THREE.MeshToonMaterial({
+        color: biome.waterShallow,
+        transparent: true,
+        opacity: 0.88,
+        gradientMap: toonGradient,
+        flatShading: true
+      });
+      oceanMesh = new THREE.Mesh(oceanGeo, oceanMat);
+      oceanMesh.receiveShadow = true;
+      oceanMesh.name = "Ocean";
+      planetGroup.add(oceanMesh);
+    }
+
+    /* =========================================================================
+       SURFACE ELEVATION SAMPLING & PLACEMENT UTILITIES
+       ========================================================================= */
+    function getSurfacePoint(dir) {
+      const normal = dir.clone().normalize();
+      const nx = normal.x * 0.8, ny = normal.y * 0.8, nz = normal.z * 0.8;
+      let elev = simplex.noise3D(nx, ny, nz);
+      elev += 0.5 * simplex.noise3D(nx * 2.2, ny * 2.2, nz * 2.2);
+      elev += 0.25 * simplex.noise3D(nx * 4.5, ny * 4.5, nz * 4.5);
+      const ridge = Math.pow(Math.max(0, simplex.noise3D(nx * 1.8 + 10, ny * 1.8 + 10, nz * 1.8 + 10)), 2.2);
+      elev += ridge * 1.4;
+
+      const heightMultiplier = 1.0 + (elev * 0.12 * STATE.roughness);
+      const r = STATE.planetRadius * heightMultiplier;
+      const pos = normal.clone().multiplyScalar(r);
+      const isLand = r > (STATE.planetRadius * STATE.seaLevel + 0.1);
+      return { pos, normal, radius: r, isLand, elevation: (r - STATE.planetRadius) * 20 };
+    }
+
+    function alignToSphere(object, position, normal) {
+      object.position.copy(position);
+      const up = new THREE.Vector3(0, 1, 0);
+      const quat = new THREE.Quaternion().setFromUnitVectors(up, normal.clone().normalize());
+      object.quaternion.copy(quat);
+      object.rotateY(Math.random() * Math.PI * 2);
+    }
+
+    /* =========================================================================
+       PROCEDURAL ASSET BUILDERS
+       ========================================================================= */
+    function createPineTree(biome, scale = 1) {
+      const group = new THREE.Group();
+      const trunkMat = getToonMaterial(0x5c3a21);
+      const foliageColors = biome.foliage;
+      const leafColor = foliageColors[Math.floor(Math.random() * foliageColors.length)];
+      const leafMat = getToonMaterial(leafColor);
+
+      const trunkGeo = new THREE.CylinderGeometry(0.12 * scale, 0.25 * scale, 1.4 * scale, 5);
+      trunkGeo.translate(0, 0.7 * scale, 0);
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.castShadow = true;
+      group.add(trunk);
+
+      const tiers = 3;
+      for (let i = 0; i < tiers; i++) {
+        const coneGeo = new THREE.ConeGeometry((1.2 - i * 0.28) * scale, (1.3 - i * 0.2) * scale, 5);
+        coneGeo.translate(0, (1.1 + i * 0.65) * scale, 0);
+        const cone = new THREE.Mesh(coneGeo, leafMat);
+        cone.castShadow = true;
+        cone.receiveShadow = true;
+        cone.rotation.y = (i * 0.4);
+        group.add(cone);
+      }
+      return group;
+    }
+
+    function createOakTree(biome, scale = 1) {
+      const group = new THREE.Group();
+      const trunkMat = getToonMaterial(0x6b4423);
+      const foliageColors = biome.foliage;
+      const leafColor = foliageColors[Math.floor(Math.random() * foliageColors.length)];
+      const leafMat = getToonMaterial(leafColor);
+
+      const trunkGeo = new THREE.CylinderGeometry(0.2 * scale, 0.35 * scale, 1.6 * scale, 5);
+      trunkGeo.translate(0, 0.8 * scale, 0);
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.castShadow = true;
+      group.add(trunk);
+
+      const sphereCount = 3 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < sphereCount; i++) {
+        const r = (0.7 + Math.random() * 0.4) * scale;
+        const leafGeo = new THREE.IcosahedronGeometry(r, 1);
+        const foliage = new THREE.Mesh(leafGeo, leafMat);
+        foliage.position.set(
+          (Math.random() - 0.5) * 0.8 * scale,
+          (1.8 + Math.random() * 0.8) * scale,
+          (Math.random() - 0.5) * 0.8 * scale
+        );
+        foliage.castShadow = true;
+        foliage.receiveShadow = true;
+        group.add(foliage);
+      }
+      return group;
+    }
+
+    function createPalmTree(scale = 1) {
+      const group = new THREE.Group();
+      const trunkMat = getToonMaterial(0x854d0e);
+      const leafMat = getToonMaterial(0x16a34a);
+
+      const segments = 4;
+      let currY = 0;
+      let currZ = 0;
+      for (let i = 0; i < segments; i++) {
+        const segGeo = new THREE.CylinderGeometry(0.22 - i * 0.03, 0.26 - i * 0.03, 0.6 * scale, 5);
+        segGeo.translate(0, 0.3 * scale, 0);
+        const seg = new THREE.Mesh(segGeo, trunkMat);
+        seg.position.set(0, currY, currZ);
+        seg.rotation.x = 0.08 * (i + 1);
+        group.add(seg);
+        currY += 0.55 * scale;
+        currZ += 0.08 * scale;
+      }
+
+      for (let j = 0; j < 6; j++) {
+        const leafGeo = new THREE.BoxGeometry(0.35 * scale, 0.05 * scale, 1.4 * scale);
+        leafGeo.translate(0, 0, 0.7 * scale);
+        const frond = new THREE.Mesh(leafGeo, leafMat);
+        frond.position.set(0, currY, currZ);
+        frond.rotation.y = (j * Math.PI / 3);
+        frond.rotation.x = -0.4;
+        group.add(frond);
+      }
+      return group;
+    }
+
+    function createHouse(scale = 1) {
+      const group = new THREE.Group();
+      const wallColors = [0xfef3c7, 0xf1f5f9, 0xfce7f3, 0xfee2e2, 0xe0f2fe];
+      const roofColors = [0xb91c1c, 0xc2410c, 0x0369a1, 0x374151, 0x065f46];
+      
+      const wallColor = wallColors[Math.floor(Math.random() * wallColors.length)];
+      const roofColor = roofColors[Math.floor(Math.random() * roofColors.length)];
+      
+      const wallMat = getToonMaterial(wallColor);
+      const roofMat = getToonMaterial(roofColor);
+      const woodMat = getToonMaterial(0x78350f);
+      const windowMat = getToonMaterial(0xfef08a, 0xfbbf24);
+
+      const w = (1.2 + Math.random() * 0.4) * scale;
+      const h = (1.0 + Math.random() * 0.3) * scale;
+      const d = (1.4 + Math.random() * 0.5) * scale;
+      const bodyGeo = new THREE.BoxGeometry(w, h, d);
+      bodyGeo.translate(0, h / 2, 0);
+      const body = new THREE.Mesh(bodyGeo, wallMat);
+      body.castShadow = true;
+      body.receiveShadow = true;
+      group.add(body);
+
+      const roofGeo = new THREE.ConeGeometry(Math.max(w, d) * 0.85, 0.85 * scale, 4);
+      roofGeo.translate(0, h + 0.4 * scale, 0);
+      roofGeo.rotateY(Math.PI / 4);
+      const roof = new THREE.Mesh(roofGeo, roofMat);
+      roof.castShadow = true;
+      group.add(roof);
+
+      const chimGeo = new THREE.BoxGeometry(0.25 * scale, 0.7 * scale, 0.25 * scale);
+      chimGeo.translate(w * 0.3, h + 0.6 * scale, d * 0.2);
+      const chim = new THREE.Mesh(chimGeo, getToonMaterial(0x64748b));
+      chim.castShadow = true;
+      group.add(chim);
+
+      const winGeo = new THREE.PlaneGeometry(0.3 * scale, 0.35 * scale);
+      const winFront = new THREE.Mesh(winGeo, windowMat);
+      winFront.position.set(0, h * 0.55, d / 2 + 0.02);
+      group.add(winFront);
+
+      const winSide = new THREE.Mesh(winGeo, windowMat);
+      winSide.position.set(w / 2 + 0.02, h * 0.55, 0);
+      winSide.rotation.y = Math.PI / 2;
+      group.add(winSide);
+
+      const doorGeo = new THREE.PlaneGeometry(0.35 * scale, 0.6 * scale);
+      const door = new THREE.Mesh(doorGeo, woodMat);
+      door.position.set(w * 0.25, 0.3 * scale, d / 2 + 0.02);
+      group.add(door);
+
+      return group;
+    }
+
+    function createWindmillLandmark(scale = 1.3) {
+      const group = new THREE.Group();
+      group.name = "Landmark_Windmill";
+
+      const towerMat = getToonMaterial(0xf8fafc);
+      const roofMat = getToonMaterial(0xb91c1c);
+      const woodMat = getToonMaterial(0x78350f);
+      const sailMat = getToonMaterial(0xfef9c3);
+
+      const towerGeo = new THREE.CylinderGeometry(0.8 * scale, 1.3 * scale, 3.2 * scale, 8);
+      towerGeo.translate(0, 1.6 * scale, 0);
+      const tower = new THREE.Mesh(towerGeo, towerMat);
+      tower.castShadow = true;
+      tower.receiveShadow = true;
+      group.add(tower);
+
+      const roofGeo = new THREE.ConeGeometry(1.05 * scale, 1.2 * scale, 8);
+      roofGeo.translate(0, 3.8 * scale, 0);
+      const roof = new THREE.Mesh(roofGeo, roofMat);
+      roof.castShadow = true;
+      group.add(roof);
+
+      const rotorGroup = new THREE.Group();
+      rotorGroup.position.set(0, 3.1 * scale, 0.95 * scale);
+
+      const hubGeo = new THREE.CylinderGeometry(0.2 * scale, 0.2 * scale, 0.3 * scale, 8);
+      hubGeo.rotateX(Math.PI / 2);
+      const hub = new THREE.Mesh(hubGeo, woodMat);
+      rotorGroup.add(hub);
+
+      for (let i = 0; i < 4; i++) {
+        const bladeArm = new THREE.Group();
+        bladeArm.rotation.z = (i * Math.PI / 2);
+
+        const sparGeo = new THREE.BoxGeometry(0.08 * scale, 2.2 * scale, 0.06 * scale);
+        sparGeo.translate(0, 1.1 * scale, 0);
+        const spar = new THREE.Mesh(sparGeo, woodMat);
+        bladeArm.add(spar);
+
+        const clothGeo = new THREE.PlaneGeometry(0.55 * scale, 1.6 * scale);
+        clothGeo.translate(0.3 * scale, 1.2 * scale, 0.02);
+        const cloth = new THREE.Mesh(clothGeo, sailMat);
+        bladeArm.add(cloth);
+
+        rotorGroup.add(bladeArm);
+      }
+      group.add(rotorGroup);
+
+      dynamicProps.push({
+        type: 'rotate',
+        target: rotorGroup,
+        speed: 1.2,
+        axis: 'z'
+      });
+
+      return group;
+    }
+
+    function createLighthouseLandmark(scale = 1.4) {
+      const group = new THREE.Group();
+      group.name = "Landmark_Lighthouse";
+
+      const whiteMat = getToonMaterial(0xffffff);
+      const redMat = getToonMaterial(0xdc2626);
+      const metalMat = getToonMaterial(0x1e293b);
+      const glassMat = getToonMaterial(0xfef08a, 0xfde047);
+
+      const segCount = 5;
+      for (let i = 0; i < segCount; i++) {
+        const rTop = 0.9 - i * 0.08;
+        const rBot = 1.0 - i * 0.08;
+        const segGeo = new THREE.CylinderGeometry(rTop * scale, rBot * scale, 0.8 * scale, 10);
+        segGeo.translate(0, (0.4 + i * 0.78) * scale, 0);
+        const seg = new THREE.Mesh(segGeo, i % 2 === 0 ? redMat : whiteMat);
+        seg.castShadow = true;
+        group.add(seg);
+      }
+
+      const balconyGeo = new THREE.CylinderGeometry(1.05 * scale, 1.05 * scale, 0.15 * scale, 10);
+      balconyGeo.translate(0, 4.0 * scale, 0);
+      const balcony = new THREE.Mesh(balconyGeo, metalMat);
+      group.add(balcony);
+
+      const lampGeo = new THREE.CylinderGeometry(0.65 * scale, 0.65 * scale, 0.7 * scale, 8);
+      lampGeo.translate(0, 4.45 * scale, 0);
+      const lamp = new THREE.Mesh(lampGeo, glassMat);
+      group.add(lamp);
+
+      const domeGeo = new THREE.ConeGeometry(0.85 * scale, 0.7 * scale, 8);
+      domeGeo.translate(0, 5.15 * scale, 0);
+      const dome = new THREE.Mesh(domeGeo, metalMat);
+      group.add(dome);
+
+      const beamGeo = new THREE.ConeGeometry(3.5 * scale, 18 * scale, 16, 1, true);
+      beamGeo.translate(0, 9 * scale, 0);
+      beamGeo.rotateX(Math.PI / 2);
+      const beamMat = new THREE.MeshBasicMaterial({
+        color: 0xfef08a,
+        transparent: true,
+        opacity: 0.35,
+        side: THREE.DoubleSide
+      });
+      const beam = new THREE.Mesh(beamGeo, beamMat);
+      beam.position.set(0, 4.45 * scale, 0);
+      group.add(beam);
+
+      dynamicProps.push({
+        type: 'rotate',
+        target: beam,
+        speed: 1.6,
+        axis: 'y'
+      });
+
+      return group;
+    }
+
+    function createSailboat(scale = 1.0) {
+      const group = new THREE.Group();
+      group.name = "Sailboat";
+
+      const hullMat = getToonMaterial(0x78350f);
+      const sailMat = getToonMaterial(0xffffff);
+
+      const hullGeo = new THREE.BoxGeometry(0.9 * scale, 0.45 * scale, 2.2 * scale);
+      hullGeo.translate(0, 0.2 * scale, 0);
+      const hull = new THREE.Mesh(hullGeo, hullMat);
+      hull.castShadow = true;
+      group.add(hull);
+
+      const mastGeo = new THREE.CylinderGeometry(0.06 * scale, 0.08 * scale, 2.8 * scale, 5);
+      mastGeo.translate(0, 1.4 * scale, 0);
+      const mast = new THREE.Mesh(mastGeo, hullMat);
+      group.add(mast);
+
+      const sailShape = new THREE.Shape();
+      sailShape.moveTo(0, 0);
+      sailShape.lineTo(1.2 * scale, 0.3 * scale);
+      sailShape.lineTo(0, 2.4 * scale);
+      sailShape.closePath();
+      const sailGeo = new THREE.ShapeGeometry(sailShape);
+      sailGeo.translate(0, 0.3 * scale, 0);
+      const sail = new THREE.Mesh(sailGeo, sailMat);
+      sail.rotation.y = Math.PI / 2;
+      group.add(sail);
+
+      return group;
+    }
+
+    function createHotAirBalloon(scale = 1.5) {
+      const group = new THREE.Group();
+      group.name = "HotAirBalloon";
+
+      const balloonMat = getToonMaterial(0xe11d48);
+      const basketMat = getToonMaterial(0x92400e);
+
+      const envGeo = new THREE.SphereGeometry(1.6 * scale, 12, 12);
+      envGeo.scale(1, 1.35, 1);
+      const env = new THREE.Mesh(envGeo, balloonMat);
+      env.castShadow = true;
+      group.add(env);
+
+      const basketGeo = new THREE.BoxGeometry(0.7 * scale, 0.6 * scale, 0.7 * scale);
+      basketGeo.translate(0, -2.4 * scale, 0);
+      const basket = new THREE.Mesh(basketGeo, basketMat);
+      group.add(basket);
+
+      for (let i = 0; i < 4; i++) {
+        const angle = i * Math.PI / 2;
+        const lineGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.2 * scale);
+        lineGeo.translate(0, -1.8 * scale, 0);
+        const line = new THREE.Mesh(lineGeo, getToonMaterial(0x1e293b));
+        line.position.set(Math.cos(angle) * 0.35 * scale, 0, Math.sin(angle) * 0.35 * scale);
+        group.add(line);
+      }
+
+      return group;
+    }
+
+    function createCrystalCluster(scale = 1.2) {
+      const group = new THREE.Group();
+      group.name = "CrystalHollow";
+
+      const colors = [0xa855f7, 0x38bdf8, 0xec4899, 0x10b981];
+      const col = colors[Math.floor(Math.random() * colors.length)];
+      const crystalMat = getToonMaterial(col, col);
+
+      const count = 4 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < count; i++) {
+        const h = (1.4 + Math.random() * 1.6) * scale;
+        const w = (0.28 + Math.random() * 0.2) * scale;
+        const crysGeo = new THREE.ConeGeometry(w, h, 5);
+        crysGeo.translate(0, h / 2, 0);
+        const crystal = new THREE.Mesh(crysGeo, crystalMat);
+        crystal.position.set((Math.random() - 0.5) * 0.8 * scale, 0, (Math.random() - 0.5) * 0.8 * scale);
+        crystal.rotation.set((Math.random() - 0.5) * 0.4, Math.random() * Math.PI, (Math.random() - 0.5) * 0.4);
+        crystal.castShadow = true;
+        group.add(crystal);
+      }
+      return group;
+    }
+
+    function createRock(scale = 1) {
+      const geo = new THREE.DodecahedronGeometry((0.6 + Math.random() * 0.5) * scale, 0);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        pos.setXYZ(
+          i,
+          pos.getX(i) * (0.8 + Math.random() * 0.4),
+          pos.getY(i) * (0.7 + Math.random() * 0.5),
+          pos.getZ(i) * (0.8 + Math.random() * 0.4)
+        );
+      }
+      geo.computeVertexNormals();
+      const mat = getToonMaterial(0x64748b);
+      const rock = new THREE.Mesh(geo, mat);
+      rock.castShadow = true;
+      rock.receiveShadow = true;
+      return rock;
+    }
+
+    function createCloudCluster(scale = 1.0) {
+      const group = new THREE.Group();
+      const cloudMat = new THREE.MeshToonMaterial({
+        color: 0xffffff,
+        gradientMap: toonGradient,
+        flatShading: true,
+        transparent: true,
+        opacity: 0.94
+      });
+
+      const puffCount = 4 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < puffCount; i++) {
+        const r = (1.2 + Math.random() * 1.1) * scale;
+        const puffGeo = new THREE.IcosahedronGeometry(r, 1);
+        const puff = new THREE.Mesh(puffGeo, cloudMat);
+        puff.position.set(
+          (Math.random() - 0.5) * 2.8 * scale,
+          (Math.random() - 0.5) * 0.6 * scale,
+          (Math.random() - 0.5) * 2.0 * scale
+        );
+        group.add(puff);
+      }
+      return group;
+    }
+
+    /* =========================================================================
+       PROCEDURAL WORLD POPULATION & LANDMARK REGISTRATION
+       ========================================================================= */
+    function populateWorld() {
+      while (propsGroup.children.length > 0) propsGroup.remove(propsGroup.children[0]);
+      while (cloudGroup.children.length > 0) cloudGroup.remove(cloudGroup.children[0]);
+      dynamicProps = [];
+      interactiveObjects = [];
+      landmarks = {};
+
+      const biome = BIOMES[STATE.biomeKey];
+      const R = STATE.planetRadius;
+
+      // 1. Landmarks
+      const pWindmill = getSurfacePoint(new THREE.Vector3(0.6, 0.7, 0.4));
+      const windmill = createWindmillLandmark(1.3);
+      alignToSphere(windmill, pWindmill.pos, pWindmill.normal);
+      propsGroup.add(windmill);
+      windmill.userData = {
+        title: "Elder Windmill",
+        desc: "An iconic wooden landmark catching the perpetual mountain breezes, grinding grain for Sunnydale.",
+        coords: "32°N, 45°E",
+        elevation: `${Math.round(pWindmill.elevation)}m ASL`,
+        targetPos: pWindmill.pos.clone(),
+        targetNormal: pWindmill.normal.clone()
+      };
+      interactiveObjects.push(windmill);
+      landmarks.windmill = windmill.userData;
+
+      const pLighthouse = getSurfacePoint(new THREE.Vector3(-0.7, 0.3, 0.65));
+      const lighthouse = createLighthouseLandmark(1.3);
+      alignToSphere(lighthouse, pLighthouse.pos, pLighthouse.normal);
+      propsGroup.add(lighthouse);
+      lighthouse.userData = {
+        title: "Beacon Point Lighthouse",
+        desc: "Guards the northern strait with a high-intensity revolving beam guiding coastal vessels through reef waters.",
+        coords: "18°N, 142°W",
+        elevation: `${Math.round(pLighthouse.elevation)}m ASL`,
+        targetPos: pLighthouse.pos.clone(),
+        targetNormal: pLighthouse.normal.clone()
+      };
+      interactiveObjects.push(lighthouse);
+      landmarks.lighthouse = lighthouse.userData;
+
+      const pVillage = getSurfacePoint(new THREE.Vector3(0.1, -0.4, 0.9));
+      const villageCenter = new THREE.Group();
+      for (let i = 0; i < 5; i++) {
+        const offsetDir = new THREE.Vector3(
+          0.1 + (Math.random() - 0.5) * 0.25,
+          -0.4 + (Math.random() - 0.5) * 0.25,
+          0.9 + (Math.random() - 0.5) * 0.25
+        );
+        const pSub = getSurfacePoint(offsetDir);
+        const house = createHouse(0.9 + Math.random() * 0.3);
+        alignToSphere(house, pSub.pos, pSub.normal);
+        villageCenter.add(house);
+      }
+      propsGroup.add(villageCenter);
+      villageCenter.userData = {
+        title: "Sunnydale Village",
+        desc: "A warm, picturesque settlement known for timber craft, cider orchards, and friendly stargazers.",
+        coords: "22°S, 84°E",
+        elevation: `${Math.round(pVillage.elevation)}m ASL`,
+        targetPos: pVillage.pos.clone(),
+        targetNormal: pVillage.normal.clone()
+      };
+      interactiveObjects.push(villageCenter);
+      landmarks.village = villageCenter.userData;
+
+      const pSakura = getSurfacePoint(new THREE.Vector3(-0.5, -0.6, -0.55));
+      const sakuraGrove = new THREE.Group();
+      for (let i = 0; i < 6; i++) {
+        const offsetDir = new THREE.Vector3(
+          -0.5 + (Math.random() - 0.5) * 0.2,
+          -0.6 + (Math.random() - 0.5) * 0.2,
+          -0.55 + (Math.random() - 0.5) * 0.2
+        );
+        const pSub = getSurfacePoint(offsetDir);
+        const oak = createOakTree(BIOMES.sakura, 1.3 + Math.random() * 0.5);
+        alignToSphere(oak, pSub.pos, pSub.normal);
+        sakuraGrove.add(oak);
+      }
+      propsGroup.add(sakuraGrove);
+      sakuraGrove.userData = {
+        title: "Sakura Sanctuary",
+        desc: "An enchanted grove of ancient blossoming trees where travelers pause to meditate beneath drifting petals.",
+        coords: "48°S, 130°W",
+        elevation: `${Math.round(pSakura.elevation)}m ASL`,
+        targetPos: pSakura.pos.clone(),
+        targetNormal: pSakura.normal.clone()
+      };
+      interactiveObjects.push(sakuraGrove);
+      landmarks.cherry = sakuraGrove.userData;
+
+      const pCrystal = getSurfacePoint(new THREE.Vector3(0.8, -0.3, -0.5));
+      const crystalHollow = createCrystalCluster(1.5);
+      alignToSphere(crystalHollow, pCrystal.pos, pCrystal.normal);
+      propsGroup.add(crystalHollow);
+      crystalHollow.userData = {
+        title: "Crystal Hollow",
+        desc: "A geological marvel of resonant prismatic minerals radiating subtle auroral energy at dusk.",
+        coords: "15°S, 32°W",
+        elevation: `${Math.round(pCrystal.elevation)}m ASL`,
+        targetPos: pCrystal.pos.clone(),
+        targetNormal: pCrystal.normal.clone()
+      };
+      interactiveObjects.push(crystalHollow);
+      landmarks.crystals = crystalHollow.userData;
+
+      const pWater = new THREE.Vector3(-0.2, 0.1, -0.98).normalize().multiplyScalar(STATE.planetRadius * STATE.seaLevel + 0.1);
+      const boat = createSailboat(1.2);
+      alignToSphere(boat, pWater, pWater.clone().normalize());
+      propsGroup.add(boat);
+      boat.userData = {
+        title: "Blue Bay Port",
+        desc: "Deep turquoise ocean waters where intrepid caravels embark for uncharted miniature archipelagos.",
+        coords: "08°N, 102°E",
+        elevation: "0m Sea Level",
+        targetPos: pWater.clone(),
+        targetNormal: pWater.clone().normalize()
+      };
+      interactiveObjects.push(boat);
+      landmarks.port = boat.userData;
+
+      dynamicProps.push({
+        type: 'bob',
+        target: boat,
+        baseY: boat.position.clone(),
+        speed: 2.2,
+        amp: 0.15
+      });
+
+      const balloon = createHotAirBalloon(1.2);
+      const balloonPivot = new THREE.Group();
+      balloon.position.set(0, 0, R + 11);
+      balloonPivot.add(balloon);
+      balloonPivot.rotation.set(0.4, 0.8, 0);
+      planetGroup.add(balloonPivot);
+      
+      const balloonWorldPos = new THREE.Vector3();
+      balloon.getWorldPosition(balloonWorldPos);
+      balloon.userData = {
+        title: "Explorer's Hot Air Balloon",
+        desc: "A panoramic observation gondola drifting gently above the troposphere, mapping cloud currents.",
+        coords: "Atmosphere 1800m",
+        elevation: "High Altitude",
+        targetPos: balloonWorldPos,
+        targetNormal: balloonWorldPos.clone().normalize()
+      };
+      interactiveObjects.push(balloon);
+      landmarks.balloon = balloon.userData;
+
+      dynamicProps.push({
+        type: 'orbitGroup',
+        target: balloonPivot,
+        speed: 0.18
+      });
+
+      // 2. Procedural Trees
+      const treeCount = STATE.treeCount;
+      const goldenRatio = (1 + Math.sqrt(5)) / 2;
+      for (let i = 0; i < treeCount; i++) {
+        const theta = 2 * Math.PI * i / goldenRatio;
+        const phi = Math.acos(1 - 2 * (i + 0.5) / treeCount);
+        const dir = new THREE.Vector3(
+          Math.cos(theta) * Math.sin(phi),
+          Math.sin(theta) * Math.sin(phi),
+          Math.cos(phi)
+        );
+
+        const pt = getSurfacePoint(dir);
+        if (pt.isLand && pt.radius < (R * 1.15)) {
+          let tree;
+          const rand = Math.random();
+          if (STATE.biomeKey === 'tropic' || (pt.radius < (R * STATE.seaLevel + 0.8) && rand > 0.4)) {
+            tree = createPalmTree(0.8 + Math.random() * 0.4);
+          } else if (rand > 0.45) {
+            tree = createPineTree(biome, 0.75 + Math.random() * 0.45);
+          } else {
+            tree = createOakTree(biome, 0.75 + Math.random() * 0.45);
+          }
+          alignToSphere(tree, pt.pos, pt.normal);
+          propsGroup.add(tree);
+
+          tree.userData = {
+            title: "Wild Woodland Tree",
+            desc: "Thriving vegetation adapted to the rich microclimates of this pocket sphere.",
+            coords: `${Math.round(dir.y * 90)}°${dir.y > 0 ? 'N' : 'S'}, ${Math.round(dir.x * 180)}°E`,
+            elevation: `${Math.round(pt.elevation)}m ASL`,
+            targetPos: pt.pos.clone(),
+            targetNormal: pt.normal.clone()
+          };
+          interactiveObjects.push(tree);
+        }
+      }
+
+      // 3. Procedural Houses
+      const houseCount = STATE.houseCount;
+      for (let i = 0; i < houseCount; i++) {
+        const dir = new THREE.Vector3(
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2
+        ).normalize();
+
+        const pt = getSurfacePoint(dir);
+        if (pt.isLand && pt.radius < (R * 1.12)) {
+          const house = createHouse(0.75 + Math.random() * 0.35);
+          alignToSphere(house, pt.pos, pt.normal);
+          propsGroup.add(house);
+
+          house.userData = {
+            title: `Cozy Cottage #${i + 1}`,
+            desc: "A charming low-poly dwelling with a wood-burning hearth and a garden path.",
+            coords: `${Math.round(dir.y * 90)}°${dir.y > 0 ? 'N' : 'S'}, ${Math.round(dir.x * 180)}°E`,
+            elevation: `${Math.round(pt.elevation)}m ASL`,
+            targetPos: pt.pos.clone(),
+            targetNormal: pt.normal.clone()
+          };
+          interactiveObjects.push(house);
+        }
+      }
+
+      // 4. Procedural Rocks
+      for (let i = 0; i < STATE.rockCount; i++) {
+        const dir = new THREE.Vector3(
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2,
+          (Math.random() - 0.5) * 2
+        ).normalize();
+        const pt = getSurfacePoint(dir);
+        const rock = createRock(0.6 + Math.random() * 0.7);
+        alignToSphere(rock, pt.pos, pt.normal);
+        propsGroup.add(rock);
+      }
+
+      // 5. Procedural Clouds
+      if (STATE.cloudsEnabled) {
+        for (let i = 0; i < STATE.cloudCount; i++) {
+          const cloud = createCloudCluster(0.9 + Math.random() * 0.6);
+          const alt = R + 4.5 + Math.random() * 4.0;
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.acos(Math.random() * 2 - 1);
+          cloud.position.set(
+            alt * Math.sin(phi) * Math.cos(theta),
+            alt * Math.sin(phi) * Math.sin(theta),
+            alt * Math.cos(phi)
+          );
+          cloud.lookAt(0, 0, 0);
+          cloudGroup.add(cloud);
+        }
+      }
+
+      landmarks.overview = {
+        title: "Planet Terraria Overview",
+        desc: "A breathtaking procedural micro-planet teeming with low-poly life, cozy villages, and dynamic weather.",
+        coords: "Orbital View",
+        elevation: "Orbit",
+        targetPos: new THREE.Vector3(0, 0, 0),
+        targetNormal: new THREE.Vector3(0, 1, 0),
+        isOverview: true
+      };
+    }
+
+    /* =========================================================================
+       CAMERA FOCUS TRANSITIONS
+       ========================================================================= */
+    const cameraTarget = {
+      active: false,
+      startCamPos: new THREE.Vector3(),
+      endCamPos: new THREE.Vector3(),
+      startLookAt: new THREE.Vector3(),
+      endLookAt: new THREE.Vector3(),
+      progress: 0,
+      duration: 1.4,
+      currentLookAt: new THREE.Vector3(0, 0, 0)
+    };
+
+    function focusCameraOn(targetPos, targetNormal, isOverview = false) {
+      cameraTarget.startCamPos.copy(camera.position);
+      cameraTarget.startLookAt.copy(controls ? controls.target : cameraTarget.currentLookAt);
+
+      if (isOverview) {
+        cameraTarget.endLookAt.set(0, 0, 0);
+        cameraTarget.endCamPos.set(0, 24, 62);
+      } else {
+        cameraTarget.endLookAt.copy(targetPos);
+        const camDistance = 14;
+        const offset = targetNormal.clone().multiplyScalar(camDistance);
+        offset.y += 3.5;
+        cameraTarget.endCamPos.copy(targetPos).add(offset);
+      }
+
+      cameraTarget.progress = 0;
+      cameraTarget.active = true;
+      if (controls) controls.enabled = false;
+      SoundEngine.playChime(660);
+    }
+
+    function updateCameraTransition(delta) {
+      if (!cameraTarget.active) return;
+
+      cameraTarget.progress += delta / cameraTarget.duration;
+      const t = Math.min(1.0, cameraTarget.progress);
+      const ease = 1 - Math.pow(1 - t, 3);
+
+      camera.position.lerpVectors(cameraTarget.startCamPos, cameraTarget.endCamPos, ease);
+      cameraTarget.currentLookAt.lerpVectors(cameraTarget.startLookAt, cameraTarget.endLookAt, ease);
+      
+      if (controls) {
+        controls.target.copy(cameraTarget.currentLookAt);
+        controls.update();
+      } else {
+        camera.lookAt(cameraTarget.currentLookAt);
+      }
+
+      if (t >= 1.0) {
+        cameraTarget.active = false;
+        if (controls) controls.enabled = true;
+      }
+    }
+
+    /* =========================================================================
+       RAYCASTING & INTERACTION
+       ========================================================================= */
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let isDragging = false;
+    let pointerDownPos = { x: 0, y: 0 };
+
+    window.addEventListener('pointerdown', (e) => {
+      pointerDownPos.x = e.clientX;
+      pointerDownPos.y = e.clientY;
+      isDragging = false;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      const dist = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+      if (dist > 6) isDragging = true;
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (isDragging || e.target.closest('.interactive')) return;
+
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+
+      if (STATE.plantMode && planetMesh) {
+        const intersects = raycaster.intersectObject(planetMesh, false);
+        if (intersects.length > 0) {
+          const hit = intersects[0];
+          const normal = hit.point.clone().normalize();
+          const tree = Math.random() > 0.5 ? createOakTree(BIOMES[STATE.biomeKey], 1.0) : createPineTree(BIOMES[STATE.biomeKey], 1.0);
+          alignToSphere(tree, hit.point, normal);
+          propsGroup.add(tree);
+          tree.userData = {
+            title: "Hand-Planted Sapling",
+            desc: "Planted by the celestial architect! It sways gently under the low-poly sun.",
+            coords: "Local Landmark",
+            elevation: `${Math.round((hit.point.length() - STATE.planetRadius) * 20)}m ASL`,
+            targetPos: hit.point.clone(),
+            targetNormal: normal.clone()
+          };
+          interactiveObjects.push(tree);
+          SoundEngine.playPop();
+          showFocusCard(tree.userData);
+          return;
+        }
+      }
+
+      const hits = raycaster.intersectObjects(interactiveObjects, true);
+      if (hits.length > 0) {
+        let obj = hits[0].object;
+        while (obj && !obj.userData.title && obj.parent) {
+          obj = obj.parent;
+        }
+        if (obj && obj.userData.title) {
+          showFocusCard(obj.userData);
+          focusCameraOn(obj.userData.targetPos, obj.userData.targetNormal);
+          return;
+        }
+      }
+
+      if (planetMesh) {
+        const surfaceHits = raycaster.intersectObject(planetMesh, false);
+        if (surfaceHits.length > 0) {
+          const hit = surfaceHits[0];
+          const normal = hit.point.clone().normalize();
+          const customData = {
+            title: "Undiscovered Territory",
+            desc: "A serene spot on the planetary sphere with breathtaking sweeping views of the horizon.",
+            coords: `${Math.round(normal.y * 90)}°${normal.y > 0 ? 'N' : 'S'}, ${Math.round(normal.x * 180)}°E`,
+            elevation: `${Math.round((hit.point.length() - STATE.planetRadius) * 20)}m ASL`,
+            targetPos: hit.point.clone(),
+            targetNormal: normal.clone()
+          };
+          showFocusCard(customData);
+          focusCameraOn(hit.point, normal);
+        }
+      }
+    });
+
+    /* =========================================================================
+       UI CONTROLLERS & DATA BINDINGS
+       ========================================================================= */
+    const focusCard = document.getElementById('focus-card');
+    const cardTitle = document.getElementById('card-title');
+    const cardDesc = document.getElementById('card-desc');
+    const cardCoords = document.getElementById('card-coords');
+    const cardElev = document.getElementById('card-elev');
+    const cardBadge = document.getElementById('card-badge');
+
+    function showFocusCard(data) {
+      if (!data) return;
+      cardTitle.textContent = data.title || "Selected Region";
+      cardDesc.textContent = data.desc || "A charming feature on the procedural planet.";
+      cardCoords.textContent = data.coords || "0°N, 0°E";
+      cardElev.textContent = data.elevation || "0m";
+      cardBadge.textContent = data.isOverview ? "PLANET" : "LANDMARK";
+      focusCard.classList.add('visible');
+    }
+
+    function hideFocusCard() {
+      focusCard.classList.remove('visible');
+    }
+
+    document.getElementById('card-orbit-btn').addEventListener('click', () => {
+      focusCameraOn(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0), true);
+      hideFocusCard();
+      document.querySelectorAll('.landmark-chip').forEach(c => c.classList.remove('active'));
+      document.querySelector('[data-target="overview"]').classList.add('active');
+    });
+
+    document.getElementById('card-inspect-btn').addEventListener('click', () => {
+      SoundEngine.playChime(880);
+      if (controls) controls.autoRotate = false;
+      document.getElementById('toggle-autospin').checked = false;
+    });
+
+    document.getElementById('landmark-dock').addEventListener('click', (e) => {
+      const btn = e.target.closest('.landmark-chip');
+      if (!btn) return;
+      document.querySelectorAll('.landmark-chip').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const targetKey = btn.dataset.target;
+      if (landmarks[targetKey]) {
+        const l = landmarks[targetKey];
+        showFocusCard(l);
+        focusCameraOn(l.targetPos, l.targetNormal, l.isOverview);
+      }
+    });
+
+    document.querySelectorAll('.biome-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.biome-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        STATE.biomeKey = btn.dataset.biome;
+        applyBiomeTheme();
+        buildPlanetTerrain();
+        populateWorld();
+        SoundEngine.playChime(580);
+      });
+    });
+
+    function applyBiomeTheme() {
+      const b = BIOMES[STATE.biomeKey];
+      scene.background.setHex(b.skyBg);
+      scene.fog.color.setHex(b.skyBg);
+      sunLight.color.setHex(b.sunColor);
+      hemiLight.color.setHex(b.ambience);
+    }
+
+    const sunSlider = document.getElementById('sun-slider');
+    const sunVal = document.getElementById('sun-val');
+    sunSlider.addEventListener('input', (e) => {
+      STATE.sunAngle = parseFloat(e.target.value);
+      updateSunPosition();
+    });
+
+    function updateSunPosition() {
+      const rad = (STATE.sunAngle * Math.PI) / 180;
+      sunPivot.rotation.z = rad;
+      const hours = Math.floor((STATE.sunAngle / 360) * 24);
+      const mins = Math.floor(((STATE.sunAngle / 360) * 24 % 1) * 60);
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const formattedHours = (hours % 12) || 12;
+      const formattedMins = mins < 10 ? '0' + mins : mins;
+      const timeStr = `${formattedHours}:${formattedMins} ${ampm}`;
+      sunVal.textContent = timeStr;
+      document.getElementById('time-label').textContent = timeStr;
+      document.getElementById('time-display').querySelector('span:first-child').textContent = (hours >= 6 && hours < 19) ? '☀️' : '🌙';
+    }
+
+    document.getElementById('roughness-slider').addEventListener('input', (e) => {
+      STATE.roughness = parseFloat(e.target.value);
+      document.getElementById('roughness-val').textContent = STATE.roughness.toFixed(1);
+      buildPlanetTerrain();
+      populateWorld();
+    });
+
+    document.getElementById('sea-slider').addEventListener('input', (e) => {
+      STATE.seaLevel = parseFloat(e.target.value);
+      document.getElementById('sea-val').textContent = STATE.seaLevel.toFixed(2);
+      buildOcean();
+    });
+
+    document.getElementById('tree-slider').addEventListener('input', (e) => {
+      STATE.treeCount = parseInt(e.target.value);
+      document.getElementById('tree-val').textContent = STATE.treeCount;
+      populateWorld();
+    });
+
+    document.getElementById('house-slider').addEventListener('input', (e) => {
+      STATE.houseCount = parseInt(e.target.value);
+      document.getElementById('house-val').textContent = STATE.houseCount;
+      populateWorld();
+    });
+
+    document.getElementById('toggle-autospin').addEventListener('change', (e) => {
+      STATE.autoSpin = e.target.checked;
+      if (controls) controls.autoRotate = STATE.autoSpin;
+    });
+
+    document.getElementById('toggle-clouds').addEventListener('change', (e) => {
+      STATE.cloudsEnabled = e.target.checked;
+      cloudGroup.visible = STATE.cloudsEnabled;
+    });
+
+    document.getElementById('toggle-toon').addEventListener('change', (e) => {
+      STATE.toonOutlines = e.target.checked;
+      buildPlanetTerrain();
+      populateWorld();
+    });
+
+    document.getElementById('toggle-plantmode').addEventListener('change', (e) => {
+      STATE.plantMode = e.target.checked;
+      container.classList.toggle('plant-mode', STATE.plantMode);
+      if (STATE.plantMode) {
+        SoundEngine.playPop();
+      }
+    });
+
+    document.getElementById('btn-reseed').addEventListener('click', () => {
+      STATE.seed = Math.random() * 10000;
+      simplex = new SimplexNoise(STATE.seed);
+      buildPlanetTerrain();
+      populateWorld();
+      SoundEngine.playChime(620);
+    });
+
+    document.getElementById('btn-audio').addEventListener('click', function() {
+      const active = SoundEngine.toggle();
+      document.getElementById('audio-icon').textContent = active ? '🔊' : '🔇';
+      this.classList.toggle('active', active);
+    });
+
+    const settingsPanel = document.getElementById('settings-panel');
+    document.getElementById('btn-settings').addEventListener('click', function() {
+      settingsPanel.classList.toggle('collapsed');
+      this.classList.toggle('active');
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    /* =========================================================================
+       ANIMATION LOOP & RENDER
+       ========================================================================= */
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const delta = clock.getDelta();
+      const elapsed = clock.getElapsedTime();
+
+      updateCameraTransition(delta);
+
+      if (controls && !cameraTarget.active) {
+        controls.update();
+      }
+
+      if (cloudGroup.visible) {
+        cloudGroup.rotation.y += delta * 0.04;
+        cloudGroup.rotation.x += delta * 0.015;
+      }
+
+      if (starsMesh) {
+        starsMesh.rotation.y = elapsed * 0.005;
+      }
+
+      for (let i = 0; i < dynamicProps.length; i++) {
+        const p = dynamicProps[i];
+        if (p.type === 'rotate') {
+          p.target.rotation[p.axis] += delta * p.speed;
+        } else if (p.type === 'bob') {
+          const wave = Math.sin(elapsed * p.speed) * p.amp;
+          p.target.position.copy(p.baseY).addScaledVector(p.target.up, wave);
+          p.target.rotation.z = Math.sin(elapsed * 1.5) * 0.08;
+        } else if (p.type === 'orbitGroup') {
+          p.target.rotation.y += delta * p.speed;
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    buildPlanetTerrain();
+    populateWorld();
+    updateSunPosition();
+    applyBiomeTheme();
+    animate();
+
+  </script>
+</body>
+</html>

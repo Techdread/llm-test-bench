@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dungeon Crawler</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+background: #0a0a0f;
+color: #ccc;
+font-family: 'Courier New', monospace;
+display: flex;
+justify-content: center;
+align-items: center;
+min-height: 100vh;
+overflow: hidden;
+}
+#game-container {
+display: flex;
+flex-direction: column;
+width: 960px;
+max-width: 100vw;
+}
+#top-bar {
+display: flex;
+justify-content: space-between;
+padding: 4px 8px;
+background: #1a1a2e;
+border-bottom: 1px solid #333;
+font-size: 13px;
+flex-wrap: wrap;
+gap: 4px;
+}
+.stat { color: #aaa; }
+.stat span { font-weight: bold; }
+.hp-val { color: #e74c3c; }
+.atk-val { color: #f39c12; }
+.def-val { color: #3498db; }
+.lvl-val { color: #2ecc71; }
+.gold-val { color: #f1c40f; }
+#main-area {
+display: flex;
+height: 520px;
+}
+#map-container {
+flex: 1;
+background: #0d0d1a;
+border-right: 1px solid #333;
+overflow: hidden;
+position: relative;
+}
+#map-canvas {
+font-family: 'Courier New', monospace;
+font-size: 14px;
+line-height: 16px;
+letter-spacing: 2px;
+white-space: pre;
+padding: 4px;
+display: block;
+}
+#sidebar {
+width: 280px;
+display: flex;
+flex-direction: column;
+background: #111122;
+overflow: hidden;
+}
+#inventory-panel, #log-panel {
+padding: 6px 8px;
+font-size: 12px;
+}
+#inventory-panel {
+border-bottom: 1px solid #333;
+flex-shrink: 0;
+max-height: 140px;
+overflow-y: auto;
+}
+#log-panel {
+flex: 1;
+overflow-y: auto;
+color: #888;
+line-height: 1.5;
+}
+.panel-title {
+color: #f39c12;
+font-weight: bold;
+margin-bottom: 4px;
+font-size: 13px;
+border-bottom: 1px solid #333;
+padding-bottom: 2px;
+}
+.inv-item { padding: 1px 0; cursor: pointer; }
+.inv-item:hover { color: #fff; }
+.log-msg { margin: 1px 0; }
+.log-combat { color: #e74c3c; }
+.log-item { color: #2ecc71; }
+.log-info { color: #3498db; }
+.log-special { color: #f1c40f; }
+#controls-hint {
+padding: 4px 8px;
+background: #1a1a2e;
+border-top: 1px solid #333;
+font-size: 11px;
+color: #666;
+text-align: center;
+}
+#overlay {
+display: none;
+position: fixed;
+top: 0; left: 0; right: 0; bottom: 0;
+background: rgba(0,0,0,0.85);
+z-index: 100;
+justify-content: center;
+align-items: center;
+}
+#overlay.active { display: flex; }
+#overlay-box {
+background: #1a1a2e;
+border: 2px solid #f39c12;
+padding: 30px 40px;
+text-align: center;
+max-width: 500px;
+}
+#overlay-box h2 { color: #e74c3c; margin-bottom: 15px; font-size: 28px; }
+#overlay-box.win h2 { color: #f1c40f; }
+#summary-stats { text-align: left; margin: 15px 0; line-height: 1.8; font-size: 14px; }
+#restart-btn {
+margin-top: 15px;
+padding: 10px 30px;
+background: #e74c3c;
+color: white;
+border: none;
+font-family: 'Courier New', monospace;
+font-size: 16px;
+cursor: pointer;
+}
+#restart-btn:hover { background: #c0392b; }
+#overlay-box.win #restart-btn { background: #f39c12; }
+#overlay-box.win #restart-btn:hover { background: #e67e22; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0a0a0f; }
+::-webkit-scrollbar-thumb { background: #333; }
+</style>
+</head>
+<body>
+<div id="game-container">
+<div id="top-bar"></div>
+<div id="main-area">
+<div id="map-container"><pre id="map-canvas"></pre></div>
+<div id="sidebar">
+<div id="inventory-panel"><div class="panel-title">INVENTORY</div><div id="inv-list"></div></div>
+<div id="log-panel"><div class="panel-title">MESSAGE LOG</div><div id="msg-log"></div></div>
+</div>
+</div>
+<div id="controls-hint">Arrow keys/WASD: Move &amp; Attack | G: Pick up | I: Inventory use | #: Stairs down | Q: Quit</div>
+</div>
+<div id="overlay"><div id="overlay-box"><h2 id="overlay-title"></h2><div id="summary-stats"></div><button id="restart-btn" onclick="initGame()">New Game</button></div></div>
+
+<script>
+const MAP_W = 60, MAP_H = 35;
+const FOV_RADIUS = 8;
+const MAX_LEVELS = 7;
+const TILE_WALL = 0, TILE_FLOOR = 1, TILE_DOOR = 2;
+
+let map, explored, visible, player, monsters, items, messages, level, gameOver;
+let rooms, stairsPos, goalItem;
+let totalKills, totalSteps, turnsPlayed;
+
+const MONSTER_TYPES = [
+{ name: 'Rat', ch: 'r', color: '#a0522d', hp: 6, atk: 2, def: 0, xp: 1 },
+{ name: 'Bat', ch: 'b', color: '#8e44ad', hp: 5, atk: 3, def: 0, xp: 1 },
+{ name: 'Goblin', ch: 'g', color: '#27ae60', hp: 12, atk: 4, def: 1, xp: 3 },
+{ name: 'Orc', ch: 'o', color: '#e67e22', hp: 18, atk: 6, def: 2, xp: 5 },
+{ name: 'Skeleton', ch: 's', color: '#bdc3c7', hp: 14, atk: 5, def: 3, xp: 4 },
+{ name: 'Troll', ch: 'T', color: '#2ecc71', hp: 28, atk: 8, def: 4, xp: 8 },
+{ name: 'Wraith', ch: 'w', color: '#9b59b6', hp: 20, atk: 10, def: 3, xp: 7 },
+{ name: 'Dragon', ch: 'D', color: '#e74c3c', hp: 45, atk: 14, def: 6, xp: 15 },
+];
+
+const ITEM_TYPES = [
+{ name: 'Healing Potion', ch: '!', color: '#e74c3c', type: 'potion' },
+{ name: 'Greater Healing Potion', ch: '!', color: '#ff6b6b', type: 'gpotion' },
+{ name: 'Dagger +1', ch: '/', color: '#95a5a6', type: 'weapon', atkBonus: 1 },
+{ name: 'Short Sword +2', ch: '/', color: '#bdc3c7', type: 'weapon', atkBonus: 2 },
+{ name: 'Long Sword +3', ch: '/', color: '#ecf0f1', type: 'weapon', atkBonus: 3 },
+{ name: 'Battle Axe +4', ch: '/', color: '#e67e22', type: 'weapon', atkBonus: 4 },
+{ name: 'Great Sword +5', ch: '/', color: '#f1c40f', type: 'weapon', atkBonus: 5 },
+];
+
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function dist(x1, y1, x2, y2) { return Math.sqrt((x1-x2)**2 + (y1-y2)**2); }
+
+function initGame() {
+document.getElementById('overlay').classList.remove('active');
+player = { x: 0, y: 0, hp: 30, maxHp: 30, atk: 5, def: 1, baseAtk: 5, weaponBonus: 0, level: 1, xp: 0, xpNext: 8 };
+level = 1;
+messages = [];
+totalKills = 0;
+totalSteps = 0;
+turnsPlayed = 0;
+gameOver = false;
+generateLevel();
+renderAll();
+addMessage('Welcome to the dungeon! Find the Amulet of Yendor on level ' + MAX_LEVELS, 'special');
+}
+
+function generateLevel() {
+map = Array.from({length: MAP_H}, () => Array(MAP_W).fill(TILE_WALL));
+explored = Array.from({length: MAP_H}, () => Array(MAP_W).fill(false));
+visible = Array.from({length: MAP_H}, () => Array(MAP_W).fill(false));
+rooms = [];
+monsters = [];
+items = [];
+
+let attempts = 0;
+const numRooms = rand(6, 10);
+while (rooms.length < numRooms && attempts < 200) {
+attempts++;
+const w = rand(5, 12), h = rand(4, 8);
+const x = rand(1, MAP_W - w - 1), y = rand(1, MAP_H - h - 1);
+let overlap = false;
+for (const r of rooms) {
+if (x < r.x + r.w + 2 && x + w + 2 > r.x && y < r.y + r.h + 2 && y + h + 2 > r.y) {
+overlap = true; break;
+}
+}
+if (!overlap) {
+rooms.push({x, y, w, h, cx: Math.floor(x + w/2), cy: Math.floor(y + h/2)});
+for (let dy = y; dy < y+h; dy++)
+for (let dx = x; dx < x+w; dx++)
+map[dy][dx] = TILE_FLOOR;
+}
+}
+
+// Connect rooms with corridors
+for (let i = 1; i < rooms.length; i++) {
+const a = rooms[i-1], b = rooms[i];
+carveCorridor(a.cx, a.cy, b.cx, b.cy);
+}
+// Extra connections for loops
+if (rooms.length > 3) {
+const idx = rand(0, rooms.length - 2);
+carveCorridor(rooms[idx].cx, rooms[idx].cy, rooms[(idx+rand(2,Math.min(4,rooms.length-1)))%rooms.length].cx, rooms[(idx+rand(2,Math.min(4,rooms.length-1)))%rooms.length].cy);
+}
+
+// Place player in first room
+player.x = rooms[0].cx;
+player.y = rooms[0].cy;
+
+// Place stairs in last room (except on final level)
+const lastRoom = rooms[rooms.length - 1];
+stairsPos = { x: lastRoom.cx, y: lastRoom.cy };
+if (level === MAX_LEVELS) {
+goalItem = { x: lastRoom.cx, y: lastRoom.cy, name: 'Amulet of Yendor', ch: '*', color: '#f1c40f' };
+} else {
+// Make sure stairs aren't on top of player
+if (stairsPos.x === player.x && stairsPos.y === player.y) {
+stairsPos.x = lastRoom.cx + 1;
+if (stairsPos.x >= MAP_W - 1) stairsPos.x = lastRoom.cx - 1;
+}
+}
+
+// Spawn monsters
+const numMonsters = rand(4, 6) + level * 2;
+for (let i = 0; i < numMonsters; i++) {
+const roomIdx = rand(level === 1 ? 1 : 0, rooms.length - 1);
+const r = rooms[roomIdx];
+const mx = rand(r.x+1, r.x+r.w-2), my = rand(r.y+1, r.y+r.h-2);
+if (map[my][mx] === TILE_FLOOR && !(mx === player.x && my === player.y)) {
+const typeIdx = Math.min(Math.floor((level - 1) * 1.5) + rand(0, 2), MONSTER_TYPES.length - 1);
+const t = MONSTER_TYPES[typeIdx];
+monsters.push({ ...t, x: mx, y: my, maxHp: t.hp });
+}
+}
+
+// Spawn items
+const numItems = rand(3, 5) + level;
+for (let i = 0; i < numItems; i++) {
+const r = rooms[rand(0, rooms.length - 1)];
+const ix = rand(r.x+1, r.x+r.w-2), iy = rand(r.y+1, r.y+r.h-2);
+if (map[iy][ix] === TILE_FLOOR) {
+let itemType;
+const roll = Math.random();
+if (roll < 0.45) {
+itemType = level >= 3 ? ITEM_TYPES[1] : ITEM_TYPES[0];
+} else {
+const wIdx = rand(2, ITEM_TYPES.length - 1);
+itemType = ITEM_TYPES[Math.min(wIdx + Math.floor(level/2), ITEM_TYPES.length-1)];
+}
+items.push({ ...itemType, x: ix, y: iy });
+}
+}
+
+computeFOV();
+}
+
+function carveCorridor(x1, y1, x2, y2) {
+let cx = x1, cy = y1;
+while (cx !== x2) {
+if (map[cy][cx] === TILE_WALL) map[cy][cx] = TILE_FLOOR;
+cx += cx < x2 ? 1 : -1;
+}
+while (cy !== y2) {
+if (map[cy][cx] === TILE_WALL) map[cy][cx] = TILE_FLOOR;
+cy += cy < y2 ? 1 : -1;
+}
+}
+
+function computeFOV() {
+visible = Array.from({length: MAP_H}, () => Array(MAP_W).fill(false));
+for (let a = 0; a < 360; a += 1.5) {
+const rad = a * Math.PI / 180;
+const dx = Math.cos(rad), dy = Math.sin(rad);
+let px = player.x + 0.5, py = player.y + 0.5;
+for (let d = 0; d < FOV_RADIUS; d += 0.5) {
+const tx = Math.floor(px), ty = Math.floor(py);
+if (tx < 0 || tx >= MAP_W || ty < 0 || ty >= MAP_H) break;
+visible[ty][tx] = true;
+explored[ty][tx] = true;
+if (map[ty][tx] === TILE_WALL) break;
+px += dx * 0.5; py += dy * 0.5;
+}
+}
+}
+
+function movePlayer(dx, dy) {
+if (gameOver) return;
+const nx = player.x + dx, ny = player.y + dy;
+if (nx < 0 || nx >= MAP_W || ny < 0 || ny >= MAP_H) return;
+if (map[ny][nx] === TILE_WALL) return;
+
+// Check for monster
+const monIdx = monsters.findIndex(m => m.x === nx && m.y === ny);
+if (monIdx !== -1) {
+attackMonster(monIdx);
+} else {
+player.x = nx; player.y = ny;
+totalSteps++;
+checkTile();
+}
+
+turnsPlayed++;
+monsterTurn();
+computeFOV();
+renderAll();
+}
+
+function checkTile() {
+if (stairsPos && player.x === stairsPos.x && player.y === stairsPos.y) {
+// Stairs available - press # to descend
+}
+if (goalItem && player.x === goalItem.x && player.y === goalItem.y) {
+winGame();
+}
+}
+
+function attackMonster(idx) {
+const m = monsters[idx];
+const dmg = Math.max(1, player.atk + player.weaponBonus - m.def + rand(-1, 2));
+m.hp -= dmg;
+addMessage(`You hit ${m.name} for ${dmg} damage!`, 'combat');
+if (m.hp <= 0) {
+addMessage(`${m.name} is slain! (+${m.xp} XP)`, 'item');
+player.xp += m.xp;
+totalKills++;
+checkLevelUp();
+monsters.splice(idx, 1);
+}
+}
+
+function checkLevelUp() {
+while (player.xp >= player.xpNext) {
+player.level++;
+player.xp -= player.xpNext;
+player.xpNext = Math.floor(player.xpNext * 1.6);
+player.maxHp += 5;
+player.hp = Math.min(player.hp + 10, player.maxHp);
+player.baseAtk += 1;
+player.atk = player.baseAtk;
+addMessage(`Level up! You are now level ${player.level}!`, 'special');
+}
+}
+
+function monsterTurn() {
+for (const m of monsters) {
+const d = dist(m.x, m.y, player.x, player.y);
+if (!visible[m.y][m.x] && d > 2) continue; // Only act if visible or close
+
+let dx = 0, dy = 0;
+if (d <= FOV_RADIUS + 1) {
+// Chase player
+dx = Math.sign(player.x - m.x);
+dy = Math.sign(player.y - m.y);
+} else {
+// Random wander
+const dirs = [[0,-1],[0,1],[-1,0],[1,0]];
+const d2 = dirs[rand(0,3)];
+dx = d2[0]; dy = d2[1];
+}
+
+if (dx !== 0 || dy !== 0) {
+let nx = m.x + dx, ny = m.y + dy;
+// Try primary direction first, then alternate
+const moves = [];
+if (dx && dy) { moves.push([dx,0],[0,dy]); } else { moves.push([dx,dy]); }
+
+let moved = false;
+for (const [mx2, my2] of moves) {
+nx = m.x + mx2; ny = m.y + my2;
+if (nx >= 0 && nx < MAP_W && ny >= 0 && ny < MAP_H && map[ny][nx] === TILE_FLOOR) {
+const blocked = monsters.some(o => o !== m && o.x === nx && o.y === ny);
+if (!blocked && !(nx === player.x && ny === player.y)) {
+m.x = nx; m.y = ny; moved = true; break;
+}
+}
+}
+
+// Attack if adjacent to player
+const ad = dist(m.x, m.y, player.x, player.y);
+if (ad <= 1.5) {
+const dmg = Math.max(1, m.atk - player.def + rand(-1, 1));
+player.hp -= dmg;
+addMessage(`${m.name} hits you for ${dmg} damage!`, 'combat');
+if (player.hp <= 0) {
+player.hp = 0;
+deathScreen();
+return;
+}
+}
+}
+}
+}
+
+function pickupItem() {
+if (gameOver) return;
+const idx = items.findIndex(i => i.x === player.x && i.y === player.y);
+if (idx !== -1) {
+const item = items[idx];
+if (!player.inventory) player.inventory = [];
+player.inventory.push(item);
+addMessage(`Picked up ${item.name}.`, 'item');
+items.splice(idx, 1);
+renderAll();
+} else {
+addMessage('Nothing to pick up here.', 'info');
+renderLog();
+}
+}
+
+function descendStairs() {
+if (gameOver) return;
+if (!stairsPos || player.x !== stairsPos.x || player.y !== stairsPos.y) {
+addMessage('No stairs here.', 'info');
+renderLog();
+return;
+}
+level++;
+if (level > MAX_LEVELS) {
+addMessage('There is nothing beyond...', 'info');
+renderLog();
+return;
+}
+addMessage(`You descend to level ${level}...`, 'special');
+generateLevel();
+computeFOV();
+renderAll();
+}
+
+function useItem(slotIdx) {
+if (gameOver || !player.inventory || slotIdx >= player.inventory.length) return;
+const item = player.inventory[slotIdx];
+if (item.type === 'potion') {
+const heal = 15 + level * 2;
+player.hp = Math.min(player.maxHp, player.hp + heal);
+addMessage(`Used ${item.name}. Healed ${heal} HP.`, 'item');
+player.inventory.splice(slotIdx, 1);
+} else if (item.type === 'gpotion') {
+const heal = 30 + level * 5;
+player.hp = Math.min(player.maxHp, player.hp + heal);
+addMessage(`Used ${item.name}. Healed ${heal} HP.`, 'item');
+player.inventory.splice(slotIdx, 1);
+} else if (item.type === 'weapon') {
+const oldBonus = player.weaponBonus;
+player.weaponBonus = item.atkBonus;
+player.atk = player.baseAtk + player.weaponBonus;
+addMessage(`Equipped ${item.name}. ATK is now ${player.atk}.`, 'item');
+if (player.inventory.length > 1) {
+// Keep old weapon in inventory? No, just replace. Actually let's keep it simple - swap
+}
+player.inventory.splice(slotIdx, 1);
+} else {
+addMessage(`Cannot use ${item.name}.`, 'info');
+return;
+}
+renderAll();
+}
+
+function addMessage(text, type) {
+messages.push({ text, type });
+if (messages.length > 100) messages.shift();
+}
+
+function deathScreen() {
+gameOver = true;
+const box = document.getElementById('overlay-box');
+box.classList.remove('win');
+document.getElementById('overlay-title').textContent = 'YOU HAVE DIED';
+document.getElementById('summary-stats').innerHTML = `
+<div style="color:#e74c3c">☠ Perished on level ${level}</div>
+<div style="margin-top:10px;color:#aaa">
+Player Level: <span style="color:#2ecc71">${player.level}</span><br>
+Steps Taken: <span style="color:#3498db">${totalSteps}</span><br>
+Turns Played: <span style="color:#f39c12">${turnsPlayed}</span><br>
+Monsters Slain: <span style="color:#e74c3c">${totalKills}</span><br>
+</div>`;
+document.getElementById('overlay').classList.add('active');
+}
+
+function winGame() {
+gameOver = true;
+const box = document.getElementById('overlay-box');
+box.classList.add('win');
+document.getElementById('overlay-title').textContent = 'VICTORY!';
+document.getElementById('summary-stats').innerHTML = `
+<div style="color:#f1c40f">★ You found the Amulet of Yendor!</div>
+<div style="margin-top:10px;color:#aaa">
+Player Level: <span style="color:#2ecc71">${player.level}</span><br>
+HP Remaining: <span style="color:#e74c3c">${player.hp}/${player.maxHp}</span><br>
+Steps Taken: <span style="color:#3498db">${totalSteps}</span><br>
+Turns Played: <span style="color:#f39c12">${turnsPlayed}</span><br>
+Monsters Slain: <span style="color:#e74c3c">${totalKills}</span><br>
+</div>`;
+document.getElementById('overlay').classList.add('active');
+}
+
+function renderAll() {
+renderTopBar();
+renderMap();
+renderInventory();
+renderLog();
+}
+
+function renderTopBar() {
+const hpPct = Math.max(0, player.hp / player.maxHp * 100);
+const hpColor = hpPct > 50 ? '#2ecc71' : hpPct > 25 ? '#f39c12' : '#e74c3c';
+document.getElementById('top-bar').innerHTML = `
+<div class="stat">Lv <span class="lvl-val">${player.level}</span> | HP <span style="color:${hpColor}">${player.hp}/${player.maxHp}</span></div>
+<div class="stat">ATK <span class="atk-val">${player.atk + player.weaponBonus}</span> DEF <span class="def-val">${player.def}</span></div>
+<div class="stat">Floor <span style="color:#f39c12">${level}/${MAX_LEVELS}</span> | XP ${player.xp}/${player.xpNext} | Kills: <span style="color:#e74c3c">${totalKills}</span></div>`;
+}
+
+function renderMap() {
+const canvas = document.getElementById('map-canvas');
+let html = '';
+for (let y = 0; y < MAP_H; y++) {
+for (let x = 0; x < MAP_W; x++) {
+if (!explored[y][x]) {
+html += '<span style="color:#0a0a0f"> </span>';
+continue;
+}
+
+const vis = visible[y][x];
+const dim = vis ? '' : 'opacity:0.35';
+
+// Check for entities at this position
+let ch = '', color = '';
+
+if (player.x === x && player.y === y) {
+ch = '@'; color = '#f1c40f';
+} else if (goalItem && goalItem.x === x && goalItem.y === y) {
+ch = '*'; color = vis ? '#f1c40f' : '#8a7500';
+} else if (stairsPos && stairsPos.x === x && stairsPos.y === y) {
+ch = '<'; color = vis ? '#3498db' : '#1a3a5c';
+} else {
+const mon = monsters.find(m => m.x === x && m.y === y);
+if (mon && visible[mon.y][mon.x]) {
+ch = mon.ch; color = mon.color;
+} else {
+const item = items.find(i => i.x === x && i.y === y);
+if (item && visible[item.y][item.x]) {
+ch = item.ch; color = item.color;
+} else if (map[y][x] === TILE_WALL) {
+ch = '#'; color = vis ? '#555' : '#333';
+} else {
+ch = '.'; color = vis ? '#2a2a3e' : '#1a1a28';
+}
+}
+}
+
+html += `<span style="color:${color};${dim}">${ch}</span>`;
+}
+html += '\n';
+}
+canvas.innerHTML = html;
+}
+
+function renderInventory() {
+const list = document.getElementById('inv-list');
+if (!player.inventory || player.inventory.length === 0) {
+list.innerHTML = '<div style="color:#555">Empty</div>';
+return;
+}
+let html = '';
+player.inventory.forEach((item, i) => {
+html += `<div class="inv-item" onclick="useItem(${i})" title="${item.name}${item.atkBonus ? ' (ATK+' + item.atkBonus + ')' : ''}">[${i+1}] <span style="color:${item.color}">${item.ch}</span> ${item.name}${item.atkBonus ? ` +${item.atkBonus}` : ''}</div>`;
+});
+list.innerHTML = html;
+}
+
+function renderLog() {
+const log = document.getElementById('msg-log');
+let html = '';
+for (let i = Math.max(0, messages.length - 30); i < messages.length; i++) {
+const m = messages[i];
+html += `<div class="log-msg log-${m.type}">${m.text}</div>`;
+}
+log.innerHTML = html;
+log.scrollTop = log.scrollHeight;
+}
+
+document.addEventListener('keydown', (e) => {
+if (gameOver) return;
+switch(e.key) {
+case 'ArrowUp': case 'w': case 'W': e.preventDefault(); movePlayer(0, -1); break;
+case 'ArrowDown': case 's': case 'S': e.preventDefault(); movePlayer(0, 1); break;
+case 'ArrowLeft': case 'a': case 'A': e.preventDefault(); movePlayer(-1, 0); break;
+case 'ArrowRight': case 'd': case 'D': e.preventDefault(); movePlayer(1, 0); break;
+case 'g': case 'G': pickupItem(); break;
+case '#': descendStairs(); break;
+case 'i': case 'I':
+if (player.inventory && player.inventory.length > 0) useItem(0);
+else { addMessage('Inventory is empty.', 'info'); renderLog(); }
+break;
+case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
+useItem(parseInt(e.key) - 1); break;
+case '.': case ',': // Wait a turn
+turnsPlayed++; monsterTurn(); computeFOV(); renderAll(); addMessage('You wait...', 'info'); renderLog(); break;
+}
+});
+
+initGame();
+</script>
+</body>
+</html>
