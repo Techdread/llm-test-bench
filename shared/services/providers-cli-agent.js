@@ -13,7 +13,8 @@
 // What an agent run is NOT: a chat turn. There is no conversation state on the
 // bridge, so a multi-message history is flattened into one prompt, sampling
 // sampling params are meaningless (the CLI owns them), while Antigravity's
-// reasoning-effort parameter is forwarded. Tool-calling requests are refused
+// reasoning-effort parameter is forwarded. Browser image data URLs are staged
+// as jailed workspace files by the bridge. Tool-calling requests are refused
 // rather than silently ignored.
 
 import { runAgent, listAgentModelOptions, isAgentBridgeReachable, AGENTS } from './agent-backend.js';
@@ -119,9 +120,29 @@ export async function fetchModels(provider) {
 function partToText(part) {
   if (typeof part === 'string') return part;
   if (part?.type === 'text') return part.text || '';
-  // CLI agents take a text prompt on argv; an inline image cannot ride along.
-  if (part?.type === 'image_url') return '[image omitted — CLI agents take text prompts only]';
+  // The bridge stages data-URL images in the jailed workspace and appends the
+  // exact paths to the prompt before starting the CLI.
+  if (part?.type === 'image_url') return '[reference image attached separately]';
   return '';
+}
+
+function imageUrlFromPart(part) {
+  if (part?.type !== 'image_url') return '';
+  const value = part.image_url;
+  return typeof value === 'string' ? value : (value?.url || '');
+}
+
+/** Extract browser data-URL images for staging by the local bridge. */
+export function messagesToImageAttachments(messages = []) {
+  const attachments = [];
+  for (const message of messages) {
+    if (!Array.isArray(message?.content)) continue;
+    for (const part of message.content) {
+      const dataUrl = imageUrlFromPart(part);
+      if (dataUrl.startsWith('data:image/')) attachments.push({ dataUrl });
+    }
+  }
+  return attachments;
 }
 
 function contentToText(content) {
@@ -159,8 +180,25 @@ export function messagesToPrompt(messages = []) {
  * intermediate narration.
  */
 function agentRunOptions(provider, modelId, params) {
-  const options = modelId && modelId !== CLI_DEFAULT_MODEL ? { model: modelId } : {};
-  const effort = params?.reasoning_effort || params?.reasoning?.effort;
+  let resolvedModelId = modelId;
+  let modelVariantEffort = '';
+
+  // `agy models` exposes Antigravity's reasoning variants as picker-friendly
+  // ids such as `gemini-3.7-flash-high`, but `agy --model` only accepts the
+  // base id. The variant belongs on the separate `--effort` flag. Keep the
+  // catalogue ids in the shared provider picker (where High/Medium/Low are
+  // useful choices) and translate them at the bridge boundary.
+  if (provider.agentId === 'antigravity') {
+    const variant = String(modelId || '').match(/^(.*)-(low|medium|high)$/);
+    if (variant) {
+      [, resolvedModelId, modelVariantEffort] = variant;
+    }
+  }
+
+  const options = resolvedModelId && resolvedModelId !== CLI_DEFAULT_MODEL
+    ? { model: resolvedModelId }
+    : {};
+  const effort = modelVariantEffort || params?.reasoning_effort || params?.reasoning?.effort;
   if (provider.agentId === 'antigravity' && ['low', 'medium', 'high'].includes(effort)) {
     options.effort = effort;
   } else if (provider.agentId === 'codex' && ['low', 'medium', 'high', 'xhigh', 'max', 'ultra'].includes(effort)) {
@@ -169,7 +207,7 @@ function agentRunOptions(provider, modelId, params) {
   return options;
 }
 
-async function runAgentChat({ provider, modelId, prompt, onChunk, signal, budgets, onEvent, params }) {
+async function runAgentChat({ provider, modelId, prompt, attachments, onChunk, signal, budgets, onEvent, params }) {
   if (!prompt.trim()) throw new Error('empty prompt');
   const stats = createRunStats();
   const messages = [];
@@ -183,6 +221,7 @@ async function runAgentChat({ provider, modelId, prompt, onChunk, signal, budget
     projectDir: '',
     options: agentRunOptions(provider, modelId, params),
     budgets: { ...DEFAULT_BUDGETS, ...(budgets || {}) },
+    attachments,
     signal,
     onEvent: (event) => {
       onEvent?.(event);
@@ -241,7 +280,12 @@ function refuseTools(provider, tools) {
 
 export async function chatCompletion({ provider, modelId, messages, tools }) {
   refuseTools(provider, tools);
-  const { text } = await runAgentChat({ provider, modelId, prompt: messagesToPrompt(messages) });
+  const { text } = await runAgentChat({
+    provider,
+    modelId,
+    prompt: messagesToPrompt(messages),
+    attachments: messagesToImageAttachments(messages),
+  });
   return toOpenAiResponse(text);
 }
 
@@ -251,6 +295,7 @@ export async function streamChatCompletion({ provider, modelId, messages, tools,
     provider,
     modelId,
     prompt: messagesToPrompt(messages),
+    attachments: messagesToImageAttachments(messages),
     signal,
     params,
     onChunk: onChunk ? (accumulated => onChunk(accumulated, { content: accumulated, toolCalls: [] })) : null,

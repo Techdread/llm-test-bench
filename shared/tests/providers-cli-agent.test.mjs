@@ -9,6 +9,7 @@ import {
   isCliAgentProviderId,
   listProviders,
   messagesToPrompt,
+  messagesToImageAttachments,
   providerFromId,
   streamChat,
   streamChatCompletion,
@@ -33,7 +34,9 @@ function jsonResponse(body, ok = true) {
 globalThis.fetch = (url, init) => {
   const path = String(url);
   if (path === '/__agent/runs') {
-    return bridgeUp ? jsonResponse({ runs: [], activeCount: 0 }) : jsonResponse({}, false);
+    return bridgeUp
+      ? jsonResponse({ runs: [], activeCount: 0, features: ['inline-image-attachments'] })
+      : jsonResponse({}, false);
   }
   if (path.startsWith('/__agent/models/')) {
     if (!bridgeUp) return jsonResponse({}, false);
@@ -151,7 +154,7 @@ test('a real conversation keeps its roles', () => {
   assert.equal(prompt, 'User: One?\n\nAssistant: Two.\n\nUser: Three?');
 });
 
-test('multimodal parts flatten to text and say what was dropped', () => {
+test('multimodal parts flatten to text and mark the separately staged image', () => {
   const prompt = messagesToPrompt([{
     role: 'user',
     content: [
@@ -159,7 +162,38 @@ test('multimodal parts flatten to text and say what was dropped', () => {
       { type: 'image_url', image_url: { url: 'data:image/png;base64,AAA' } },
     ],
   }]);
-  assert.equal(prompt, 'What is this?\n[image omitted — CLI agents take text prompts only]');
+  assert.equal(prompt, 'What is this?\n[reference image attached separately]');
+});
+
+test('multimodal data URLs are extracted as bridge attachments', () => {
+  const messages = [{
+    role: 'user',
+    content: [
+      { type: 'image_url', image_url: { url: 'data:image/png;base64,AAA' } },
+      { type: 'image_url', image_url: 'https://example.com/remote.png' },
+      { type: 'text', text: 'Inspect it' },
+    ],
+  }];
+  assert.deepEqual(messagesToImageAttachments(messages), [
+    { dataUrl: 'data:image/png;base64,AAA' },
+  ]);
+});
+
+test('multimodal completion sends extracted images to the bridge', async () => {
+  await streamChatCompletion({
+    provider: createProvider({ id: 'antigravity', label: 'Antigravity' }),
+    modelId: 'gemini-3.7-flash-high',
+    messages: [{
+      role: 'user',
+      content: [
+        { type: 'image_url', image_url: { url: 'data:image/png;base64,AAA' } },
+        { type: 'text', text: 'Inspect it' },
+      ],
+    }],
+  });
+  assert.deepEqual(lastRunBody.attachments, [{ dataUrl: 'data:image/png;base64,AAA' }]);
+  assert.equal(lastRunBody.options.model, 'gemini-3.7-flash');
+  assert.equal(lastRunBody.options.effort, 'high');
 });
 
 test('empty and whitespace-only messages are dropped', () => {
@@ -210,6 +244,27 @@ test('Antigravity receives low, medium, and high reasoning effort', async () => 
     });
     assert.deepEqual(lastRunBody.options, { model: 'gemini-3.7-flash', effort });
   }
+});
+
+test('Antigravity picker variants become a base model plus reasoning effort', async () => {
+  for (const effort of ['low', 'medium', 'high']) {
+    await streamChat({
+      provider: createProvider({ id: 'antigravity', label: 'Antigravity' }),
+      modelId: `gemini-3.7-flash-${effort}`,
+      userPrompt: 'Hi',
+    });
+    assert.deepEqual(lastRunBody.options, { model: 'gemini-3.7-flash', effort });
+  }
+});
+
+test('Antigravity picker variant effort wins over a stale generation parameter', async () => {
+  await streamChat({
+    provider: createProvider({ id: 'antigravity', label: 'Antigravity' }),
+    modelId: 'gemini-3.7-flash-high',
+    userPrompt: 'Hi',
+    params: { reasoning_effort: 'low' },
+  });
+  assert.deepEqual(lastRunBody.options, { model: 'gemini-3.7-flash', effort: 'high' });
 });
 
 test('Codex receives every GPT-5.6 reasoning level', async () => {

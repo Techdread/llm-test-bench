@@ -81,6 +81,9 @@ export function buildRuns(generations) {
       paramsLabel: m.paramsLabel || null,
       stats: m.genStats || null,
       generatedAt: m.batch?.generatedAt || m.createdAt || '',
+      verification: m.verification || null,
+      derivedFrom: m.derivedFrom || '',
+      parentId: m.derivedFrom ? `${g.folderId || g.id}/${m.derivedFrom}` : '',
     });
   }
 

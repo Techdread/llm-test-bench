@@ -148,12 +148,32 @@ export async function fetchModels(provider) {
   }));
 }
 
-async function postChat(provider, body, { stream = false, signal } = {}) {
+/**
+ * Resolve one watchdog duration. A per-call value wins over the provider
+ * setting, and **0 disables the watchdog entirely** — the caller's AbortSignal
+ * (a stop button) is then the only bound, which is what a slow local model
+ * spending minutes on prompt processing actually needs.
+ */
+function pickTimeout(explicit, configured, fallback) {
+  const value = [explicit, configured, fallback].find(v => Number.isFinite(Number(v)));
+  return Math.max(0, Number(value) || 0);
+}
+
+/**
+ * POST the chat request and return a live handle, not a bare Response: the
+ * caller holds it for the whole body read so the external signal stays wired to
+ * the fetch (a mid-stream stop really tears the connection down) and `arm()`
+ * re-arms the inactivity watchdog per chunk. Call `release()` when done.
+ */
+async function postChat(provider, body, { stream = false, signal, timeouts = {} } = {}) {
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
-  const timeout = provider.generationTimeoutMs || DEFAULT_GENERATION_TIMEOUT;
+  const limitMs = stream
+    ? pickTimeout(timeouts.streamMs, provider.streamTimeoutMs, DEFAULT_STREAM_INACTIVITY_TIMEOUT)
+    : pickTimeout(timeouts.generationMs, provider.generationTimeoutMs, DEFAULT_GENERATION_TIMEOUT);
   const controller = new AbortController();
-  let timer;
+  let timer = null;
   let externalAbortHandler;
+  let released = false;
 
   if (signal) {
     if (signal.aborted) controller.abort(signal.reason);
@@ -161,25 +181,33 @@ async function postChat(provider, body, { stream = false, signal } = {}) {
     signal.addEventListener('abort', externalAbortHandler, { once: true });
   }
 
-  timer = setTimeout(() => controller.abort(new DOMException('Lemonade request timeout', 'TimeoutError')), stream
-    ? (provider.streamTimeoutMs || DEFAULT_STREAM_INACTIVITY_TIMEOUT)
-    : timeout);
+  const arm = () => {
+    if (!limitMs || released) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => controller.abort(new DOMException('Lemonade request timeout', 'TimeoutError')), limitMs);
+  };
+  const release = () => {
+    released = true;
+    clearTimeout(timer);
+    if (signal && externalAbortHandler) signal.removeEventListener('abort', externalAbortHandler);
+  };
 
+  arm();
   try {
-    return await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
+    const res = await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: requestHeaders(provider),
       body: JSON.stringify(body),
       signal: controller.signal,
     });
+    return { res, arm, release, signal };
   } catch (e) {
+    release();
     if (e.name === 'AbortError' || e.name === 'TimeoutError') {
+      if (signal?.aborted) throw new DOMException('Request aborted by caller', 'AbortError');
       throw timeoutError(provider, stream ? 'Stream timed out' : 'Connection timed out');
     }
     throw e;
-  } finally {
-    clearTimeout(timer);
-    if (signal && externalAbortHandler) signal.removeEventListener('abort', externalAbortHandler);
   }
 }
 
@@ -193,25 +221,31 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
   }, params, PROVIDER_TYPE);
   if (onChunk) body = withUsageReporting(body, PROVIDER_TYPE);
 
-  const res = await postChat(provider, body, { stream: !!onChunk });
-  if (!res.ok) throw new Error(`Lemonade ${provider.name}: ${await readError(res)}`);
+  const call = await postChat(provider, body, { stream: !!onChunk });
+  const { res } = call;
+  if (!res.ok) { call.release(); throw new Error(`Lemonade ${provider.name}: ${await readError(res)}`); }
 
   if (!onChunk) {
-    const data = await res.json();
-    const message = data.choices?.[0]?.message;
-    if (message?.reasoning_content) stats.markReasoning();
-    stats.setFinishReason(data.choices?.[0]?.finish_reason);
-    stats.setUsage(data.usage);
-    onStats?.(stats.finish());
-    return message?.content || '';
+    try {
+      const data = await res.json();
+      const message = data.choices?.[0]?.message;
+      if (message?.reasoning_content) stats.markReasoning();
+      stats.setFinishReason(data.choices?.[0]?.finish_reason);
+      stats.setUsage(data.usage);
+      onStats?.(stats.finish());
+      return message?.content || '';
+    } finally {
+      call.release();
+    }
   }
 
-  return readStreamingResponse(res, provider, onChunk, onStats, stats);
+  return readStreamingResponse(call, provider, onChunk, onStats, stats);
 }
 
-async function readStreamingResponse(res, provider, onChunk, onStats, stats, { returnResponse = false } = {}) {
+async function readStreamingResponse(call, provider, onChunk, onStats, stats, { returnResponse = false } = {}) {
+  const { res, arm = () => {}, release = () => {}, signal } = call;
   const reader = res.body?.getReader();
-  if (!reader) throw new Error(`Lemonade ${provider.name}: Response has no readable body`);
+  if (!reader) { release(); throw new Error(`Lemonade ${provider.name}: Response has no readable body`); }
   const decoder = new TextDecoder();
   let buffer = '';
   let full = '';
@@ -222,6 +256,7 @@ async function readStreamingResponse(res, provider, onChunk, onStats, stats, { r
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      arm(); // data arrived: restart the inactivity watchdog
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
@@ -233,7 +268,7 @@ async function readStreamingResponse(res, provider, onChunk, onStats, stats, { r
         const delta = choice.delta || {};
         if (choice.finish_reason) finishReason = choice.finish_reason;
         if (delta.reasoning_content) stats.markReasoning();
-        if (delta.tool_calls) delta.tool_calls.forEach(call => addToolCallDelta(toolCallParts, call));
+        if (delta.tool_calls) delta.tool_calls.forEach(part => addToolCallDelta(toolCallParts, part));
         if (event.parsed?.usage) stats.setUsage(event.parsed.usage);
         if (delta.content) {
           stats.markFirstToken();
@@ -247,10 +282,15 @@ async function readStreamingResponse(res, provider, onChunk, onStats, stats, { r
     }
   } catch (e) {
     if (e.name === 'AbortError' || e.name === 'TimeoutError') {
+      // A caller-initiated stop must never look like a finished turn, however
+      // much text had already streamed.
+      if (signal?.aborted) throw new DOMException('Request aborted by caller', 'AbortError');
       if (full) return returnResponse ? openAiResponse(full, toolCallParts, finishReason) : full;
       throw timeoutError(provider, 'Stream timed out');
     }
     throw e;
+  } finally {
+    release();
   }
 
   onStats?.(stats.finish());
@@ -266,21 +306,25 @@ function openAiResponse(content, toolCallParts, finishReason) {
 }
 
 /** Raw non-streaming OpenAI-compatible completion, including tools. */
-export async function chatCompletion({ provider, modelId, messages, tools }) {
+export async function chatCompletion({ provider, modelId, messages, tools, timeouts }) {
   const body = { model: modelId, messages, stream: false };
   if (tools?.length) body.tools = tools;
-  const res = await postChat(provider, body);
-  if (!res.ok) throw new Error(`Lemonade ${provider.name}: ${await readError(res)}`);
-  return res.json();
+  const call = await postChat(provider, body, { timeouts });
+  try {
+    if (!call.res.ok) throw new Error(`Lemonade ${provider.name}: ${await readError(call.res)}`);
+    return await call.res.json();
+  } finally {
+    call.release();
+  }
 }
 
 /** Raw streaming OpenAI-compatible completion, including tools. */
-export async function streamChatCompletion({ provider, modelId, messages, tools, onChunk, returnResponse = false, signal }) {
+export async function streamChatCompletion({ provider, modelId, messages, tools, onChunk, returnResponse = false, signal, timeouts }) {
   const body = { model: modelId, messages, stream: true };
   if (tools?.length) body.tools = tools;
-  const res = await postChat(provider, body, { stream: true, signal });
-  if (!res.ok) throw new Error(`Lemonade ${provider.name}: ${await readError(res)}`);
-  return readStreamingResponse(res, provider, onChunk, null, createRunStats(), { returnResponse });
+  const call = await postChat(provider, body, { stream: true, signal, timeouts });
+  if (!call.res.ok) { call.release(); throw new Error(`Lemonade ${provider.name}: ${await readError(call.res)}`); }
+  return readStreamingResponse(call, provider, onChunk, null, createRunStats(), { returnResponse });
 }
 
 export async function completeChat({ provider, modelId, systemPrompt, userPrompt, appTitle }) {

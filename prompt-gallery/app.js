@@ -14,7 +14,7 @@ import { ImportPromptsDialog } from './components/ImportPromptsDialog.js';
 import { RefineView } from './components/RefineView.js';
 import { BatchRunDialog } from './components/BatchRunDialog.js';
 import { runHtmlSandbox, runStatusLabel } from './services/sandboxRunner.js';
-import { healHtml } from './services/refine.js';
+import { auditHtml, healHtml, repairAgainstAudit } from './services/refine.js';
 import { MetadataPanel } from './components/MetadataPanel.js';
 import { SaveDialog } from './components/SaveDialog.js';
 import { Toast } from './components/Toast.js';
@@ -38,7 +38,8 @@ import * as meta from './services/metadata.js';
 import * as library from './services/library.js';
 import * as openrouter from './services/openrouter.js';
 import { buildPromptGalleryAgentTask, PROMPT_GALLERY_AGENT_OUTPUT } from './services/codingAgent.js';
-import { AGENTS } from '../shared/services/agent-backend.js';
+import { AGENTS, getAgentModelEffort } from '../shared/services/agent-backend.js';
+import { CLI_DEFAULT_MODEL, CLI_PROVIDER_PREFIX } from '../shared/services/executor-models.js';
 import * as modelProviders from '../shared/services/model-providers.js';
 import { prefs, hydrateAppPrefs, setPref, setPrefs, subscribeAppPrefs } from '../shared/services/app-prefs.js';
 import { subscribeSuite } from '../shared/services/suite-prefs.js';
@@ -1039,32 +1040,80 @@ function App() {
     [allModels, selectedProviderId, selectedModelId],
   );
 
-  const batchModel = useMemo(() => ({
-    providerId: selectedProviderId,
-    modelId: selectedModelId,
-    label: selectedModelInfo?.displayLabel || selectedModelInfo?.name || model || '',
-  }), [selectedProviderId, selectedModelId, selectedModelInfo, model]);
+  const batchModel = useMemo(() => {
+    if (backend === 'agent') {
+      const agent = AGENTS.find(item => item.id === selectedAgentId);
+      const agentModelId = agentModels[selectedAgentId] || '';
+      return {
+        backend: 'agent',
+        providerId: `${CLI_PROVIDER_PREFIX}${selectedAgentId}`,
+        modelId: agentModelId || CLI_DEFAULT_MODEL,
+        agentId: selectedAgentId,
+        agentModelId,
+        label: `${agent?.label || selectedAgentId} CLI / ${agentModelId || 'default'}`,
+      };
+    }
+    return {
+      backend: 'model',
+      providerId: selectedProviderId,
+      modelId: selectedModelId,
+      label: selectedModelInfo?.displayLabel || selectedModelInfo?.name || model || '',
+    };
+  }, [backend, selectedProviderId, selectedModelId, selectedModelInfo, model, selectedAgentId, agentModels]);
+
+  const batchTarget = useCallback((mdl = batchModel) => ({
+    providerId: mdl?.providerId || '',
+    modelId: mdl?.modelId || '',
+    params: mdl?.backend === 'agent'
+      ? { reasoning_effort: getAgentModelEffort(mdl.agentId, mdl.agentModelId) }
+      : undefined,
+  }), [batchModel]);
 
   // Injected operations the batch runner drives. Rebuilt when the model,
   // directory, or the generations snapshot (skip/has-run data) changes.
   const batchDeps = useMemo(() => ({
-    generate: async (promptText, { onChunk } = {}) => {
+    generate: async (promptText, { model: mdl, promptItem, checklist, onChunk, onStats } = {}) => {
+      const target = batchTarget(mdl);
       let finalHtml = '';
-      await openrouter.generateHtml(promptText, selectedProviderId, selectedModelId, (partial) => {
+      const generationPrompt = checklist ? [
+        `ORIGINAL PROMPT:\n${promptText}`,
+        promptItem?.notes ? `WATCH FOR:\n${promptItem.notes}` : '',
+        `HOST-DERIVED ACCEPTANCE CHECKLIST:\n${JSON.stringify(checklist)}`,
+        'Build the requested page and satisfy the checklist. Return only the complete standalone HTML document.',
+      ].filter(Boolean).join('\n\n') : promptText;
+      await openrouter.generateHtml(generationPrompt, target.providerId, target.modelId, (partial) => {
         finalHtml = stripCodeFences(partial);
         onChunk?.(finalHtml);
-      });
+      }, onStats, target.params);
       return finalHtml;
     },
     runSandbox: (h) => runHtmlSandbox(h),
-    heal: ({ prompt, html: htmlDoc, errors, onChunk }) =>
-      healHtml({ providerId: selectedProviderId, modelId: selectedModelId, prompt, html: htmlDoc, errors, onChunk }),
-    save: async ({ prompt, promptText, response, model: mdl, tags, kind, healAttempts }) => {
+    heal: ({ model: mdl, prompt, html: htmlDoc, errors, onChunk }) => {
+      const target = batchTarget(mdl);
+      return healHtml({ ...target, prompt, html: htmlDoc, errors, onChunk });
+    },
+    audit: ({ model: mdl, promptItem, checklist, html: htmlDoc, sandbox, onStats }) => {
+      const target = batchTarget(mdl);
+      return auditHtml({
+        ...target, prompt: promptItem.prompt, notes: promptItem.notes || '', checklist, html: htmlDoc, sandbox, onStats,
+      });
+    },
+    repair: ({ model: mdl, promptItem, html: htmlDoc, sandbox, failedChecks, repairTasks, onChunk, onStats }) => {
+      const target = batchTarget(mdl);
+      return repairAgainstAudit({
+        ...target, prompt: promptItem.prompt, html: htmlDoc, sandbox, failedChecks, repairTasks, onChunk, onStats,
+      });
+    },
+    save: async ({ prompt, promptText, response, model: mdl, tags, kind, healAttempts, verification, derivedFrom }) => {
       const derivedTitle = prompt.title
         || (promptText.split('\n').find(l => l.trim()) || 'untitled').trim().slice(0, 60);
       const folder = library.slugify(derivedTitle);
       const note = kind === 'healed'
         ? `Batch self-heal (${healAttempts} attempt${healAttempts === 1 ? '' : 's'})`
+        : kind === 'verified-repair'
+          ? `Verified generation repair round ${verification?.round || 0}`
+          : kind === 'verified-original'
+            ? 'Verified generation original'
         : 'Batch generated';
       const metadata = {
         ...meta.createMetadata(mdl.label || mdl.modelId || 'unknown', tags, note),
@@ -1072,6 +1121,12 @@ function App() {
         providerId: mdl.providerId,
         aiGenerated: true,
         batch: { id: batchIdRef.current, kind, healAttempts: healAttempts || 0, generatedAt: new Date().toISOString() },
+        ...(verification ? {
+          schemaVersion: 2,
+          source: 'verified-generation',
+          derivedFrom: derivedFrom || '',
+          verification: { ...verification, runId: verification.runId || batchIdRef.current },
+        } : {}),
       };
       return meta.saveGeneration(rootHandle, folder, promptText, response, metadata);
     },
@@ -1086,7 +1141,7 @@ function App() {
         return m.modelId === mdl.modelId || (mdl.label && m.model === mdl.label);
       });
     },
-  }), [selectedProviderId, selectedModelId, rootHandle, generations]);
+  }), [batchTarget, rootHandle, generations]);
 
   const handleOpenBatch = useCallback(async () => {
     if (!rootHandle) {
@@ -1369,11 +1424,18 @@ function App() {
         model=${batchModel}
         allModels=${allModels.filter(m => !disabledProviders.includes(m.providerId))}
         modelsLoading=${modelsLoading}
-        onModelChange=${handleModelChange}
+        backend=${backend}
+        selectedProviderId=${selectedProviderId}
+        selectedModelId=${selectedModelId}
+        agentId=${selectedAgentId}
+        agentModelId=${agentModels[selectedAgentId] || ''}
+        onExecutorChange=${handleExecutorChange}
         onProviderSettingsClick=${() => setShowProviderSettings(true)}
         hasDirectory=${!!rootHandle}
         onPickDirectory=${handlePickDirectory}
         deps=${batchDeps}
+        runId=${batchIdRef.current}
+        theme=${theme}
         onOpenGallery=${() => navigate('gallery')}
         onOpenRuns=${() => navigate('runs')}
         onClose=${handleCloseBatch}

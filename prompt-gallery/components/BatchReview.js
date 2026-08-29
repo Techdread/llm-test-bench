@@ -1,6 +1,7 @@
 import { html } from 'htm/preact';
 import { Fragment } from 'preact';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'preact/hooks';
+import { VerificationBadge, VerificationDetails } from './VerificationBadge.js';
 
 // Live HTML preview in a sandboxed iframe. srcdoc is (re)applied after the
 // element is laid out and cleared first, so swapping generations tears down the
@@ -126,6 +127,7 @@ export function BatchReview({ rows, resetKey, onOpen }) {
                 ${r.label}
                 ${r.autoScore != null ? html` <span class="batch-score-chip">${fmtScore(r.autoScore)}</span>` : null}
                 ${r.healed ? html` <span class="batch-healed-chip">fixed</span>` : null}
+                ${r.verification ? html` <${VerificationBadge} verification=${r.verification} />` : null}
                 ${r.error ? html`<span class="batch-run-err" title=${r.error}> — ${r.error}</span>` : null}
               </span>
             </div>
@@ -158,6 +160,7 @@ export function BatchReview({ rows, resetKey, onOpen }) {
             ${cur.subtitle ? html`<span class="batch-review-gen" title=${`Generated: ${cur.subtitle}`}>${cur.subtitle}</span>` : null}
             ${cur.autoScore != null ? html`<span class="batch-score-chip">${fmtScore(cur.autoScore)}</span>` : null}
             ${cur.healed ? html`<span class="batch-healed-chip">fixed</span>` : null}
+            ${cur.verification ? html`<${VerificationBadge} verification=${cur.verification} />` : null}
             ${onOpen && cur.id && html`
               <button class="btn btn-xs" title="Open this generation" onClick=${() => onOpen(cur.id)}>
                 <i class="fa-solid fa-arrow-up-right-from-square"></i> Open
@@ -170,6 +173,11 @@ export function BatchReview({ rows, resetKey, onOpen }) {
               ${statsBits(cur.stats) ? html`<span class="batch-stats-line">${statsBits(cur.stats)}</span>` : null}
             </div>
           `}
+          ${cur.verification && html`<${VerificationDetails}
+            verification=${cur.verification}
+            parentId=${cur.parentId}
+            onOpenParent=${onOpen}
+          />`}
           <div class="batch-preview is-zoomable" title="Click to enlarge" onClick=${() => setZoom(cur)}>
             <${HtmlLive} html=${cur.html} />
             <div class="preview-hitbox"></div>

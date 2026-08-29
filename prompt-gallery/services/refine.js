@@ -32,6 +32,29 @@ Rules:
 - Respond with ONLY the complete updated HTML document, starting with <!DOCTYPE html>.
 - No markdown, no code fences, no explanations.`;
 
+const AUDIT_SYSTEM = `You are a strict acceptance reviewer for a standalone single-page HTML document.
+Evaluate only the supplied checklist against the complete HTML and the compact sandbox evidence. Do not invent new must-pass requirements. Runtime errors and timeouts are authoritative; never mark their host checks as passing.
+
+Return JSON only with this shape:
+{"schemaVersion":1,"checks":[{"id":"prompt-01","status":"pass|fail|unknown","evidence":"short concrete evidence"}],"repairTasks":["focused repair task"],"notes":"short summary"}
+
+Rules:
+- Include one row for every supplied checklist ID and no other IDs.
+- Use pass only when the HTML or evidence supports it.
+- Use unknown when generic evidence cannot establish a visual or interaction claim.
+- Keep evidence under 500 characters per row and repairTasks to at most four.
+- No markdown, code fences, score, overall verdict, or prose outside the JSON object.`;
+
+const REPAIR_AUDIT_SYSTEM = `You are an expert web developer repairing a standalone single-page HTML document against a failed acceptance audit.
+
+Rules:
+- Return one complete HTML document beginning with <!DOCTYPE html>.
+- Preserve working behaviour and visual identity.
+- Change only what the failed or unknown must-checks require.
+- Do not remove a feature merely to silence an error.
+- Do not claim success in prose. Return HTML only, with no code fences.
+- The standalone artefact must not reference repo-relative shared/lib paths.`;
+
 function stripCodeFences(text) {
   let s = text || '';
   s = s.replace(/^\s*```(?:html)?\s*\n?/, '');
@@ -52,7 +75,7 @@ function buildContext(prompt, htmlContent) {
  * Fix the captured runtime errors. Streams the corrected document.
  * onChunk receives the accumulated text so far (not deltas).
  */
-export async function healHtml({ providerId, modelId, prompt, html, errors, onChunk }) {
+export async function healHtml({ providerId, modelId, prompt, html, errors, onChunk, params }) {
   const parts = buildContext(prompt, html);
   parts.push(`RUNTIME ERRORS CAPTURED IN SANDBOX:\n${errors.map((e, i) => `${i + 1}. ${e}`).join('\n')}`);
   parts.push('Fix these errors and return the complete corrected HTML document.');
@@ -64,6 +87,7 @@ export async function healHtml({ providerId, modelId, prompt, html, errors, onCh
     systemPrompt: HEAL_SYSTEM,
     userPrompt: parts.join('\n\n'),
     appTitle: 'Prompt Gallery',
+    params,
     onChunk: (text) => {
       accumulated = text || '';
       onChunk?.(stripCodeFences(accumulated));
@@ -111,6 +135,71 @@ export async function applyImprovements({ providerId, modelId, prompt, html, ins
     userPrompt: parts.join('\n\n'),
     appTitle: 'Prompt Gallery',
     onChunk: (text) => {
+      accumulated = text || '';
+      onChunk?.(stripCodeFences(accumulated));
+    },
+  });
+  return stripCodeFences(typeof result === 'string' && result ? result : accumulated);
+}
+
+function compactSandbox(status) {
+  if (!status) return { ok: false, timedOut: false, errors: [], warnings: [], evidence: {} };
+  return {
+    ok: !!status.ok,
+    timedOut: !!status.timedOut,
+    duration: Number(status.duration) || 0,
+    errors: (status.errors || []).slice(0, 20).map(error => String(error).slice(0, 1000)),
+    warnings: (status.warnings || []).slice(0, 20).map(warning => String(warning).slice(0, 1000)),
+    evidence: status.evidence || {},
+  };
+}
+
+/** Fresh acceptance-auditor call. Parsing and host verdicts live in acceptance.js. */
+export async function auditHtml({ providerId, modelId, prompt, notes, checklist, html, sandbox, onStats, params }) {
+  const userPrompt = [
+    `ORIGINAL PROMPT:\n${String(prompt || '').trim()}`,
+    notes ? `WATCH FOR:\n${String(notes).trim()}` : '',
+    `ACCEPTANCE CHECKLIST:\n${JSON.stringify(checklist)}`,
+    `SANDBOX STATUS AND EVIDENCE:\n${JSON.stringify(compactSandbox(sandbox))}`,
+    `CURRENT COMPLETE HTML:\n${html}`,
+    'Audit the document and return the required JSON object only.',
+  ].filter(Boolean).join('\n\n');
+  return streamChat({
+    providerId,
+    modelId,
+    systemPrompt: AUDIT_SYSTEM,
+    userPrompt,
+    appTitle: 'Prompt Gallery',
+    onStats,
+    params,
+  });
+}
+
+/** Fresh focused repair call. Streams accumulated corrected HTML. */
+export async function repairAgainstAudit({
+  providerId, modelId, prompt, html, sandbox, failedChecks, repairTasks, onChunk, onStats, params,
+}) {
+  const errors = sandbox?.timedOut
+    ? ['Execution timed out — possible infinite loop or blocked load']
+    : (sandbox?.errors || []);
+  const userPrompt = [
+    `ORIGINAL PROMPT:\n${String(prompt || '').trim()}`,
+    `CURRENT HTML:\n${html}`,
+    errors.length ? `SANDBOX ERRORS:\n${errors.map((error, i) => `${i + 1}. ${error}`).join('\n')}` : '',
+    `FAILED OR UNKNOWN MUST CHECKS:\n${JSON.stringify(failedChecks || [])}`,
+    (repairTasks || []).length ? `AUDITOR REPAIR TASKS:\n${repairTasks.map((task, i) => `${i + 1}. ${task}`).join('\n')}` : '',
+    'Repair only these requirements and return the complete corrected HTML document.',
+  ].filter(Boolean).join('\n\n');
+  let accumulated = '';
+  const result = await streamChat({
+    providerId,
+    modelId,
+    systemPrompt: REPAIR_AUDIT_SYSTEM,
+    userPrompt,
+    appTitle: 'Prompt Gallery',
+    onStats,
+    params,
+    onChunk: text => {
       accumulated = text || '';
       onChunk?.(stripCodeFences(accumulated));
     },

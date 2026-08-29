@@ -11,6 +11,7 @@ import {
   sortProjects,
   sortVariants,
 } from '../services/gallery.js';
+import { VerificationBadge } from './VerificationBadge.js';
 
 const MAX_LIVE_THUMBS = 6;
 const OFFSCREEN_UNMOUNT_MS = 1500;
@@ -135,6 +136,7 @@ function ProjectCard({ project, onOpen }) {
           <${RatingWidget} rating=${project.bestRating} readonly size=${12} />
           <span class="gallery-card-date">Updated ${formatDate(project.latestAt)}</span>
           ${project.refinedCount > 0 && html`<span class="status-badge"><i class="fa-solid fa-screwdriver-wrench"></i> ${project.refinedCount}</span>`}
+          ${project.verifiedCount > 0 && html`<span class="verification-badge passed"><i class="fa-solid fa-shield-circle-check"></i> ${project.verifiedCount}</span>`}
         </div>
         ${project.prompt && html`<p class="project-prompt-excerpt">${project.prompt}</p>`}
         ${project.tags.length > 0 && html`
@@ -184,6 +186,7 @@ function VariantCard({ generation, projectTitle, onSelect, onMorph, onDelete, on
           <span class="gallery-card-date">${formatDate(meta.createdAt, true)}</span>
           ${refined && html`<span class="status-badge"><i class="fa-solid fa-screwdriver-wrench"></i> Refined</span>`}
           ${archived && html`<span class="status-badge archived"><i class="fa-solid fa-box-archive"></i> Archived</span>`}
+          ${meta.verification && html`<${VerificationBadge} verification=${meta.verification} />`}
         </div>
         ${(meta.tags || []).length > 0 && html`
           <div class="gallery-card-tags">
@@ -306,6 +309,7 @@ export function GalleryView({
 
   const projects = useMemo(() => groupGenerationsByFolder(generations), [generations]);
   const facets = useMemo(() => collectGalleryFacets(generations), [generations]);
+  const hasVerification = useMemo(() => generations.some(generation => !!generation.metadata?.verification), [generations]);
   const filters = { query: search, collection, model: filterModel, tag: filterTag, minRating };
   const filteredProjects = useMemo(() => sortProjects(filterProjects(projects, filters), sortBy), [projects, search, collection, filterModel, filterTag, minRating, sortBy]);
   const filteredVariants = useMemo(() => sortVariants(filterVariants(generations, filters), sortBy), [generations, search, collection, filterModel, filterTag, minRating, sortBy]);
@@ -313,14 +317,19 @@ export function GalleryView({
   const selectedProject = selectedFolder ? projectByFolder.get(selectedFolder) : null;
 
   const collectionCounts = useMemo(() => {
-    const ids = ['all', 'unreviewed', 'favorites', 'recent', 'refined', 'archived'];
+    const ids = ['all', 'unreviewed', 'favorites', 'recent', 'refined', 'archived',
+      ...(hasVerification ? ['verified', 'verification-warn', 'verification-failed'] : [])];
     return Object.fromEntries(ids.map(id => {
       const count = viewMode === 'projects'
         ? filterProjects(projects, { collection: id }).length
         : filterVariants(generations, { collection: id }).length;
       return [id, count];
     }));
-  }, [projects, generations, viewMode]);
+  }, [projects, generations, viewMode, hasVerification]);
+
+  useEffect(() => {
+    if (!hasVerification && ['verified', 'verification-warn', 'verification-failed'].includes(collection)) setCollection('all');
+  }, [hasVerification, collection]);
 
   const changeViewMode = mode => {
     setViewMode(mode);
@@ -386,6 +395,7 @@ export function GalleryView({
         collectionCounts=${collectionCounts}
         resultCount=${viewMode === 'projects' ? filteredProjects.length : filteredVariants.length}
         onClear=${clearFilters}
+        hasVerification=${hasVerification}
       />
 
       ${(viewMode === 'projects' ? filteredProjects.length : filteredVariants.length) === 0

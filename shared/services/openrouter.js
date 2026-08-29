@@ -76,8 +76,6 @@ function describeApiKey(apiKey) {
   return {
     present: value.length > 0,
     length: value.length,
-    prefix: value ? value.slice(0, 10) : '',
-    suffix: value.length > 4 ? value.slice(-4) : '',
     hasWhitespace: value !== value.trim(),
     looksQuoted: value.startsWith('"') || value.endsWith('"') || value.startsWith("'") || value.endsWith("'"),
   };
@@ -95,10 +93,9 @@ async function throwOpenRouterError(res, context = {}) {
       referer: window.location.origin,
       apiKey: keyInfo,
       userPromptLength: typeof context.userPrompt === 'string' ? context.userPrompt.length : null,
-      userPromptPreview: typeof context.userPrompt === 'string' ? context.userPrompt.slice(0, 120) : null,
     });
     const keyLabel = keyInfo.present
-      ? `${keyInfo.prefix}${keyInfo.suffix ? `...${keyInfo.suffix}` : ''} (${keyInfo.length} chars)`
+      ? `configured (${keyInfo.length} chars)`
       : 'missing';
     throw new Error(`${message}. OpenRouter rejected the API key being sent: ${keyLabel}.`);
   }

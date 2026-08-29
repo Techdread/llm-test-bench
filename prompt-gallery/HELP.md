@@ -51,12 +51,24 @@ relay prompts or responses.
   and press **Go**.
 - Each generation is auto-saved with `ai-gen` + `batch` tags under the folder
   derived from the prompt's title, so nothing needs naming by hand.
-- **Self-heal** (off by default) re-runs any page that throws a runtime error
-  through the model up to 1–3 times; both the original and the healed version
-  are kept. Other options: skip prompts already run for this model, retry on API
-  failure, and a delay between prompts for rate-limited providers.
+- **Quick** is the default and preserves the original one-call generation flow.
+- **Runtime Heal** runs the page in the hidden sandbox and repairs captured
+  runtime errors up to 1–3 times. Both the original and healed versions are
+  kept.
+- **Verified** derives a checklist from the prompt and **Watch
+  for** notes, collects bounded sandbox evidence, asks the selected model to
+  audit the result in a fresh call, and can make 0–2 focused repair rounds.
+  The original and every repair are always saved as separate variants.
+- Verified uses extra model calls, tokens, and time. Its pass means the bounded
+  checklist and sandbox evidence passed; it is not a guarantee of subjective
+  visual quality, playability, or fun. Unsupported or unreadable evidence is
+  shown as **Needs review**, not silently treated as a pass.
+- Other options apply to every mode: skip prompts already run for the model,
+  retry provider failures, and add a delay for rate-limited providers.
 - A live preview follows the current generation; a summary at the end reports how
-  many were generated, healed, skipped, and failed, with a jump to the Gallery.
+  many were generated, healed, verified, warned, skipped, and failed, plus role
+  calls and repair rounds. Open **Runs** or a variant's metadata panel to inspect
+  checklist rows, evidence, stop reason, token usage, and repair lineage.
 
 ## Refine tab
 
@@ -75,7 +87,9 @@ relay prompts or responses.
 - Search includes project names, original prompt text, model names, tags, and
   notes. Filter by model, tag, minimum rating, or a review collection.
 - **Unreviewed**, **Favorites**, **Recent**, **Refined**, and **Archived** make
-  it easy to return to a useful subset of the work.
+  it easy to return to a useful subset of the work. When verified metadata is
+  present, **Verified**, **Needs review**, and **Verification failed** filters
+  appear as well.
 - Archiving hides a generation from normal browsing without deleting its HTML
   or metadata. Open the Archived collection to restore it.
 

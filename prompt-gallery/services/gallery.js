@@ -22,6 +22,10 @@ export function isRefined(generation) {
   return Boolean(meta.derivedFrom || meta.refine?.kind);
 }
 
+export function verificationStatus(generation) {
+  return generation.metadata?.verification?.status || '';
+}
+
 export function modelLabel(generation) {
   const meta = generation.metadata || {};
   return meta.modelDisplayLabel || meta.modelName || meta.model || 'Unknown model';
@@ -65,6 +69,10 @@ function matchesCollection(generation, collection, now) {
     case 'unreviewed': return !archived && ratingValue(generation) === 0;
     case 'favorites': return !archived && ratingValue(generation) >= 4;
     case 'refined': return !archived && isRefined(generation);
+    case 'verified': return !archived && verificationStatus(generation) === 'passed';
+    case 'verification-warn': return !archived && verificationStatus(generation) === 'warned';
+    case 'verification-failed': return !archived && !!verificationStatus(generation)
+      && !['passed', 'warned'].includes(verificationStatus(generation));
     case 'recent': {
       const created = dateValue(generation.metadata?.createdAt);
       return !archived && created > 0 && now - created <= RECENT_WINDOW_MS;
@@ -144,6 +152,9 @@ export function groupGenerationsByFolder(generations) {
       unreviewedCount: activeVariants.filter(generation => ratingValue(generation) === 0).length,
       favoriteCount: activeVariants.filter(generation => ratingValue(generation) >= 4).length,
       refinedCount: activeVariants.filter(isRefined).length,
+      verifiedCount: activeVariants.filter(generation => verificationStatus(generation) === 'passed').length,
+      verificationWarnCount: activeVariants.filter(generation => verificationStatus(generation) === 'warned').length,
+      verificationFailedCount: activeVariants.filter(generation => !!verificationStatus(generation) && !['passed', 'warned'].includes(verificationStatus(generation))).length,
       bestRating: variants.reduce((best, generation) => Math.max(best, ratingValue(generation)), 0),
       latestAt,
       archived: variants.length > 0 && variants.every(isArchived),

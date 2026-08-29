@@ -74,6 +74,59 @@ export function isAgentRunsPayload(payload) {
   return Boolean(payload && Array.isArray(payload.runs) && Number.isFinite(payload.activeCount));
 }
 
+// ── Bridge feature negotiation ──
+//
+// The bridge is a separate long-lived process, so the page is routinely newer
+// than the serve.py that is actually answering. Anything the client sends that
+// an older bridge would MISREAD (rather than ignore) has to be negotiated.
+
+/** Ceilings an older bridge clamps to; the closest it can get to "no limit". */
+const LEGACY_TIME_CEILINGS = { maxAgentSeconds: 7200, idleTimeoutSeconds: 1800 };
+
+let featureProbe = null;
+
+/**
+ * Feature strings this bridge advertises. An old bridge sends none, which is
+ * exactly the signal we need. Cached per page load.
+ */
+export function agentBridgeFeatures({ refresh = false } = {}) {
+  if (!featureProbe || refresh) {
+    featureProbe = fetch('/__agent/runs')
+      .then(async (res) => {
+        if (!res.ok) return [];
+        const payload = await res.json().catch(() => null);
+        return Array.isArray(payload?.features) ? payload.features : [];
+      })
+      .catch(() => []);
+  }
+  return featureProbe;
+}
+
+/**
+ * Translate budgets for the bridge that is actually running.
+ *
+ * A time budget of 0 means "no limit", but a bridge without
+ * `unlimited-time-budgets` clamps it UP to its 10-second floor — turning "run as
+ * long as you need" into the tightest limit in the system. Rather than send a
+ * number that means the opposite of what the user asked for, fall back to the
+ * highest value that bridge accepts and say so.
+ *
+ * @returns {{budgets: Object, downgraded: string[]}} `downgraded` names the
+ * budgets that could not be honoured, for the caller to surface.
+ */
+export function budgetsForBridge(budgets = {}, features = []) {
+  if (features.includes('unlimited-time-budgets')) return { budgets, downgraded: [] };
+  const next = { ...budgets };
+  const downgraded = [];
+  for (const [key, ceiling] of Object.entries(LEGACY_TIME_CEILINGS)) {
+    if (Number(next[key]) === 0) {
+      next[key] = ceiling;
+      downgraded.push(key);
+    }
+  }
+  return { budgets: next, downgraded };
+}
+
 export async function listAgentRuns() {
   try {
     const res = await fetch('/__agent/runs');
@@ -173,11 +226,35 @@ export function resolveAgentModelSelection(modelId, effort, choices = []) {
 }
 
 /** Start a run, then attach to its normalized SSE event stream. */
-export async function runAgent({ agent, prompt, projectDir, options, budgets, onStart, onEvent, onLive, signal }) {
+export async function runAgent({ agent, prompt, projectDir, options, budgets, attachments, onStart, onEvent, onLive, onNotice, signal }) {
+  // Negotiate before spawning: an unlimited budget sent to an older bridge
+  // becomes a 10-second one, killing the run before the agent has done anything.
+  const bridgeFeatures = await agentBridgeFeatures();
+  const negotiated = budgetsForBridge(budgets || {}, bridgeFeatures);
+  if (negotiated.downgraded.length) {
+    const message = `This agent bridge predates unlimited time budgets, so "no timeout" `
+      + `was sent as its maximum instead (${negotiated.downgraded
+        .map(key => `${key} ${negotiated.budgets[key]}s`).join(', ')}). `
+      + 'Restart the hub with serve.py to remove the limit entirely.';
+    console.warn('[agent-bridge]', message);
+    onNotice?.({ code: 'budget_downgraded', message, downgraded: negotiated.downgraded });
+  }
+
+  if (attachments?.length && !bridgeFeatures.includes('inline-image-attachments')) {
+    throw new Error('This agent bridge cannot receive image attachments — restart the hub with the current serve.py');
+  }
+
   const res = await fetch('/__agent/run', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ agent, prompt, projectDir, options: options || {}, budgets: budgets || {} }),
+    body: JSON.stringify({
+      agent,
+      prompt,
+      projectDir,
+      options: options || {},
+      budgets: negotiated.budgets,
+      ...(attachments?.length ? { attachments } : {}),
+    }),
   }).catch((error) => {
     throw new Error(`Bridge unreachable — run the hub with serve.py (${error.message})`);
   });

@@ -9,6 +9,16 @@ export const PROVIDER_TYPE = 'lmstudio';
 const DEFAULT_TIMEOUT = 30000;
 const DEFAULT_STREAM_INACTIVITY_TIMEOUT = 600000; // 10 min inactivity timeout for streaming
 const DEFAULT_GENERATION_TIMEOUT = 600000; // 10 min absolute timeout for non-streaming generations (tool-calling, etc.)
+
+/**
+ * Resolve one watchdog duration: a per-call value wins over the provider
+ * setting, and 0 disables the watchdog entirely so only the caller's
+ * AbortSignal bounds the request.
+ */
+function pickTimeout(explicit, configured, fallback) {
+  const value = [explicit, configured, fallback].find(v => Number.isFinite(Number(v)));
+  return Math.max(0, Number(value) || 0);
+}
 const MTMD_MEDIA_MARKER = '<__media__>';
 const MTMD_LEGACY_IMAGE_MARKER = '<__image__>';
 
@@ -701,19 +711,24 @@ export async function chatCompletion({ provider, modelId, messages, tools, toolC
  * Streaming raw chat completion from an LM Studio endpoint — supports
  * arbitrary message arrays, including multimodal image content.
  */
-export async function streamChatCompletion({ provider, modelId, messages, tools, toolChoice, onChunk, returnResponse = false, signal, params }) {
+export async function streamChatCompletion({ provider, modelId, messages, tools, toolChoice, onChunk, returnResponse = false, signal, params, timeouts }) {
   if (!tools?.length && hasImageContent(messages)) {
     return streamChatCompletionNative({ provider, modelId, messages, onChunk, returnResponse, signal });
   }
 
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
-  const streamTimeout = provider.streamTimeoutMs || DEFAULT_STREAM_INACTIVITY_TIMEOUT;
+  // A per-call `timeouts.streamMs` overrides the provider setting, and 0 means
+  // no inactivity watchdog at all — the caller's `signal` (a stop button) is
+  // then the only bound, which is what a local model that spends minutes on
+  // prompt processing before its first token actually needs.
+  const streamTimeout = pickTimeout(timeouts?.streamMs, provider.streamTimeoutMs, DEFAULT_STREAM_INACTIVITY_TIMEOUT);
   const controller = new AbortController();
   let inactivityTimer = null;
   let externalAbortHandler = null;
 
   function resetInactivityTimer() {
     if (inactivityTimer) clearTimeout(inactivityTimer);
+    if (!streamTimeout) return;
     inactivityTimer = setTimeout(() => {
       controller.abort(new DOMException('LM Studio stream inactivity timeout', 'TimeoutError'));
     }, streamTimeout);
@@ -848,6 +863,10 @@ export async function streamChatCompletion({ provider, modelId, messages, tools,
     }
   } catch (e) {
     if (e.name === 'AbortError' || e.name === 'TimeoutError') {
+      // A caller-initiated stop must never look like a finished turn, however
+      // much text had already streamed — otherwise a hard stop just becomes a
+      // short answer and the agent loop marches on to the next turn.
+      if (signal?.aborted) throw new DOMException('Request aborted by caller', 'AbortError');
       if (full.length > 0) {
         console.warn(`LM Studio stream timed out after receiving ${full.length} chars, returning partial result`);
         if (!returnResponse) return full;

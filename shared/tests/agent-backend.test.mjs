@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  budgetsForBridge,
   getAgentModelEffort,
   groupAgentModelOptions,
   isAgentRunsPayload,
@@ -100,4 +101,37 @@ test('reasoning effort preferences are stored independently per CLI model', () =
   assert.equal(getAgentModelEffort('codex', 'gpt-5.6-sol'), 'ultra');
   assert.equal(getAgentModelEffort('codex', 'gpt-5.6-luna'), 'max');
   assert.equal(saveAgentModelEffort('codex', 'gpt-5.6-sol', 'bogus'), false);
+});
+
+// ── Bridge feature negotiation ──
+
+test('an unlimited time budget is never sent to a bridge that would read it as 10 seconds', () => {
+  // The exact failure this guards: an older serve.py clamps 0 UP to its 10s
+  // floor, so "no timeout" became the tightest limit in the system and the run
+  // died with "Agent time budget exceeded" before the agent wrote a file.
+  const asked = { maxTurns: 40, maxAgentSeconds: 0, idleTimeoutSeconds: 0, maxFiles: 100 };
+  const { budgets, downgraded } = budgetsForBridge(asked, []);
+
+  assert.equal(budgets.maxAgentSeconds, 7200);
+  assert.equal(budgets.idleTimeoutSeconds, 1800);
+  assert.deepEqual(downgraded, ['maxAgentSeconds', 'idleTimeoutSeconds']);
+  assert.equal(budgets.maxFiles, 100, 'non-time budgets pass through untouched');
+  assert.equal(asked.maxAgentSeconds, 0, 'the caller\'s own budgets are not mutated');
+});
+
+test('a bridge that advertises the feature receives the unlimited budget as asked', () => {
+  const asked = { maxAgentSeconds: 0, idleTimeoutSeconds: 0 };
+  const { budgets, downgraded } = budgetsForBridge(asked, ['unlimited-time-budgets']);
+  assert.equal(budgets.maxAgentSeconds, 0);
+  assert.equal(budgets.idleTimeoutSeconds, 0);
+  assert.deepEqual(downgraded, []);
+});
+
+test('ordinary time budgets are passed through whatever the bridge supports', () => {
+  for (const features of [[], ['unlimited-time-budgets']]) {
+    const { budgets, downgraded } = budgetsForBridge({ maxAgentSeconds: 900, idleTimeoutSeconds: 180 }, features);
+    assert.equal(budgets.maxAgentSeconds, 900);
+    assert.equal(budgets.idleTimeoutSeconds, 180);
+    assert.deepEqual(downgraded, []);
+  }
 });

@@ -9,6 +9,12 @@ const COLLECTIONS = [
   { id: 'archived', label: 'Archived', icon: 'fa-box-archive' },
 ];
 
+const VERIFICATION_COLLECTIONS = [
+  { id: 'verified', label: 'Verified', icon: 'fa-shield-circle-check' },
+  { id: 'verification-warn', label: 'Needs review', icon: 'fa-circle-question' },
+  { id: 'verification-failed', label: 'Verification failed', icon: 'fa-shield-halved' },
+];
+
 export function FilterBar({
   viewMode,
   onViewModeChange,
@@ -29,6 +35,7 @@ export function FilterBar({
   collectionCounts,
   resultCount,
   onClear,
+  hasVerification = false,
 }) {
   const hasFilters = Boolean(search || filterModel || filterTag || Number(minRating) > 0 || collection !== 'all');
 
@@ -89,7 +96,7 @@ export function FilterBar({
 
       <div class="gallery-collection-bar">
         <div class="gallery-collection-tabs" role="group" aria-label="Review collection">
-          ${COLLECTIONS.map(item => html`
+          ${(hasVerification ? [...COLLECTIONS, ...VERIFICATION_COLLECTIONS] : COLLECTIONS).map(item => html`
             <button
               key=${item.id}
               class=${collection === item.id ? 'active' : ''}

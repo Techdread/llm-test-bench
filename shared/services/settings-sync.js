@@ -17,41 +17,11 @@
 // Import this module BEFORE any code that reads localStorage (e.g. the
 // OpenRouter consolidation IIFE) so that settings are restored first.
 
+import { isSyncableSettingKey } from './settings-sync-policy.js';
+
 const COOKIE_PREFIX = 'dh__';
 const MAX_AGE = 365 * 24 * 60 * 60; // 1 year
 const MAX_COOKIE_VALUE_LEN = 3500;   // leave headroom within 4KB cookie limit
-
-// Large caches that should NOT be synced (transient, too big for cookies)
-const SKIP_KEYS = new Set([
-  'devtools-hub-openrouter-models',
-  'devtools-hub-model-cache',
-]);
-
-// Known app prefixes whose preferences should be synced
-const APP_PREFIXES = [
-  'devtools-hub-',
-  'prompt-gallery-',
-  'code-arena-',
-  'svg-benchmark-',
-  'html-viewer-',
-  'component-playground-',
-  'css-grader-',
-  'doc-writer-',
-  'email-tester-',
-  'figma-clone-',
-  'figma-v2-',
-  'markdown-workshop-',
-  'portfolio-gen-',
-  'regex-tester-',
-  'slide-builder-',
-  'api-viewer-',
-  'three-prompt-lab-',
-];
-
-function shouldSync(key) {
-  if (SKIP_KEYS.has(key)) return false;
-  return APP_PREFIXES.some(p => key.startsWith(p));
-}
 
 // ── Cookie helpers ──
 
@@ -89,6 +59,12 @@ function restoreFromCookies() {
   for (const [cookieName, value] of Object.entries(cookies)) {
     if (!cookieName.startsWith(COOKIE_PREFIX)) continue;
     const key = cookieName.substring(COOKIE_PREFIX.length);
+    if (!isSyncableSettingKey(key)) {
+      // Purge credentials or stale non-allowlisted data written by older
+      // versions before it can be restored to localStorage.
+      deleteCookie(cookieName);
+      continue;
+    }
     // Only restore if localStorage is empty for this key
     if (localStorage.getItem(key) === null && value) {
       localStorage.setItem(key, value);
@@ -106,7 +82,7 @@ function backupToCookies() {
   let backed = 0;
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (!shouldSync(key)) continue;
+    if (!isSyncableSettingKey(key)) continue;
     const value = localStorage.getItem(key);
     if (value !== null) {
       setCookie(COOKIE_PREFIX + key, value);
@@ -118,7 +94,7 @@ function backupToCookies() {
   for (const cookieName of Object.keys(cookies)) {
     if (!cookieName.startsWith(COOKIE_PREFIX)) continue;
     const key = cookieName.substring(COOKIE_PREFIX.length);
-    if (shouldSync(key) && localStorage.getItem(key) === null) {
+    if (!isSyncableSettingKey(key) || localStorage.getItem(key) === null) {
       deleteCookie(cookieName);
     }
   }

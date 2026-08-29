@@ -1,5 +1,6 @@
 import { html } from 'htm/preact';
 import { useRef, useEffect } from 'preact/hooks';
+import { sanitizeSvgMarkup } from '../../shared/services/content-sanitizer.js';
 
 export function SvgPreview({ svgContent, size }) {
   const containerRef = useRef(null);
@@ -7,7 +8,7 @@ export function SvgPreview({ svgContent, size }) {
   useEffect(() => {
     if (!containerRef.current) return;
     if (svgContent && svgContent.trim()) {
-      containerRef.current.innerHTML = svgContent;
+      containerRef.current.innerHTML = sanitizeSvgMarkup(svgContent);
     } else {
       containerRef.current.innerHTML = '';
     }

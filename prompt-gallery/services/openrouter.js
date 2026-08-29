@@ -21,7 +21,7 @@ Make the output visually polished and modern.`;
  * @param {string} modelId - Model ID
  * @param {Function} [onChunk] - Streaming callback
  */
-export async function generateHtml(prompt, providerId, modelId, onChunk) {
+export async function generateHtml(prompt, providerId, modelId, onChunk, onStats, params) {
   return streamChat({
     providerId,
     modelId,
@@ -29,5 +29,7 @@ export async function generateHtml(prompt, providerId, modelId, onChunk) {
     userPrompt: prompt,
     appTitle: 'Prompt Gallery',
     onChunk,
+    onStats,
+    params,
   });
 }

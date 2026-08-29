@@ -558,10 +558,15 @@ export async function chatCompletion({ providerId, modelId, messages, tools, app
  * Streaming raw chat completion through a specific provider. Supports
  * arbitrary message arrays, including multimodal image content.
  *
+ * `timeouts` ({streamMs, generationMs}) overrides the provider's own watchdogs
+ * for this call only; 0 disables that watchdog entirely, leaving `signal` — a
+ * user's stop button — as the sole bound. Local adapters honour it; remote ones
+ * ignore it.
+ *
  * @returns {Promise<string|Object>} Full accumulated assistant text by default,
  * or an OpenAI-style response object when `returnResponse` is true.
  */
-export async function streamChatCompletion({ providerId, modelId, messages, tools, toolChoice, appTitle, onChunk, returnResponse = false, signal, params }) {
+export async function streamChatCompletion({ providerId, modelId, messages, tools, toolChoice, appTitle, onChunk, returnResponse = false, signal, params, timeouts }) {
   const provider = getProvider(providerId);
   if (!provider) throw new Error(`Provider "${providerId}" not found`);
   if (provider.enabled === false) throw new Error(`Provider "${provider.name}" is disabled`);
@@ -570,7 +575,7 @@ export async function streamChatCompletion({ providerId, modelId, messages, tool
   if (adapter.streamChatCompletion) {
     return adapter.streamChatCompletion({
       provider, modelId, messages, tools, toolChoice, appTitle, onChunk, returnResponse, signal,
-      params,
+      params, timeouts,
     });
   }
 

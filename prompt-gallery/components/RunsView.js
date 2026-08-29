@@ -95,6 +95,8 @@ export function RunsView({ generations, hasDirectory, onPickDirectory, onOpen, o
     stats: it.stats,
     paramsLabel: it.paramsLabel,
     error: it.html ? '' : 'HTML file missing',
+    verification: it.verification,
+    parentId: it.parentId,
   })), [singleRun]);
 
   if (!hasDirectory) {

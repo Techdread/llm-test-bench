@@ -3,6 +3,8 @@ import { useState, useCallback } from 'preact/hooks';
 import { RatingWidget } from './RatingWidget.js';
 import { sendToCodeMorphLab } from '../../shared/services/code-morph-handoff.js';
 import { sendToBugfixBench } from '../../shared/services/bugfix-bench-handoff.js';
+import { VerificationDetails } from './VerificationBadge.js';
+import { sanitizeRichHtml } from '../../shared/services/content-sanitizer.js';
 
 export function MetadataPanel({ generation, response, onUpdateMetadata, onSavePromptToLibrary, onRefine, onEdit, onDelete, onCompare, onClose, allowHandoffs = true }) {
   const [tagInput, setTagInput] = useState('');
@@ -36,12 +38,14 @@ export function MetadataPanel({ generation, response, onUpdateMetadata, onSavePr
   }, [id, meta, onUpdateMetadata]);
 
   const renderMarkdown = () => {
-    if (!window.marked || !prompt) return prompt || '';
+    if (!prompt) return '';
+    let rendered = prompt;
     try {
-      return window.marked.parse(prompt);
+      if (window.marked) rendered = window.marked.parse(prompt);
     } catch (e) {
-      return prompt;
+      rendered = prompt;
     }
+    return sanitizeRichHtml(rendered);
   };
 
   const formatDate = (dateStr) => {
@@ -93,6 +97,16 @@ export function MetadataPanel({ generation, response, onUpdateMetadata, onSavePr
               <i class="fa-solid fa-screwdriver-wrench"></i> ${meta.derivedFrom}
               ${meta.refine?.kind && html` <span class="tag-chip">${meta.refine.kind}</span>`}
             </span>
+          </div>
+        `}
+
+        ${meta.verification && html`
+          <div class="metadata-field">
+            <span class="metadata-label">Verification</span>
+            <${VerificationDetails}
+              verification=${meta.verification}
+              parentId=${meta.derivedFrom ? `${folderId}/${meta.derivedFrom}` : ''}
+            />
           </div>
         `}
 

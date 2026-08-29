@@ -1,13 +1,14 @@
 import { html } from 'htm/preact';
 import { Fragment } from 'preact';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'preact/hooks';
+import { sanitizeSvgMarkup } from '../../shared/services/content-sanitizer.js';
 
 // Small inline SVG renderer (mirrors SvgPreview).
 export function SvgLive({ svg }) {
   const ref = useRef(null);
   useEffect(() => {
     if (!ref.current) return;
-    ref.current.innerHTML = (svg && svg.trim()) ? svg : '';
+    ref.current.innerHTML = (svg && svg.trim()) ? sanitizeSvgMarkup(svg) : '';
   }, [svg]);
   return html`<div class="batch-svg-live" ref=${ref}></div>`;
 }

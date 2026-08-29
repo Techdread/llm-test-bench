@@ -1,4 +1,5 @@
 import { html } from 'htm/preact';
+import { sanitizeRichHtml } from '../../shared/services/content-sanitizer.js';
 
 export function ExplainPanel({ text, busy, onClose }) {
   if (!text && !busy) return null;
@@ -7,6 +8,7 @@ export function ExplainPanel({ text, busy, onClose }) {
   if (window.marked && text) {
     try { rendered = window.marked.parse(text); } catch (e) { /* fallback */ }
   }
+  rendered = sanitizeRichHtml(rendered);
   const isMd = !!window.marked && !!text;
   return html`
     <div class="explain-panel">

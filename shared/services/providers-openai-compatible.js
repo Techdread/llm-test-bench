@@ -238,10 +238,35 @@ export async function fetchModels(provider) {
   return entries;
 }
 
-async function postChat(provider, body, { stream = false, signal } = {}) {
-  const timeout = provider.generationTimeoutMs || DEFAULT_GENERATION_TIMEOUT;
+/**
+ * Resolve one watchdog duration. An explicit per-call value wins over the
+ * provider setting, and **0 means no watchdog at all** — the caller's
+ * AbortSignal (a stop button) is then the only bound. Local servers can spend
+ * many minutes on prompt processing before the first token, so a fixed
+ * wall-clock number is a guess, not a safety property.
+ */
+function pickTimeout(explicit, configured, fallback) {
+  const value = [explicit, configured, fallback].find(v => Number.isFinite(Number(v)));
+  return Math.max(0, Number(value) || 0);
+}
+
+/**
+ * POST the chat request and hand back a live handle rather than a bare
+ * Response. The caller keeps the handle for the whole body read so that
+ *   - the external signal stays wired to the fetch (aborting mid-stream really
+ *     tears the connection down), and
+ *   - `arm()` re-arms the inactivity watchdog on every chunk instead of the
+ *     timer only ever covering time-to-first-byte.
+ * `release()` must be called once the body is finished with.
+ */
+async function postChat(provider, body, { stream = false, signal, timeouts = {} } = {}) {
+  const limitMs = stream
+    ? pickTimeout(timeouts.streamMs, provider.streamTimeoutMs, DEFAULT_STREAM_INACTIVITY_TIMEOUT)
+    : pickTimeout(timeouts.generationMs, provider.generationTimeoutMs, DEFAULT_GENERATION_TIMEOUT);
   const controller = new AbortController();
   let externalAbortHandler;
+  let timer = null;
+  let released = false;
 
   if (signal) {
     if (signal.aborted) controller.abort(signal.reason);
@@ -249,26 +274,38 @@ async function postChat(provider, body, { stream = false, signal } = {}) {
     signal.addEventListener('abort', externalAbortHandler, { once: true });
   }
 
-  const timer = setTimeout(
-    () => controller.abort(new DOMException('Request timeout', 'TimeoutError')),
-    stream ? (provider.streamTimeoutMs || DEFAULT_STREAM_INACTIVITY_TIMEOUT) : timeout,
-  );
+  const arm = () => {
+    if (!limitMs || released) return;
+    clearTimeout(timer);
+    timer = setTimeout(
+      () => controller.abort(new DOMException(stream ? 'Stream inactivity timeout' : 'Request timeout', 'TimeoutError')),
+      limitMs,
+    );
+  };
+  const release = () => {
+    released = true;
+    clearTimeout(timer);
+    if (signal && externalAbortHandler) signal.removeEventListener('abort', externalAbortHandler);
+  };
 
+  arm();
   try {
-    return await endpointFetch(provider, '/v1/chat/completions', {
+    const res = await endpointFetch(provider, '/v1/chat/completions', {
       method: 'POST',
       headers: requestHeaders(provider),
       body: JSON.stringify(body),
       signal: controller.signal,
     });
+    return { res, arm, release, signal };
   } catch (e) {
+    release();
     if (e.name === 'AbortError' || e.name === 'TimeoutError') {
+      // A caller-initiated stop is not a provider fault: keep it an AbortError
+      // so the run records "cancelled" instead of "the endpoint timed out".
+      if (signal?.aborted) throw new DOMException('Request aborted by caller', 'AbortError');
       throw providerError(provider, stream ? 'Stream timed out' : 'Connection timed out');
     }
     throw e;
-  } finally {
-    clearTimeout(timer);
-    if (signal && externalAbortHandler) signal.removeEventListener('abort', externalAbortHandler);
   }
 }
 
@@ -282,25 +319,34 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
   }, params, PROVIDER_TYPE);
   if (onChunk) body = withUsageReporting(body, PROVIDER_TYPE);
 
-  const res = await postChat(provider, body, { stream: !!onChunk });
-  if (!res.ok) throw providerError(provider, `${await readError(res)}${proxyUnavailableHint(provider, res)}`);
-
-  if (!onChunk) {
-    const data = await res.json();
-    const message = data.choices?.[0]?.message;
-    if (message?.reasoning_content) stats.markReasoning();
-    stats.setFinishReason(data.choices?.[0]?.finish_reason);
-    stats.setUsage(data.usage);
-    onStats?.(stats.finish());
-    return message?.content || '';
+  const call = await postChat(provider, body, { stream: !!onChunk });
+  const { res } = call;
+  if (!res.ok) {
+    call.release();
+    throw providerError(provider, `${await readError(res)}${proxyUnavailableHint(provider, res)}`);
   }
 
-  return readStreamingResponse(res, provider, onChunk, onStats, stats);
+  if (!onChunk) {
+    try {
+      const data = await res.json();
+      const message = data.choices?.[0]?.message;
+      if (message?.reasoning_content) stats.markReasoning();
+      stats.setFinishReason(data.choices?.[0]?.finish_reason);
+      stats.setUsage(data.usage);
+      onStats?.(stats.finish());
+      return message?.content || '';
+    } finally {
+      call.release();
+    }
+  }
+
+  return readStreamingResponse(call, provider, onChunk, onStats, stats);
 }
 
-async function readStreamingResponse(res, provider, onChunk, onStats, stats, { returnResponse = false } = {}) {
+async function readStreamingResponse(call, provider, onChunk, onStats, stats, { returnResponse = false } = {}) {
+  const { res, arm = () => {}, release = () => {}, signal } = call;
   const reader = res.body?.getReader();
-  if (!reader) throw providerError(provider, 'Response has no readable body');
+  if (!reader) { release(); throw providerError(provider, 'Response has no readable body'); }
   const decoder = new TextDecoder();
   let buffer = '';
   let full = '';
@@ -311,6 +357,7 @@ async function readStreamingResponse(res, provider, onChunk, onStats, stats, { r
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      arm(); // data arrived: restart the inactivity watchdog
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
@@ -322,7 +369,7 @@ async function readStreamingResponse(res, provider, onChunk, onStats, stats, { r
         const delta = choice.delta || {};
         if (choice.finish_reason) finishReason = choice.finish_reason;
         if (delta.reasoning_content) stats.markReasoning();
-        if (delta.tool_calls) delta.tool_calls.forEach(call => addToolCallDelta(toolCallParts, call));
+        if (delta.tool_calls) delta.tool_calls.forEach(part => addToolCallDelta(toolCallParts, part));
         if (event.parsed?.usage) stats.setUsage(event.parsed.usage);
         if (delta.content) {
           stats.markFirstToken();
@@ -336,10 +383,16 @@ async function readStreamingResponse(res, provider, onChunk, onStats, stats, { r
     }
   } catch (e) {
     if (e.name === 'AbortError' || e.name === 'TimeoutError') {
+      // A caller-initiated stop must never look like a finished turn, however
+      // much text had already streamed — otherwise a hard stop just becomes a
+      // short answer and the agent loop marches on to the next turn.
+      if (signal?.aborted) throw new DOMException('Request aborted by caller', 'AbortError');
       if (full) return returnResponse ? openAiResponse(full, toolCallParts, finishReason) : full;
       throw providerError(provider, 'Stream timed out');
     }
     throw e;
+  } finally {
+    release();
   }
 
   onStats?.(stats.finish());
@@ -355,20 +408,25 @@ function openAiResponse(content, toolCallParts, finishReason) {
 }
 
 /** Raw non-streaming completion, including tools. */
-export async function chatCompletion({ provider, modelId, messages, tools, toolChoice, params }) {
+export async function chatCompletion({ provider, modelId, messages, tools, toolChoice, params, timeouts }) {
   const body = applyParams({ model: modelId, messages, stream: false }, params, PROVIDER_TYPE);
   if (tools?.length) {
     body.tools = tools;
     if (toolChoice) body.tool_choice = toolChoice;
   }
-  const res = await postChat(provider, body);
-  if (!res.ok) throw providerError(provider, `${await readError(res)}${proxyUnavailableHint(provider, res)}`);
-  return res.json();
+  const call = await postChat(provider, body, { timeouts });
+  const { res } = call;
+  try {
+    if (!res.ok) throw providerError(provider, `${await readError(res)}${proxyUnavailableHint(provider, res)}`);
+    return await res.json();
+  } finally {
+    call.release();
+  }
 }
 
 /** Raw streaming completion, including tools. */
 export async function streamChatCompletion({
-  provider, modelId, messages, tools, toolChoice, onChunk, returnResponse = false, signal, params,
+  provider, modelId, messages, tools, toolChoice, onChunk, returnResponse = false, signal, params, timeouts,
 }) {
   let body = applyParams({ model: modelId, messages, stream: true }, params, PROVIDER_TYPE);
   body = withUsageReporting(body, PROVIDER_TYPE);
@@ -376,9 +434,12 @@ export async function streamChatCompletion({
     body.tools = tools;
     if (toolChoice) body.tool_choice = toolChoice;
   }
-  const res = await postChat(provider, body, { stream: true, signal });
-  if (!res.ok) throw providerError(provider, `${await readError(res)}${proxyUnavailableHint(provider, res)}`);
-  return readStreamingResponse(res, provider, onChunk, null, createRunStats(), { returnResponse });
+  const call = await postChat(provider, body, { stream: true, signal, timeouts });
+  if (!call.res.ok) {
+    call.release();
+    throw providerError(provider, `${await readError(call.res)}${proxyUnavailableHint(provider, call.res)}`);
+  }
+  return readStreamingResponse(call, provider, onChunk, null, createRunStats(), { returnResponse });
 }
 
 export async function completeChat({ provider, modelId, systemPrompt, userPrompt, appTitle }) {
