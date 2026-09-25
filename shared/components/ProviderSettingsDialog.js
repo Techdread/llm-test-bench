@@ -309,7 +309,7 @@ export function ProviderSettingsDialog({ onClose, onProvidersChanged, appId }) {
             placeholder="qwen3.8-27b — only if the server has no /v1/models" />
         </div>
       `}
-      ${meta.supportsProxy && html`
+      ${meta.supportsProxy && !isPublicDistribution() && html`
         <div class="form-group">
           <label style=${{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <input type="checkbox" checked=${newUseProxy}

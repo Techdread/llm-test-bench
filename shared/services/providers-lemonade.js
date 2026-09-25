@@ -165,7 +165,7 @@ function pickTimeout(explicit, configured, fallback) {
  * the fetch (a mid-stream stop really tears the connection down) and `arm()`
  * re-arms the inactivity watchdog per chunk. Call `release()` when done.
  */
-async function postChat(provider, body, { stream = false, signal, timeouts = {} } = {}) {
+async function postChat(provider, body, { stream = false, signal, timeouts = {}, telemetry = null } = {}) {
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
   const limitMs = stream
     ? pickTimeout(timeouts.streamMs, provider.streamTimeoutMs, DEFAULT_STREAM_INACTIVITY_TIMEOUT)
@@ -194,13 +194,15 @@ async function postChat(provider, body, { stream = false, signal, timeouts = {} 
 
   arm();
   try {
+    telemetry?.mark('dispatched');
     const res = await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: requestHeaders(provider),
       body: JSON.stringify(body),
       signal: controller.signal,
     });
-    return { res, arm, release, signal };
+    if (res.ok) telemetry?.mark('sessionReady');
+    return { res, arm, release, signal, telemetry };
   } catch (e) {
     release();
     if (e.name === 'AbortError' || e.name === 'TimeoutError') {
@@ -212,8 +214,8 @@ async function postChat(provider, body, { stream = false, signal, timeouts = {} 
 }
 
 /** Stream a standard system/user completion from Lemonade. */
-export async function streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk, params, onStats }) {
-  const stats = createRunStats();
+export async function streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk, params, onStats, telemetry }) {
+  const stats = createRunStats(undefined, telemetry);
   let body = applyParams({
     model: modelId,
     messages: messagesForPrompt(systemPrompt, userPrompt),
@@ -221,7 +223,7 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
   }, params, PROVIDER_TYPE);
   if (onChunk) body = withUsageReporting(body, PROVIDER_TYPE);
 
-  const call = await postChat(provider, body, { stream: !!onChunk });
+  const call = await postChat(provider, body, { stream: !!onChunk, telemetry });
   const { res } = call;
   if (!res.ok) { call.release(); throw new Error(`Lemonade ${provider.name}: ${await readError(res)}`); }
 
@@ -266,9 +268,12 @@ async function readStreamingResponse(call, provider, onChunk, onStats, stats, { 
         if (event.done) break;
         const choice = event.parsed?.choices?.[0] || {};
         const delta = choice.delta || {};
-        if (choice.finish_reason) finishReason = choice.finish_reason;
+        if (choice.finish_reason) { finishReason = choice.finish_reason; stats.setFinishReason(finishReason); }
         if (delta.reasoning_content) stats.markReasoning();
-        if (delta.tool_calls) delta.tool_calls.forEach(part => addToolCallDelta(toolCallParts, part));
+        if (delta.tool_calls) {
+          call.telemetry?.mark('firstTool');
+          delta.tool_calls.forEach(part => addToolCallDelta(toolCallParts, part));
+        }
         if (event.parsed?.usage) stats.setUsage(event.parsed.usage);
         if (delta.content) {
           stats.markFirstToken();
@@ -306,29 +311,31 @@ function openAiResponse(content, toolCallParts, finishReason) {
 }
 
 /** Raw non-streaming OpenAI-compatible completion, including tools. */
-export async function chatCompletion({ provider, modelId, messages, tools, timeouts }) {
+export async function chatCompletion({ provider, modelId, messages, tools, timeouts, telemetry }) {
   const body = { model: modelId, messages, stream: false };
   if (tools?.length) body.tools = tools;
-  const call = await postChat(provider, body, { timeouts });
+  const call = await postChat(provider, body, { timeouts, telemetry });
   try {
     if (!call.res.ok) throw new Error(`Lemonade ${provider.name}: ${await readError(call.res)}`);
-    return await call.res.json();
+    const data = await call.res.json();
+    if (telemetry) createRunStats(undefined, telemetry).setUsage(data?.usage);
+    return data;
   } finally {
     call.release();
   }
 }
 
 /** Raw streaming OpenAI-compatible completion, including tools. */
-export async function streamChatCompletion({ provider, modelId, messages, tools, onChunk, returnResponse = false, signal, timeouts }) {
+export async function streamChatCompletion({ provider, modelId, messages, tools, onChunk, returnResponse = false, signal, timeouts, telemetry, }) {
   const body = { model: modelId, messages, stream: true };
   if (tools?.length) body.tools = tools;
-  const call = await postChat(provider, body, { stream: true, signal, timeouts });
+  const call = await postChat(provider, body, { stream: true, signal, timeouts, telemetry });
   if (!call.res.ok) { call.release(); throw new Error(`Lemonade ${provider.name}: ${await readError(call.res)}`); }
-  return readStreamingResponse(call, provider, onChunk, null, createRunStats(), { returnResponse });
+  return readStreamingResponse(call, provider, onChunk, null, createRunStats(undefined, telemetry), { returnResponse });
 }
 
-export async function completeChat({ provider, modelId, systemPrompt, userPrompt, appTitle }) {
-  return streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk: null, appTitle });
+export async function completeChat({ provider, modelId, systemPrompt, userPrompt, appTitle, telemetry }) {
+  return streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk: null, appTitle, telemetry });
 }
 
 /** Create a Lemonade provider entry for the Settings registry. */

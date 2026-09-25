@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D4AF37"/>
+      <stop offset="30%" stop-color="#FFD700"/>
+      <stop offset="50%" stop-color="#FFF8DC"/>
+      <stop offset="70%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#D4AF37"/>
+    </linearGradient>
+    <linearGradient id="baseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#B8860B"/>
+      <stop offset="50%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#B8860B"/>
+    </linearGradient>
+    <linearGradient id="cupInnerGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8B7500"/>
+      <stop offset="100%" stop-color="#D4AF37"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Base pedestal -->
+  <rect x="60" y="210" width="80" height="20" rx="2" fill="url(#baseGradient)"/>
+  <rect x="70" y="230" width="60" height="15" rx="2" fill="url(#baseGradient)"/>
+  <rect x="55" y="245" width="90" height="5" rx="1" fill="#B8860B"/>
+  
+  <!-- Stem -->
+  <rect x="90" y="185" width="20" height="30" fill="url(#goldGradient)"/>
+  <ellipse cx="100" cy="185" rx="15" ry="5" fill="url(#goldGradient)"/>
+  
+  <!-- Cup body -->
+  <path d="M50 70 Q50 185 100 185 Q150 185 150 70 L150 50 L50 50 Z" fill="url(#goldGradient)"/>
+  
+  <!-- Cup rim -->
+  <ellipse cx="100" cy="50" rx="50" ry="10" fill="#FFF8DC"/>
+  <ellipse cx="100" cy="50" rx="45" ry="8" fill="url(#cupInnerGradient)"/>
+  
+  <!-- Handles -->
+  <path d="M50 75 Q25 75 25 110 Q25 145 55 140" fill="none" stroke="url(#goldGradient)" stroke-width="8" stroke-linecap="round"/>
+  <path d="M150 75 Q175 75 175 110 Q175 145 145 140" fill="none" stroke="url(#goldGradient)" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Inner shadow line -->
+  <path d="M55 55 Q55 175 100 175 Q145 175 145 55" fill="none" stroke="#B8860B" stroke-width="2" opacity="0.5"/>
+  
+  <!-- Number 1 -->
+  <text x="100" y="140" font-family="Georgia, serif" font-size="50" font-weight="bold" fill="#8B7500" text-anchor="middle">1</text>
+  
+  <!-- Highlight -->
+  <path d="M60 60 Q60 100 70 120" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.4" stroke-linecap="round"/>
+</svg>

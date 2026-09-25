@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <!-- Deep Sea Background Gradient -->
+    <linearGradient id="sea-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="40%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+
+    <!-- Whale Body Gradient -->
+    <linearGradient id="whale-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#60a5fa"/>
+      <stop offset="60%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+
+    <!-- Fin Shadow Gradient -->
+    <linearGradient id="fin-grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1d4ed8"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+
+    <!-- Background Glow -->
+    <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Filter for Bubbles -->
+    <filter id="blur-bubbles" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="url(#sea-grad)"/>
+  <rect width="100%" height="100%" fill="url(#glow)"/>
+
+  <!-- Subtle Background Light Rays & Depth -->
+  <polygon points="200,0 350,0 550,600 300,600" fill="#ffffff" opacity="0.02"/>
+  <polygon points="500,0 700,0 900,600 700,600" fill="#ffffff" opacity="0.02"/>
+
+  <!-- Stylized Blue Whale Group -->
+  <g id="whale">
+    <!-- Main Body Path -->
+    <path d="M 80 280 
+             C 140 240, 260 160, 460 180 
+             C 560 190, 600 250, 620 300 
+             C 640 200, 680 140, 730 170 
+             C 750 180, 760 210, 730 250 
+             C 710 280, 710 320, 730 360 
+             C 760 400, 750 430, 730 430 
+             C 680 390, 640 360, 620 300 
+             C 500 370, 280 410, 140 340 
+             C 100 320, 80 300, 80 280 Z" 
+          fill="url(#whale-grad)"/>
+
+    <!-- Top Highlight on Body -->
+    <path d="M 90 265 C 180 205, 380 195, 500 215" 
+          stroke="#ffffff" fill="none" stroke-width="4" stroke-linecap="round" opacity="0.25"/>
+
+    <!-- Dorsal Fin -->
+    <path d="M 470 182 C 490 115, 525 105, 540 172 Z" 
+          fill="url(#whale-grad)"/>
+
+    <!-- Pectoral Fin -->
+    <path d="M 240 320 C 260 390, 330 410, 350 360 C 360 330, 300 320, 240 320 Z" 
+          fill="url(#fin-grad)"/>
+
+    <!-- Throat Pleats (Grooves) -->
+    <path d="M 100 305 C 160 345, 220 365, 300 365" 
+          stroke="#1e3a8a" fill="none" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+    <path d="M 105 315 C 165 355, 225 375, 310 375" 
+          stroke="#1e3a8a" fill="none" stroke-width="2.5" stroke-linecap="round" opacity="0.5"/>
+    <path d="M 110 325 C 170 365, 230 380, 320 380" 
+          stroke="#1e3a8a" fill="none" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+    <path d="M 115 335 C 175 370, 235 385, 325 385" 
+          stroke="#1e3a8a" fill="none" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+
+    <!-- Mouth Line -->
+    <path d="M 80 280 C 140 305, 220 325, 300 330" 
+          stroke="#1e3a8a" fill="none" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+
+    <!-- Eye -->
+    <ellipse cx="165" cy="270" rx="8" ry="6" fill="#0f172a"/>
+    <circle cx="167" cy="268" r="2" fill="#ffffff" opacity="0.9"/>
+
+    <!-- Blowhole -->
+    <ellipse cx="185" cy="225" rx="5" ry="3" fill="#0f172a" transform="rotate(-15 185 225)"/>
+  </g>
+
+  <!-- Tiny Bubbles -->
+  <g id="bubbles" filter="url(#blur-bubbles)">
+    <!-- Large Bubbles -->
+    <circle cx="190" cy="210" r="14" fill="#93c5fd" opacity="0.3"/>
+    <circle cx="205" cy="210" r="10" fill="#bfdbfe" opacity="0.4"/>
+    
+    <!-- Rising Stream -->
+    <circle cx="195" cy="180" r="18" fill="#93c5fd" opacity="0.25"/>
+    <circle cx="180" cy="190" r="8" fill="#ffffff" opacity="0.3"/>
+    
+    <circle cx="210" cy="140" r="12" fill="#93c5fd" opacity="0.35"/>
+    <circle cx="190" cy="150" r="6" fill="#ffffff" opacity="0.4"/>
+    
+    <circle cx="175" cy="110" r="10" fill="#93c5fd" opacity="0.4"/>
+    <circle cx="220" cy="115" r="5" fill="#ffffff" opacity="0.5"/>
+    
+    <circle cx="190" cy="70" r="14" fill="#93c5fd" opacity="0.3"/>
+    <circle cx="170" cy="80" r="4" fill="#ffffff" opacity="0.6"/>
+
+    <!-- Scattered Tiny Bubbles -->
+    <circle cx="230" cy="160" r="3" fill="#bfdbfe" opacity="0.7"/>
+    <circle cx="160" cy="170" r="2.5" fill="#ffffff" opacity="0.8"/>
+    <circle cx="245" cy="100" r="4" fill="#93c5fd" opacity="0.6"/>
+    <circle cx="150" cy="90" r="3" fill="#ffffff" opacity="0.7"/>
+    <circle cx="260" cy="50" r="5" fill="#93c5fd" opacity="0.5"/>
+    <circle cx="130" cy="60" r="2" fill="#ffffff" opacity="0.9"/>
+    
+    <circle cx="215" cy="40" r="3" fill="#bfdbfe" opacity="0.6"/>
+    <circle cx="280" cy="80" r="2.5" fill="#ffffff" opacity="0.7"/>
+    <circle cx="140" cy="130" r="2" fill="#bfdbfe" opacity="0.8"/>
+  </g>
+
+  <!-- Foreground Depth Particles -->
+  <circle cx="650" cy="520" r="1.5" fill="#ffffff" opacity="0.3"/>
+  <circle cx="720" cy="480" r="1" fill="#ffffff" opacity="0.4"/>
+  <circle cx="120" cy="540" r="2" fill="#ffffff" opacity="0.2"/>
+  <circle cx="400" cy="560" r="1.5" fill="#ffffff" opacity="0.3"/>
+</svg>

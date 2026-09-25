@@ -1,9 +1,19 @@
 import { html } from 'htm/preact';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'preact/hooks';
-import { ProviderModelSelector } from '../../shared/components/ProviderModelSelector.js';
+import { ExecutorModelSelector } from '../../shared/components/ExecutorModelSelector.js';
+import { AgentTrace } from '../../shared/components/AgentTrace.js';
+import { agentLabel } from '../../shared/components/CodingAgentRun.js';
+import { agentIdFromProviderId } from '../../shared/services/providers-cli-agent.js';
 import { runBatch } from '../services/batchRunner.js';
-import { BatchReview, SvgLive } from './BatchReview.js';
+import { BatchReview, MotionChip, SvgLightbox, SvgLive } from './BatchReview.js';
+import { PROMPT_SETS, promptSetOf } from '../services/promptLibrary.js';
 import { PARAM_SPEC, expandSweep, paramsSignature } from '../../shared/services/gen-params.js';
+import {
+  completionTokenCount,
+  estimatedTokenCount,
+  formatTokensPerSecond,
+  tokensPerSecond,
+} from '../services/batchMetrics.js';
 
 // Each parameter field takes a comma-separated list: one value pins it, several
 // sweep it, empty sends nothing (server default). "0, 0.7, 1.2" on temperature
@@ -36,6 +46,7 @@ const STATUS_META = {
   validating: { icon: 'fa-solid fa-check-double',       cls: 'active',  label: 'Validating' },
   healing:    { icon: 'fa-solid fa-screwdriver-wrench', cls: 'active',  label: 'Fixing' },
   scoring:    { icon: 'fa-solid fa-ruler-combined',     cls: 'active',  label: 'Scoring' },
+  checking:   { icon: 'fa-solid fa-film',               cls: 'active',  label: 'Checking motion' },
   saved:      { icon: 'fa-solid fa-circle-check',       cls: 'ok',      label: 'Saved' },
   skipped:    { icon: 'fa-solid fa-forward',            cls: 'skipped', label: 'Skipped' },
   error:      { icon: 'fa-solid fa-triangle-exclamation', cls: 'error', label: 'Failed' },
@@ -44,10 +55,15 @@ const STATUS_META = {
 
 export function BatchRunDialog({
   prompts,               // merged benchmark prompts: [{ slug, title, prompt, existingSubmissions }]
-  model,                 // { providerId, modelId, label }
+  model,                 // { providerId, modelId, label, isAgent }
   allModels,
   modelsLoading,
-  onModelChange,
+  backend = 'model',     // toolbar executor, so the dialog's picker matches it
+  selectedProviderId = '',
+  selectedModelId = '',
+  agentId = 'claude-code',
+  agentModelId = '',
+  onExecutorChange,
   onProviderSettingsClick,
   hasDirectory,
   onPickDirectory,
@@ -62,6 +78,18 @@ export function BatchRunDialog({
 
   const [selectedIds, setSelectedIds] = useState(() => new Set(prompts.map(p => p.slug)));
 
+  // One prompt set at a time. Ticks are remembered per prompt, but only the set
+  // on screen is counted or run, so Core and Animated never get lumped together.
+  const [promptSet, setPromptSet] = useState('core');
+  const availableSets = useMemo(
+    () => PROMPT_SETS
+      .map(s => ({ ...s, count: prompts.filter(p => promptSetOf(p) === s.id).length }))
+      .filter(s => s.id === 'core' || s.count > 0),
+    [prompts],
+  );
+  const setPrompts = useMemo(() => prompts.filter(p => promptSetOf(p) === promptSet), [prompts, promptSet]);
+  const activeSetMeta = availableSets.find(s => s.id === promptSet);
+
   const [heal, setHeal] = useState(false);
   const [healAttempts, setHealAttempts] = useState(1);
   const [saveBothOnHeal] = useState(true);
@@ -75,12 +103,25 @@ export function BatchRunDialog({
   const [items, setItems] = useState([]);
   const [runList, setRunList] = useState([]);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [inspectedIndex, setInspectedIndex] = useState(-1);
   const [summary, setSummary] = useState(null);
-  const [previewSvg, setPreviewSvg] = useState('');
-  const [results, setResults] = useState([]);   // run index -> final SVG markup
+  const [results, setResults] = useState([]);   // run index -> latest partial/final SVG markup
+  const [outputStats, setOutputStats] = useState([]);
+  // CLI agents only: per-prompt run events and the bridge's live tail.
+  const [agentEvents, setAgentEvents] = useState([]);
+  const [agentLive, setAgentLive] = useState([]);
+  const [fullscreenIndex, setFullscreenIndex] = useState(-1);
+  const [pauseState, setPauseState] = useState('running'); // running | pausing | paused
+  const [pauseContext, setPauseContext] = useState(null);
+  const [rateClock, setRateClock] = useState(() => Date.now());
   const [reviewNav, setReviewNav] = useState(null); // ‹ › nav lifted from BatchReview into the footer
   const stopRef = useRef(false);
+  const pauseRequestedRef = useRef(false);
+  const pauseResolverRef = useRef(null);
   const listEndRef = useRef(null);
+  const activeIndexRef = useRef(-1);
+  const followActiveRef = useRef(true);
+  const streamTimingsRef = useRef([]);
 
   // Past runs (rebuilt from saved submissions)
   const [runs, setRuns] = useState([]);
@@ -88,7 +129,7 @@ export function BatchRunDialog({
   const [pastRun, setPastRun] = useState(null);   // { id, model, startedAt, items: [...with svg] }
 
   const hasModel = !!(model?.providerId && model?.modelId);
-  const selectedCount = selectedIds.size;
+  const selectedCount = setPrompts.filter(p => selectedIds.has(p.slug)).length;
 
   const combos = useMemo(() => expandSweep(buildGrid(paramText)), [paramText]);
   const isSweep = combos.length > 1;
@@ -97,12 +138,12 @@ export function BatchRunDialog({
   const alreadyRunCount = useMemo(() => {
     if (!hasModel) return 0;
     let n = 0;
-    for (const p of prompts) {
+    for (const p of setPrompts) {
       if (!selectedIds.has(p.slug)) continue;
       try { if (deps.hasExistingForModel?.(p, model)) n++; } catch (e) { /* ignore */ }
     }
     return n;
-  }, [prompts, selectedIds, model, hasModel, deps]);
+  }, [setPrompts, selectedIds, model, hasModel, deps]);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape' && phase !== 'running') onClose(); };
@@ -117,12 +158,53 @@ export function BatchRunDialog({
       return next;
     });
   }, []);
-  const selectAll = useCallback(() => setSelectedIds(new Set(prompts.map(p => p.slug))), [prompts]);
-  const selectNone = useCallback(() => setSelectedIds(new Set()), []);
+  // All / None touch only the set on screen.
+  const selectAll = useCallback(() => setSelectedIds(prev => {
+    const next = new Set(prev);
+    for (const p of setPrompts) next.add(p.slug);
+    return next;
+  }), [setPrompts]);
+  const selectNone = useCallback(() => setSelectedIds(prev => {
+    const next = new Set(prev);
+    for (const p of setPrompts) next.delete(p.slug);
+    return next;
+  }), [setPrompts]);
 
   const handleEvent = useCallback((event) => {
     if (event.type === 'item') {
-      if (event.status === 'start') { setActiveIndex(event.index); return; }
+      if (event.status === 'start') {
+        activeIndexRef.current = event.index;
+        streamTimingsRef.current[event.index] = null;
+        setActiveIndex(event.index);
+        setResults(prev => {
+          const next = prev.slice();
+          next[event.index] = '';
+          return next;
+        });
+        setOutputStats(prev => {
+          const next = prev.slice();
+          next[event.index] = null;
+          return next;
+        });
+        setAgentEvents(prev => {
+          const next = prev.slice();
+          next[event.index] = [];
+          return next;
+        });
+        if (followActiveRef.current) setInspectedIndex(event.index);
+        return;
+      }
+      if (['generating', 'healing'].includes(event.status)) {
+        streamTimingsRef.current[event.index] = null;
+        setOutputStats(prev => {
+          const next = prev.slice();
+          next[event.index] = null;
+          return next;
+        });
+      } else {
+        const timing = streamTimingsRef.current[event.index];
+        if (timing?.startedAt && !timing.endedAt) timing.endedAt = Date.now();
+      }
       setItems(prev => {
         const next = prev.slice();
         const cur = next[event.index] || {};
@@ -134,22 +216,44 @@ export function BatchRunDialog({
           healed: event.healed ?? cur.healed,
           valid: event.valid ?? cur.valid,
           autoScore: event.autoScore ?? cur.autoScore,
+          animation: event.animation ?? cur.animation,
+          savedIds: event.savedIds || cur.savedIds || [],
         };
         return next;
       });
     } else if (event.type === 'preview' || event.type === 'chunk') {
-      setPreviewSvg(event.svg || '');
-      if (event.type === 'preview') {
-        setResults(prev => {
-          const next = prev.slice();
-          next[event.index] = event.svg || '';
-          return next;
-        });
+      if (event.type === 'chunk' && event.svg) {
+        const now = Date.now();
+        const timing = streamTimingsRef.current[event.index];
+        if (!timing?.startedAt) streamTimingsRef.current[event.index] = { startedAt: now, endedAt: null };
+        setRateClock(now);
       }
+      setResults(prev => {
+        const next = prev.slice();
+        next[event.index] = event.svg || '';
+        return next;
+      });
     } else if (event.type === 'stats') {
+      setOutputStats(prev => {
+        const next = prev.slice();
+        next[event.index] = event.stats || null;
+        return next;
+      });
       setItems(prev => {
         const next = prev.slice();
         next[event.index] = { ...(next[event.index] || {}), stats: event.stats };
+        return next;
+      });
+    } else if (event.type === 'agent') {
+      setAgentEvents(prev => {
+        const next = prev.slice();
+        next[event.index] = [...(next[event.index] || []), event.event];
+        return next;
+      });
+    } else if (event.type === 'agentLive') {
+      setAgentLive(prev => {
+        const next = prev.slice();
+        next[event.index] = event.live || null;
         return next;
       });
     } else if (event.type === 'done') {
@@ -161,6 +265,14 @@ export function BatchRunDialog({
     if (phase === 'running') listEndRef.current?.scrollIntoView({ block: 'nearest' });
   }, [items, phase]);
 
+  const waitAtPauseBoundary = useCallback(async (context) => {
+    if (!pauseRequestedRef.current || stopRef.current) return;
+    setPauseContext(context || null);
+    setPauseState('paused');
+    await new Promise(resolve => { pauseResolverRef.current = resolve; });
+    pauseResolverRef.current = null;
+  }, []);
+
   // ── Review rows for the run that just finished ──
   const doneRows = useMemo(() => runList.map((p, idx) => {
     const it = items[idx] || { status: 'queued' };
@@ -169,7 +281,7 @@ export function BatchRunDialog({
       key: p.jobKey || p.slug, title: p.title, prompt: p.prompt, slug: p.slug,
       svg: results[idx] || '',
       icon: m.icon, cls: m.cls, label: m.label,
-      autoScore: it.autoScore, healed: it.healed, stats: it.stats,
+      autoScore: it.autoScore, healed: it.healed, stats: it.stats, animation: it.animation,
       paramsLabel: p.params && Object.keys(p.params).length ? paramsSignature(p.params) : null,
       error: it.status === 'error' ? it.message : '',
     };
@@ -214,6 +326,7 @@ export function BatchRunDialog({
     autoScore: it.autoScore,
     healed: it.healed,
     stats: it.stats,
+    animation: it.animation,
     paramsLabel: it.params && Object.keys(it.params).length ? (it.paramsLabel || paramsSignature(it.params)) : null,
     error: it.svg ? '' : 'SVG file missing',
   })), [pastRun]);
@@ -221,7 +334,7 @@ export function BatchRunDialog({
   const start = useCallback(async () => {
     if (!hasModel) { addToast('Select a model first', 'error'); return; }
     if (!hasDirectory) { addToast('Connect a directory first — submissions are saved there', 'error'); return; }
-    const chosen = prompts.filter(p => selectedIds.has(p.slug));
+    const chosen = setPrompts.filter(p => selectedIds.has(p.slug));
     if (chosen.length === 0) { addToast('Select at least one prompt', 'error'); return; }
 
     // One job per prompt × parameter set. With no sweep this is just the prompts.
@@ -240,10 +353,22 @@ export function BatchRunDialog({
     setRunList(list);
     setItems(list.map(() => ({ status: 'queued' })));
     setSummary(null);
-    setPreviewSvg('');
-    setResults([]);
+    setResults(list.map(() => ''));
+    setOutputStats(list.map(() => null));
+    setAgentEvents(list.map(() => []));
+    setAgentLive(list.map(() => null));
+    setInspectedIndex(-1);
+    setFullscreenIndex(-1);
     setActiveIndex(-1);
+    activeIndexRef.current = -1;
+    followActiveRef.current = true;
+    streamTimingsRef.current = [];
     stopRef.current = false;
+    pauseRequestedRef.current = false;
+    pauseResolverRef.current?.();
+    pauseResolverRef.current = null;
+    setPauseState('running');
+    setPauseContext(null);
     setPhase('running');
 
     try {
@@ -258,23 +383,88 @@ export function BatchRunDialog({
         deps,
         onEvent: handleEvent,
         shouldStop: () => stopRef.current,
+        shouldPause: () => pauseRequestedRef.current,
+        waitIfPaused: waitAtPauseBoundary,
       });
     } catch (e) {
       addToast('Batch run error: ' + e.message, 'error');
     } finally {
+      pauseRequestedRef.current = false;
+      pauseResolverRef.current?.();
+      pauseResolverRef.current = null;
+      setPauseState('running');
+      setPauseContext(null);
       setActiveIndex(-1);
       setPhase('done');
     }
-  }, [hasModel, hasDirectory, prompts, selectedIds, combos, model, heal, healAttempts, saveBothOnHeal,
-      skipExisting, delaySec, apiRetries, deps, handleEvent, addToast]);
+  }, [hasModel, hasDirectory, setPrompts, selectedIds, combos, model, heal, healAttempts, saveBothOnHeal,
+      skipExisting, delaySec, apiRetries, deps, handleEvent, waitAtPauseBoundary, addToast]);
+
+  const pause = useCallback(() => {
+    if (pauseRequestedRef.current || stopRef.current) return;
+    pauseRequestedRef.current = true;
+    setPauseState('pausing');
+    addToast('Pause requested — waiting for the current model call to finish', 'info');
+  }, [addToast]);
+
+  const resume = useCallback(() => {
+    if (!pauseRequestedRef.current) return;
+    pauseRequestedRef.current = false;
+    setPauseState('running');
+    setPauseContext(null);
+    const resolve = pauseResolverRef.current;
+    pauseResolverRef.current = null;
+    resolve?.();
+    addToast('Batch resumed', 'info');
+  }, [addToast]);
 
   const stop = useCallback(() => {
     stopRef.current = true;
-    addToast('Stopping after the current prompt…', 'info');
+    pauseRequestedRef.current = false;
+    const resolve = pauseResolverRef.current;
+    pauseResolverRef.current = null;
+    resolve?.();
+    addToast('Stopping after the current operation…', 'info');
   }, [addToast]);
 
   const doneCount = items.filter(it => ['saved', 'skipped', 'error', 'stopped'].includes(it.status)).length;
   const progressPct = runList.length ? Math.round((doneCount / runList.length) * 100) : 0;
+  const activeStatus = items[activeIndex]?.status || '';
+  const isStreaming = ['generating', 'healing'].includes(activeStatus);
+  const displayedSvg = inspectedIndex >= 0 ? (results[inspectedIndex] || '') : '';
+  const displayedCharacters = displayedSvg.length;
+  const reportedTokens = inspectedIndex >= 0 ? completionTokenCount(outputStats[inspectedIndex]) : null;
+  const displayedTokens = reportedTokens ?? estimatedTokenCount(displayedSvg);
+  const displayedTokenLabel = `${displayedTokens.toLocaleString()} token${displayedTokens === 1 ? '' : 's'} generated`;
+  const viewingActive = inspectedIndex >= 0 && inspectedIndex === activeIndex;
+  const displayedTokenRate = tokensPerSecond(
+    inspectedIndex >= 0 ? outputStats[inspectedIndex] : null,
+    displayedTokens,
+    inspectedIndex >= 0 ? streamTimingsRef.current[inspectedIndex] : null,
+    rateClock,
+  );
+  const displayedTokenRateLabel = formatTokensPerSecond(displayedTokenRate);
+  const inspectedTitle = inspectedIndex >= 0 ? (runList[inspectedIndex]?.title || '') : '';
+  const fullscreenSvg = fullscreenIndex >= 0 ? (results[fullscreenIndex] || '') : '';
+  const fullscreenTitle = fullscreenIndex >= 0 ? (runList[fullscreenIndex]?.title || 'Generation') : '';
+
+  useEffect(() => {
+    if (phase !== 'running' || !viewingActive || !isStreaming || !displayedCharacters) return undefined;
+    const timer = window.setInterval(() => setRateClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [phase, viewingActive, isStreaming, displayedCharacters]);
+
+  const inspectOutput = useCallback((index) => {
+    if (index < 0 || (!results[index] && index !== activeIndexRef.current)) return;
+    followActiveRef.current = index === activeIndexRef.current;
+    setInspectedIndex(index);
+  }, [results]);
+
+  const returnToLive = useCallback(() => {
+    if (activeIndexRef.current < 0) return;
+    followActiveRef.current = true;
+    setInspectedIndex(activeIndexRef.current);
+  }, []);
 
   const fmtScore = (s) => (s == null ? '' : `${Math.round(s * 100)}%`);
 
@@ -289,12 +479,15 @@ export function BatchRunDialog({
             ? html`<span>Model: <strong>${model.label || model.modelId}</strong></span>`
             : html`<span>No model loaded — pick one to run the batch</span>`}
         </div>
-        <${ProviderModelSelector}
+        <${ExecutorModelSelector}
           models=${allModels}
-          providerId=${model?.providerId || ''}
-          modelId=${model?.modelId || ''}
-          onChange=${onModelChange}
-          disabled=${allModels.length === 0 && !modelsLoading}
+          backend=${backend}
+          providerId=${selectedProviderId}
+          modelId=${selectedModelId}
+          agentId=${agentId}
+          agentModelId=${agentModelId}
+          onChange=${onExecutorChange}
+          disabled=${allModels.length === 0 && !modelsLoading && backend !== 'agent'}
           loading=${modelsLoading}
           onSettingsClick=${onProviderSettingsClick}
         />
@@ -310,16 +503,31 @@ export function BatchRunDialog({
 
       <div class="batch-section">
         <div class="batch-section-head">
-          <span><i class="fa-solid fa-list-check"></i> Prompts (${selectedCount}/${prompts.length})</span>
+          <span><i class="fa-solid fa-list-check"></i> Prompts (${selectedCount}/${setPrompts.length})</span>
           <span class="batch-select-actions">
-            <button class="btn btn-xs" onClick=${selectAll}>All</button>
-            <button class="btn btn-xs" onClick=${selectNone}>None</button>
+            <button class="btn btn-xs" onClick=${selectAll} title="Tick every prompt in this set">All</button>
+            <button class="btn btn-xs" onClick=${selectNone} title="Untick every prompt in this set">None</button>
           </span>
         </div>
+        ${availableSets.length > 1 && html`
+          <div class="batch-set-switch" role="group" aria-label="Prompt set">
+            ${availableSets.map(s => html`
+              <button
+                key=${s.id}
+                type="button"
+                class=${`prompt-category-chip ${promptSet === s.id ? 'active' : ''}`}
+                aria-pressed=${promptSet === s.id}
+                title=${s.hint}
+                onClick=${() => setPromptSet(s.id)}
+              ><i class=${`fa-solid ${s.icon}`}></i> ${s.label}<span class="batch-set-count">${s.count}</span></button>
+            `)}
+            ${activeSetMeta?.hint && html`<span class="batch-set-hint">${activeSetMeta.hint}. Only this set runs.</span>`}
+          </div>
+        `}
         <div class="batch-prompt-list">
-          ${prompts.length === 0
-            ? html`<div class="batch-empty">No prompts found. Harvest fails silently if data/prompts.json is missing.</div>`
-            : prompts.map(p => html`
+          ${setPrompts.length === 0
+            ? html`<div class="batch-empty">No prompts found in this set. Seeds fail silently if their data/*.json file is missing.</div>`
+            : setPrompts.map(p => html`
               <label class="batch-prompt-row" key=${p.slug}>
                 <input type="checkbox" checked=${selectedIds.has(p.slug)} onChange=${() => toggleOne(p.slug)} />
                 <span class="batch-prompt-title" title=${p.prompt}>${p.title}</span>
@@ -370,6 +578,9 @@ export function BatchRunDialog({
           </label>
         </div>
         <div class="batch-note"><i class="fa-solid fa-ruler-combined"></i> Benchmarks with a reference image are auto-scored as they run.</div>
+        ${promptSet === 'animated' && html`
+          <div class="batch-note"><i class="fa-solid fa-film"></i> Animated prompts get a motion check: each SVG is rendered frozen at six moments and flagged when nothing moves, nothing loops, or it relies on script.</div>
+        `}
       </div>
 
       <div class="batch-section">
@@ -432,8 +643,34 @@ export function BatchRunDialog({
     <div class="modal-body batch-running">
       <div class="batch-progress">
         <div class="batch-progress-bar"><div class="batch-progress-fill" style=${{ width: progressPct + '%' }}></div></div>
-        <div class="batch-progress-text">${doneCount} / ${runList.length} done${activeIndex >= 0 ? ` · running "${runList[activeIndex]?.title || ''}"` : ''}</div>
+        <div class="batch-progress-meta">
+          <div class="batch-progress-text">${doneCount} / ${runList.length} done${pauseState === 'paused'
+            ? ` · paused${pauseContext?.prompt?.title ? ` before "${pauseContext.prompt.title}"` : ''}`
+            : activeIndex >= 0 ? ` · running "${runList[activeIndex]?.title || ''}"` : ''}</div>
+          <div class=${`batch-stream-count ${isStreaming ? 'is-streaming' : ''}`} aria-live="polite">
+            ${!viewingActive && inspectedIndex >= 0
+              ? html`<i class="fa-solid fa-eye"></i> Viewing saved output · ${displayedCharacters.toLocaleString()} characters · ${displayedTokenLabel} · ${displayedTokenRateLabel}`
+              : html`
+                <i class=${`fa-solid ${isStreaming ? 'fa-spinner fa-spin' : displayedCharacters ? 'fa-code' : 'fa-hourglass-half'}`}></i>
+                ${displayedCharacters
+                  ? `${displayedCharacters.toLocaleString()} character${displayedCharacters === 1 ? '' : 's'} streamed · ${displayedTokenLabel} · ${displayedTokenRateLabel}`
+                  : 'Waiting for the first SVG chunk…'}
+              `}
+          </div>
+        </div>
       </div>
+
+      ${pauseState !== 'running' && html`
+        <div class=${`batch-pause-state ${pauseState}`} role="status" aria-live="polite">
+          <i class=${`fa-solid ${pauseState === 'paused' ? 'fa-circle-pause' : 'fa-spinner fa-spin'}`}></i>
+          <div>
+            <strong>${pauseState === 'paused' ? 'Paused' : 'Pausing…'}</strong>
+            <span>${pauseState === 'paused'
+              ? `No model calls are running${pauseContext?.prompt?.title ? ` · next: ${pauseContext.prompt.title}` : ''}.`
+              : 'Finishing the in-flight model call; no new call will start.'}</span>
+          </div>
+        </div>
+      `}
 
       <div class="batch-run-body">
         <div class="batch-run-list">
@@ -441,29 +678,87 @@ export function BatchRunDialog({
             const it = items[idx] || { status: 'queued' };
             const m = STATUS_META[it.status] || STATUS_META.queued;
             const isActive = idx === activeIndex;
+            const isInspected = idx === inspectedIndex;
+            const canInspect = !!results[idx] || isActive;
             return html`
-              <div class=${`batch-run-item ${m.cls} ${isActive ? 'is-active' : ''}`} key=${p.jobKey || p.slug}>
+              <div
+                class=${`batch-run-item ${m.cls} ${isActive ? 'is-active' : ''} ${isInspected ? 'is-inspected' : ''} ${canInspect ? 'is-inspectable' : ''}`}
+                key=${p.jobKey || p.slug}
+                role=${canInspect ? 'button' : undefined}
+                tabIndex=${canInspect ? 0 : undefined}
+                aria-current=${isInspected ? 'true' : undefined}
+                title=${canInspect ? (isActive ? 'View the live generation' : 'Inspect this generation while the batch continues') : ''}
+                onClick=${canInspect ? () => inspectOutput(idx) : undefined}
+                onKeyDown=${canInspect ? (event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    inspectOutput(idx);
+                  }
+                } : undefined}
+              >
                 <i class=${`batch-run-icon fa ${m.icon} ${m.cls === 'active' ? 'fa-fade' : ''}`}></i>
                 <span class="batch-run-title" title=${p.title}>${p.title}</span>
                 <span class="batch-run-status">
                   ${it.status === 'healing' && it.healAttempt ? `fix ${it.healAttempt}` : m.label}
                   ${it.status === 'saved' && it.autoScore != null ? html` <span class="batch-score-chip">${fmtScore(it.autoScore)}</span>` : null}
                   ${it.healed && it.status === 'saved' ? html` <span class="batch-healed-chip">fixed</span>` : null}
+                  ${it.status === 'saved' ? html`<${MotionChip} animation=${it.animation} />` : null}
+                  ${results[idx] ? html`
+                    <button class="batch-fullscreen-button" title="Open full-screen SVG"
+                      onClick=${(event) => { event.stopPropagation(); setFullscreenIndex(idx); }}>
+                      <i class="fa-solid fa-expand"></i>
+                    </button>` : null}
                 </span>
               </div>
             `;
           })}
           <div ref=${listEndRef}></div>
         </div>
-        <div class="batch-preview">
-          ${previewSvg
-            ? html`<${SvgLive} svg=${previewSvg} />`
-            : html`<div class="batch-preview-empty"><i class="fa-solid fa-hourglass-half"></i><span>Live preview appears here</span></div>`}
+        <div class="batch-live-panel">
+          <div class="batch-preview-head">
+            <span title=${inspectedTitle}><i class="fa-solid fa-image"></i> ${inspectedTitle || 'Preview'}</span>
+            <span class="batch-preview-actions">
+              ${displayedSvg ? html`
+                <button class="batch-fullscreen-button" title="Open full-screen SVG"
+                  onClick=${() => setFullscreenIndex(inspectedIndex)}>
+                  <i class="fa-solid fa-expand"></i> Full screen
+                </button>` : null}
+              ${!viewingActive && activeIndex >= 0
+                ? html`<button class="batch-return-live" onClick=${returnToLive}><i class="fa-solid fa-tower-broadcast"></i> Return to live</button>`
+                : pauseState === 'paused'
+                  ? html`<span class="batch-live-chip is-paused"><i class="fa-solid fa-circle-pause"></i> Paused</span>`
+                  : html`<span class="batch-live-chip"><i class="fa-solid fa-circle"></i> Live</span>`}
+            </span>
+          </div>
+          <div class="batch-preview">
+            ${displayedSvg
+              ? html`<${SvgLive} svg=${displayedSvg} />`
+              : html`<div class="batch-preview-empty"><i class="fa-solid fa-hourglass-half"></i><span>${model?.isAgent ? 'The SVG appears here once the agent writes it' : 'Live preview appears here'}</span></div>`}
+          </div>
+          ${model?.isAgent && inspectedIndex >= 0 && html`
+            <div class="batch-agent-trace">
+              <${AgentTrace}
+                events=${agentEvents[inspectedIndex] || []}
+                running=${viewingActive && isStreaming}
+                agentLabel=${agentLabel(agentIdFromProviderId(model.providerId))}
+                live=${agentLive[inspectedIndex] || null}
+                emptyText="Starting the agent…"
+              />
+            </div>`}
         </div>
       </div>
     </div>
 
     <div class="modal-footer">
+      ${pauseState === 'paused'
+        ? html`<button class="btn btn-primary batch-resume-button" onClick=${resume}>
+            <i class="fa-solid fa-play"></i> Resume
+          </button>`
+        : html`<button class="btn batch-pause-button" onClick=${pause} disabled=${pauseState === 'pausing' || stopRef.current}
+            title="Finish the current model call, then pause before another starts">
+            <i class=${`fa-solid ${pauseState === 'pausing' ? 'fa-spinner fa-spin' : 'fa-pause'}`}></i>
+            ${pauseState === 'pausing' ? 'Pausing…' : 'Pause'}
+          </button>`}
       <button class="btn btn-danger" onClick=${stop} disabled=${stopRef.current}>
         <i class="fa-solid fa-stop"></i> ${stopRef.current ? 'Stopping…' : 'Stop'}
       </button>
@@ -477,6 +772,10 @@ export function BatchRunDialog({
         <div class="batch-summary-grid">
           <div class="batch-stat"><strong>${summary?.generated || 0}</strong><span>generated</span></div>
           <div class="batch-stat"><strong>${summary?.scored || 0}</strong><span>scored</span></div>
+          ${summary?.motionChecked ? html`
+            <div class=${`batch-stat ${summary.moving < summary.motionChecked ? 'is-bad' : ''}`} title="Animated submissions that visibly move">
+              <strong>${summary.moving}/${summary.motionChecked}</strong><span>moving</span>
+            </div>` : null}
           <div class="batch-stat"><strong>${summary?.healed || 0}</strong><span>fixed</span></div>
           <div class="batch-stat"><strong>${summary?.saved || 0}</strong><span>saved</span></div>
           <div class="batch-stat"><strong>${summary?.skipped || 0}</strong><span>skipped</span></div>
@@ -579,7 +878,7 @@ export function BatchRunDialog({
 
   return html`
     <div class="modal-overlay">
-      <div class="modal batch-dialog" onClick=${(e) => e.stopPropagation()}>
+      <div class=${`modal batch-dialog ${phase === 'running' ? 'is-running' : ''}`} onClick=${(e) => e.stopPropagation()}>
         <div class="modal-header">
           <h2><i class=${`fa-solid ${heading.icon}`}></i> ${heading.text}</h2>
           <div class="batch-header-actions">
@@ -600,6 +899,18 @@ export function BatchRunDialog({
           : phase === 'past' ? renderPastRun()
           : renderDone()}
       </div>
+      ${fullscreenSvg && html`
+        <${SvgLightbox}
+          svg=${fullscreenSvg}
+          title=${fullscreenTitle}
+          subtitle=${phase === 'running' && fullscreenIndex === activeIndex
+            ? 'Live generation · the batch continues in the background'
+            : phase === 'running'
+              ? 'Pinned generation · the batch continues in the background'
+              : 'Saved batch generation'}
+          onClose=${() => setFullscreenIndex(-1)}
+        />
+      `}
     </div>
   `;
 }

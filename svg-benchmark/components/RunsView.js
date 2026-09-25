@@ -1,7 +1,16 @@
 import { html } from 'htm/preact';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'preact/hooks';
-import { BatchReview, SvgLive, SvgLightbox } from './BatchReview.js';
+import { BatchReview, MotionChip, SvgLive, SvgLightbox } from './BatchReview.js';
 import { paramsSignature } from '../../shared/services/gen-params.js';
+import { promptSetInfo } from '../services/promptLibrary.js';
+
+// Core runs stay unlabelled, as they were before prompt sets existed.
+function SetBadge({ set }) {
+  if (!set || set === 'core') return null;
+  const label = set === 'mixed' ? 'mixed sets' : promptSetInfo(set).label;
+  const icon = set === 'mixed' ? 'fa-shuffle' : promptSetInfo(set).icon;
+  return html`<span class=${`runs-set-badge set-${set}`}><i class=${`fa-solid ${icon}`}></i> ${label}</span>`;
+}
 
 export const MAX_COMPARE = 25;
 
@@ -119,6 +128,7 @@ export function RunsView({ deps, hasDirectory, onPickDirectory, onOpenBenchmark,
     autoScore: it.autoScore,
     healed: it.healed,
     stats: it.stats,
+    animation: it.animation,
     paramsLabel: it.params && Object.keys(it.params).length ? (it.paramsLabel || paramsSignature(it.params)) : null,
     error: it.svg ? '' : 'SVG file missing',
   })), [singleRun]);
@@ -145,8 +155,8 @@ export function RunsView({ deps, hasDirectory, onPickDirectory, onOpenBenchmark,
             <i class="fa-solid fa-arrow-left"></i> All Runs
           </button>
           <div class="runs-subhead-title">
-            <strong>${singleRun.model}</strong>
-            <span>${fmtWhen(singleRun.startedAt)} · ${singleRun.count} SVG${singleRun.count === 1 ? '' : 's'}${singleRun.avgScore != null ? ` · avg ${fmtScore(singleRun.avgScore)}` : ''}</span>
+            <strong>${singleRun.model} <${SetBadge} set=${singleRun.promptSet} /></strong>
+            <span>${fmtWhen(singleRun.startedAt)} · ${singleRun.count} SVG${singleRun.count === 1 ? '' : 's'}${singleRun.avgScore != null ? ` · avg ${fmtScore(singleRun.avgScore)}` : ''}${singleRun.motionCheckedCount ? ` · ${singleRun.movingCount}/${singleRun.motionCheckedCount} moving` : ''}</span>
           </div>
         </div>
         <${BatchReview} rows=${singleRows} resetKey=${singleRun.id} onOpenBenchmark=${onOpenBenchmark} />
@@ -204,11 +214,12 @@ export function RunsView({ deps, hasDirectory, onPickDirectory, onOpenBenchmark,
                     </label>
                     <button class="runs-row-open" onClick=${() => openSingle(r)} title="Open this run">
                       <i class="fa-solid fa-layer-group runs-row-icon"></i>
-                      <span class="runs-row-model" title=${r.modelId || r.model}>${r.model}</span>
+                      <span class="runs-row-model" title=${r.modelId || r.model}>${r.model} <${SetBadge} set=${r.promptSet} /></span>
                       <span class="runs-row-when">${fmtWhen(r.startedAt)}</span>
                       <span class="runs-row-meta">
                         ${r.count} SVG${r.count === 1 ? '' : 's'}
                         ${r.avgScore != null ? html`<span class="batch-score-chip" title="Average auto-score">avg ${fmtScore(r.avgScore)}</span>` : null}
+                        ${r.motionCheckedCount ? html`<span class=${`batch-motion-chip ${r.movingCount === r.motionCheckedCount ? 'is-moving' : 'is-warn'}`} title="Animated submissions that visibly move">${r.movingCount}/${r.motionCheckedCount} moving</span>` : null}
                         <i class="fa-solid fa-chevron-right"></i>
                       </span>
                     </button>
@@ -336,6 +347,7 @@ function CompareRuns({ compareRuns, onBack, onOpenBenchmark }) {
                     <div class="compare-col-meta">
                       ${it?.autoScore != null ? html`<span class="batch-score-chip">${fmtScore(it.autoScore)}</span>` : null}
                       ${it?.healed ? html`<span class="batch-healed-chip">fixed</span>` : null}
+                      <${MotionChip} animation=${it?.animation} />
                       ${it?.paramsLabel && it.paramsLabel !== 'defaults' ? html`<span class="batch-params-chip"><i class="fa-solid fa-sliders"></i> ${it.paramsLabel}</span>` : null}
                       ${statsBits(it?.stats) ? html`<span class="batch-stats-line">${statsBits(it.stats)}</span>` : null}
                     </div>

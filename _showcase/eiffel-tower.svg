@@ -1,0 +1,133 @@
+<svg viewBox="0 0 500 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Sky Background Gradient -->
+    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4A90E2" />
+      <stop offset="100%" stop-color="#87CEEB" />
+    </linearGradient>
+
+    <!-- Balloon Envelope Clip Path -->
+    <clipPath id="envelopeClip">
+      <path d="M 250 50 C 380 50 450 250 380 400 Q 250 420 120 400 C 50 250 120 50 250 50 Z" />
+    </clipPath>
+
+    <!-- 3D Volume Highlight/Shadow -->
+    <radialGradient id="envelopeVolume" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.5" />
+      <stop offset="60%" stop-color="#000000" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.4" />
+    </radialGradient>
+
+    <!-- Flame Gradient -->
+    <radialGradient id="flameGrad" cx="50%" cy="80%" r="60%">
+      <stop offset="0%" stop-color="#FFF7D6" />
+      <stop offset="40%" stop-color="#FFD700" />
+      <stop offset="100%" stop-color="#FF4500" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background Sky -->
+  <rect width="500" height="700" fill="url(#skyGrad)" />
+
+  <!-- Stylized Clouds -->
+  <g fill="#FFFFFF" opacity="0.8">
+    <!-- Cloud 1 -->
+    <circle cx="80" cy="620" r="30" />
+    <circle cx="120" cy="610" r="40" />
+    <circle cx="160" cy="625" r="35" />
+    <circle cx="100" cy="650" r="45" />
+    
+    <!-- Cloud 2 -->
+    <circle cx="420" cy="220" r="25" />
+    <circle cx="450" cy="210" r="35" />
+    <circle cx="480" cy="225" r="20" />
+    <circle cx="440" cy="245" r="30" />
+
+    <!-- Cloud 3 -->
+    <circle cx="60" cy="350" r="20" />
+    <circle cx="90" cy="340" r="30" />
+    <circle cx="50" cy="365" r="25" />
+  </g>
+
+  <!-- Balloon Envelope -->
+  <g>
+    <!-- Colorful Stripes -->
+    <g clip-path="url(#envelopeClip)">
+      <rect x="60" y="20" width="50" height="450" fill="#FF3B30" transform="rotate(-18, 250, 250)" />
+      <rect x="95" y="20" width="50" height="450" fill="#FF9500" transform="rotate(-13, 250, 250)" />
+      <rect x="130" y="20" width="50" height="450" fill="#FFCC00" transform="rotate(-8, 250, 250)" />
+      <rect x="165" y="20" width="50" height="450" fill="#34C759" transform="rotate(-3, 250, 250)" />
+      <rect x="200" y="20" width="50" height="450" fill="#007AFF" transform="rotate(2, 250, 250)" />
+      <rect x="250" y="20" width="50" height="450" fill="#5856D6" transform="rotate(6, 250, 250)" />
+      <rect x="300" y="20" width="50" height="450" fill="#AF52DE" transform="rotate(11, 250, 250)" />
+      <rect x="350" y="20" width="50" height="450" fill="#FF2D55" transform="rotate(16, 250, 250)" />
+    </g>
+
+    <!-- Volume Shading -->
+    <path d="M 250 50 C 380 50 450 250 380 400 Q 250 420 120 400 C 50 250 120 50 250 50 Z" fill="url(#envelopeVolume)" />
+  </g>
+
+  <!-- Burner & Ropes -->
+  <g>
+    <!-- Connecting Ropes -->
+    <path d="M 200 460 L 140 410 M 230 460 L 190 410 M 270 460 L 310 410 M 300 460 L 360 410" stroke="#2C3E50" stroke-width="2" />
+    <path d="M 225 460 L 225 415 M 275 460 L 275 415" stroke="#2C3E50" stroke-width="1.5" stroke-dasharray="4 2" />
+
+    <!-- Burner Base -->
+    <rect x="220" y="410" width="60" height="15" rx="3" fill="#34495E" />
+    <rect x="225" y="405" width="50" height="5" fill="#2C3E50" />
+    <rect x="215" y="420" width="70" height="5" rx="2" fill="#7F8C8D" />
+
+    <!-- Flame -->
+    <path d="M 250 355 C 235 390 230 405 250 405 C 270 405 265 390 250 355 Z" fill="url(#flameGrad)" />
+    <path d="M 250 370 C 242 395 238 402 250 402 C 262 402 258 395 250 370 Z" fill="#FFFFFF" opacity="0.9" />
+    <path d="M 250 390 C 246 398 245 402 250 402 C 255 402 254 398 250 390 Z" fill="#FFF0B2" />
+  </g>
+
+  <!-- Wicker Basket -->
+  <g>
+    <!-- Basket Body Base Color -->
+    <rect x="200" y="460" width="100" height="100" rx="4" fill="#D4974A" />
+
+    <!-- Wicker Texture (Horizontal Weave) -->
+    <g stroke="#8B5A2B" stroke-width="3" opacity="0.8">
+      <line x1="200" y1="470" x2="300" y2="470" />
+      <line x1="200" y1="480" x2="300" y2="480" />
+      <line x1="200" y1="490" x2="300" y2="490" />
+      <line x1="200" y1="500" x2="300" y2="500" />
+      <line x1="200" y1="510" x2="300" y2="510" />
+      <line x1="200" y1="520" x2="300" y2="520" />
+      <line x1="200" y1="530" x2="300" y2="530" />
+      <line x1="200" y1="540" x2="300" y2="540" />
+      <line x1="200" y1="550" x2="300" y2="550" />
+    </g>
+
+    <!-- Wicker Texture (Vertical Weave) -->
+    <g stroke="#6B4216" stroke-width="2" opacity="0.6">
+      <line x1="210" y1="460" x2="210" y2="560" />
+      <line x1="225" y1="460" x2="225" y2="560" />
+      <line x1="240" y1="460" x2="240" y2="560" />
+      <line x1="260" y1="460" x2="260" y2="560" />
+      <line x1="275" y1="460" x2="275" y2="560" />
+      <line x1="290" y1="460" x2="290" y2="560" />
+    </g>
+
+    <!-- Top Rim -->
+    <rect x="194" y="454" width="112" height="12" rx="4" fill="#8B5A2B" />
+    <rect x="196" y="456" width="108" height="4" rx="2" fill="#A06B35" />
+
+    <!-- Bottom Rim -->
+    <rect x="194" y="554" width="112" height="12" rx="4" fill="#6D4620" />
+    <rect x="196" y="560" width="108" height="4" rx="2" fill="#8B5A2B" />
+
+    <!-- Sandbags -->
+    <path d="M 194 454 C 184 454 184 434 194 434 C 204 434 204 454 194 454 Z" fill="#E0B078" stroke="#8B5A2B" stroke-width="2" />
+    <path d="M 194 434 L 194 424 C 188 422 186 426 188 430" fill="none" stroke="#8B5A2B" stroke-width="2" />
+
+    <path d="M 306 454 C 316 454 316 434 306 434 C 296 434 296 454 306 454 Z" fill="#E0B078" stroke="#8B5A2B" stroke-width="2" />
+    <path d="M 306 434 L 306 424 C 312 422 314 426 312 430" fill="none" stroke="#8B5A2B" stroke-width="2" />
+  </g>
+
+  <!-- Subtle Drop Shadow for Depth -->
+  <ellipse cx="250" cy="585" rx="50" ry="8" fill="#000000" opacity="0.2" />
+</svg>

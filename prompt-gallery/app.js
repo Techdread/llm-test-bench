@@ -14,6 +14,8 @@ import { ImportPromptsDialog } from './components/ImportPromptsDialog.js';
 import { RefineView } from './components/RefineView.js';
 import { BatchRunDialog } from './components/BatchRunDialog.js';
 import { runHtmlSandbox, runStatusLabel } from './services/sandboxRunner.js';
+import { planRunMerge } from './services/runs.js';
+import { withRating, ratingFromKey, RATING_MAX } from './services/rating.js';
 import { auditHtml, healHtml, repairAgainstAudit } from './services/refine.js';
 import { MetadataPanel } from './components/MetadataPanel.js';
 import { SaveDialog } from './components/SaveDialog.js';
@@ -45,6 +47,7 @@ import { prefs, hydrateAppPrefs, setPref, setPrefs, subscribeAppPrefs } from '..
 import { subscribeSuite } from '../shared/services/suite-prefs.js';
 import { crossAppHandoffsEnabled, isPublicDistribution } from '../shared/services/distribution.js';
 import { consumeShowcaseRoute } from '../shared/services/showcase.js';
+import { mountGenerationStatus } from '../shared/components/GenerationStatus.js';
 
 function getRoute() {
   const hash = window.location.hash || '#/create';
@@ -90,6 +93,7 @@ function App() {
   // Create view state
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
+  const [responseMetrics, setResponseMetrics] = useState({ stats: null, timing: null });
   // What actually produced the current response ('' until something does).
   // Empty means "nothing generated yet", so Save can fall back to the picker.
   const [model, setModel] = useState('');
@@ -165,6 +169,7 @@ function App() {
       if (cancelled || !item) return;
       setPrompt(item.prompt || '');
       setResponse(item.code);
+      setResponseMetrics({ stats: null, timing: null });
       setRoute(getRoute());
     });
     return () => { cancelled = true; };
@@ -222,6 +227,7 @@ function App() {
     if (!inbound || !inbound.prompt) return;
     setPrompt(inbound.prompt);
     setResponse('');
+    setResponseMetrics({ stats: null, timing: null });
     setEditingId('');
     clearPromptGalleryInboundHandoff();
     if (route.name !== 'create') {
@@ -428,6 +434,9 @@ function App() {
     }
   }, [addToast]);
 
+  // The gallery scan leaves pages on disk; this is how the views fetch one.
+  const loadHtml = useCallback((id) => (rootHandle ? meta.loadResponse(rootHandle, id) : Promise.resolve('')), [rootHandle]);
+
   const refreshGenerations = useCallback(async () => {
     if (!rootHandle) return;
     try {
@@ -603,6 +612,8 @@ function App() {
     }
     setIsGenerating(true);
     setResponse('');
+    const responseStartedAt = Date.now();
+    setResponseMetrics({ stats: null, timing: { startedAt: responseStartedAt, endedAt: null } });
     setCreateRunStatus(null);
     try {
       let finalHtml = '';
@@ -619,15 +630,35 @@ function App() {
         });
         finalHtml = stripCodeFences(completed.content);
         setResponse(finalHtml);
+        const usage = completed.doneEvent?.usage;
+        if (usage) {
+          setResponseMetrics(current => current.timing?.startedAt === responseStartedAt
+            ? {
+                ...current,
+                stats: {
+                  completionTokens: usage.outputTokens ?? usage.output_tokens ?? null,
+                  promptTokens: usage.inputTokens ?? usage.input_tokens ?? null,
+                },
+              }
+            : current);
+        }
         const label = AGENTS.find(agent => agent.id === completed.agent)?.label || completed.agent;
         setModel(`${label}${completed.model ? ` · ${completed.model}` : ''} CLI`);
       } else {
-        await openrouter.generateHtml(promptText, selectedProviderId, selectedModelId, (partial) => {
-          // Strip markdown code fences if model wraps output
-          const cleaned = stripCodeFences(partial);
-          finalHtml = cleaned;
-          setResponse(cleaned);
-        });
+        await openrouter.generateHtml(
+          promptText,
+          selectedProviderId,
+          selectedModelId,
+          (partial) => {
+            // Strip markdown code fences if model wraps output
+            const cleaned = stripCodeFences(partial);
+            finalHtml = cleaned;
+            setResponse(cleaned);
+          },
+          (stats) => setResponseMetrics(current => current.timing?.startedAt === responseStartedAt
+            ? { ...current, stats }
+            : current),
+        );
         // Auto-set the model label
         const modelInfo = allModels.find(m => m.providerId === selectedProviderId && m.modelId === selectedModelId);
         if (modelInfo) {
@@ -648,6 +679,9 @@ function App() {
       if (!agentRun.wasCancelled()) addToast('Generation failed: ' + e.message, 'error');
     } finally {
       setIsGenerating(false);
+      setResponseMetrics(current => current.timing?.startedAt === responseStartedAt
+        ? { ...current, timing: { ...current.timing, endedAt: Date.now() } }
+        : current);
     }
   }, [prompt, backend, selectedProviderId, selectedModelId, selectedAgentId, agentModels, agentRun,
       rootHandle, handlePickDirectory, allModels, addToast]);
@@ -655,6 +689,7 @@ function App() {
   const handleClear = useCallback(() => {
     setPrompt('');
     setResponse('');
+    setResponseMetrics({ stats: null, timing: null });
     setModel('');
     setEditingId('');
     setCreateRunStatus(null);
@@ -664,6 +699,7 @@ function App() {
   // Manual edits invalidate the last sandbox verdict.
   const handleResponseChange = useCallback((value) => {
     setResponse(value);
+    setResponseMetrics({ stats: null, timing: null });
     setCreateRunStatus(null);
   }, []);
 
@@ -686,13 +722,62 @@ function App() {
     if (!rootHandle) return;
     try {
       await meta.updateMetadata(rootHandle, id, newMeta);
-      setSelectedGeneration(prev => prev ? { ...prev, metadata: newMeta } : prev);
+      // Only the generation that was written — rating from Runs must not stamp
+      // its metadata onto whichever generation happens to be open.
+      setSelectedGeneration(prev => prev && prev.id === id ? { ...prev, metadata: newMeta } : prev);
       // Also update in generations list
       setGenerations(prev => prev.map(g => g.id === id ? { ...g, metadata: newMeta } : g));
     } catch (e) {
       addToast('Failed to update metadata: ' + e.message, 'error');
     }
   }, [rootHandle, addToast]);
+
+  // Rate by id from the run review / compare, where only the id is to hand.
+  const handleRateGeneration = useCallback((id, value) => {
+    const generation = generations.find(g => g.id === id);
+    if (!generation) return;
+    handleUpdateMetadata(id, withRating(generation.metadata, value));
+  }, [generations, handleUpdateMetadata]);
+
+  const handleMergeRuns = useCallback(async (runs) => {
+    if (!rootHandle || !runs?.length) return false;
+    const runIds = runs.map(run => run.id);
+    const generationCount = runs.reduce((sum, run) => sum + (run.count || 0), 0);
+    if (!confirm(`Merge ${runs.length} same-model runs containing ${generationCount} generations? The original run IDs will be kept in metadata.`)) return false;
+
+    const mergedAt = new Date().toISOString();
+    const mergedRunId = `batch-merged-${Date.now().toString(36)}`;
+    let updates;
+    try {
+      updates = planRunMerge(generations, runIds, { mergedRunId, mergedAt });
+    } catch (error) {
+      addToast(error.message || 'These runs cannot be merged', 'error');
+      return false;
+    }
+
+    const written = [];
+    try {
+      for (const update of updates) {
+        await meta.updateMetadata(rootHandle, update.id, update.metadata);
+        written.push(update);
+      }
+      const byId = new Map(updates.map(update => [update.id, update.metadata]));
+      setGenerations(previous => previous.map(generation => byId.has(generation.id)
+        ? { ...generation, metadata: byId.get(generation.id) }
+        : generation));
+      setSelectedGeneration(previous => previous && byId.has(previous.id)
+        ? { ...previous, metadata: byId.get(previous.id) }
+        : previous);
+      addToast(`${runs.length} runs merged into one run with ${generationCount} generations`, 'success');
+      return true;
+    } catch (error) {
+      // Metadata files are independent, so restore any already-written rows if
+      // a later write fails and avoid leaving a half-merged run on disk.
+      await Promise.allSettled(written.map(update => meta.updateMetadata(rootHandle, update.id, update.previousMetadata)));
+      addToast(`Failed to merge runs: ${error.message}`, 'error');
+      return false;
+    }
+  }, [rootHandle, generations, addToast]);
 
   const handleArchiveGenerations = useCallback(async (ids, archive) => {
     if (!rootHandle || !ids?.length) return;
@@ -731,6 +816,7 @@ function App() {
       if (gen) {
         setPrompt(gen.prompt || '');
         setResponse(gen.response || '');
+        setResponseMetrics({ stats: null, timing: null });
         setModel(gen.metadata?.model || '');
         setEditingId(gen.folderId || id);
         navigate('create');
@@ -814,6 +900,7 @@ function App() {
   const handleUseLibraryPrompt = useCallback((p) => {
     setPrompt(p.prompt);
     setResponse('');
+    setResponseMetrics({ stats: null, timing: null });
     setEditingId(library.slugify(p.title));
     navigate('create');
     addToast(`Loaded "${p.title}"`, 'info');
@@ -822,6 +909,7 @@ function App() {
   const handleRunLibraryPrompt = useCallback((p) => {
     setPrompt(p.prompt);
     setResponse('');
+    setResponseMetrics({ stats: null, timing: null });
     setEditingId(library.slugify(p.title));
     navigate('create');
     handleGenerate(p.prompt);
@@ -1040,6 +1128,9 @@ function App() {
     [allModels, selectedProviderId, selectedModelId],
   );
 
+  // What the toolbar is actually pointing at — a provider model or a CLI agent.
+  // Batch runs, Refine and the Save dialog's suggestion wands all use it, so a
+  // helper never falls back to the provider model the toolbar has since left.
   const batchModel = useMemo(() => {
     if (backend === 'agent') {
       const agent = AGENTS.find(item => item.id === selectedAgentId);
@@ -1088,9 +1179,9 @@ function App() {
       return finalHtml;
     },
     runSandbox: (h) => runHtmlSandbox(h),
-    heal: ({ model: mdl, prompt, html: htmlDoc, errors, onChunk }) => {
+    heal: ({ model: mdl, prompt, html: htmlDoc, errors, onChunk, onStats }) => {
       const target = batchTarget(mdl);
-      return healHtml({ ...target, prompt, html: htmlDoc, errors, onChunk });
+      return healHtml({ ...target, prompt, html: htmlDoc, errors, onChunk, onStats });
     },
     audit: ({ model: mdl, promptItem, checklist, html: htmlDoc, sandbox, onStats }) => {
       const target = batchTarget(mdl);
@@ -1104,6 +1195,7 @@ function App() {
         ...target, prompt: promptItem.prompt, html: htmlDoc, sandbox, failedChecks, repairTasks, onChunk, onStats,
       });
     },
+    load: (id) => meta.loadGeneration(rootHandle, id),
     save: async ({ prompt, promptText, response, model: mdl, tags, kind, healAttempts, verification, derivedFrom }) => {
       const derivedTitle = prompt.title
         || (promptText.split('\n').find(l => l.trim()) || 'untitled').trim().slice(0, 60);
@@ -1120,7 +1212,10 @@ function App() {
         modelId: mdl.modelId,
         providerId: mdl.providerId,
         aiGenerated: true,
-        batch: { id: batchIdRef.current, kind, healAttempts: healAttempts || 0, generatedAt: new Date().toISOString() },
+        batch: {
+          id: batchIdRef.current, kind, healAttempts: healAttempts || 0,
+          promptSet: library.promptSetOf(prompt), generatedAt: new Date().toISOString(),
+        },
         ...(verification ? {
           schemaVersion: 2,
           source: 'verified-generation',
@@ -1187,14 +1282,13 @@ function App() {
         e.preventDefault();
         // Focus toggle could be added
       }
-      // Ctrl+1-5 for rating in view mode
+      // Ctrl+1-9 rates that many stars in view mode, Ctrl+0 rates 10
       if ((e.ctrlKey || e.metaKey) && route.name === 'view' && selectedGeneration) {
-        const num = parseInt(e.key);
-        if (num >= 1 && num <= 5) {
+        const num = ratingFromKey(e.key);
+        if (num != null) {
           e.preventDefault();
-          const m = selectedGeneration.metadata || {};
-          handleUpdateMetadata(selectedGeneration.id, { ...m, rating: num });
-          addToast(`Rating set to ${num}`, 'info');
+          handleUpdateMetadata(selectedGeneration.id, withRating(selectedGeneration.metadata, num));
+          addToast(`Rating set to ${num}/${RATING_MAX}`, 'info');
         }
       }
     };
@@ -1224,9 +1318,9 @@ function App() {
         return html`<${RefineView}
           session=${refineSession}
           onSessionChange=${setRefineSession}
-          hasModel=${!!(selectedProviderId && selectedModelId)}
-          providerId=${selectedProviderId}
-          modelId=${selectedModelId}
+          hasModel=${!!(batchModel.providerId && batchModel.modelId)}
+          providerId=${batchModel.providerId}
+          modelId=${batchModel.modelId}
           hasDirectory=${!!rootHandle}
           onSaveStep=${handleSaveRefineStep}
           addToast=${addToast}
@@ -1235,6 +1329,7 @@ function App() {
       case 'gallery':
         return html`<${GalleryView}
           generations=${generations}
+          loadHtml=${loadHtml}
           selectedFolder=${decodeRouteParam(route.param)}
           onOpenProject=${handleOpenGalleryProject}
           onBackProject=${handleBackFromGalleryProject}
@@ -1282,6 +1377,7 @@ function App() {
       case 'compare':
         return html`<${CompareView}
           generations=${generations}
+          loadHtml=${loadHtml}
           compareIds=${compareIds}
           onCompareIdsChange=${setCompareIds}
           onOpen=${(id) => navigate('view/' + id)}
@@ -1290,11 +1386,16 @@ function App() {
       case 'runs':
         return html`<${RunsView}
           generations=${generations}
+          loadHtml=${loadHtml}
           hasDirectory=${!!rootHandle}
           onPickDirectory=${handlePickDirectory}
           onOpen=${(id) => navigate('view/' + id)}
           onRefresh=${refreshGenerations}
+          onMerge=${handleMergeRuns}
+          onRate=${handleRateGeneration}
           addToast=${addToast}
+          initialRunId=${decodeRouteParam(route.param)}
+          onRouteRun=${(id) => navigate(id ? 'runs/' + encodeURIComponent(id) : 'runs')}
         />`;
 
       case 'create':
@@ -1306,6 +1407,9 @@ function App() {
               onPromptChange=${setPrompt}
               response=${response}
               onResponseChange=${handleResponseChange}
+              responseStats=${responseMetrics.stats}
+              responseTiming=${responseMetrics.timing}
+              isGenerating=${isGenerating}
               theme=${theme}
               onMorph=${crossAppHandoffsEnabled() ? handleMorphCurrent : null}
               onSavePromptToLibrary=${() => handleOpenPromptForm({ prompt })}
@@ -1414,8 +1518,8 @@ function App() {
         addToast=${addToast}
         prompt=${prompt}
         response=${response}
-        providerId=${selectedProviderId}
-        modelId=${selectedModelId}
+        providerId=${batchModel.providerId}
+        modelId=${batchModel.modelId}
       />
     `}
     ${showBatchDialog && html`
@@ -1437,7 +1541,7 @@ function App() {
         runId=${batchIdRef.current}
         theme=${theme}
         onOpenGallery=${() => navigate('gallery')}
-        onOpenRuns=${() => navigate('runs')}
+        onOpenRuns=${(id) => navigate(id ? 'runs/' + encodeURIComponent(id) : 'runs')}
         onClose=${handleCloseBatch}
         addToast=${addToast}
       />
@@ -1545,3 +1649,5 @@ function stripCodeFences(text) {
 }
 
 render(html`<${App} />`, document.getElementById('app'));
+// Spec 340: live phase chip (Starting / Thinking / Writing) for any model call in flight.
+mountGenerationStatus();

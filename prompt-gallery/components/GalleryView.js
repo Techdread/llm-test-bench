@@ -1,7 +1,9 @@
 import { html } from 'htm/preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { RatingWidget } from './RatingWidget.js';
+import { ratingOf, RATING_MAX } from '../services/rating.js';
 import { FilterBar } from './FilterBar.js';
+import { useLazyHtml } from './useLazyHtml.js';
 import {
   collectGalleryFacets,
   filterProjects,
@@ -42,7 +44,7 @@ function deactivate(id) {
   subscribers.get(id)?.setLive(false);
 }
 
-function LazyThumb({ id, srcdoc, title }) {
+function LazyThumb({ id, srcdoc, title, genId, loadHtml }) {
   const [live, setLive] = useState(false);
   const wrapRef = useRef(null);
   const offTimerRef = useRef(null);
@@ -74,10 +76,14 @@ function LazyThumb({ id, srcdoc, title }) {
     return () => observer.disconnect();
   }, [id]);
 
+  // The page itself is fetched only once this thumbnail is live, so opening the
+  // gallery costs a list of metadata rather than every generation's HTML.
+  const { html: loaded } = useLazyHtml(genId, loadHtml, { enabled: live, initial: srcdoc || '' });
+
   return html`
     <div class="gallery-thumb" ref=${wrapRef}>
       ${live
-        ? html`<iframe srcdoc=${srcdoc || ''} sandbox="allow-scripts" title=${title} tabindex="-1"></iframe>`
+        ? html`<iframe srcdoc=${loaded || ''} sandbox="allow-scripts" title=${title} tabindex="-1"></iframe>`
         : html`<div class="gallery-thumb-placeholder"><i class="fa-solid fa-image"></i></div>`
       }
     </div>
@@ -101,7 +107,7 @@ function shortVariantKey(variantKey) {
   return suffix.slice(-6);
 }
 
-function ProjectCard({ project, onOpen }) {
+function ProjectCard({ project, onOpen, loadHtml }) {
   const representative = project.representative;
   return html`
     <article
@@ -119,6 +125,8 @@ function ProjectCard({ project, onOpen }) {
     >
       <${LazyThumb}
         id=${`project:${project.folderId}:${representative?.id || 'empty'}`}
+        genId=${representative?.id || ''}
+        loadHtml=${loadHtml}
         srcdoc=${representative?.response || ''}
         title=${project.title}
       />
@@ -150,7 +158,7 @@ function ProjectCard({ project, onOpen }) {
   `;
 }
 
-function VariantCard({ generation, projectTitle, onSelect, onMorph, onDelete, onArchive, onCompare }) {
+function VariantCard({ generation, projectTitle, onSelect, onMorph, onDelete, onArchive, onCompare, loadHtml }) {
   const meta = generation.metadata || {};
   const archived = Boolean(meta.archivedAt);
   const refined = Boolean(meta.derivedFrom || meta.refine?.kind);
@@ -171,7 +179,8 @@ function VariantCard({ generation, projectTitle, onSelect, onMorph, onDelete, on
         }}
         title="Open generation"
       >
-        <${LazyThumb} id=${generation.id} srcdoc=${generation.response} title=${`${projectTitle} - ${model}`} />
+        <${LazyThumb} id=${generation.id} genId=${generation.id} loadHtml=${loadHtml}
+          srcdoc=${generation.response} title=${`${projectTitle} - ${model}`} />
       </div>
       <div class="gallery-card-body">
         <div class="variant-card-heading">
@@ -182,7 +191,7 @@ function VariantCard({ generation, projectTitle, onSelect, onMorph, onDelete, on
           <span class="variant-key" title=${generation.variantKey || 'Legacy generation'}>#${shortVariantKey(generation.variantKey)}</span>
         </div>
         <div class="gallery-card-meta">
-          <${RatingWidget} rating=${meta.rating || 0} readonly size=${12} />
+          <${RatingWidget} rating=${ratingOf(meta)} readonly size=${12} />
           <span class="gallery-card-date">${formatDate(meta.createdAt, true)}</span>
           ${refined && html`<span class="status-badge"><i class="fa-solid fa-screwdriver-wrench"></i> Refined</span>`}
           ${archived && html`<span class="status-badge archived"><i class="fa-solid fa-box-archive"></i> Archived</span>`}
@@ -226,7 +235,7 @@ function ProjectDetail({ project, onBack, onSelect, onMorph, onDelete, onArchive
           <div class="project-detail-stats">
             <span>${project.variantCount} variant${project.variantCount === 1 ? '' : 's'}</span>
             <span>${project.models.length} model${project.models.length === 1 ? '' : 's'}</span>
-            <span>Best ${project.bestRating || 0}/5</span>
+            <span>Best ${project.bestRating || 0}/${RATING_MAX}</span>
             <span>Updated ${formatDate(project.latestAt)}</span>
           </div>
         </div>
@@ -263,6 +272,7 @@ function ProjectDetail({ project, onBack, onSelect, onMorph, onDelete, onArchive
           <div class="gallery-grid variant-grid">
             ${visibleVariants.map(generation => html`
               <${VariantCard}
+                loadHtml=${loadHtml}
                 key=${generation.id}
                 generation=${generation}
                 projectTitle=${project.title}
@@ -282,6 +292,7 @@ function ProjectDetail({ project, onBack, onSelect, onMorph, onDelete, onArchive
 
 export function GalleryView({
   generations,
+  loadHtml,
   selectedFolder,
   onOpenProject,
   onBackProject,
@@ -409,13 +420,14 @@ export function GalleryView({
         : viewMode === 'projects'
           ? html`
             <div class="gallery-grid project-grid">
-              ${filteredProjects.map(project => html`<${ProjectCard} key=${project.id} project=${project} onOpen=${onOpenProject} />`)}
+              ${filteredProjects.map(project => html`<${ProjectCard} key=${project.id} project=${project} onOpen=${onOpenProject} loadHtml=${loadHtml} />`)}
             </div>
           `
           : html`
             <div class="gallery-grid variant-grid">
               ${filteredVariants.map(generation => html`
                 <${VariantCard}
+                  loadHtml=${loadHtml}
                   key=${generation.id}
                   generation=${generation}
                   projectTitle=${projectByFolder.get(generation.folderId)?.title || generation.folderId || generation.id}

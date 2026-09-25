@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%">
+  <defs>
+    <!-- Sky Gradient -->
+    <radialGradient id="skyGrad" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#1A2545"/>
+      <stop offset="100%" stop-color="#080D1A"/>
+    </radialGradient>
+
+    <!-- Ocean Gradient -->
+    <linearGradient id="oceanGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0B1528"/>
+      <stop offset="100%" stop-color="#040812"/>
+    </linearGradient>
+
+    <!-- Light Beam Gradient (Left) -->
+    <linearGradient id="beamLeft" x1="400" y1="0" x2="0" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.8"/>
+      <stop offset="25%" stop-color="#FFD700" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Light Beam Gradient (Right) -->
+    <linearGradient id="beamRight" x1="400" y1="0" x2="800" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.8"/>
+      <stop offset="25%" stop-color="#FFD700" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Center Glow -->
+    <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#FFD700" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- 3D Shading for Tower -->
+    <linearGradient id="towerShade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="55%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="85%" stop-color="#000" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.45"/>
+    </linearGradient>
+
+    <!-- Window/Deck Railing Pattern/Gradient -->
+    <linearGradient id="rockGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#151D2E"/>
+      <stop offset="100%" stop-color="#080B14"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#skyGrad)"/>
+
+  <!-- Stars -->
+  <g fill="#FFF">
+    <circle cx="120" cy="80" r="1.5" opacity="0.8"/>
+    <circle cx="250" cy="150" r="1" opacity="0.5"/>
+    <circle cx="680" cy="100" r="2" opacity="0.7"/>
+    <circle cx="550" cy="180" r="1.2" opacity="0.4"/>
+    <circle cx="300" cy="50" r="1.8" opacity="0.6"/>
+    <circle cx="750" cy="220" r="1" opacity="0.5"/>
+    <circle cx="80" cy="200" r="1" opacity="0.3"/>
+    <circle cx="450" cy="90" r="1.5" opacity="0.8"/>
+  </g>
+
+  <!-- Light Beams (Behind lighthouse, over sky/ocean) -->
+  <g>
+    <polygon points="400,175 0,20 0,330" fill="url(#beamLeft)"/>
+    <polygon points="400,175 800,20 800,330" fill="url(#beamRight)"/>
+    <circle cx="400" cy="175" r="50" fill="url(#glowGrad)"/>
+  </g>
+
+  <!-- Ocean -->
+  <path d="M0 420 Q 200 400 400 430 T 800 420 L 800 600 L 0 600 Z" fill="url(#oceanGrad)"/>
+  
+  <!-- Ocean Waves -->
+  <g stroke="#1A2B4C" stroke-width="2" fill="none" opacity="0.4">
+    <path d="M 100 460 Q 150 450 200 460 T 300 460"/>
+    <path d="M 50 490 Q 120 480 190 490 T 330 490"/>
+    <path d="M 450 450 Q 500 440 550 450 T 650 450"/>
+    <path d="M 400 500 Q 480 490 560 500 T 720 500"/>
+    <path d="M 150 530 Q 250 520 350 530 T 550 530"/>
+    <path d="M 600 550 Q 680 540 760 550"/>
+  </g>
+
+  <!-- Rocks / Base -->
+  <g fill="url(#rockGrad)">
+    <path d="M 250 600 L 280 480 Q 340 460 400 470 Q 460 460 520 480 L 550 600 Z"/>
+    <path d="M 220 600 L 260 510 Q 350 490 400 500 Q 450 490 540 510 L 580 600 Z" fill="#1C273A" opacity="0.8"/>
+    <ellipse cx="400" cy="490" rx="80" ry="15" fill="#233045" opacity="0.5"/>
+  </g>
+
+  <!-- Lighthouse Tower -->
+  <g>
+    <!-- White Stripe 1 (Bottom) -->
+    <path d="M 350 500 L 355 425 L 445 425 L 450 500 Z" fill="#F4F6F7"/>
+    
+    <!-- Red Stripe 2 -->
+    <path d="M 355 425 L 360 350 L 440 350 L 445 425 Z" fill="#C0392B"/>
+    
+    <!-- White Stripe 3 -->
+    <path d="M 360 350 L 365 275 L 435 275 L 440 350 Z" fill="#F4F6F7"/>
+    
+    <!-- Red Stripe 4 -->
+    <path d="M 365 275 L 370 200 L 430 200 L 435 275 Z" fill="#C0392B"/>
+    
+    <!-- Base Lip -->
+    <path d="M 340 500 L 350 470 L 450 470 L 460 500 Z" fill="#B0BEC5"/>
+    <path d="M 340 500 L 350 470 L 450 470 L 460 500 Z" fill="#7F8C8D" opacity="0.5"/>
+
+    <!-- Door -->
+    <path d="M 390 500 L 390 460 A 10 10 0 0 1 410 460 L 410 500 Z" fill="#2C3E50"/>
+    <rect x="400" y="470" width="2" height="15" fill="#7F8C8D"/>
+    <circle cx="403" cy="477" r="1.5" fill="#BDC3C7"/>
+
+    <!-- Gallery Deck / Balcony -->
+    <rect x="355" y="200" width="90" height="12" fill="#B0BEC5"/>
+    <rect x="355" y="210" width="90" height="4" fill="#7F8C8D"/>
+    <!-- Railing -->
+    <rect x="358" y="180" width="84" height="3" fill="#7F8C8D"/>
+    <g stroke="#7F8C8D" stroke-width="2.5">
+      <line x1="362" y1="200" x2="362" y2="183"/>
+      <line x1="374" y1="200" x2="374" y2="183"/>
+      <line x1="386" y1="200" x2="386" y2="183"/>
+      <line x1="414" y1="200" x2="414" y2="183"/>
+      <line x1="426" y1="200" x2="426" y2="183"/>
+      <line x1="438" y1="200" x2="438" y2="183"/>
+    </g>
+
+    <!-- Lantern Room -->
+    <!-- Base Lip -->
+    <rect x="365" y="196" width="70" height="6" fill="#7F8C8D"/>
+    <!-- Glass -->
+    <path d="M 375 200 L 380 150 L 420 150 L 425 200 Z" fill="#E8F1F2" opacity="0.9"/>
+    <!-- Mullions -->
+    <g stroke="#34495E" stroke-width="2">
+      <line x1="388" y1="200" x2="390" y2="150"/>
+      <line x1="400" y1="200" x2="400" y2="150"/>
+      <line x1="412" y1="200" x2="410" y2="150"/>
+    </g>
+    <!-- Light inside lantern -->
+    <circle cx="400" cy="175" r="12" fill="#FFD700"/>
+    
+    <!-- Roof / Dome -->
+    <path d="M 375 150 Q 400 105 425 150 Z" fill="#2C3E50"/>
+    <path d="M 375 150 Q 390 125 400 150 Z" fill="#34495E" opacity="0.5"/>
+    
+    <!-- Finial / Top Ball -->
+    <circle cx="400" cy="105" r="5" fill="#34495E"/>
+  </g>
+
+  <!-- 3D Shading Overlay for Tower & Lantern -->
+  <g clip-path="url(#towerClip)">
+       <!-- We can just draw the shading over the silhouette -->
+       <path d="M 350 500 L 355 425 L 360 350 L 365 275 L 370 200 L 375 200 L 375 150 L 380 150 L 420 150 L 420 200 L 430 200 L 435 275 L 440 350 L 445 425 L 450 500 Z" fill="url(#towerShade)"/>
+  </g>
+
+  <!-- Note: Using a clip path for shading might clip out the rocks if they overlap, but shadows usually fall on top of the structure anyway. To ensure the shading only applies to the lighthouse, the path above defines the lighthouse silhouette exactly. The rocks are drawn below it. -->
+
+</svg>

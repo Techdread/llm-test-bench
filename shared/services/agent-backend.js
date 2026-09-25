@@ -4,11 +4,19 @@
 // project directory and their own task prompt; the bridge owns process launch,
 // path jailing, budgets, cancellation, and event normalization.
 
+import { applyModelVisibility } from './cli-agent-model-visibility.js';
+import {
+  startGeneration, telemetryEnabled, observeAgentEvent, observeAgentLive,
+} from './generation-telemetry.js';
+
 export const AGENTS = [
-  { id: 'claude-code', label: 'Claude Code', shell: true },
+  { id: 'claude-code', label: 'Claude Code', shell: true, effort: true },
   { id: 'codex', label: 'Codex', shell: true, models: true, effort: true },
   { id: 'antigravity', label: 'Antigravity', shell: true, models: true, effort: true },
   { id: 'grok', label: 'Grok', shell: true, models: true },
+  { id: 'devin', label: 'Devin', shell: true, models: true },
+  { id: 'cursor', label: 'Cursor', shell: true, models: true },
+  { id: 'opencode', label: 'OpenCode', shell: true, models: true },
 ];
 
 export const AGENT_EFFORT_LEVELS = Object.freeze(['low', 'medium', 'high', 'xhigh', 'max', 'ultra']);
@@ -83,6 +91,20 @@ export function isAgentRunsPayload(payload) {
 /** Ceilings an older bridge clamps to; the closest it can get to "no limit". */
 const LEGACY_TIME_CEILINGS = { maxAgentSeconds: 7200, idleTimeoutSeconds: 1800 };
 
+/**
+ * Ceilings a bridge without `open-ended-budgets` clamps every count/size budget
+ * to — and it reads an explicit null ("no limit") as "use the default".
+ */
+const LEGACY_COUNT_CEILINGS = {
+  maxTurns: 200,
+  maxFiles: 2000,
+  maxTotalBytes: 1024 * 1024 * 1024,
+  maxFileBytes: 256 * 1024 * 1024,
+  maxImages: 100,
+  maxImagePixels: 1024 * 1024 * 1024,
+  maxTokens: 10_000_000,
+};
+
 let featureProbe = null;
 
 /**
@@ -107,22 +129,41 @@ export function agentBridgeFeatures({ refresh = false } = {}) {
  *
  * A time budget of 0 means "no limit", but a bridge without
  * `unlimited-time-budgets` clamps it UP to its 10-second floor — turning "run as
- * long as you need" into the tightest limit in the system. Rather than send a
- * number that means the opposite of what the user asked for, fall back to the
- * highest value that bridge accepts and say so.
+ * long as you need" into the tightest limit in the system. Likewise a count
+ * budget of Infinity/null means "no limit", but a bridge without
+ * `open-ended-budgets` reads null as its default (40 turns, 100 files...) and
+ * clamps big numbers to its old ceilings. Rather than send a number that means
+ * something other than what the user asked for, fall back to the highest value
+ * that bridge accepts and say so.
  *
  * @returns {{budgets: Object, downgraded: string[]}} `downgraded` names the
  * budgets that could not be honoured, for the caller to surface.
  */
 export function budgetsForBridge(budgets = {}, features = []) {
-  if (features.includes('unlimited-time-budgets')) return { budgets, downgraded: [] };
   const next = { ...budgets };
   const downgraded = [];
-  for (const [key, ceiling] of Object.entries(LEGACY_TIME_CEILINGS)) {
-    if (Number(next[key]) === 0) {
-      next[key] = ceiling;
-      downgraded.push(key);
+  const openEnded = features.includes('open-ended-budgets');
+  if (!features.includes('unlimited-time-budgets')) {
+    for (const [key, ceiling] of Object.entries(LEGACY_TIME_CEILINGS)) {
+      if (Number(next[key]) === 0 || next[key] === Infinity) {
+        next[key] = ceiling;
+        downgraded.push(key);
+      }
     }
+  }
+  if (!openEnded) {
+    for (const [key, ceiling] of Object.entries({ ...LEGACY_TIME_CEILINGS, ...LEGACY_COUNT_CEILINGS })) {
+      if (!(key in next) || downgraded.includes(key)) continue;
+      const unlimited = next[key] === null || next[key] === Infinity;
+      if (unlimited || Number(next[key]) > ceiling) {
+        next[key] = ceiling;
+        downgraded.push(key);
+      }
+    }
+  }
+  // JSON has no Infinity; spell "no limit" as the explicit null the bridge reads.
+  for (const key of Object.keys(LEGACY_COUNT_CEILINGS)) {
+    if (next[key] === Infinity) next[key] = null;
   }
   return { budgets: next, downgraded };
 }
@@ -141,17 +182,51 @@ export async function cancelAgentRun(runId) {
   await fetch(`/__agent/cancel/${encodeURIComponent(runId)}`, { method: 'POST' });
 }
 
-export async function listAgentModelOptions(agent) {
+/**
+ * Suspend or continue a running agent's process tree (POSIX job control on the
+ * bridge). The agent keeps its whole context and carries on from where it was
+ * frozen; its time budgets are held while it is parked.
+ *
+ * @returns {Promise<{paused: boolean, pausedMs: number}>}
+ * @throws if this bridge cannot pause, or the run is no longer active.
+ */
+export async function setAgentRunPaused(runId, paused) {
+  const features = await agentBridgeFeatures();
+  if (!features.includes('pause-resume')) {
+    throw new Error('This agent bridge cannot pause a run — restart the hub with the current serve.py');
+  }
+  const route = paused ? 'pause' : 'resume';
+  const res = await fetch(`/__agent/${route}/${encodeURIComponent(runId)}`, { method: 'POST' })
+    .catch((error) => { throw new Error(`Bridge unreachable (${error.message})`); });
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(payload.error || `Agent bridge error (${res.status})`);
+  return { paused: !!payload.paused, pausedMs: payload.pausedMs || 0 };
+}
+
+export const pauseAgentRun = runId => setAgentRunPaused(runId, true);
+export const resumeAgentRun = runId => setAgentRunPaused(runId, false);
+
+/** Whether the bridge that is actually running supports pause/resume. */
+export async function agentPauseSupported() {
+  return (await agentBridgeFeatures()).includes('pause-resume');
+}
+
+export async function listAgentModelOptions(agent, { refresh = false, includeHidden = false } = {}) {
   try {
-    const res = await fetch(`/__agent/models/${encodeURIComponent(agent)}`);
+    const suffix = refresh ? '?refresh=1' : '';
+    const res = await fetch(`/__agent/models/${encodeURIComponent(agent)}${suffix}`);
     if (!res.ok) return [];
     const payload = await res.json();
-    if (Array.isArray(payload.modelOptions)) {
-      return payload.modelOptions
+    const rows = Array.isArray(payload.modelOptions)
+      ? payload.modelOptions
         .filter(option => option?.id)
-        .map(option => ({ ...option, id: option.id, label: option.label || option.id }));
-    }
-    return (payload.models || []).filter(Boolean).map(id => ({ id, label: id }));
+        .map(option => ({ ...option, id: option.id, label: option.label || option.id }))
+      : (payload.models || []).filter(Boolean).map(id => ({ id, label: id }));
+    // Curation applies here, once, so it reaches every picker: the provider
+    // dropdown, the Forge agent chooser and the unified executor selector all
+    // arrive through this one call. `includeHidden` exists for the dialog that
+    // does the curating, which must see the rows it is offering to hide.
+    return includeHidden ? rows : applyModelVisibility(agent, rows);
   } catch {
     return [];
   }
@@ -225,17 +300,71 @@ export function resolveAgentModelSelection(modelId, effort, choices = []) {
   return { modelId: choice?.id || modelId || '', effort: resolvedEffort, supportedEfforts: supported };
 }
 
-/** Start a run, then attach to its normalized SSE event stream. */
-export async function runAgent({ agent, prompt, projectDir, options, budgets, attachments, onStart, onEvent, onLive, onNotice, signal }) {
+/**
+ * Start a run, then attach to its normalized SSE event stream.
+ *
+ * Every run is recorded by generation telemetry (spec 340). A caller that
+ * already tracks the call — the cli-agent provider, inside model-providers —
+ * passes its `telemetry` tracker; any other caller (a Forge build driving an
+ * agent over a project) gets a tracker of its own here, sealed on completion.
+ */
+export async function runAgent({ telemetry, telemetryMeta, ...args }) {
+  const owned = !telemetry && telemetryEnabled();
+  let tracker = telemetry || null;
+  if (owned) {
+    try {
+      tracker = startGeneration({
+        entry: 'agentRun',
+        provider: { id: `cli-agent:${args.agent}`, type: 'cli-agent', name: agentLabel(args.agent) },
+        agentId: args.agent,
+        modelId: args.options?.model || 'default',
+        params: args.options?.effort ? { reasoning_effort: args.options.effort } : null,
+        promptText: args.prompt,
+        streamed: true,
+        signal: args.signal,
+        ...(telemetryMeta || {}),
+      });
+    } catch { tracker = null; }
+  }
+  let toolEvents = 0;
+  const observed = tracker ? {
+    ...args,
+    // The bridge accepted the run and is starting the process. The chip can say
+    // "Starting" now; serve.py's exact spawn time replaces this mark at `done`.
+    onStart: (runId) => { tracker.mark('spawned'); tracker.setServerRun({ runId, projectDir: args.projectDir || '' }); args.onStart?.(runId); },
+    onEvent: (event) => { if (observeAgentEvent(tracker, event)) toolEvents++; args.onEvent?.(event); },
+    onLive: (frame) => { observeAgentLive(tracker, frame); args.onLive?.(frame); },
+  } : args;
+  if (!owned || !tracker) return runAgentRaw({ ...observed, telemetry: tracker });
+  try {
+    const result = await runAgentRaw({ ...observed, telemetry: tracker });
+    const done = result?.doneEvent;
+    const failed = !done || (done.exitCode != null && done.exitCode !== 0);
+    tracker.finish(failed
+      ? { error: new Error(result?.bridgeRun?.budgetStop?.reason
+        || (done ? `agent exited with code ${done.exitCode}` : 'the agent stream ended without a completion event')) }
+      : { result: { text: done.summary || '' }, toolCalls: toolEvents });
+    return result;
+  } catch (error) {
+    tracker.finish({ error, aborted: args.signal?.aborted });
+    throw error;
+  }
+}
+
+function agentLabel(agentId) {
+  return AGENTS.find(a => a.id === agentId)?.label || agentId || 'CLI agent';
+}
+
+async function runAgentRaw({ agent, prompt, projectDir, options, budgets, attachments, onStart, onEvent, onLive, onNotice, signal, telemetry }) {
   // Negotiate before spawning: an unlimited budget sent to an older bridge
   // becomes a 10-second one, killing the run before the agent has done anything.
   const bridgeFeatures = await agentBridgeFeatures();
   const negotiated = budgetsForBridge(budgets || {}, bridgeFeatures);
   if (negotiated.downgraded.length) {
-    const message = `This agent bridge predates unlimited time budgets, so "no timeout" `
+    const message = `This agent bridge predates unlimited budgets, so "no limit" `
       + `was sent as its maximum instead (${negotiated.downgraded
-        .map(key => `${key} ${negotiated.budgets[key]}s`).join(', ')}). `
-      + 'Restart the hub with serve.py to remove the limit entirely.';
+        .map(key => `${key} ${negotiated.budgets[key]}`).join(', ')}). `
+      + 'Restart the hub with serve.py to remove the limits entirely.';
     console.warn('[agent-bridge]', message);
     onNotice?.({ code: 'budget_downgraded', message, downgraded: negotiated.downgraded });
   }
@@ -244,6 +373,7 @@ export async function runAgent({ agent, prompt, projectDir, options, budgets, at
     throw new Error('This agent bridge cannot receive image attachments — restart the hub with the current serve.py');
   }
 
+  telemetry?.mark('dispatched');
   const res = await fetch('/__agent/run', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

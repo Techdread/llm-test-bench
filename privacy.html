@@ -1,20 +1,25 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-distribution="public">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Plain-language privacy policy for LLM Test Bench: no accounts, no analytics, files stay in the folder you choose.">
   <title>Privacy · LLM Test Bench</title>
+  <link rel="canonical" href="https://neuroviz.uk/privacy.html">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#080b12">
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
   <header class="site-header">
     <a class="brand" href="./"><span class="brand-mark">LT</span><span>LLM Test Bench</span></a>
-    <nav><a href="./">Home</a><a href="settings.html">Settings</a><a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a></nav>
+    <nav><a href="./">Home</a><a href="showcase.html">Showcase</a><a href="settings.html">Settings</a><a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a></nav>
   </header>
   <main class="legal-page">
     <p class="eyebrow">Plain-language policy</p>
     <h1>Privacy</h1>
-    <p>This hosted edition is a static website. It does not include an application server, user accounts, analytics, or a project database.</p>
+    <p>This hosted edition is a mostly static website with no user accounts and no analytics. The only server-side part is a small showcase service on Cloudflare (a D1 database and R2 file storage) that holds the published showcase examples. It stores nothing about visitors.</p>
 
     <h2>Files</h2>
     <p>When you connect a working folder, supported browsers give the site a restricted handle to the folder you chose. Generated files are written directly to that folder. They are not uploaded to the LLM Test Bench maintainers.</p>
@@ -24,6 +29,7 @@
 
     <h2>Generated code</h2>
     <p>Generated HTML and p5.js code runs in sandboxed previews. It can still make network requests allowed by your browser. Review generated code before sharing it or entering sensitive information into it.</p>
+    <p>The examples on the <a href="showcase.html">showcase</a> are shown exactly as each model wrote them. Some load libraries or fonts from public CDNs such as cdnjs, jsDelivr, or Google Fonts when you open them, and those providers will see an ordinary request from your browser.</p>
 
     <h2>Screen recording</h2>
     <p>Recording uses the browser's display-capture prompt. You choose the tab, window, or screen, and the browser must ask each time. Recordings are downloaded or saved to your selected folder.</p>

@@ -10,7 +10,9 @@
 // (cf. app-prefs's `${appId}-theme` default), so callers always pass an
 // explicit legacyKeys map describing which localStorage keys to migrate from.
 
-import { loadAt, saveAt, migrateLegacyAt, migrateJsonFieldAt } from './app-config.js';
+import {
+  loadAtDetailed, saveAt, migrateLegacyAt, migrateJsonFieldAt, decodeScratchValue,
+} from './app-config.js';
 export { saveAt as saveSuiteAt };
 
 const AREA_RE = /^[a-z0-9][a-z0-9-]*$/;
@@ -19,6 +21,8 @@ const SUITE_DIR = '_suite';
 const snapshots = new Map();      // area -> snapshot object
 const subscribers = new Map();    // area -> Set<callback>
 const legacyKeyMaps = new Map();  // area -> { field: lsKey }
+const readStates = new Map();     // area -> 'ok' | 'missing' | 'corrupt' | 'no-root' | 'error'
+const hydrations = new Map();     // area -> in-flight hydrate
 
 function validateArea(area) {
   if (typeof area !== 'string' || !AREA_RE.test(area)) {
@@ -40,16 +44,10 @@ function rememberLegacyKeys(area, lk) {
   legacyKeyMaps.set(area, { ...prev, ...lk });
 }
 
-function decodeLegacyValue(raw) {
-  // Plain strings (e.g. 'dark', 'BSA-xxx') are kept as-is; values that look
-  // structured (start with '[' or '{') are JSON-parsed so array/object
-  // fields like a providers list round-trip through localStorage scratch.
-  if (raw === null || raw === undefined) return undefined;
-  if (raw.length > 0 && (raw[0] === '[' || raw[0] === '{')) {
-    try { return JSON.parse(raw); } catch { /* fall through to raw */ }
-  }
-  return raw;
-}
+// Plain strings (e.g. 'dark', 'BSA-xxx') are kept as-is; values that look
+// structured are JSON-parsed, so array/object fields round-trip through the
+// localStorage scratch. Shared with app-config's migration path.
+const decodeLegacyValue = decodeScratchValue;
 
 function readLegacy(legacyKeys) {
   const out = {};
@@ -103,28 +101,72 @@ export async function hydrateSuite(area, { defaults = {}, legacyKeys } = {}) {
   validateArea(area);
   if (legacyKeys) rememberLegacyKeys(area, legacyKeys);
   const path = pathFor(area);
-
-  if (legacyKeys) {
-    try {
-      await migrateLegacyAt(path, legacyKeys);
-    } catch (e) {
-      console.error(`[suite-prefs] migrateLegacyAt(${path}) failed:`, e);
+  const running = (async () => {
+    if (legacyKeys) {
+      try {
+        await migrateLegacyAt(path, legacyKeys);
+      } catch (e) {
+        console.error(`[suite-prefs] migrateLegacyAt(${path}) failed:`, e);
+      }
     }
-  }
 
-  let disk = {};
+    let disk = {};
+    try {
+      const read = await loadAtDetailed(path);
+      disk = await repairStored(path, read.data);
+      readStates.set(area, read.status);
+    } catch (e) {
+      console.error(`[suite-prefs] loadAt(${path}) failed:`, e);
+      readStates.set(area, 'error');
+    }
+
+    const previous = snapshots.get(area) || {};
+    const next = { ...defaults, ...previous, ...disk };
+    snapshots.set(area, next);
+    writeLegacySnapshot(area, next);
+    notify(area);
+    return next;
+  })();
+  hydrations.set(area, running.catch(() => {}));
+  return running;
+}
+
+/**
+ * Heal a field that an older build wrote as a JSON STRING instead of the list
+ * or object it is (see decodeScratchValue). Left alone, the reader sees "not
+ * an array", behaves as if the area were empty, and the next save overwrites
+ * the real data.
+ */
+async function repairStored(path, disk) {
+  if (!disk || typeof disk !== 'object') return disk;
+  const fixed = {};
+  for (const [field, value] of Object.entries(disk)) {
+    const decoded = decodeScratchValue(value);
+    if (decoded !== value && decoded !== undefined) fixed[field] = decoded;
+  }
+  if (!Object.keys(fixed).length) return disk;
+  console.warn(`[suite-prefs] ${path}: repairing fields stored as text: ${Object.keys(fixed).join(', ')}`);
   try {
-    disk = await loadAt(path);
+    await saveAt(path, fixed);
   } catch (e) {
-    console.error(`[suite-prefs] loadAt(${path}) failed:`, e);
+    console.error(`[suite-prefs] ${path}: repair write failed:`, e);
   }
+  return { ...disk, ...fixed };
+}
 
-  const previous = snapshots.get(area) || {};
-  const next = { ...defaults, ...previous, ...disk };
-  snapshots.set(area, next);
-  writeLegacySnapshot(area, next);
-  notify(area);
-  return next;
+/** Wait for an in-flight hydrate, or run one, so a write is never blind. */
+async function ensureHydrated(area) {
+  const pending = hydrations.get(area);
+  if (pending) { await pending; return; }
+  if (readStates.has(area)) return;
+  await hydrateSuite(area, { legacyKeys: legacyKeyMaps.get(area) }).catch(() => {});
+}
+
+function refuseIfUnreadable(area) {
+  if (readStates.get(area) === 'error') {
+    throw new Error(`Refusing to write ${area}: its settings file exists but could not be read, `
+      + 'so writing now would replace settings this session cannot see. Nothing was changed.');
+  }
 }
 
 // Synchronous LS scratch write. For string fields we store the value raw
@@ -185,6 +227,8 @@ try {
  *  reload-without-root. */
 export async function setSuite(area, field, value) {
   validateArea(area);
+  await ensureHydrated(area);
+  refuseIfUnreadable(area);
   const current = snapshots.get(area) || {};
   const next = { ...current, [field]: value };
   snapshots.set(area, next);
@@ -201,6 +245,8 @@ export async function setSuite(area, field, value) {
 /** Bulk update — write multiple fields in one disk transaction. */
 export async function setSuiteFields(area, partial) {
   validateArea(area);
+  await ensureHydrated(area);
+  refuseIfUnreadable(area);
   const current = snapshots.get(area) || {};
   const next = { ...current, ...partial };
   snapshots.set(area, next);
@@ -256,4 +302,6 @@ export function _resetSuitePrefs() {
   snapshots.clear();
   subscribers.clear();
   legacyKeyMaps.clear();
+  readStates.clear();
+  hydrations.clear();
 }

@@ -1,6 +1,9 @@
 // Canvas-based pixel comparison for SVG vs reference image
 // All operations are client-side using offscreen canvases
 
+import { svgDataUrl } from './svgRender.js';
+import { analyzeAnimation } from './animationCheck.js';
+
 const DEFAULT_SIZE = 400;
 
 /**
@@ -22,13 +25,12 @@ export function renderSvgToCanvas(svgString, width = DEFAULT_SIZE, height = DEFA
     ctx.fillRect(0, 0, width, height);
 
     const img = new Image();
-    const encoded = encodeURIComponent(svgString);
     img.onload = () => {
       ctx.drawImage(img, 0, 0, width, height);
       resolve(canvas);
     };
     img.onerror = () => reject(new Error('Failed to render SVG to canvas'));
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encoded;
+    img.src = svgDataUrl(svgString);
   });
 }
 
@@ -158,7 +160,8 @@ export function analyzeSvg(svgString) {
 
   const allElements = svg.querySelectorAll('*');
   const hasViewBox = svg.hasAttribute('viewBox');
-  const hasAnimation = svg.querySelector('animate, animateTransform, animateMotion, set') !== null;
+  // SMIL or CSS @keyframes, the two kinds an image-rendered SVG actually plays.
+  const hasAnimation = analyzeAnimation(svgString).animated;
 
   return {
     elementCount: allElements.length,

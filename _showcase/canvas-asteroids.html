@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VECTOR ASTEROIDS</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+
+        canvas {
+            display: block;
+            background-color: #000;
+            border: 2px solid #0f0;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 24px;
+            pointer-events: none;
+        }
+
+        .screen {
+            background: rgba(0, 0, 0, 0.85);
+            padding: 30px;
+            border: 2px solid #0f0;
+            pointer-events: auto;
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1 {
+            font-size: 48px;
+            margin: 0 0 20px 0;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .btn {
+            background: transparent;
+            color: #0f0;
+            border: 2px solid #0f0;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background: #0f0;
+            color: #000;
+        }
+
+        #high-scores {
+            margin-top: 20px;
+            text-align: left;
+            display: inline-block;
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            width: 250px;
+            margin: 5px 0;
+        }
+
+        .controls-hint {
+            font-size: 14px;
+            margin-top: 20px;
+            color: #0a0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui-layer">
+        <div class="hud" id="hud">
+            <div>SCORE: <span id="scoreVal">0</span></div>
+            <div>LIVES: <span id="livesVal">3</span></div>
+            <div>LEVEL: <span id="levelVal">1</span></div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <h1>VECTOR ASTEROIDS</h1>
+            <button class="btn" onclick="game.start()">START MISSION</button>
+            <div class="controls-hint">
+                W / UP: Thrust<br>
+                A,D / LEFT,RIGHT: Rotate<br>
+                SPACE: Fire<br>
+                SHIFT: Hyperspace Jump
+            </div>
+            <div id="high-scores"></div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="screen">
+            <h1>GAME OVER</h1>
+            <p>FINAL SCORE: <span id="finalScore">0</span></p>
+            <button class="btn" onclick="game.start()">TRY AGAIN</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/** 
+ * AUDIO ENGINE (Web Audio API)
+ */
+const AudioEngine = (() => {
+    let ctx = null;
+
+    const init = () => {
+        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    };
+
+    const playTone = (freq, type, duration, volume = 0.1, slide = 0) => {
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        if (slide !== 0) {
+            osc.frequency.exponentialRampToValueAtTime(freq + slide, ctx.currentTime + duration);
+        }
+        gain.gain.setValueAtTime(volume, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+    };
+
+    return {
+        init,
+        shoot: () => playTone(800, 'square', 0.1, 0.05),
+        thrust: () => playTone(100, 'sawtooth', 0.1, 0.03),
+        explode: () => playTone(200, 'sawtooth', 0.4, 0.1, -150),
+        ufo: () => playTone(600, 'sine', 0.2, 0.05, 200),
+        jump: () => playTone(100, 'square', 0.3, 0.1, 800)
+    };
+})();
+
+/**
+ * GAME ENGINE
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 800;
+canvas.height = 600;
+
+const CONFIG = {
+    SHIP_SIZE: 15,
+    SHIP_THRUST: 0.1,
+    SHIP_FRICTION: 0.99,
+    SHIP_ROT_SPEED: 0.07,
+    BULLET_SPEED: 6,
+    BULLET_LIFE: 60,
+    ASTEROID_NUM: 3,
+    ASTEROID_SIZE: 50,
+    ASTEROID_SPEED: 1.5,
+    UFO_CHANCE: 0.2,
+    UFO_SPEED: 2
+};
+
+class Entity {
+    constructor(x, y, radius) {
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.vx = 0;
+        this.vy = 0;
+        this.angle = 0;
+        this.markedForDeletion = false;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < -this.radius) this.x = canvas.width + this.radius;
+        else if (this.x > canvas.width + this.radius) this.x = -this.radius;
+        if (this.y < -this.radius) this.y = canvas.height + this.radius;
+        else if (this.y > canvas.height + this.radius) this.y = -this.radius;
+    }
+
+    draw() {
+        ctx.strokeStyle = '#0f0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        // To be overridden
+        ctx.stroke();
+    }
+}
+
+class Ship extends Entity {
+    constructor() {
+        super(canvas.width / 2, canvas.height / 2, CONFIG.SHIP_SIZE);
+        this.vx = 0;
+        this.vy = 0;
+        this.angle = -Math.PI / 2;
+        this.thrusting = false;
+        this.invulnerable = 120; // frames
+    }
+
+    update() {
+        if (this.thrusting) {
+            this.vx += Math.cos(this.angle) * CONFIG.SHIP_THRUST;
+            this.vy += Math.sin(this.angle) * CONFIG.SHIP_THRUST;
+        }
+        this.vx *= CONFIG.SHIP_FRICTION;
+        this.vy *= CONFIG.SHIP_FRICTION;
+        super.update();
+        if (this.invulnerable > 0) this.invulnerable--;
+    }
+
+    draw() {
+        if (this.invulnerable % 10 > 5) return; // Blink effect
+        ctx.strokeStyle = '#0f0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(
+            this.x + Math.cos(this.angle) * this.radius,
+            this.y + Math.sin(this.angle) * this.radius
+        );
+        ctx.lineTo(
+            this.x + Math.cos(this.angle + 2.5) * this.radius,
+            this.y + Math.sin(this.angle + 2.5) * this.radius
+        );
+        ctx.lineTo(
+            this.x + Math.cos(this.angle - 2.5) * this.radius,
+            this.y + Math.sin(this.angle - 2.5) * this.radius
+        );
+        ctx.closePath();
+        ctx.stroke();
+
+        if (this.thrusting) {
+            ctx.beginPath();
+            ctx.moveTo(
+                this.x + Math.cos(this.angle + Math.PI) * (this.radius * 0.6),
+                this.y + Math.sin(this.angle + Math.PI) * (this.radius * 0.6)
+            );
+            ctx.lineTo(
+                this.x + Math.cos(this.angle + 2.8) * this.radius,
+                this.y + Math.sin(this.angle + 2.8) * this.radius
+            );
+            ctx.lineTo(
+                this.x + Math.cos(this.angle - 2.8) * this.radius,
+                this.y + Math.sin(this.angle - 2.8) * this.radius
+            );
+            ctx.stroke();
+        }
+    }
+
+    jump() {
+        AudioEngine.jump();
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+    }
+}
+
+class Asteroid extends Entity {
+    constructor(x, y, radius, level = 3) {
+        super(x, y, radius);
+        this.level = level; // 3: Large, 2: Med, 1: Small
+        const speed = CONFIG.ASTEROID_SPEED * (4 - level);
+        const angle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+
+        // Randomize shape vertices
+        this.vertices = [];
+        const vertCount = 8 + Math.floor(Math.random() * 7);
+        for (let i = 0; i < vertCount; i++) {
+            const dist = radius * (0.7 + Math.random() * 0.4);
+            const theta = (i / vertCount) * Math.PI * 2;
+            this.vertices.push({ x: Math.cos(theta) * dist, y: Math.sin(theta) * dist });
+        }
+    }
+
+    draw() {
+        ctx.strokeStyle = '#0f0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(this.x + this.vertices[0].x, this.y + this.vertices[0].y);
+        for (let i = 1; i < this.vertices.length; i++) {
+            ctx.lineTo(this.x + this.vertices[i].x, this.y + this.vertices[i].y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+    }
+}
+
+class Bullet extends Entity {
+    constructor(x, y, angle) {
+        super(x, y, 2);
+        this.vx = Math.cos(angle) * CONFIG.BULLET_SPEED;
+        this.vy = Math.sin(angle) * CONFIG.BULLET_SPEED;
+        this.life = CONFIG.BULLET_LIFE;
+    }
+
+    update() {
+        super.update();
+        this.life--;
+        if (this.life <= 0) this.markedForDeletion = true;
+    }
+
+    draw() {
+        ctx.fillStyle = '#0f0';
+        ctx.fillRect(this.x - 1, this.y - 1, 3, 3);
+    }
+}
+
+class UFO extends Entity {
+    constructor() {
+        super(Math.random() > 0.5 ? 0 : canvas.width, Math.random() * canvas.height, 15);
+        this.vx = (this.x === 0) ? CONFIG.UFO_SPEED : -CONFIG.UFO_SPEED;
+        this.vy = (Math.random() - 0.5) * 2;
+        this.shootTimer = 60;
+    }
+
+    update(ship, bullets) {
+        super.update();
+        this.shootTimer--;
+        if (this.shootTimer <= 0) {
+            const angle = Math.atan2(ship.y - this.y, ship.x - this.x);
+            bullets.push(new Bullet(this.x, this.y, angle));
+            this.shootTimer = 100 + Math.random() * 100;
+        }
+    }
+
+    draw() {
+        ctx.strokeStyle = '#0f0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(this.x, this.y, this.radius, this.radius / 3, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y - 2, this.radius / 4, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+}
+
+const game = {
+    score: 0,
+    lives: 3,
+    level: 1,
+    ship: null,
+    asteroids: [],
+    bullets: [],
+    ufo: null,
+    keys: {},
+    running: false,
+
+    init() {
+        window.addEventListener('keydown', e => this.keys[e.code] = true);
+        window.addEventListener('keyup', e => this.keys[e.code] = false);
+        this.updateHighScoreTable();
+    },
+
+    start() {
+        AudioEngine.init();
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('game-over-screen').classList.remove('active');
+        this.score = 0;
+        this.lives = 3;
+        this.level = 1;
+        this.running = true;
+        this.spawnLevel();
+        this.loop();
+    },
+
+    spawnLevel() {
+        this.asteroids = [];
+        this.bullets = [];
+        this.ufo = null;
+        this.ship = new Ship();
+        const count = CONFIG.ASTEROID_NUM + this.level;
+        for (let i = 0; i < count; i++) {
+            let x, y;
+            do {
+                x = Math.random() * canvas.width;
+                y = Math.random() * canvas.height;
+            } while (this.dist(x, y, this.ship.x, this.ship.y) < 150);
+            this.asteroids.push(new Asteroid(x, y, CONFIG.ASTEROID_SIZE, 3));
+        }
+    },
+
+    dist(x1, y1, x2, y2) {
+        return Math.sqrt((x2 - x1)**2 + (y2 - y1)**2);
+    },
+
+    handleInput() {
+        if (!this.ship) return;
+        if (this.keys['ArrowLeft'] || this.keys['KeyA']) this.ship.angle -= CONFIG.SHIP_ROT_SPEED;
+        if (this.keys['ArrowRight'] || this.keys['KeyD']) this.ship.angle += CONFIG.SHIP_ROT_SPEED;
+        if (this.keys['ArrowUp'] || this.keys['KeyW']) {
+            this.ship.thrusting = true;
+            if (Math.random() > 0.8) AudioEngine.thrust();
+        } else {
+            this.ship.thrusting = false;
+        }
+        if (this.keys['Space']) {
+            this.keys['Space'] = false; // Prevent rapid fire
+            this.bullets.push(new Bullet(this.ship.x, this.ship.y, this.ship.angle));
+            AudioEngine.shoot();
+        }
+        if (this.keys['ShiftLeft'] || this.keys['ShiftRight']) {
+            this.keys['ShiftLeft'] = false;
+            this.keys['ShiftRight'] = false;
+            this.ship.jump();
+        }
+    },
+
+    update() {
+        this.handleInput();
+
+        this.ship.update();
+
+        // UFO Logic
+        if (!this.ufo && Math.random() < 0.002) {
+            this.ufo = new UFO();
+            AudioEngine.ufo();
+        }
+        if (this.ufo) {
+            this.ufo.update(this.ship, this.bullets);
+        }
+
+        this.asteroids.forEach(a => a.update());
+        this.bullets.forEach(b => b.update());
+
+        // Collisions: Bullet vs Asteroid
+        this.bullets.forEach(b => {
+            this.asteroids.forEach(a => {
+                if (!b.markedForDeletion && this.dist(b.x, b.y, a.x, a.y) < a.radius) {
+                    b.markedForDeletion = true;
+                    a.markedForDeletion = true;
+                    this.score += (4 - a.level) * 100;
+                    AudioEngine.explode();
+                    if (a.level > 1) {
+                        for (let i = 0; i < 2; i++) {
+                            this.asteroids.push(new Asteroid(a.x, a.y, a.radius / 2, a.level - 1));
+                        }
+                    }
+                }
+            });
+            if (this.ufo && !b.markedForDeletion && this.dist(b.x, b.y, this.ufo.x, this.ufo.y) < this.ufo.radius) {
+                b.markedForDeletion = true;
+                this.ufo.markedForDeletion = true;
+                this.score += 500;
+                AudioEngine.explode();
+            }
+        });
+
+        // Collisions: Ship vs Asteroid/UFO
+        if (this.ship.invulnerable <= 0) {
+            let hit = false;
+            this.asteroids.forEach(a => {
+                if (this.dist(this.ship.x, this.ship.y, a.x, a.y) < a.radius + this.ship.radius * 0.5) {
+                    hit = true;
+                }
+            });
+            if (this.ufo && this.dist(this.ship.x, this.ship.y, this.ufo.x, this.ufo.y) < this.ufo.radius + this.ship.radius) {
+                hit = true;
+            }
+
+            if (hit) {
+                this.lives--;
+                AudioEngine.explode();
+                if (this.lives <= 0) {
+                    this.gameOver();
+                } else {
+                    this.ship = new Ship(); // Reset ship position and give invulnerability
+                }
+            }
+        }
+
+        // Cleanup
+        this.asteroids = this.asteroids.filter(a => !a.markedForDeletion);
+        this.bullets = this.bullets.filter(b => !b.markedForDeletion);
+        if (this.ufo && this.ufo.markedForDeletion) this.ufo = null;
+
+        // Level Up
+        if (this.asteroids.length === 0) {
+            this.level++;
+            this.spawnLevel();
+        }
+
+        // Update HUD
+        document.getElementById('scoreVal').innerText = this.score;
+        document.getElementById('livesVal').innerText = this.lives;
+        document.getElementById('levelVal').innerText = this.level;
+    },
+
+    draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Glow effect
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#0f0';
+
+        this.ship.draw();
+        this.asteroids.forEach(a => a.draw());
+        this.bullets.forEach(b => b.draw());
+        if (this.ufo) this.ufo.draw();
+
+        ctx.shadowBlur = 0;
+    },
+
+    loop() {
+        if (!this.running) return;
+        this.update();
+        this.draw();
+        requestAnimationFrame(() => this.loop());
+    },
+
+    gameOver() {
+        this.running = false;
+        document.getElementById('game-over-screen').classList.add('active');
+        document.getElementById('finalScore').innerText = this.score;
+        this.saveHighScore();
+        this.updateHighScoreTable();
+    },
+
+    saveHighScore() {
+        try {
+            let scores = JSON.parse(localStorage.getItem('asteroids_scores') || '[]');
+            scores.push(this.score);
+            scores.sort((a, b) => b - a);
+            scores = scores.slice(0, 5);
+            localStorage.setItem('asteroids_scores', JSON.stringify(scores));
+        } catch (e) {
+            console.warn("LocalStorage not available");
+        }
+    },
+
+    updateHighScoreTable() {
+        let scores = [];
+        try {
+            scores = JSON.parse(localStorage.getItem('asteroids_scores') || '[]');
+        } catch (e) {
+            console.warn("LocalStorage not available");
+        }
+        let html = '<strong>TOP PILOTS:</strong><br>';
+        if (scores.length === 0) html += 'No records yet.';
+        scores.forEach((s, i) => {
+            html += `<div class="score-row"><span>#${i+1}</span><span>${s}</span></div>`;
+        });
+        document.getElementById('high-scores').innerHTML = html;
+    }
+};
+
+game.init();
+</script>
+</body>
+</html>

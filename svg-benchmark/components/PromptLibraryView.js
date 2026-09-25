@@ -1,6 +1,6 @@
 import { html } from 'htm/preact';
 import { useMemo, useState } from 'preact/hooks';
-import { PROMPT_CATEGORIES, categoryInfo } from '../services/promptLibrary.js';
+import { PROMPT_CATEGORIES, PROMPT_SETS, categoryInfo, promptSetOf } from '../services/promptLibrary.js';
 
 function PromptCard({ item, onUse, onRun, isGenerating }) {
   const [expanded, setExpanded] = useState(false);
@@ -13,6 +13,11 @@ function PromptCard({ item, onUse, onRun, isGenerating }) {
         <div>
           <h3>${item.title}</h3>
           <span class="svg-prompt-category"><i class=${`fa-solid ${category.icon}`}></i> ${category.label}</span>
+          ${promptSetOf(item) === 'animated' && html`
+            <span class="svg-prompt-set-badge" title="Animated set: builds on a core prompt with numbered motion requirements">
+              <i class="fa-solid fa-film"></i> animated
+            </span>
+          `}
         </div>
         <span class=${`tag-chip difficulty-${item.difficulty || 'moderate'}`}>${item.difficulty || 'moderate'}</span>
       </div>
@@ -53,10 +58,12 @@ export function PromptLibraryView({ prompts, onUse, onRun, onBatch, isGenerating
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [difficulty, setDifficulty] = useState('all');
+  const [promptSet, setPromptSet] = useState('all');
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     return (prompts || []).filter(item => {
+      if (promptSet !== 'all' && promptSetOf(item) !== promptSet) return false;
       if (category !== 'all' && item.category !== category) return false;
       if (difficulty !== 'all' && item.difficulty !== difficulty) return false;
       if (!query) return true;
@@ -64,7 +71,7 @@ export function PromptLibraryView({ prompts, onUse, onRun, onBatch, isGenerating
         || item.prompt.toLowerCase().includes(query)
         || (item.tags || []).some(tag => tag.toLowerCase().includes(query));
     });
-  }, [prompts, search, category, difficulty]);
+  }, [prompts, search, category, difficulty, promptSet]);
 
   const categories = PROMPT_CATEGORIES.filter(info =>
     (prompts || []).some(item => item.category === info.id));
@@ -79,6 +86,7 @@ export function PromptLibraryView({ prompts, onUse, onRun, onBatch, isGenerating
         </div>
         <div class="svg-prompt-summary">
           <span><strong>${prompts.length}</strong> prompts</span>
+          <span><strong>${prompts.filter(item => promptSetOf(item) === 'animated').length}</strong> animated</span>
           <span><strong>${prompts.filter(item => item.existingSubmissions > 0).length}</strong> represented</span>
         </div>
       </div>
@@ -93,6 +101,10 @@ export function PromptLibraryView({ prompts, onUse, onRun, onBatch, isGenerating
             placeholder="Search prompts and techniques…"
           />
         </label>
+        <select class="filter-select" value=${promptSet} onChange=${event => setPromptSet(event.target.value)} aria-label="Prompt set">
+          <option value="all">All sets</option>
+          ${PROMPT_SETS.map(s => html`<option key=${s.id} value=${s.id}>${s.label}</option>`)}
+        </select>
         <select class="filter-select" value=${difficulty} onChange=${event => setDifficulty(event.target.value)}>
           <option value="all">All difficulties</option>
           <option value="simple">Simple</option>
@@ -119,8 +131,8 @@ export function PromptLibraryView({ prompts, onUse, onRun, onBatch, isGenerating
       <div class="svg-prompt-results">
         <div class="svg-prompt-results-head">
           <span>${filtered.length} matching prompt${filtered.length === 1 ? '' : 's'}</span>
-          ${(search || category !== 'all' || difficulty !== 'all') && html`
-            <button class="btn btn-xs" onClick=${() => { setSearch(''); setCategory('all'); setDifficulty('all'); }}>Clear filters</button>
+          ${(search || category !== 'all' || difficulty !== 'all' || promptSet !== 'all') && html`
+            <button class="btn btn-xs" onClick=${() => { setSearch(''); setCategory('all'); setDifficulty('all'); setPromptSet('all'); }}>Clear filters</button>
           `}
         </div>
         ${filtered.length > 0

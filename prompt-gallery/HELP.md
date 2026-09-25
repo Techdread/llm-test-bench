@@ -49,6 +49,14 @@ relay prompts or responses.
 - The dialog shows the currently-loaded model; if none is selected you must pick
   one before it will start. Tick the prompts to include (all are pre-selected)
   and press **Go**.
+- **Core / Advanced** above the prompt list picks which set a batch runs. A
+  batch only ever runs the set on screen, so the two are never lumped together.
+  **Advanced** has 40 harder briefs; each builds on a core prompt with a
+  numbered list of checkable requirements and sharper **Watch for** notes (which
+  Verified mode turns into its checklist). Advanced titles end in
+  "(Advanced)", so their generations save to their own folders and "has run"
+  and skip-existing treat them separately. **Runs** labels Advanced runs, and
+  Merge only combines runs from the same set.
 - Each generation is auto-saved with `ai-gen` + `batch` tags under the folder
   derived from the prompt's title, so nothing needs naming by hand.
 - **Quick** is the default and preserves the original one-call generation flow.
@@ -64,11 +72,25 @@ relay prompts or responses.
   visual quality, playability, or fun. Unsupported or unreadable evidence is
   shown as **Needs review**, not silently treated as a pass.
 - Other options apply to every mode: skip prompts already run for the model,
-  retry provider failures, and add a delay for rate-limited providers.
+  retry provider failures, add a delay for rate-limited providers, or turn off
+  **Show live generation** to avoid retaining and rendering streamed HTML in the
+  Batch dialog during large runs.
 - A live preview follows the current generation; a summary at the end reports how
   many were generated, healed, verified, warned, skipped, and failed, plus role
   calls and repair rounds. Open **Runs** or a variant's metadata panel to inspect
   checklist rows, evidence, stop reason, token usage, and repair lineage.
+- **Judge as you review.** Open a run in **Runs** and rate each generation out
+  of 10 with the stars above the preview, or press **1–9** (and **0** for 10)
+  while stepping with ← →. The run list shows how many of each run you have
+  rated, and every column in a run comparison has its own stars. Ratings made
+  before the switch to 10 stars (out of 5) are kept on disk as they were and
+  shown doubled, so a 4/5 reads as 8/10.
+- In **Runs**, select two or more batches and choose **Merge** to combine them
+  into one run. Merge is available only when every selected run used the same
+  provider and model; the original run IDs remain recorded in metadata.
+- Use the expand button beside a live or saved batch item to open its page in an
+  interactive full-screen viewer. The viewer can follow the current generation
+  or stay pinned to an earlier result while the rest of the batch continues.
 
 ## Refine tab
 

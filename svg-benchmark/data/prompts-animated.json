@@ -1,0 +1,1158 @@
+{
+ "version": 1,
+ "set": "animated",
+ "description": "Animated briefs. Each builds on a core prompt (basedOn) and adds numbered, checkable motion requirements. Slugs start with 'animated-' so generations save to their own benchmark folders.",
+ "prompts": [
+  {
+   "id": "animated-seed-a-stapler-on-a-table",
+   "set": "animated",
+   "basedOn": "seed-a-stapler-on-a-table",
+   "slug": "animated-a-stapler-on-a-table",
+   "title": "A stapler on a table (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "rotation",
+    "pivot",
+    "sequencing"
+   ],
+   "prompt": "a stapler on a table.\n\nThis is the animated brief: draw the picture above and bring it to life. The stapler staples a sheet of paper in a steady loop.\n\nRequirements:\n1. The upper arm pivots down around the rear hinge (rotation origin at the hinge, not the arm's centre) and springs back up.\n2. A sheet of paper slides in under the head before each press and out after it.\n3. On impact the base gives a small squash and short impact lines appear, then fade.\n4. The table stays still; the shadow under the arm shortens as it closes.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the arm rotating around its middle or the canvas origin; paper passing through the stapler; the impact effect out of sync with the press.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-bonsai-tree-twisted-trunk-tiered-green-leaf-clumps-zen-style",
+   "set": "animated",
+   "basedOn": "seed-bonsai-tree-twisted-trunk-tiered-green-leaf-clumps-zen-style",
+   "slug": "animated-bonsai-tree-twisted-trunk-tiered-green-leaf-clumps",
+   "title": "Bonsai Tree (Animated)",
+   "category": "nature",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "stagger",
+    "path-motion",
+    "opacity"
+   ],
+   "prompt": "Bonsai Tree: Twisted trunk, tiered green leaf clumps, Zen style.\n\nThis is the animated brief: draw the picture above and bring it to life. A calm breeze moves through the bonsai.\n\nRequirements:\n1. Each tiered leaf clump sways with a small rotation anchored where it joins its branch, with staggered timing so the clumps never move in unison.\n2. The twisted trunk and the pot stay rooted and still.\n3. Three small leaves drift down on curved paths, fading out near the ground, and re-enter from the canopy.\n4. A soft background element (sun, mist band or ensō circle) breathes slowly in opacity over 8 seconds or longer.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the whole tree rotating as one piece; clumps pivoting around their own centres and detaching; falling leaves popping back into view.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-cactus-in-a-pot-flat-design-pastel-green-sharp-white-needles",
+   "set": "animated",
+   "basedOn": "seed-cactus-in-a-pot-flat-design-pastel-green-sharp-white-needles",
+   "slug": "animated-cactus-in-a-pot-flat-design-pastel-green-sharp-whit",
+   "title": "Cactus in a Pot (Animated)",
+   "category": "nature",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "transform-origin",
+    "scale",
+    "stagger"
+   ],
+   "prompt": "Cactus in a Pot: Flat design, pastel green, sharp white needles.\n\nThis is the animated brief: draw the picture above and bring it to life. The potted cactus has a gentle flat-design idle loop.\n\nRequirements:\n1. The cactus squashes and stretches slightly, like breathing, with the scale anchored at the soil line, not its centre.\n2. A small flower on top blooms: petals scale open from its centre, hold, then close.\n3. The sharp white needles twinkle one after another with a staggered opacity pulse.\n4. The pot never moves or scales.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: scaling from the SVG origin so the cactus slides off the pot; every needle flashing together; the flower drifting away from its stem.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-chameleon-spiraled-tail-multi-colored-skin-segments",
+   "set": "animated",
+   "basedOn": "seed-chameleon-spiraled-tail-multi-colored-skin-segments",
+   "slug": "animated-chameleon-spiraled-tail-multi-colored-skin-segments",
+   "title": "Chameleon (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "colour",
+    "path-motion",
+    "sequencing"
+   ],
+   "prompt": "Chameleon: Spiraled tail, multi-colored skin segments.\n\nThis is the animated brief: draw the picture above and bring it to life. The chameleon changes colour and catches a fly.\n\nRequirements:\n1. The skin segments cycle through at least three colour palettes as a wave that travels from head to tail, not all at once.\n2. The spiraled tail curls a little tighter and relaxes.\n3. A fly buzzes on a looping figure-eight path near the head, and the eye swivels to track it.\n4. Once per loop the tongue shoots out in a straight line to the fly and retracts; the fly vanishes, then reappears for the next cycle.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: every segment changing colour at the same instant; the tongue missing the fly's position; the eye not rotating around its own centre.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-circuit-board-heart-red-pathways-connecting-silver-solder-po",
+   "set": "animated",
+   "basedOn": "seed-circuit-board-heart-red-pathways-connecting-silver-solder-po",
+   "slug": "animated-circuit-board-heart-red-pathways-connecting-silver",
+   "title": "Circuit Board Heart (Animated)",
+   "category": "technology",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "stroke-dash",
+    "path-motion",
+    "timing"
+   ],
+   "prompt": "Circuit Board Heart: Red pathways connecting silver solder points.\n\nThis is the animated brief: draw the picture above and bring it to life. The circuit board heart beats and sends current along its traces.\n\nRequirements:\n1. The heart gives a double lub-dub beat (two quick scale pulses from its centre, then a rest) every 1.2 to 1.6 seconds.\n2. Bright pulses travel along at least four different red pathways from solder point to solder point, using stroke-dasharray/stroke-dashoffset or animateMotion on the trace paths.\n3. Each silver solder point flashes as a pulse arrives at it.\n4. The board background stays static.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: pulses that do not follow the traces; one uniform throb instead of a two-part beat; solder flashes out of sync with pulse arrival.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-commonwealth-of-dominica",
+   "set": "animated",
+   "basedOn": "seed-commonwealth-of-dominica",
+   "slug": "animated-commonwealth-of-dominica",
+   "title": "Commonwealth of dominica (Animated)",
+   "category": "places",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "morph",
+    "filter",
+    "flag"
+   ],
+   "prompt": "Commonwealth of Dominica\n\nThis is the animated brief: draw the picture above and bring it to life. The flag of the Commonwealth of Dominica waves in the wind.\n\nRequirements:\n1. The flag keeps its correct design: green field, a yellow/black/white triple-banded cross, and a red disc at the centre holding the Sisserou parrot ringed by ten green stars.\n2. A wave ripples across the flag from hoist to fly: its outline and bands bend (path morphing or a displacement filter), not just a skew or slide.\n3. Bands of light and shade travel with the wave.\n4. The flagpole stays still and the hoist edge stays attached to it.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: wrong band order in the cross; a flag that only slides or skews; the stars drifting out of the red disc during the wave.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-compass-nautical-star-design-aged-brass-needle-pointing-nort",
+   "set": "animated",
+   "basedOn": "seed-compass-nautical-star-design-aged-brass-needle-pointing-nort",
+   "slug": "animated-compass-nautical-star-design-aged-brass-needle-poin",
+   "title": "Compass (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "rotation",
+    "easing",
+    "keySplines"
+   ],
+   "prompt": "Compass: Nautical star design, aged brass, needle pointing North.\n\nThis is the animated brief: draw the picture above and bring it to life. The compass needle settles on North like a real magnetic needle.\n\nRequirements:\n1. The needle swings past North and oscillates with decreasing amplitude (at least three swings, damped with keySplines or keyTimes), settles, then after a pause is knocked off and repeats.\n2. The needle rotates about the central pivot.\n3. The nautical star rose stays fixed.\n4. A glint of light sweeps once across the aged brass bezel each cycle.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the needle rotating around the wrong point; linear back-and-forth with no damping; the whole compass rotating.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-corgi-a-chubby-corgi-puppy-sitting-upright-with-its-tongue-o",
+   "set": "animated",
+   "basedOn": "seed-corgi-a-chubby-corgi-puppy-sitting-upright-with-its-tongue-o",
+   "slug": "animated-corgi-a-chubby-corgi-puppy-sitting-upright-with-its",
+   "title": "Corgi (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "character",
+    "stagger",
+    "transform-origin"
+   ],
+   "prompt": "Corgi: A chubby corgi puppy sitting upright with its tongue out, minimalist lines.\n\nThis is the animated brief: draw the picture above and bring it to life. The corgi puppy is happy to see you.\n\nRequirements:\n1. The tongue wiggles and the tail end wags quickly from a fixed base.\n2. The ears perk up and relax every few seconds.\n3. The eyes blink with a quick vertical squash on a different rhythm from the ears.\n4. The body rises and falls slightly with breathing while staying seated, and the minimalist line style holds throughout.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: every motion sharing one duration so the loop looks mechanical; blinks that scale the whole head; the tail detaching from the body.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-crystal-ball-purple-mists-inside-wooden-claw-stand",
+   "set": "animated",
+   "basedOn": "seed-crystal-ball-purple-mists-inside-wooden-claw-stand",
+   "slug": "animated-crystal-ball-purple-mists-inside-wooden-claw-stand",
+   "title": "Crystal Ball (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "clipPath",
+    "morph",
+    "opacity"
+   ],
+   "prompt": "Crystal Ball: Purple mists inside, wooden claw stand.\n\nThis is the animated brief: draw the picture above and bring it to life. Purple mists swirl inside the crystal ball.\n\nRequirements:\n1. At least three mist shapes drift and change shape inside the glass and never cross the ball's outline (use a clipPath).\n2. The mists shift slowly in opacity and hue between purple and violet.\n3. A highlight glint on the glass stays fixed while the mist moves beneath it.\n4. Sparkles appear and fade at scattered points inside the ball; the wooden claw stand stays still.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: mist leaking outside the sphere; the whole ball rotating; mist shapes resetting abruptly.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-cyberpunk-drone-four-rotors-neon-red-sensors-sleek-black-mat",
+   "set": "animated",
+   "basedOn": "seed-cyberpunk-drone-four-rotors-neon-red-sensors-sleek-black-mat",
+   "slug": "animated-cyberpunk-drone-four-rotors-neon-red-sensors-sleek",
+   "title": "Cyberpunk Drone (Animated)",
+   "category": "technology",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "rotation",
+    "nested-transforms",
+    "sync"
+   ],
+   "prompt": "Cyberpunk Drone: Four rotors, neon red sensors, sleek black matte.\n\nThis is the animated brief: draw the picture above and bring it to life. The cyberpunk drone hovers in place.\n\nRequirements:\n1. All four rotors spin continuously, each around its own hub, as blurred discs or fast blades.\n2. The body bobs gently up and down with a slight tilt, and the rotors travel with it (nest them inside the body's transform).\n3. The neon red sensors pulse and a scan beam sweeps the ground below.\n4. A soft ground shadow shrinks as the drone rises and grows as it drops.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: rotors rotating around the drone's centre instead of their hubs; rotors left behind when the body bobs; a shadow out of step with the altitude.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-diamond-top-down-view-faceted-blue-and-white",
+   "set": "animated",
+   "basedOn": "seed-diamond-top-down-view-faceted-blue-and-white",
+   "slug": "animated-diamond-top-down-view-faceted-blue-and-white",
+   "title": "Diamond (Animated)",
+   "category": "symbols",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "stagger",
+    "opacity",
+    "sparkle"
+   ],
+   "prompt": "Diamond: Top-down view, faceted blue and white.\n\nThis is the animated brief: draw the picture above and bring it to life. Light moves across the faceted diamond.\n\nRequirements:\n1. Facets brighten and dim in a sequence that reads as light sweeping across the stone, not random flicker.\n2. At least four star-shaped sparkles scale up, rotate slightly and fade at facet corners, staggered in time.\n3. The stone's outline stays still: no spinning.\n4. The blue and white palette holds throughout.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: every facet pulsing together; sparkles floating in empty space; a sweep that restarts with a jump.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-eiffel-tower-detailed-ironwork-lattice-side-view",
+   "set": "animated",
+   "basedOn": "seed-eiffel-tower-detailed-ironwork-lattice-side-view",
+   "slug": "animated-eiffel-tower-detailed-ironwork-lattice-side-view",
+   "title": "Eiffel Tower (Animated)",
+   "category": "places",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "rotation",
+    "stagger",
+    "gradient"
+   ],
+   "prompt": "Eiffel Tower: Detailed ironwork lattice, side view.\n\nThis is the animated brief: draw the picture above and bring it to life. An evening loop at the Eiffel Tower.\n\nRequirements:\n1. The detailed ironwork lattice stays intact and still.\n2. A beacon at the summit sends two opposing beams that rotate from the top of the tower.\n3. The tower sparkles: many small lights flicker on the lattice in a random-looking stagger for a few seconds, then stop.\n4. The sky shifts slowly from dusk to deep blue and back while clouds drift behind the tower.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: beams attached to the wrong point; sparkles off the tower; the lattice simplified to a plain silhouette to make animating easier.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-electric-guitar-stratocaster-shape-sunburst-finish",
+   "set": "animated",
+   "basedOn": "seed-electric-guitar-stratocaster-shape-sunburst-finish",
+   "slug": "animated-electric-guitar-stratocaster-shape-sunburst-finish",
+   "title": "Electric Guitar (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "morph",
+    "stagger",
+    "decay"
+   ],
+   "prompt": "Electric Guitar: Stratocaster shape, sunburst finish.\n\nThis is the animated brief: draw the picture above and bring it to life. The electric guitar is being strummed.\n\nRequirements:\n1. The six strings vibrate with the largest amplitude mid-string and none at the nut and bridge (path morph between bowed shapes).\n2. The strings are struck in a strum from top to bottom with a short delay between strings, and each vibration decays.\n3. Musical notes or sound waves emerge from the body and fade.\n4. A sheen slides along the sunburst finish.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: strings moving as rigid lines with the ends moving too; every string in unison; the whole guitar shaking.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-elephant-silhouette-walking-against-a-large-orange-sunset-ci",
+   "set": "animated",
+   "basedOn": "seed-elephant-silhouette-walking-against-a-large-orange-sunset-ci",
+   "slug": "animated-elephant-silhouette-walking-against-a-large-orange",
+   "title": "Elephant Silhouette (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "gait",
+    "rotation",
+    "gradient"
+   ],
+   "prompt": "Elephant Silhouette: Walking against a large orange sunset circle.\n\nThis is the animated brief: draw the picture above and bring it to life. The elephant silhouette walks in front of the setting sun.\n\nRequirements:\n1. The elephant walks in place with a four-beat gait: legs swing from the shoulder and hip in the correct alternating order.\n2. The trunk swings gently and the body rises and falls with each step.\n3. The large orange sun sinks slowly as the sky gradient deepens, and the loop returns seamlessly.\n4. Grass or dust scrolls past on the ground to sell the forward walk.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: legs pivoting around their feet; front and back legs moving in sync; a visible jump when the sun resets.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-feather-pen-elegant-quill-dipping-into-an-inkwell",
+   "set": "animated",
+   "basedOn": "seed-feather-pen-elegant-quill-dipping-into-an-inkwell",
+   "slug": "animated-feather-pen-elegant-quill-dipping-into-an-inkwell",
+   "title": "Feather Pen (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "stroke-dash",
+    "path-motion",
+    "sync"
+   ],
+   "prompt": "Feather Pen: Elegant quill dipping into an inkwell.\n\nThis is the animated brief: draw the picture above and bring it to life. The quill dips into the inkwell and writes.\n\nRequirements:\n1. The quill lifts, dips into the inkwell, rises with a drop of ink that falls back in, and moves over to the paper.\n2. A handwritten word or flourish draws itself on the paper (stroke-dashoffset), following the nib's position as it moves.\n3. The feather's barbs flutter slightly as the quill moves.\n4. The writing fades out before the next cycle.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the nib and the line being drawn in different places; ink appearing all at once; the quill rotating about its centre instead of the grip.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-flamingo-standing-on-one-leg-bright-pink-elegant-s-curve-nec",
+   "set": "animated",
+   "basedOn": "seed-flamingo-standing-on-one-leg-bright-pink-elegant-s-curve-nec",
+   "slug": "animated-flamingo-standing-on-one-leg-bright-pink-elegant-s",
+   "title": "Flamingo (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "morph",
+    "ripple",
+    "character"
+   ],
+   "prompt": "Flamingo: Standing on one leg, bright pink, elegant \"S\" curve neck.\n\nThis is the animated brief: draw the picture above and bring it to life. The flamingo shifts its weight on one leg.\n\nRequirements:\n1. The S-curved neck bends (not a rigid rotation) as the head dips to preen and returns.\n2. The standing leg stays planted while the body tilts slightly over it.\n3. The folded leg lifts and tucks back in.\n4. Water ripples expand outward from the standing leg as concentric ellipses that fade. The bright pink colouring holds throughout.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the neck rotating like a stick; the foot sliding; ripples not centred on the leg.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-floppy-disk-iconic-save-icon-3-5-inch-style-labels-included",
+   "set": "animated",
+   "basedOn": "seed-floppy-disk-iconic-save-icon-3-5-inch-style-labels-included",
+   "slug": "animated-floppy-disk-iconic-save-icon-3-5-inch-style-labels",
+   "title": "Floppy Disk (Animated)",
+   "category": "symbols",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "stroke-dash",
+    "sequencing",
+    "ui"
+   ],
+   "prompt": "Floppy Disk: Iconic save icon, 3.5-inch style, labels included.\n\nThis is the animated brief: draw the picture above and bring it to life. The floppy disk animates like a save icon.\n\nRequirements:\n1. The metal shutter slides open to reveal the disk, then closes.\n2. A progress bar in the label area fills from left to right.\n3. When the bar is full a checkmark draws itself with a stroke animation, holds, then everything resets.\n4. The labels stay readable at all times, and the 3.5-inch proportions and write-protect notch stay correct.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the shutter sliding past the disk edge; the progress bar filling outside the label; a checkmark that appears without a stroke draw.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-frog-a-bright-green-tree-frog-sitting-on-a-perfectly-circula",
+   "set": "animated",
+   "basedOn": "seed-frog-a-bright-green-tree-frog-sitting-on-a-perfectly-circula",
+   "slug": "animated-frog-a-bright-green-tree-frog-sitting-on-a-perfectl",
+   "title": "Frog (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "scale",
+    "path-motion",
+    "ripple"
+   ],
+   "prompt": "Frog: A bright green tree frog sitting on a perfectly circular lily pad.\n\nThis is the animated brief: draw the picture above and bring it to life. The tree frog sits on its lily pad while the pond moves around it.\n\nRequirements:\n1. The frog's throat pouch inflates and deflates, and the frog blinks.\n2. Once per loop it catches a passing insect with its tongue.\n3. The perfectly circular lily pad bobs very slightly and concentric ripples expand out from it.\n4. An insect follows a looping path over the pond until it is caught.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the pad losing its circular shape; ripples drawn over the frog; the tongue not reaching the insect.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-galactic-jellyfish-translucent-bells-with-long-glowing-neon-",
+   "set": "animated",
+   "basedOn": "seed-galactic-jellyfish-translucent-bells-with-long-glowing-neon-",
+   "slug": "animated-galactic-jellyfish-translucent-bells-with-long-glow",
+   "title": "Galactic Jellyfish (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "morph",
+    "squash-stretch",
+    "glow"
+   ],
+   "prompt": "Galactic Jellyfish: Translucent bells with long, glowing neon tentacles.\n\nThis is the animated brief: draw the picture above and bring it to life. The galactic jellyfish swims through space.\n\nRequirements:\n1. The bell contracts and expands (squash and stretch anchored at its top), and each contraction nudges the jellyfish upward before it drifts back down.\n2. The long glowing tentacles trail behind with a wave that travels from base to tip and lags the bell's motion.\n3. The neon glow of the tentacles pulses in colour.\n4. Background stars twinkle and drift slowly past.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: tentacles as rigid lines; the bell scaling from its centre so it detaches from the tentacles; upward drift that accumulates until the jellyfish leaves the frame.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-gramophone-large-brass-horn-spinning-vinyl-record",
+   "set": "animated",
+   "basedOn": "seed-gramophone-large-brass-horn-spinning-vinyl-record",
+   "slug": "animated-gramophone-large-brass-horn-spinning-vinyl-record",
+   "title": "Gramophone (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "rotation",
+    "path-motion",
+    "rhythm"
+   ],
+   "prompt": "Gramophone: Large brass horn, spinning vinyl record.\n\nThis is the animated brief: draw the picture above and bring it to life. The gramophone plays a record.\n\nRequirements:\n1. The vinyl record spins around the spindle at a steady rate, while a highlight on the vinyl stays fixed as the grooves turn beneath it.\n2. The tone arm rests on the record and wobbles very slightly.\n3. Musical notes rise out of the brass horn on curving paths, growing and fading.\n4. The horn pulses gently in scale from its throat, in rhythm with the notes.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the highlight rotating with the record, which kills the illusion; the record spinning around the wrong centre; notes coming from the base instead of the horn.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-hedgehog-a-tiny-round-hedgehog-curled-into-a-ball-with-soft-",
+   "set": "animated",
+   "basedOn": "seed-hedgehog-a-tiny-round-hedgehog-curled-into-a-ball-with-soft-",
+   "slug": "animated-hedgehog-a-tiny-round-hedgehog-curled-into-a-ball-w",
+   "title": "Hedgehog (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "sequencing",
+    "morph",
+    "character"
+   ],
+   "prompt": "Hedgehog: A tiny round hedgehog curled into a ball with soft brown quills. and has legs\n\nThis is the animated brief: draw the picture above and bring it to life. The hedgehog uncurls, takes a few steps, and curls up again.\n\nRequirements:\n1. It starts curled into a ball with soft brown quills.\n2. It unrolls to reveal its face and legs, then its legs take small steps in place while the nose sniffs with quick twitches.\n3. It curls back into the ball and holds before repeating, and the quills bristle outward as it curls.\n4. The legs stay attached to the body through every phase.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the face popping in instead of unrolling; legs floating free of the body; the loop jumping between the curled and open states.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-honeybee-bold-yellow-and-black-stripes-translucent-honeycomb",
+   "set": "animated",
+   "basedOn": "seed-honeybee-bold-yellow-and-black-stripes-translucent-honeycomb",
+   "slug": "animated-honeybee-bold-yellow-and-black-stripes-translucent",
+   "title": "Honeybee (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "path-motion",
+    "rotate-auto",
+    "blur"
+   ],
+   "prompt": "Honeybee: Bold yellow and black stripes, translucent honeycomb wings.\n\nThis is the animated brief: draw the picture above and bring it to life. The honeybee hovers beside the honeycomb.\n\nRequirements:\n1. The translucent honeycomb wings beat very fast from the wing root, blurred with opacity or rapid rotation.\n2. The bee flies a lazy figure-eight with animateMotion and turns to face its direction of travel (rotate=\"auto\" or equivalent).\n3. The body bobs with the flight, and pollen particles drift behind it and fade.\n4. The bold yellow and black stripes stay crisp.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: wings rotating around their tips; the bee flying backwards; a flight path that does not close.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-hot-air-balloon-colorful-stripes-wicker-basket",
+   "set": "animated",
+   "basedOn": "seed-hot-air-balloon-colorful-stripes-wicker-basket",
+   "slug": "animated-hot-air-balloon-colorful-stripes-wicker-basket",
+   "title": "Hot Air Balloon (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "parallax",
+    "glow",
+    "pendulum"
+   ],
+   "prompt": "Hot Air Balloon: Colorful stripes, wicker basket.\n\nThis is the animated brief: draw the picture above and bring it to life. The hot air balloon rises over a landscape.\n\nRequirements:\n1. The burner flame flickers under the envelope, and its glow brightens the underside of the balloon when it fires.\n2. The balloon drifts upward and sways; the wicker basket hangs from it and swings slightly on its ropes, never separating.\n3. Clouds pass at two different speeds to show depth.\n4. The colorful stripes stay intact throughout.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the basket separating from the balloon; the flame lighting unrelated areas; clouds snapping back to their start.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-hummingbird-in-mid-flight-blurred-wing-effect-using-semi-tra",
+   "set": "animated",
+   "basedOn": "seed-hummingbird-in-mid-flight-blurred-wing-effect-using-semi-tra",
+   "slug": "animated-hummingbird-in-mid-flight-blurred-wing-effect-using",
+   "title": "Hummingbird (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "blur",
+    "sequencing",
+    "iridescence"
+   ],
+   "prompt": "Hummingbird: In mid-flight, blurred wing effect using semi-transparency.\n\nThis is the animated brief: draw the picture above and bring it to life. The hummingbird hovers at a flower and feeds.\n\nRequirements:\n1. The wings beat in a fast blur built from several semi-transparent wing positions that cycle quickly.\n2. The bird hovers with a tiny jitter, darts forward to put its beak into the flower, holds, and backs off.\n3. The flower sways slightly at the moment the beak touches it.\n4. A shimmer of iridescent colour moves across the throat feathers.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: a wing blur that is just one static semi-transparent shape; the beak missing the flower; the flower reacting at the wrong moment.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-jamaican-flag",
+   "set": "animated",
+   "basedOn": "seed-jamaican-flag",
+   "slug": "animated-jamaican-flag",
+   "title": "Jamaican flag (Animated)",
+   "category": "places",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "morph",
+    "flag",
+    "shading"
+   ],
+   "prompt": "Jamaican flag\n\nThis is the animated brief: draw the picture above and bring it to life. The Jamaican flag flies from its pole in a strong breeze.\n\nRequirements:\n1. The design stays correct: a gold saltire, green triangles top and bottom, black triangles at the hoist and fly.\n2. A wave ripples across the flag from hoist to fly and bends the edges of the saltire.\n3. Shading travels with the wave.\n4. The pole stays still and the hoist edge stays attached to it.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: black and green triangles swapped; the saltire straightening during the wave; the hoist edge coming away from the pole.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-koala-a-fluffy-koala-hugging-a-smooth-grey-tree-branch-paste",
+   "set": "animated",
+   "basedOn": "seed-koala-a-fluffy-koala-hugging-a-smooth-grey-tree-branch-paste",
+   "slug": "animated-koala-a-fluffy-koala-hugging-a-smooth-grey-tree-bra",
+   "title": "Koala (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "character",
+    "sequencing",
+    "opacity"
+   ],
+   "prompt": "Koala: A fluffy koala hugging a smooth grey tree branch, pastel colors.\n\nThis is the animated brief: draw the picture above and bring it to life. The koala dozes on its branch.\n\nRequirements:\n1. The koala breathes slowly, its chest rising and falling.\n2. Its eyelids droop shut and the head nods from the neck, then it jolts awake and settles again.\n3. A few 'z' letters float up and fade, only while it sleeps.\n4. The ear fluff ruffles, and the branch flexes slightly with its weight. The pastel palette holds.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the head nodding around the nose instead of the neck; z's appearing while it is awake; the koala sliding off the branch.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-lightbulb-filament-shaped-like-a-brain-glowing-yellow",
+   "set": "animated",
+   "basedOn": "seed-lightbulb-filament-shaped-like-a-brain-glowing-yellow",
+   "slug": "animated-lightbulb-filament-shaped-like-a-brain-glowing-yell",
+   "title": "Lightbulb (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "stroke-dash",
+    "glow",
+    "stagger"
+   ],
+   "prompt": "Lightbulb: Filament shaped like a brain, glowing yellow.\n\nThis is the animated brief: draw the picture above and bring it to life. Ideas spark through the brain-shaped filament.\n\nRequirements:\n1. The brain-shaped filament lights up section by section with a travelling glow (stroke-dashoffset or staggered opacity) until it is fully lit.\n2. Once fully lit, the bulb's glowing halo grows and pulses gently.\n3. Small sparks jump between the filament's folds, staying inside the glass.\n4. The glow fades back down before the loop repeats; the screw base stays unlit.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the whole filament lighting at once; the halo clipped hard at the bulb edge; sparks outside the bulb.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-lighthouse-red-and-white-stripes-yellow-light-beam",
+   "set": "animated",
+   "basedOn": "seed-lighthouse-red-and-white-stripes-yellow-light-beam",
+   "slug": "animated-lighthouse-red-and-white-stripes-yellow-light-beam",
+   "title": "Lighthouse (Animated)",
+   "category": "places",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "rotation",
+    "parallax",
+    "light"
+   ],
+   "prompt": "Lighthouse: Red and white stripes, yellow light beam.\n\nThis is the animated brief: draw the picture above and bring it to life. The lighthouse sweeps its beam across a night sea.\n\nRequirements:\n1. The yellow beam rotates around the lamp at the top, completing a sweep every 4 to 8 seconds, narrowing as it points toward the viewer and widening to the sides.\n2. The lamp flares brighter when the beam faces forward.\n3. Waves roll at the base in at least two layers moving at different speeds.\n4. Stars twinkle in the sky. The red and white stripes stay intact.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the beam rotating around the tower base or the canvas origin; the beam drawn over the tower when it should pass behind; wave layers resetting with a jump.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-medal-gold-coin-hanging-from-a-red-blue-ribbon",
+   "set": "animated",
+   "basedOn": "seed-medal-gold-coin-hanging-from-a-red-blue-ribbon",
+   "slug": "animated-medal-gold-coin-hanging-from-a-red-blue-ribbon",
+   "title": "Medal (Animated)",
+   "category": "symbols",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "pendulum",
+    "flip",
+    "glint"
+   ],
+   "prompt": "Medal: Gold coin hanging from a red/blue ribbon.\n\nThis is the animated brief: draw the picture above and bring it to life. The gold medal swings on its ribbon and turns.\n\nRequirements:\n1. The medal swings like a pendulum from the top of the ribbon, and the ribbon bends with it.\n2. The coin turns over by squashing horizontally (scaleX), showing a different design on its back after the midpoint.\n3. A glint sweeps across the gold face.\n4. The red/blue ribbon stays attached at the top.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the pendulum pivoting at the coin's centre instead of the ribbon top; the front design showing during the back half of the turn; the ribbon detaching.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-microscope-scientific-laboratory-style-chrome-finish",
+   "set": "animated",
+   "basedOn": "seed-microscope-scientific-laboratory-style-chrome-finish",
+   "slug": "animated-microscope-scientific-laboratory-style-chrome-finis",
+   "title": "Microscope (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "filter",
+    "sync",
+    "clipPath"
+   ],
+   "prompt": "Microscope: Scientific laboratory style, chrome finish.\n\nThis is the animated brief: draw the picture above and bring it to life. The microscope brings a sample into focus.\n\nRequirements:\n1. The focus knob turns and the eyepiece tube moves down slightly as it turns.\n2. A circular magnified inset shows the specimen going from blurred to sharp (animated feGaussianBlur stdDeviation or an opacity crossfade).\n3. Cells in the inset drift and divide slowly, staying inside the circle.\n4. Chrome highlights on the body stay fixed.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the knob rotating about the wrong axis; inset blur that snaps instead of easing; cells escaping the circular inset.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-monarch-butterfly-top-down-view-with-intricate-stained-glass",
+   "set": "animated",
+   "basedOn": "seed-monarch-butterfly-top-down-view-with-intricate-stained-glass",
+   "slug": "animated-monarch-butterfly-top-down-view-with-intricate-stai",
+   "title": "Monarch Butterfly (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "transform-origin",
+    "scale",
+    "stagger"
+   ],
+   "prompt": "Monarch Butterfly: Top-down view with intricate stained-glass wing patterns.\n\nThis is the animated brief: draw the picture above and bring it to life. The monarch butterfly flaps its stained-glass wings.\n\nRequirements:\n1. Seen from above, the wings fold toward the body and open again (scaleX anchored at the body), with forewing and hindwing slightly out of phase.\n2. Light shimmers through the stained-glass wing panes, and the dark lead lines stay intact.\n3. The body stays centred and still while the antennae twitch.\n4. The butterfly rests with wings open for a moment between sets of flaps.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: wings scaling from their own centres and detaching from the body; the stained-glass pattern lost; flapping at a constant mechanical rate with no rest.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-mountain-range-three-peaks-snowy-caps-minimalist-line-art",
+   "set": "animated",
+   "basedOn": "seed-mountain-range-three-peaks-snowy-caps-minimalist-line-art",
+   "slug": "animated-mountain-range-three-peaks-snowy-caps-minimalist-li",
+   "title": "Mountain Range (Animated)",
+   "category": "nature",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "stroke-dash",
+    "gradient",
+    "sequencing"
+   ],
+   "prompt": "Mountain Range: Three peaks, snowy caps, minimalist line art.\n\nThis is the animated brief: draw the picture above and bring it to life. A minimalist day-to-night cycle over three peaks.\n\nRequirements:\n1. The three peaks draw themselves in line art at the start (stroke-dashoffset), then stay drawn for the rest of the loop.\n2. The sun rises from behind the peaks, arcs across and sets, and a moon follows.\n3. The sky moves through dawn, day, dusk and night, and the snowy caps change tint with the light.\n4. The sun and moon always pass behind the peaks, never in front.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the line art redrawing every cycle with a flash; the sun passing in front of the peaks; sky colours out of step with the sun.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-oak-leaf-detailed-vein-structure-autumn-orange-and-brown",
+   "set": "animated",
+   "basedOn": "seed-oak-leaf-detailed-vein-structure-autumn-orange-and-brown",
+   "slug": "animated-oak-leaf-detailed-vein-structure-autumn-orange-and",
+   "title": "Oak Leaf (Animated)",
+   "category": "nature",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "path-motion",
+    "flip",
+    "colour"
+   ],
+   "prompt": "Oak Leaf: Detailed vein structure, autumn orange and brown.\n\nThis is the animated brief: draw the picture above and bring it to life. The oak leaf falls and turns in autumn air.\n\nRequirements:\n1. The leaf tumbles down a swaying S-shaped path, rotating and flipping (scaleX) as it goes.\n2. The paler underside colour shows while it is flipped.\n3. The detailed vein structure travels with the leaf.\n4. It lands, settles and fades out while a new leaf starts at the top. The autumn palette shifts subtly as it falls.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: veins left behind; a straight vertical drop; the new leaf popping in while the old one is still visible.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-old-school-cassette-clear-plastic-casing-brown-tape-reels",
+   "set": "animated",
+   "basedOn": "seed-old-school-cassette-clear-plastic-casing-brown-tape-reels",
+   "slug": "animated-old-school-cassette-clear-plastic-casing-brown-tape",
+   "title": "Old School Cassette (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "rotation",
+    "radius",
+    "sync"
+   ],
+   "prompt": "Old School Cassette: Clear plastic casing, brown tape reels.\n\nThis is the animated brief: draw the picture above and bring it to life. The cassette is playing.\n\nRequirements:\n1. Both tape reels rotate around their own hubs.\n2. The brown tape pack on one reel shrinks while the other grows (animated radius), and the smaller reel turns faster.\n3. The tape run between the reels stays attached to both packs.\n4. The reels stay visible through the clear plastic casing, and a small play indicator blinks.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: reels spinning around the cassette's centre; both packs staying the same size; the tape path not connecting the reels.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-origami-crane-minimalist-geometric-lines-with-sharp-angles",
+   "set": "animated",
+   "basedOn": "seed-origami-crane-minimalist-geometric-lines-with-sharp-angles",
+   "slug": "animated-origami-crane-minimalist-geometric-lines-with-sharp",
+   "title": "Origami Crane (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "morph",
+    "polygon",
+    "sequencing"
+   ],
+   "prompt": "Origami Crane: Minimalist geometric lines with sharp angles.\n\nThis is the animated brief: draw the picture above and bring it to life. The origami crane folds itself.\n\nRequirements:\n1. It starts as a flat square sheet.\n2. It folds into the crane over several visible steps by morphing polygon points between shapes, each shape using the same number of points so the morph tweens.\n3. The finished crane flaps its wings twice.\n4. It unfolds back to the square to loop, keeping minimal straight lines and sharp angles throughout (no curves).\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: morphs between polygons with different point counts, which snap instead of tweening; curves creeping in; a jump from crane back to square.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-owl-eyes-extreme-close-up-nocturnal-gold-and-black-aesthetic",
+   "set": "animated",
+   "basedOn": "seed-owl-eyes-extreme-close-up-nocturnal-gold-and-black-aesthetic",
+   "slug": "animated-owl-eyes-extreme-close-up-nocturnal-gold-and-black",
+   "title": "Owl Eyes (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "clipPath",
+    "character",
+    "sync"
+   ],
+   "prompt": "Owl Eyes: Extreme close-up, nocturnal gold and black aesthetic.\n\nThis is the animated brief: draw the picture above and bring it to life. The owl's eyes watch you in the dark.\n\nRequirements:\n1. The pupils dilate and constrict.\n2. The eyes blink with lids that close from the top and bottom.\n3. The gaze darts to one side, holds and returns, with both pupils moving together and staying inside the irises.\n4. A glint in each eye stays in place while the pupils move, and the feathers around the eyes ruffle slightly. The gold and black palette holds.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: pupils moving independently; the glint moving with the pupil; pupils escaping the iris.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-pocket-watch-open-face-showing-gold-gears-and-roman-numerals",
+   "set": "animated",
+   "basedOn": "seed-pocket-watch-open-face-showing-gold-gears-and-roman-numerals",
+   "slug": "animated-pocket-watch-open-face-showing-gold-gears-and-roman",
+   "title": "Pocket Watch (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "rotation",
+    "calcMode-discrete",
+    "gears"
+   ],
+   "prompt": "Pocket Watch: Open face showing gold gears and Roman numerals.\n\nThis is the animated brief: draw the picture above and bring it to life. The pocket watch keeps time.\n\nRequirements:\n1. The second hand ticks in discrete one-second steps (calcMode=\"discrete\" or stepped keyframes), not a smooth sweep.\n2. The minute hand advances a visible amount over the loop.\n3. The gold gears turn at different speeds, and meshing gears turn in opposite directions.\n4. The balance wheel oscillates back and forth, and the Roman numerals stay fixed.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: meshing gears turning the same way; the second hand sweeping smoothly; hands rotating around the wrong centre.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-red-eyed-tree-frog",
+   "set": "animated",
+   "basedOn": "seed-red-eyed-tree-frog",
+   "slug": "animated-red-eyed-tree-frog",
+   "title": "Red eyed tree frog (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "character",
+    "sequencing",
+    "clipPath"
+   ],
+   "prompt": "Red Eyed tree frog\n\nThis is the animated brief: draw the picture above and bring it to life. The red-eyed tree frog wakes up.\n\nRequirements:\n1. It starts with its eyes closed under green lids.\n2. The lids slide open to reveal bright red eyes with vertical pupils, and it looks around.\n3. It shifts its grip on the leaf, lifting one orange foot, while its blue and yellow side markings stay correct.\n4. It closes its eyes again to loop.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: eyes snapping open instead of lids retracting; round pupils; feet detaching from the leaf.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-red-panda-a-round-red-panda-sitting-and-holding-a-green-bamb",
+   "set": "animated",
+   "basedOn": "seed-red-panda-a-round-red-panda-sitting-and-holding-a-green-bamb",
+   "slug": "animated-red-panda-a-round-red-panda-sitting-and-holding-a-g",
+   "title": "Red Panda (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "sequencing",
+    "clipPath",
+    "character"
+   ],
+   "prompt": "Red Panda: A round red panda sitting and holding a green bamboo stalk, flat vector style.\n\nThis is the animated brief: draw the picture above and bring it to life. The red panda eats its bamboo stalk.\n\nRequirements:\n1. The paws bring the bamboo up to the mouth and the jaw chews.\n2. The stalk gets shorter in steps with each bite (clipped or shrinking path), and small crumbs fall from the mouth.\n3. The ears flick between bites.\n4. At the end a new stalk slides in from the side to loop. The flat vector style holds.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the bamboo shortening without a bite; crumbs falling upward or from the wrong place; the new stalk appearing already in the mouth.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-red-panda-cute-rounded-proportions-thick-ringed-tail",
+   "set": "animated",
+   "basedOn": "seed-red-panda-cute-rounded-proportions-thick-ringed-tail",
+   "slug": "animated-red-panda-cute-rounded-proportions-thick-ringed-tai",
+   "title": "Red Panda (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "squash-stretch",
+    "morph",
+    "character"
+   ],
+   "prompt": "Red Panda: Cute, rounded proportions, thick ringed tail.\n\nThis is the animated brief: draw the picture above and bring it to life. The red panda plays with its thick ringed tail.\n\nRequirements:\n1. The tail swishes in a smooth S-curve (path morph or chained segment rotations), and its rings follow the curve.\n2. The head turns to follow the tail.\n3. It pounces once per cycle: a squash before the jump, a stretch in the air, a squash on landing.\n4. The cute rounded proportions hold at every moment.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: rings sliding off the tail; a tail that rotates as a rigid block; no anticipation before the pounce.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-retro-rocket-1950s-sci-fi-style-red-fins-exhaust-flames",
+   "set": "animated",
+   "basedOn": "seed-retro-rocket-1950s-sci-fi-style-red-fins-exhaust-flames",
+   "slug": "animated-retro-rocket-1950s-sci-fi-style-red-fins-exhaust-fl",
+   "title": "Retro Rocket (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "sequencing",
+    "flicker",
+    "parallax"
+   ],
+   "prompt": "Retro Rocket: 1950s sci-fi style, red fins, exhaust flames.\n\nThis is the animated brief: draw the picture above and bring it to life. The 1950s retro rocket lifts off.\n\nRequirements:\n1. The exhaust flames flicker in length and colour (yellow core, orange-red outer) and stay attached to the nozzle.\n2. Smoke clouds billow out to both sides of the launch pad and stay there as the rocket climbs.\n3. The rocket shakes on the pad, rises and leaves the top of the frame, while stars streak past faster as it climbs.\n4. It re-enters from the bottom edge so the loop is seamless. The red fins and chrome styling hold.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: flames detached from the nozzle as it rises; smoke rising with the rocket; the rocket teleporting back into place in view.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-robot-arm-industrial-look-hydraulic-pistons-grasping-a-light",
+   "set": "animated",
+   "basedOn": "seed-robot-arm-industrial-look-hydraulic-pistons-grasping-a-light",
+   "slug": "animated-robot-arm-industrial-look-hydraulic-pistons-graspin",
+   "title": "Robot Arm (Animated)",
+   "category": "technology",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "nested-transforms",
+    "kinematics",
+    "sequencing"
+   ],
+   "prompt": "Robot Arm: Industrial look, hydraulic pistons, grasping a lightbulb.\n\nThis is the animated brief: draw the picture above and bring it to life. The industrial robot arm picks up a lightbulb and places it.\n\nRequirements:\n1. The arm is a kinematic chain: base rotation, shoulder, elbow and wrist joints, with each segment nested inside its parent's transform.\n2. The hydraulic pistons extend and retract to match the joint angles.\n3. The gripper opens, closes on the lightbulb, carries it to a new spot and releases it; the bulb lights up once placed.\n4. The arm returns to its start pose for the loop.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: segments rotating independently so the arm comes apart; pistons not matching the joints; the bulb floating free of the gripper.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-rocket-ship-simple-cartoon-style-blasting-off-to-the-top-rig",
+   "set": "animated",
+   "basedOn": "seed-rocket-ship-simple-cartoon-style-blasting-off-to-the-top-rig",
+   "slug": "animated-rocket-ship-simple-cartoon-style-blasting-off-to-th",
+   "title": "Rocket Ship (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "path-motion",
+    "rotate-auto",
+    "trail"
+   ],
+   "prompt": "Rocket Ship: Simple cartoon style, blasting off to the top right.\n\nThis is the animated brief: draw the picture above and bring it to life. The cartoon rocket blasts off to the top right, over and over.\n\nRequirements:\n1. The rocket travels to the top right along a slightly curved path and points along its direction of travel.\n2. A cartoon flame and a puffy smoke trail follow it; each puff grows and fades where it was left.\n3. Speed lines streak behind the rocket.\n4. It exits the frame and re-enters from the bottom left, while a background planet or clouds stay put.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the rocket flying sideways, not aligned to its path; smoke puffs travelling with the rocket; a visible pop on re-entry.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-rotary-phone-pastel-mint-green-circular-dialer",
+   "set": "animated",
+   "basedOn": "seed-rotary-phone-pastel-mint-green-circular-dialer",
+   "slug": "animated-rotary-phone-pastel-mint-green-circular-dialer",
+   "title": "Rotary Phone (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "rotation",
+    "sequencing",
+    "timing"
+   ],
+   "prompt": "Rotary Phone: Pastel mint green, circular dialer.\n\nThis is the animated brief: draw the picture above and bring it to life. Someone dials the rotary phone.\n\nRequirements:\n1. The finger wheel rotates clockwise to the finger stop, then returns counter-clockwise at a slower, even speed; the digits printed under the holes stay fixed.\n2. At least three different digits are dialled in sequence, each with a different rotation angle.\n3. After dialling, the handset rattles slightly as the line rings.\n4. The pastel mint green palette holds.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the digits rotating with the holes; the return as fast as the wind-up; every digit using the same angle.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-satellite-solar-panels-deployed-orbiting-a-blue-arc",
+   "set": "animated",
+   "basedOn": "seed-satellite-solar-panels-deployed-orbiting-a-blue-arc",
+   "slug": "animated-satellite-solar-panels-deployed-orbiting-a-blue-arc",
+   "title": "Satellite (Animated)",
+   "category": "technology",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "path-motion",
+    "rotate-auto",
+    "pulse"
+   ],
+   "prompt": "Satellite: Solar panels deployed, orbiting a blue arc.\n\nThis is the animated brief: draw the picture above and bring it to life. The satellite orbits above a blue planet.\n\nRequirements:\n1. The satellite follows the blue orbital arc with animateMotion and rotates to stay aligned with the path.\n2. The deployed solar panels travel with it and glint when they face the sun.\n3. Signal pulses emit toward the planet as expanding arcs that fade.\n4. The planet's clouds rotate slowly while the stars stay fixed.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the satellite leaving the arc; panels detaching; signals emitted away from the planet.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-seahorse-intricate-curly-tail-pastel-gradient-scales",
+   "set": "animated",
+   "basedOn": "seed-seahorse-intricate-curly-tail-pastel-gradient-scales",
+   "slug": "animated-seahorse-intricate-curly-tail-pastel-gradient-scale",
+   "title": "Seahorse (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "morph",
+    "gradient",
+    "path-motion"
+   ],
+   "prompt": "Seahorse: Intricate curly tail, pastel gradient scales.\n\nThis is the animated brief: draw the picture above and bring it to life. The seahorse bobs in the current.\n\nRequirements:\n1. The seahorse bobs up and down with a gentle sway while its dorsal fin flutters rapidly.\n2. The intricate curly tail curls tighter and relaxes by changing shape, not by rotating as a block.\n3. Bubbles rise from the snout, wobbling side to side and growing.\n4. The pastel gradient scales shimmer by animating the gradient, looping without a jump.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the tail curling as a rigid rotation; bubbles rising in straight lines; a gradient animation that jumps when it loops.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-space-needle-futuristic-seattle-landmark-silhouette",
+   "set": "animated",
+   "basedOn": "seed-space-needle-futuristic-seattle-landmark-silhouette",
+   "slug": "animated-space-needle-futuristic-seattle-landmark-silhouette",
+   "title": "Space Needle (Animated)",
+   "category": "places",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "stagger",
+    "gradient",
+    "sequencing"
+   ],
+   "prompt": "Space Needle: Futuristic Seattle landmark silhouette.\n\nThis is the animated brief: draw the picture above and bring it to life. Night falls over the Space Needle.\n\nRequirements:\n1. The sky transitions from sunset to night, and city lights come on along a low skyline.\n2. Lights chase around the rim of the Space Needle's saucer, and a beacon at the top blinks.\n3. A plane or the monorail crosses the scene once per loop.\n4. The silhouette stays accurate: legs that pinch at the waist and a flying-saucer top.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: chasing lights that read as flashing; the silhouette simplified into a generic tower; night snapping back to sunset.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-steam-locomotive-side-profile-puffing-white-steam-clouds",
+   "set": "animated",
+   "basedOn": "seed-steam-locomotive-side-profile-puffing-white-steam-clouds",
+   "slug": "animated-steam-locomotive-side-profile-puffing-white-steam-c",
+   "title": "Steam Locomotive (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "kinematics",
+    "parallax",
+    "rhythm"
+   ],
+   "prompt": "Steam Locomotive: Side profile, puffing white steam clouds.\n\nThis is the animated brief: draw the picture above and bring it to life. The steam locomotive chugs along.\n\nRequirements:\n1. The driving wheels rotate and the coupling rods move with them: the rods stay level and their ends stay attached to the wheel pins for the full rotation.\n2. Puffs of white steam burst from the chimney in rhythm with the wheels, grow, drift back and fade.\n3. The landscape and track sleepers scroll past to show forward motion, with no visible seam.\n4. The locomotive body rocks slightly.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: rods rotating with the wheels instead of staying level; steam rhythm unrelated to the wheels; a seam or jump in the scrolling background.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-stylized-blue-whale-smooth-curves-deep-sea-gradient-tiny-bub",
+   "set": "animated",
+   "basedOn": "seed-stylized-blue-whale-smooth-curves-deep-sea-gradient-tiny-bub",
+   "slug": "animated-stylized-blue-whale-smooth-curves-deep-sea-gradient",
+   "title": "Stylized Blue Whale (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "morph",
+    "particles",
+    "light"
+   ],
+   "prompt": "Stylized Blue Whale: Smooth curves, deep sea gradient, tiny bubbles.\n\nThis is the animated brief: draw the picture above and bring it to life. The stylized blue whale swims through the deep.\n\nRequirements:\n1. The body undulates and the tail fluke beats up and down, anchored where the tail meets the body.\n2. Tiny bubbles rise at different speeds, wobble, and pop with a quick scale-up then fade.\n3. Light rays from the surface shimmer across the deep sea gradient.\n4. Once per loop a spout of water plumes from the blowhole.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the tail rotating around its tip; bubbles all rising at the same speed; the spout disconnected from the blowhole.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-trophy-large-gold-cup-with-1-engraved",
+   "set": "animated",
+   "basedOn": "seed-trophy-large-gold-cup-with-1-engraved",
+   "slug": "animated-trophy-large-gold-cup-with-1-engraved",
+   "title": "Trophy (Animated)",
+   "category": "symbols",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "clipPath",
+    "particles",
+    "easing"
+   ],
+   "prompt": "Trophy: Large gold cup with \"1\" engraved.\n\nThis is the animated brief: draw the picture above and bring it to life. The trophy celebrates a first-place win.\n\nRequirements:\n1. The large gold cup rises onto its podium and settles with a small bounce.\n2. A sweep of light passes across the engraved 1, clipped to the numeral.\n3. Confetti falls with varied colours, rotations and speeds.\n4. Sparkles twinkle around the cup's rim.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the shine leaking outside the 1; confetti all falling identically; a visible reset of the cup's position.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-typewriter-close-up-of-a-few-keys-with-letters-a-s-d-f",
+   "set": "animated",
+   "basedOn": "seed-typewriter-close-up-of-a-few-keys-with-letters-a-s-d-f",
+   "slug": "animated-typewriter-close-up-of-a-few-keys-with-letters-a-s",
+   "title": "Typewriter (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "sequencing",
+    "timing",
+    "sync"
+   ],
+   "prompt": "Typewriter: Close-up of a few keys with letters \"A-S-D-F\".\n\nThis is the animated brief: draw the picture above and bring it to life. The typewriter types A-S-D-F.\n\nRequirements:\n1. The A, S, D and F keys press down in that order (moving down with a shadow change) and spring back.\n2. The letters appear one at a time on a strip of paper, in sync with each key press.\n3. The paper advances left by one character per letter.\n4. After F, a small 'ding' burst appears and the line resets for the next loop. The key labels never change.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: letters appearing out of sync with the key presses; the wrong order; key labels changing.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-umbrella-open-yellow-with-blue-raindrops-falling",
+   "set": "animated",
+   "basedOn": "seed-umbrella-open-yellow-with-blue-raindrops-falling",
+   "slug": "animated-umbrella-open-yellow-with-blue-raindrops-falling",
+   "title": "Umbrella (Animated)",
+   "category": "objects",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "particles",
+    "stagger",
+    "clipPath"
+   ],
+   "prompt": "Umbrella: Open, yellow, with blue raindrops falling.\n\nThis is the animated brief: draw the picture above and bring it to life. Rain falls on the yellow umbrella.\n\nRequirements:\n1. Blue raindrops fall at a slant with varied speeds and sizes.\n2. Drops that hit the canopy splash in a small burst and never pass through it.\n3. Water drips from the points of the canopy edge.\n4. A puddle below shows expanding ripples, and the umbrella sways very slightly in the wind.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: raindrops falling through the umbrella; every drop identical; ripples spreading outside the puddle.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-vr-headset-futuristic-visor-with-blue-digital-glow",
+   "set": "animated",
+   "basedOn": "seed-vr-headset-futuristic-visor-with-blue-digital-glow",
+   "slug": "animated-vr-headset-futuristic-visor-with-blue-digital-glow",
+   "title": "VR Headset (Animated)",
+   "category": "technology",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "clipPath",
+    "glow",
+    "sequencing"
+   ],
+   "prompt": "VR Headset: Futuristic visor with blue digital glow.\n\nThis is the animated brief: draw the picture above and bring it to life. The VR headset powers on.\n\nRequirements:\n1. The visor starts dark, then a blue digital glow spreads from the centre outward.\n2. A scan line sweeps across the visor.\n3. Digital patterns (grid, code or HUD glyphs) scroll inside the visor, clipped to its shape.\n4. The glow pulses gently while powered, and the strap and body stay still.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: patterns spilling outside the visor; a power-on with no build-up; the glow clipped hard at the edge.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-wind-turbine-three-blades-sleek-white-minimalist-hills",
+   "set": "animated",
+   "basedOn": "seed-wind-turbine-three-blades-sleek-white-minimalist-hills",
+   "slug": "animated-wind-turbine-three-blades-sleek-white-minimalist-hi",
+   "title": "Wind Turbine (Animated)",
+   "category": "technology",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "rotation",
+    "transform-origin",
+    "parallax"
+   ],
+   "prompt": "Wind Turbine: Three blades, sleek white, minimalist hills.\n\nThis is the animated brief: draw the picture above and bring it to life. Wind turbines turn on minimalist hills.\n\nRequirements:\n1. The three sleek white blades rotate around the hub at the top of the tower at a steady speed, spaced 120 degrees apart.\n2. At least two more turbines in the distance turn at different speeds and phases.\n3. Wind lines or grass ripples sweep across the hills.\n4. Clouds drift slowly overhead.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: blades rotating around the tower base or the canvas centre; blades not 120 degrees apart; every turbine perfectly in sync.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-seed-wolf-howling-sharp-vector-silhouette-with-a-crescent-moon-ba",
+   "set": "animated",
+   "basedOn": "seed-wolf-howling-sharp-vector-silhouette-with-a-crescent-moon-ba",
+   "slug": "animated-wolf-howling-sharp-vector-silhouette-with-a-crescen",
+   "title": "Wolf Howling (Animated)",
+   "category": "animals",
+   "difficulty": "moderate",
+   "tags": [
+    "animated",
+    "character",
+    "sequencing",
+    "glow"
+   ],
+   "prompt": "Wolf Howling: Sharp vector silhouette with a crescent moon backdrop.\n\nThis is the animated brief: draw the picture above and bring it to life. The wolf howls at the crescent moon.\n\nRequirements:\n1. The wolf lifts its head to howl (head and neck rotating up from the shoulders), holds the howl, and lowers it.\n2. Sound waves or breath rise from the muzzle during the howl only.\n3. The crescent moon glows brighter during the howl, and clouds drift across it.\n4. Stars twinkle. The sharp vector silhouette holds.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the head rotating around the nose; howl effects outside the howl; moon glow out of sync with the howl.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-curated-isometric-neighbourhood",
+   "set": "animated",
+   "basedOn": "curated-isometric-neighbourhood",
+   "slug": "animated-isometric-neighbourhood-four-seasons",
+   "title": "Isometric Neighbourhood (Animated)",
+   "category": "places",
+   "difficulty": "complex",
+   "tags": [
+    "isometric",
+    "architecture",
+    "lighting",
+    "animated",
+    "particles",
+    "stagger"
+   ],
+   "prompt": "Create a detailed isometric neighbourhood block in a square SVG viewBox. Include four small buildings, tree-lined pavements, parked bicycles, cast shadows, and subtle signs of all four seasons in separate corners. Use a restrained editorial colour palette and crisp vector geometry.\n\nThis is the animated brief: draw the picture above and bring it to life. The isometric neighbourhood comes alive.\n\nRequirements:\n1. Each season corner runs its own weather loop: blossom petals in spring, butterflies or heat shimmer in summer, falling leaves in autumn, snow in winter, each staying in its corner.\n2. Bicycles ride along the pavements in the isometric grid directions, never screen-horizontal.\n3. Window lights switch on and off in a stagger across the four buildings.\n4. Cast shadows lengthen and shorten together as the light angle changes, and depth ordering stays correct whenever something passes behind a building.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: bicycles moving at non-isometric angles; weather leaking into the wrong corner; shadows moving independently of each other.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-curated-transit-map",
+   "set": "animated",
+   "basedOn": "curated-transit-map",
+   "slug": "animated-fictional-metro-transit-map",
+   "title": "Fictional Metro Map (Animated)",
+   "category": "symbols",
+   "difficulty": "complex",
+   "tags": [
+    "information-design",
+    "typography",
+    "diagram",
+    "animated",
+    "path-motion",
+    "keyPoints"
+   ],
+   "prompt": "Design a legible fictional metro map as SVG with four colour-coded lines, twelve named stations, two river crossings, interchange symbols, a compact legend, and a clear visual hierarchy. Use only vector shapes and text; keep labels readable without overlaps.\n\nThis is the animated brief: draw the picture above and bring it to life. Trains run on the fictional metro map.\n\nRequirements:\n1. At least one train per line travels its route with animateMotion using the same path data as the drawn line.\n2. Trains dwell briefly at stations (keyPoints/keyTimes), and interchange symbols pulse when a train arrives.\n3. A 'you are here' marker pulses at one station.\n4. Station labels stay readable, and no moving element ever covers a label.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: trains leaving the line paths; no dwell at stations; moving elements covering labels.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-curated-weather-dashboard-icons",
+   "set": "animated",
+   "basedOn": "curated-weather-dashboard-icons",
+   "slug": "animated-weather-dashboard-icon-system",
+   "title": "Weather Icon System (Animated)",
+   "category": "technology",
+   "difficulty": "moderate",
+   "tags": [
+    "icons",
+    "design-system",
+    "grid",
+    "animated",
+    "clipPath",
+    "timing"
+   ],
+   "prompt": "Create a cohesive SVG weather icon system arranged on a 3 by 3 grid: sunny, cloudy, rain, storm, snow, fog, windy, moonlit, and partly cloudy. Give every icon consistent stroke weight, optical size, spacing, and a small accessible text label.\n\nThis is the animated brief: draw the picture above and bring it to life. Every icon in the weather system animates.\n\nRequirements:\n1. Sunny rays rotate slowly; cloudy clouds drift; rain drops fall; storm lightning flashes as its cloud darkens; snowflakes fall and turn; fog bands slide; windy lines sweep; moonlit stars twinkle; the partly-cloudy cloud passes the sun.\n2. Each animation stays inside its own grid cell (clip it).\n3. All nine share one timing vocabulary: easing and durations drawn from a small shared set.\n4. Stroke weights stay consistent during motion and the text labels do not move.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: animation leaving its cell; stroke weights changing mid-motion; labels animating; nine unrelated timings.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-curated-botanical-poster",
+   "set": "animated",
+   "basedOn": "curated-botanical-poster",
+   "slug": "animated-botanical-poster-wildflowers",
+   "title": "Botanical Wildflower Poster (Animated)",
+   "category": "nature",
+   "difficulty": "artistic",
+   "tags": [
+    "poster",
+    "botanical",
+    "typography",
+    "animated",
+    "stroke-dash",
+    "sequencing",
+    "stagger"
+   ],
+   "prompt": "Illustrate a vintage botanical field-guide poster in SVG showing six distinct British wildflowers with stems, leaves, roots, numbered specimen markers, delicate ink-style outlines, muted watercolour fills, and a refined title panel reading WILDFLOWERS.\n\nThis is the animated brief: draw the picture above and bring it to life. The botanical field-guide poster grows.\n\nRequirements:\n1. The six wildflowers grow in numbered order: roots extend, the stem draws upward (stroke draw), leaves unfurl, and the flower opens.\n2. For each plant the ink outlines draw before its watercolour fills fade in.\n3. Each numbered specimen marker appears as its flower completes.\n4. The WILDFLOWERS title panel is visible from the start. After all six are complete the poster holds, the plants fade, and it repeats.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: fills appearing before outlines; flowers growing downward; a growth order that doesn't match the numbers.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-curated-mechanical-watch-cutaway",
+   "set": "animated",
+   "basedOn": "curated-mechanical-watch-cutaway",
+   "slug": "animated-mechanical-watch-cutaway",
+   "title": "Mechanical Watch Cutaway (Animated)",
+   "category": "objects",
+   "difficulty": "complex",
+   "tags": [
+    "technical",
+    "gears",
+    "cutaway",
+    "animated",
+    "calcMode-discrete"
+   ],
+   "prompt": "Draw a precision cutaway illustration of a mechanical wristwatch movement as SVG. Show interlocking brass gears, ruby bearings, balance wheel, mainspring barrel, steel screws, case outline, and five fine leader-line annotations. Keep the mechanism believable and visually layered.\n\nThis is the animated brief: draw the picture above and bring it to life. The movement runs inside the cutaway.\n\nRequirements:\n1. Meshing gears turn in opposite directions at speeds consistent with their size: a gear half the diameter turns twice as fast.\n2. The balance wheel oscillates back and forth while its hairspring breathes.\n3. The escapement ticks in discrete steps in time with the balance wheel.\n4. The mainspring barrel turns very slowly, and the five leader-line annotations stay fixed and readable.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: meshing gears turning the same way; speeds ignoring gear size; annotations moving with the parts.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-curated-aurora-landscape",
+   "set": "animated",
+   "basedOn": "curated-aurora-landscape",
+   "slug": "animated-aurora-over-mountain-lake",
+   "title": "Aurora Mountain Landscape (Animated)",
+   "category": "nature",
+   "difficulty": "artistic",
+   "tags": [
+    "landscape",
+    "gradients",
+    "reflection",
+    "animated",
+    "morph",
+    "gradient"
+   ],
+   "prompt": "Create a cinematic SVG landscape of an aurora sweeping above a snow-covered mountain lake at night. Include layered mountain silhouettes, pine trees, stars, luminous green and violet sky ribbons, and a softened mirrored reflection in the water using gradients and masks.\n\nThis is the animated brief: draw the picture above and bring it to life. The aurora dances over the mountain lake.\n\nRequirements:\n1. The green and violet ribbons ripple and shift, slowly changing shape and brightness (path morph or an animated gradient or filter).\n2. The lake reflection mirrors the sky animation in sync, softened and flipped.\n3. Small ripples distort only the reflection, never the mountains.\n4. Stars twinkle and a shooting star crosses once per loop.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: the reflection out of sync with the sky; ribbons that only fade instead of moving; ripples on the mountains.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-curated-robot-mascot-sheet",
+   "set": "animated",
+   "basedOn": "curated-robot-mascot-sheet",
+   "slug": "animated-friendly-robot-mascot-expression-sheet",
+   "title": "Robot Mascot Expression Sheet (Animated)",
+   "category": "technology",
+   "difficulty": "complex",
+   "tags": [
+    "character",
+    "mascot",
+    "expressions",
+    "animated",
+    "sequencing",
+    "stagger"
+   ],
+   "prompt": "Design a friendly rounded robot mascot as an SVG character sheet with six consistent poses: waving, thinking, celebrating, surprised, carrying a parcel, and sleeping. Preserve the same proportions and signature details in every pose and arrange the set on a clean labelled grid.\n\nThis is the animated brief: draw the picture above and bring it to life. Each pose on the mascot sheet loops its own action.\n\nRequirements:\n1. Waving: the arm waves from the shoulder. Thinking: a thought bubble grows with dots appearing in turn. Celebrating: jumps with confetti.\n2. Surprised: a quick hop and an exclamation mark pops. Carrying a parcel: walks in place with the parcel bouncing. Sleeping: breathes with floating z's.\n3. Each action stays inside its labelled cell, and the six loops run on different timings.\n4. Proportions and signature details stay identical across all six poses at every moment of the animation.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: animation leaving its cell; proportions drifting between poses; all six moving on the same beat.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  },
+  {
+   "id": "animated-curated-stained-glass-phoenix",
+   "set": "animated",
+   "basedOn": "curated-stained-glass-phoenix",
+   "slug": "animated-stained-glass-phoenix-window",
+   "title": "Stained-glass Phoenix (Animated)",
+   "category": "animals",
+   "difficulty": "artistic",
+   "tags": [
+    "stained-glass",
+    "symmetry",
+    "ornament",
+    "animated",
+    "gradient",
+    "opacity",
+    "stagger"
+   ],
+   "prompt": "Create an ornate arched stained-glass window in SVG featuring a rising phoenix with spread wings. Build the image from jewel-toned segmented panes separated by dark lead lines, include flame motifs and a decorative border, and use subtle gradients to suggest transmitted light.\n\nThis is the animated brief: draw the picture above and bring it to life. Light passes through the stained-glass phoenix window.\n\nRequirements:\n1. Panes brighten and dim in a slow sweep, as if the sun is passing across the window.\n2. The flame motifs flicker with warm colour shifts, each on its own timing.\n3. The phoenix's wings lift slightly and settle, with the dark lead lines moving with their panes.\n4. Coloured light rays fall below the window and shift with the sweep.\n5. The first frame already reads as a complete, finished picture.\n6. Every animation loops forever and restarts without a visible jump or snap.\n\nDeliver one self-contained SVG with a viewBox. Animate only with SMIL (<animate>, <animateTransform>, <animateMotion>, <set>) or CSS @keyframes inside a <style> element. No JavaScript, no external images or fonts.",
+   "notes": "Watch for: panes separating from their lead lines; the whole window pulsing uniformly; flames flickering in unison.",
+   "createdAt": "2026-09-15T00:00:00.000Z"
+  }
+ ]
+}

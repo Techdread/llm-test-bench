@@ -9,3 +9,9 @@
 
 /*.html
   Cache-Control: public, max-age=0, must-revalidate
+
+# Showcase generations are model-written code on this origin. Opened directly,
+# they must not reach localStorage (visitors' API keys). <img> tiles and the
+# benches' JSON fetches are unaffected. Spec 342 § Security, phase 0.
+/_showcase/*
+  Content-Security-Policy: sandbox; default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'

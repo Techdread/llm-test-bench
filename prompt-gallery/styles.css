@@ -307,7 +307,26 @@ body {
 
 .section-header-actions {
   display: flex;
+  align-items: center;
   gap: 4px;
+}
+
+.response-metrics {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 4px;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.response-metric-divider {
+  color: var(--text-muted);
+  opacity: 0.65;
 }
 
 .section-header-actions .btn-icon:disabled {
@@ -765,6 +784,15 @@ body {
 
 .rating-star.hovered {
   color: #fbbf24;
+}
+
+.rating-value {
+  margin-left: 6px;
+  min-width: 3.2em;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  align-self: center;
 }
 
 .rating-display {
@@ -2290,6 +2318,19 @@ body {
   color: var(--text-secondary);
 }
 .batch-section-head i { margin-right: 6px; }
+.batch-set-switch { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.batch-set-switch .library-cat-chip i { margin-right: 4px; }
+.batch-set-count { margin-left: 4px; opacity: 0.75; font-variant-numeric: tabular-nums; }
+.batch-set-hint { font-size: 11px; color: var(--text-muted); }
+.library-badge-advanced { color: #f59e0b; border-color: #f59e0b; }
+.library-set-chips { padding-left: 10px; border-left: 1px solid var(--border-color); }
+.runs-set-badge {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
+  padding: 1px 7px; border-radius: 999px; border: 1px solid var(--border-color);
+  color: var(--text-muted); white-space: nowrap;
+}
+.runs-set-badge.is-advanced { color: #f59e0b; border-color: #f59e0b; }
+.runs-set-badge.is-mixed { color: var(--accent); border-color: var(--accent); }
 .batch-select-actions { display: flex; gap: 6px; }
 
 .batch-prompt-list {
@@ -2440,6 +2481,12 @@ body {
   font-size: 11px;
 }
 .batch-preview-head > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.batch-preview-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.batch-fullscreen-button {
+  display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0;
+  background: none; color: var(--accent); font: inherit; cursor: pointer; white-space: nowrap;
+}
+.batch-fullscreen-button:hover { text-decoration: underline; }
 .batch-return-live { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; white-space: nowrap; }
 .batch-return-live:hover { text-decoration: underline; }
 .batch-live-chip { display: inline-flex; align-items: center; gap: 5px; color: var(--success); white-space: nowrap; }
@@ -2456,6 +2503,10 @@ body {
   color: var(--text-muted);
   font-size: 13px;
 }
+.batch-preview-disabled .batch-preview-empty { text-align: center; padding: 20px; }
+.batch-preview-disabled .batch-preview-empty i { font-size: 24px; }
+.batch-preview-disabled .batch-preview-empty strong { color: var(--text-secondary); }
+.batch-preview-disabled .batch-preview-empty span { font-size: 11px; }
 .batch-code-stream {
   flex: 0 0 auto;
   overflow: hidden;
@@ -2571,6 +2622,18 @@ body {
   font-variant-numeric: tabular-nums;
 }
 .batch-review-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11px; }
+.batch-review-judge { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+.batch-review-judge-label { color: var(--text-secondary); font-weight: 600; }
+.batch-review-judge-hint { color: var(--text-muted); font-size: 11px; }
+.batch-rating-chip {
+  font-size: 10px; padding: 0 6px; border-radius: 8px; font-weight: 600;
+  background: color-mix(in srgb, #f59e0b 20%, transparent); color: #f59e0b;
+}
+.batch-rating-chip i { font-size: 9px; }
+.runs-row-rated { color: var(--text-muted); }
+.runs-row-rated i { color: #f59e0b; font-size: 11px; }
+.runs-row-rated.is-done { color: #f59e0b; }
+.rcmp-col-rate { display: flex; justify-content: center; }
 .batch-params-chip {
   display: inline-flex; align-items: center; gap: 5px; padding: 1px 7px; border-radius: 10px;
   background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border-color);
@@ -2595,6 +2658,19 @@ body {
 }
 .runs-intro i { color: var(--accent); }
 .runs-actions { display: flex; align-items: center; gap: 8px; }
+
+.runs-missing-note {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  font-size: 13px; color: var(--text-secondary);
+}
+.runs-missing-note i { color: var(--accent); margin-top: 2px; }
+.runs-missing-note code {
+  font-family: var(--font-mono, monospace); font-size: 12px;
+  color: var(--text-primary);
+}
 
 .runs-list {
   border: 1px solid var(--border-color); border-radius: 10px;
@@ -2720,6 +2796,11 @@ body {
 .html-lightbox-title strong { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .html-lightbox-title span { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .html-lightbox-stage { flex: 1; min-height: 0; background: #fff; }
+.html-lightbox-empty {
+  width: 100%; height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  background: var(--bg-primary); color: var(--text-muted); font-size: 13px;
+}
 
 @media (max-width: 900px) {
   /* Stacked: the list gets a capped height of its own, so hand the rows back

@@ -36,6 +36,29 @@ The hosted catalogue includes harvested benchmarks plus curated challenges for
 information design, icon consistency, complex geometry, character consistency,
 gradients, masks and artistic composition.
 
+### Animated prompt set
+
+The **Animated** set is the harder tier: one brief for every core prompt, asking
+for the same picture brought to life. Each brief opens with its core prompt,
+then lists numbered motion requirements you can check off (what moves, what
+stays still, where rotations pivot, what has to stay in sync) and ends with a
+**Watch for:** note naming the usual failures. Every brief requires a first
+frame that already reads as a finished picture, loops that restart without a
+jump, and SMIL or CSS `@keyframes` only: no JavaScript.
+
+- Animated titles end in **(Animated)** and their benchmark folders start with
+  `animated-`, so their submissions, "has run" badges and skip-existing stay
+  separate from the core prompts.
+- The **All sets / Core / Animated** filter in Prompts narrows the catalogue;
+  animated cards carry an **animated** badge.
+- The set lives in `data/prompts-animated.json`.
+
+SVGs everywhere in the app (preview, batch, Runs, compare, lightbox, submission
+cards) render as images, so animations play. Images never run scripts or load
+anything external, so they need no sanitizing, and it is the same rendering
+auto-score uses. A half-streamed or broken SVG still previews inline while it
+is being written.
+
 ## CLI agent generation
 
 Click **CLI agent** in Create to use Claude Code, Codex, Antigravity, or Grok in place
@@ -64,16 +87,29 @@ The **Batch** button (top toolbar) runs one model over many benchmark prompts in
 a row — a fast way to fill out a benchmark for a newly added model.
 
 - The dialog shows the currently-loaded model; pick one if none is selected.
-- It lists every benchmark prompt (all ticked by default); untick any you want to
-  skip, then press **Go**. Each generated SVG is auto-saved as a submission under
-  that benchmark, tagged `ai-gen` + `batch`.
+- **Core / Animated** above the prompt list picks which set a batch runs. Only
+  the set on screen runs, and **All** / **None** only touch that set.
+- It lists every benchmark prompt in the set (all ticked by default); untick any
+  you want to skip, then press **Go**. Each generated SVG is auto-saved as a
+  submission under that benchmark, tagged `ai-gen` + `batch`, and records its
+  prompt set.
 - Benchmarks that have a **reference image** are auto-scored as they run, so a
   batch also produces comparison scores.
+- **Animated** prompts get a **motion check** instead of a pixel score. The SVG
+  is rendered frozen at six moments and the frames are compared. Each result
+  shows a chip: **moves** (green), **moves** with a warning (amber, hover for
+  why, e.g. nothing repeats forever or it waits for a click), or **static** /
+  **no animation** (red). The summary and the Runs list show how many moved.
 - **Auto-fix invalid SVG** (off by default) re-asks the model to repair any output
   that isn't well-formed SVG, up to 1–3 times, keeping both the original and the
   fixed version. Other options: skip prompts already run for this model, retry on
   API failure, and a delay between prompts for rate-limited providers.
-- A live preview follows the current generation; a summary at the end reports how
+- A live preview follows the current generation and shows characters streamed,
+  tokens generated, and tokens per second. Click any earlier completed row to
+  inspect it while the batch continues, use **Return to live** to follow the
+  active SVG again, or open either view full screen.
+- **Pause** finishes the current model call and stops before starting another;
+  **Resume** continues from that safe boundary. A summary at the end reports how
   many were generated, scored, fixed, skipped, and failed.
 - When the run finishes you can **flick through everything it produced**: the
   arrows (or the ← / → keys) step through each generated SVG, clicking a row in
@@ -116,6 +152,7 @@ created automatically.
 ## Scoring
 
 - **Auto-score** — renders both the SVG and the reference image to canvas, runs a pixel-level comparison, and returns a 0–100 % similarity score.
+- **Motion check** (Animated prompts, batch only) — freezes the animation at 0, 0.37, 0.91, 1.63, 2.71 and 3.9 seconds by rewriting SMIL `begin` offsets and pausing CSS animations at a negative delay, renders each frame, and counts changed pixels. It also flags script (which never runs), click- or hover-triggered animation, and animation that never repeats. CSS freezing overrides authored delays, so staggered elements fall in phase in the probe frames; that only affects the check, not the saved SVG.
 - **Manual score** — press 1–9 on the keyboard (outside of text inputs) to quickly rate a submission.
 
 ## Record video

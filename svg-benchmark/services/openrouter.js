@@ -30,7 +30,7 @@ Keep file size reasonable — prefer simple paths and shapes over overly complex
  * @param {string} modelId - Model ID
  * @param {Function} [onChunk] - Streaming callback
  */
-export async function generateSvg(prompt, providerId, modelId, onChunk, { params, onStats } = {}) {
+export async function generateSvg(prompt, providerId, modelId, onChunk, { params, onStats, onAgentEvent, onAgentLive } = {}) {
   return streamChat({
     providerId,
     modelId,
@@ -40,6 +40,8 @@ export async function generateSvg(prompt, providerId, modelId, onChunk, { params
     onChunk,
     params,
     onStats,
+    onAgentEvent,
+    onAgentLive,
   });
 }
 
@@ -51,7 +53,7 @@ The SVG must start with <svg and include a viewBox attribute. Preserve the inten
 /**
  * Ask the model to repair an invalid SVG. Streams accumulated text via onChunk.
  */
-export async function healSvg(prompt, brokenSvg, reason, providerId, modelId, onChunk, { params, onStats } = {}) {
+export async function healSvg(prompt, brokenSvg, reason, providerId, modelId, onChunk, { params, onStats, onAgentEvent, onAgentLive } = {}) {
   const userPrompt = [
     prompt?.trim() ? `ORIGINAL PROMPT:\n${prompt.trim()}` : '',
     `CURRENT SVG (invalid):\n${brokenSvg}`,
@@ -67,6 +69,8 @@ export async function healSvg(prompt, brokenSvg, reason, providerId, modelId, on
     onChunk,
     params,
     onStats,
+    onAgentEvent,
+    onAgentLive,
   });
 }
 

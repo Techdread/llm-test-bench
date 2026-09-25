@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-distribution="public">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hand-picked games, 3D scenes, p5.js sketches and SVG illustrations written by local and hosted LLMs — each opens with its prompt and code.">
+  <title>Showcase · LLM Test Bench</title>
+  <link rel="canonical" href="https://neuroviz.uk/showcase.html">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#080b12">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="LLM Test Bench">
+  <meta property="og:url" content="https://neuroviz.uk/showcase.html">
+  <meta property="og:title" content="LLM Test Bench showcase — what models actually made">
+  <meta property="og:description" content="Hand-picked games, 3D scenes, p5.js sketches and SVG illustrations written by local and hosted LLMs, each with its prompt and code.">
+  <meta property="og:image" content="https://neuroviz.uk/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="A grid of model-generated games, 3D scenes, sketches and SVG illustrations.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="LLM Test Bench home">
+      <span class="brand-mark">LT</span>
+      <span>LLM Test Bench</span>
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="./#tools">Tools</a>
+      <a href="showcase.html" aria-current="page">Showcase</a>
+      <a href="settings.html">Settings</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a>
+    </nav>
+  </header>
+
+  <main class="showcase-page" data-showcase-panel>
+    <section class="showcase-page-head">
+      <p class="eyebrow">Real output, not mock-ups</p>
+      <h1>Showcase</h1>
+      <p class="showcase-page-intro">The best generations from the three benches, rated by the maintainer. Every piece was written by a model from a single prompt. Click one to open its prompt and full source in the bench that made it, then run the same prompt on your own model.</p>
+    </section>
+
+    <div class="showcase-toolbar">
+      <div class="filter-chips" data-showcase-filters role="group" aria-label="Filter by bench"></div>
+      <label class="sort-select">Sort
+        <select data-showcase-sort>
+          <option value="curated">Curated</option>
+          <option value="rating">Highest rated</option>
+        </select>
+      </label>
+    </div>
+
+    <p class="showcase-count" data-showcase-count aria-live="polite"></p>
+    <div class="showcase-grid showcase-grid-full" data-showcase-grid>
+      <p class="showcase-empty">Loading the showcase&hellip;</p>
+    </div>
+
+    <aside class="browser-note">
+      <strong>About these examples.</strong>
+      Code is shown as each model wrote it. Some examples load libraries or fonts from public CDNs when you open them. Ratings are one person's judgement; model names are the labels used at generation time.
+    </aside>
+  </main>
+
+  <footer>
+    <span>LLM Test Bench · MIT licensed</span>
+    <span>Experimental software — review generated code before sharing it.</span>
+  </footer>
+  <script src="showcase.js"></script>
+</body>
+</html>

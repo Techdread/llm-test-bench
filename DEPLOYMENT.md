@@ -40,12 +40,25 @@ creating a DNS record by hand, or you may see a `522` error.
 - https://developers.cloudflare.com/pages/framework-guides/deploy-anything/
 - https://developers.cloudflare.com/pages/configuration/custom-domains/
 
+### Optional: the showcase service
+
+`functions/` holds a small read-only API for the showcase (`/api/showcase`,
+`/api/showcase/<id>`, `/api/media/<key>`), backed by a D1 database and an R2
+bucket. It is optional: with no bindings each route answers `503` and the site
+serves the showcase copy baked into `_showcase/`. To turn it on, create a D1
+database and an R2 bucket, apply `migrations/*.sql` to the database, and in the
+Pages project's **Settings → Bindings** bind the database as `DB` and the bucket
+as `MEDIA`. The maintainers fill it with their own seeding tool; a fork that
+does not need a live showcase can ignore it.
+
 ### Other hosts
 
 `_headers` is Cloudflare-specific. On Netlify the same file format works; on other
 hosts, port the equivalent rules — `X-Content-Type-Options`, `Referrer-Policy`,
-`Permissions-Policy`, `X-Frame-Options`, and long-lived immutable caching for
-`/shared/lib/*` — to your host's own configuration.
+`Permissions-Policy`, `X-Frame-Options`, long-lived immutable caching for
+`/shared/lib/*`, and the sandboxing `Content-Security-Policy` on `/_showcase/*` —
+to your host's own configuration. `functions/` only runs on Cloudflare Pages;
+elsewhere the site uses the baked-in `_showcase/` copy.
 
 ## Requirements
 

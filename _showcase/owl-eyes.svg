@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#1A1200"/>
+      <stop offset="100%" stop-color="#030303"/>
+    </radialGradient>
+    <radialGradient id="irisGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF8D0"/>
+      <stop offset="35%" stop-color="#FFD700"/>
+      <stop offset="70%" stop-color="#B8860B"/>
+      <stop offset="90%" stop-color="#4A3000"/>
+      <stop offset="100%" stop-color="#1A0D00"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="50%" cy="45%" r="75%">
+      <stop offset="0%" stop-color="#000" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#000" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#000" stop-opacity="0.95"/>
+    </radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="25"/>
+    </filter>
+  </defs>
+
+  <rect width="100%" height="100%" fill="#050505"/>
+  <rect width="100%" height="100%" fill="url(#bgGrad)"/>
+
+  <g id="atmosphere">
+    <circle cx="240" cy="360" r="220" fill="#2A1A00" filter="url(#softGlow)" opacity="0.15"/>
+    <circle cx="560" cy="360" r="220" fill="#2A1A00" filter="url(#softGlow)" opacity="0.15"/>
+  </g>
+
+  <g id="facial-disk">
+    <path d="M 400,40 C 660,60 760,280 710,540 C 660,760 400,830 400,830 C 400,830 140,760 90,540 C 40,280 140,60 400,40 Z" fill="#0A0A0A"/>
+    
+    <g stroke="#1A1100" stroke-width="3" fill="none" opacity="0.8">
+      <path d="M 400,70 L 400,160 M 320,90 L 350,180 M 480,90 L 450,180 M 220,160 L 280,230 M 580,160 L 520,230 M 130,330 L 220,370 M 670,330 L 580,370 M 140,570 L 250,530 M 660,570 L 550,530 M 240,760 L 340,680 M 560,760 L 460,680"/>
+    </g>
+    <g stroke="#4A3000" stroke-width="1.5" fill="none" opacity="0.5">
+      <path d="M 200,120 Q 250,200 190,320 M 600,120 Q 550,200 610,320 M 320,220 Q 270,330 350,480 M 480,220 Q 530,330 450,480 M 160,480 Q 280,430 230,630 M 640,480 Q 520,430 570,630 M 280,680 Q 380,580 440,700 M 520,680 Q 420,580 360,700"/>
+    </g>
+  </g>
+
+  <g id="eyes">
+    <circle cx="240" cy="360" r="155" fill="#0F0F0F" stroke="#151515" stroke-width="8"/>
+    <circle cx="560" cy="360" r="155" fill="#0F0F0F" stroke="#151515" stroke-width="8"/>
+
+    <circle cx="240" cy="360" r="150" fill="url(#irisGrad)" opacity="0.6" filter="url(#softGlow)"/>
+    <circle cx="560" cy="360" r="150" fill="url(#irisGrad)" opacity="0.6" filter="url(#softGlow)"/>
+
+    <circle cx="240" cy="360" r="142" fill="url(#irisGrad)"/>
+    <circle cx="560" cy="360" r="142" fill="url(#irisGrad)"/>
+
+    <g stroke="#100800" stroke-width="3" fill="none" opacity="0.9">
+      <circle cx="240" cy="360" r="135" stroke-dasharray="4 10"/>
+      <circle cx="240" cy="360" r="115" stroke-dasharray="6 14"/>
+      <circle cx="240" cy="360" r="95" stroke-dasharray="3 8"/>
+      <circle cx="240" cy="360" r="75" stroke-dasharray="5 12"/>
+      <circle cx="560" cy="360" r="135" stroke-dasharray="4 10"/>
+      <circle cx="560" cy="360" r="115" stroke-dasharray="6 14"/>
+      <circle cx="560" cy="360" r="95" stroke-dasharray="3 8"/>
+      <circle cx="560" cy="360" r="75" stroke-dasharray="5 12"/>
+    </g>
+
+    <g stroke="#FFF0A0" stroke-width="2" fill="none" opacity="0.4">
+      <circle cx="240" cy="360" r="125" stroke-dasharray="2 26"/>
+      <circle cx="560" cy="360" r="125" stroke-dasharray="2 26"/>
+    </g>
+
+    <circle cx="240" cy="360" r="72" fill="none" stroke="#D4AF37" stroke-width="4" filter="url(#glow)" opacity="0.8"/>
+    <circle cx="560" cy="360" r="72" fill="none" stroke="#D4AF37" stroke-width="4" filter="url(#glow)" opacity="0.8"/>
+
+    <circle cx="240" cy="360" r="68" fill="#020202"/>
+    <circle cx="560" cy="360" r="68" fill="#020202"/>
+
+    <circle cx="240" cy="360" r="70" fill="none" stroke="#8B6508" stroke-width="2"/>
+    <circle cx="560" cy="360" r="70" fill="none" stroke="#8B6508" stroke-width="2"/>
+
+    <g fill="#FFFFFF" filter="url(#glow)">
+      <circle cx="285" cy="290" r="24" opacity="0.95"/>
+      <circle cx="265" cy="260" r="11" opacity="0.9"/>
+      <circle cx="605" cy="290" r="24" opacity="0.95"/>
+      <circle cx="585" cy="260" r="11" opacity="0.9"/>
+    </g>
+    <g fill="#FFD700" opacity="0.6">
+      <circle cx="305" cy="390" r="7"/>
+      <circle cx="625" cy="390" r="7"/>
+      <circle cx="220" cy="310" r="4"/>
+      <circle cx="540" cy="310" r="4"/>
+    </g>
+  </g>
+
+  <g id="shadows">
+    <path d="M 60,260 Q 240,140 380,320 Q 260,210 110,380 Z" fill="#000000" opacity="0.85"/>
+    <path d="M 740,260 Q 560,140 420,320 Q 540,210 690,380 Z" fill="#000000" opacity="0.85"/>
+    <path d="M 100,520 Q 250,630 370,460 Q 260,560 130,580 Z" fill="#000000" opacity="0.7"/>
+    <path d="M 700,520 Q 550,630 430,460 Q 540,560 670,580 Z" fill="#000000" opacity="0.7"/>
+  </g>
+
+  <g id="beak">
+    <path d="M 385,475 Q 400,510 415,475 Q 430,580 400,680 Q 370,580 385,475 Z" fill="#050505" stroke="#1A1100" stroke-width="2"/>
+    <path d="M 395,485 Q 400,510 405,485 Q 415,560 400,630 Q 385,560 395,485 Z" fill="#2A1A00" opacity="0.9"/>
+    <path d="M 400,500 L 400,580" fill="none" stroke="#000000" stroke-width="2" opacity="0.5"/>
+  </g>
+
+  <g id="gold-dust" fill="#D4AF37" opacity="0.8" filter="url(#glow)">
+    <circle cx="90" cy="110" r="2.5"/>
+    <circle cx="710" cy="130" r="1.5"/>
+    <circle cx="140" cy="610" r="2"/>
+    <circle cx="660" cy="690" r="3"/>
+    <circle cx="410" cy="90" r="1.5"/>
+    <circle cx="180" cy="190" r="2"/>
+    <circle cx="620" cy="170" r="1"/>
+    <circle cx="70" cy="410" r="1.5"/>
+    <circle cx="730" cy="430" r="2"/>
+    <circle cx="120" cy="740" r="1.5"/>
+    <circle cx="680" cy="760" r="2.5"/>
+  </g>
+
+  <rect width="100%" height="100%" fill="url(#vignette)" pointer-events="none"/>
+</svg>

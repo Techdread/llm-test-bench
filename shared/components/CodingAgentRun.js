@@ -22,11 +22,14 @@ export function agentLabel(agentId) {
  *   start: (options: Object) => Promise<Object>,
  *   cancel: () => void,
  *   reset: () => void,
- *   events: Array, running: boolean, cancelling: boolean, agentId: string,
+ *   events: Array, live: ?Object, running: boolean, cancelling: boolean, agentId: string,
  * }}
  */
 export function useCodingAgentRun({ appId } = {}) {
   const [events, setEvents] = useState([]);
+  // The bridge's rolling tail of what the agent is writing or thinking right
+  // now; the finished text still arrives as an ordinary event.
+  const [live, setLive] = useState(null);
   const [running, setRunning] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [agentId, setAgentId] = useState('');
@@ -37,6 +40,7 @@ export function useCodingAgentRun({ appId } = {}) {
 
   const reset = useCallback(() => {
     setEvents([]);
+    setLive(null);
     setCancelling(false);
   }, []);
 
@@ -64,6 +68,7 @@ export function useCodingAgentRun({ appId } = {}) {
     cancelledRef.current = false;
     setAgentId(runAgentId);
     setEvents([]);
+    setLive(null);
     setCancelling(false);
     setRunning(true);
     try {
@@ -80,6 +85,7 @@ export function useCodingAgentRun({ appId } = {}) {
         onWorkspace,
         onStart,
         onEvent: event => setEvents(current => [...current, event]),
+        onLive: setLive,
         onOutput,
       });
     } finally {
@@ -92,7 +98,7 @@ export function useCodingAgentRun({ appId } = {}) {
   /** True when the last run ended because the user cancelled it. */
   const wasCancelled = useCallback(() => cancelledRef.current, []);
 
-  return { start, cancel, reset, wasCancelled, events, running, cancelling, agentId };
+  return { start, cancel, reset, wasCancelled, events, live, running, cancelling, agentId };
 }
 
 /** Inline trace for a `useCodingAgentRun` handle. Renders nothing when idle. */
@@ -105,6 +111,7 @@ export function AgentRunTrace({ run, emptyText, class: className = '' }) {
         running=${run.running}
         agentLabel=${agentLabel(run.agentId)}
         emptyText=${emptyText}
+        live=${run.live}
       />
     </div>`;
 }

@@ -15,8 +15,9 @@ import { getEnabledProviders } from '../services/model-providers.js';
  * @param {boolean} [props.disabled]
  * @param {boolean} [props.loading]
  * @param {Function} [props.onSettingsClick] - Open provider settings
+ * @param {string} [props.placeholder] - Trigger text while nothing is selected
  */
-export function ProviderModelSelector({ models, providerId, modelId, onChange, disabled, loading, onSettingsClick }) {
+export function ProviderModelSelector({ models, providerId, modelId, onChange, disabled, loading, onSettingsClick, placeholder = 'Select model...' }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [showMode, setShowMode] = useState(() => localStorage.getItem('provider-model-selector-show-mode') || 'all');
@@ -128,6 +129,7 @@ export function ProviderModelSelector({ models, providerId, modelId, onChange, d
     if (type === 'unsloth-studio') return 'fa-bolt';
     if (type === 'openai-compatible') return 'fa-plug';
     if (type === 'lemonade') return 'fa-lemon';
+    if (type === 'ensemble') return 'fa-layer-group';
     return 'fa-network-wired';
   };
 
@@ -144,7 +146,7 @@ export function ProviderModelSelector({ models, providerId, modelId, onChange, d
             ? html`<i class="fa-solid fa-spinner fa-spin" style=${{ marginRight: '6px' }}></i> Loading...`
             : (disabled
               ? '\u{2699}\uFE0F Configure providers'
-              : (displayLabel || 'Select model...')
+              : (displayLabel || placeholder)
             )
           }
         </span>

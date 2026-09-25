@@ -158,8 +158,14 @@ export function extractUsage(usage) {
  * NON-streamed responses, and the hub always streams.
  *
  * `now` is injectable so tests stay deterministic.
+ *
+ * `telemetry` is the hub-wide generation tracker (spec 340,
+ * generation-telemetry.js) that model-providers threads into every adapter.
+ * Every mark is forwarded to it, so an adapter that already feeds this object
+ * reports its phases without knowing the tracker exists. The result shape
+ * below is unchanged for existing `onStats` consumers.
  */
-export function createRunStats(now = () => Date.now()) {
+export function createRunStats(now = () => Date.now(), telemetry = null) {
   const startedAt = now();
   let firstTokenAt = null;
   let finishedAt = null;
@@ -168,10 +174,22 @@ export function createRunStats(now = () => Date.now()) {
   let thought = false;
 
   return {
-    markFirstToken() { if (firstTokenAt === null) firstTokenAt = now(); },
-    markReasoning() { thought = true; if (firstTokenAt === null) firstTokenAt = now(); },
-    setUsage(raw) { const u = extractUsage(raw); if (u) usage = u; },
-    setFinishReason(reason) { if (reason) finishReason = reason; },
+    markFirstToken() {
+      if (firstTokenAt === null) firstTokenAt = now();
+      telemetry?.mark?.('firstToken');
+    },
+    markReasoning() {
+      thought = true;
+      if (firstTokenAt === null) firstTokenAt = now();
+      telemetry?.mark?.('firstThought');
+    },
+    setUsage(raw) {
+      const u = extractUsage(raw);
+      if (u) { usage = u; telemetry?.setUsage?.(u); }
+    },
+    setFinishReason(reason) {
+      if (reason) { finishReason = reason; telemetry?.setFinishReason?.(reason); }
+    },
     finish() { finishedAt = now(); return this.result(); },
     result() {
       const end = finishedAt ?? now();

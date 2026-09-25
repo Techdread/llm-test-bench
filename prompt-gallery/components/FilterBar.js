@@ -76,9 +76,11 @@ export function FilterBar({
         </select>
         <select class="filter-select" value=${minRating} onChange=${event => onMinRatingChange(Number(event.target.value))} title="Minimum rating">
           <option value="0">Any rating</option>
-          <option value="3">3+ stars</option>
-          <option value="4">4+ stars</option>
-          <option value="5">5 stars</option>
+          <option value="5">5+ stars</option>
+          <option value="7">7+ stars</option>
+          <option value="8">8+ stars</option>
+          <option value="9">9+ stars</option>
+          <option value="10">10 stars</option>
         </select>
         <select class="filter-select" value=${sortBy} onChange=${event => onSortChange(event.target.value)} title="Sort results">
           <option value="date-desc">Newest first</option>

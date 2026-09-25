@@ -7,6 +7,7 @@
 // Prompt edits keep prior text in a revisions array; removals are soft
 // (seeds are hidden, user prompts go to trash) so no prompt text is ever lost.
 import * as fs from '../../shared/services/fs.js';
+import { ratingOf } from './rating.js';
 
 export const CATEGORIES = [
   { id: 'threejs', label: 'Three.js', icon: 'fa-cube' },
@@ -14,6 +15,8 @@ export const CATEGORIES = [
   { id: 'html-js', label: 'HTML / JavaScript', icon: 'fa-code' },
   { id: 'shader', label: 'Shader', icon: 'fa-fire' },
   { id: 'games-graphics', label: 'Games & Graphics', icon: 'fa-gamepad' },
+  { id: 'webxr', label: 'VR / WebXR', icon: 'fa-vr-cardboard' },
+  { id: 'simulation', label: 'Simulations', icon: 'fa-city' },
 ];
 
 export function categoryLabel(id) {
@@ -42,19 +45,45 @@ function normalizeText(text) {
 
 // ── Seeds ──────────────────────────────────────────────────────────
 
+// Prompt sets keep harder briefs apart from the originals: the Batch dialog
+// runs one set at a time and every batch generation records which set it came
+// from. A prompt without `set` is core — that covers the user's own prompts.
+export const PROMPT_SETS = [
+  { id: 'core', label: 'Core', icon: 'fa-layer-group', hint: 'The original prompts' },
+  { id: 'advanced', label: 'Advanced', icon: 'fa-mountain', hint: 'Harder briefs: each builds on a core prompt with numbered requirements' },
+];
+
+export function promptSetOf(prompt) {
+  return prompt?.set || 'core';
+}
+
+export function promptSetLabel(id) {
+  return PROMPT_SETS.find(s => s.id === id)?.label || id || 'Core';
+}
+
+// Each seed file loads on its own, so a missing advanced file never costs the
+// core prompts.
+const SEED_FILES = [
+  { url: './data/library.json', set: 'core' },
+  { url: './data/library-advanced.json', set: 'advanced' },
+];
+
 let seedsCache = null;
 
 export async function loadSeeds() {
   if (seedsCache) return seedsCache;
-  try {
-    const res = await fetch('./data/library.json');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    seedsCache = (data.prompts || []).map(p => ({ ...p, source: 'curated' }));
-  } catch (e) {
-    console.warn('[library] failed to load seed prompts:', e?.message || e);
-    seedsCache = [];
-  }
+  const lists = await Promise.all(SEED_FILES.map(async (file) => {
+    try {
+      const res = await fetch(file.url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return (data.prompts || []).map(p => ({ ...p, set: p.set || file.set, source: 'curated' }));
+    } catch (e) {
+      console.warn(`[library] failed to load seed prompts from ${file.url}:`, e?.message || e);
+      return [];
+    }
+  }));
+  seedsCache = lists.flat();
   return seedsCache;
 }
 
@@ -194,7 +223,7 @@ export function statsForPrompt(generations, prompt) {
   for (const g of matching) {
     const m = g.metadata || {};
     if (m.model) models.add(m.model);
-    if ((m.rating || 0) > bestRating) bestRating = m.rating || 0;
+    if (ratingOf(m) > bestRating) bestRating = ratingOf(m);
     if ((m.createdAt || '') > lastRunAt) lastRunAt = m.createdAt || '';
   }
   return { runs: matching.length, models: models.size, bestRating, lastRunAt };
@@ -204,6 +233,10 @@ export function statsForPrompt(generations, prompt) {
 
 function guessCategory(promptText) {
   const t = normalizeText(promptText);
+  // WebXR wins over the library it is written in — a VR Three.js prompt is a VR prompt.
+  if (/webxr|\bvr\b|immersive-(vr|ar)|quest ?[23]|passthrough|hand tracking/.test(t)) return 'webxr';
+  // Likewise a simulator is a simulation whatever it renders with (e.g. a Three.js bus sim).
+  if (/\bsimulator\b|\bsim ?(city|earth)\b|tycoon|\bagent-based\b/.test(t)) return 'simulation';
   if (/three\.?js/.test(t)) return 'threejs';
   if (/p5\.?js|p5 sketch/.test(t)) return 'p5js';
   if (/shader|glsl|webgl|raymarch/.test(t)) return 'shader';

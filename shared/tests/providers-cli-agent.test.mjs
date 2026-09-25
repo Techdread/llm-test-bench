@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CLI_DEFAULT_MODEL,
+  CHAT_MODE_PREAMBLE,
   agentIdFromProviderId,
+  foldScratchFiles,
   chatCompletion,
   createProvider,
   fetchModels,
@@ -26,6 +28,7 @@ let agentModels = { 'claude-code': ['opus', 'sonnet'], codex: [], antigravity: [
 let agentModelOptions = {};
 let runEvents = [];
 let lastRunBody = null;
+let scratchFiles = [];
 
 function jsonResponse(body, ok = true) {
   return Promise.resolve({ ok, status: ok ? 200 : 404, json: () => Promise.resolve(body) });
@@ -35,7 +38,7 @@ globalThis.fetch = (url, init) => {
   const path = String(url);
   if (path === '/__agent/runs') {
     return bridgeUp
-      ? jsonResponse({ runs: [], activeCount: 0, features: ['inline-image-attachments'] })
+      ? jsonResponse({ runs: [], activeCount: 0, features: ['inline-image-attachments', 'scratch-files'] })
       : jsonResponse({}, false);
   }
   if (path.startsWith('/__agent/models/')) {
@@ -51,6 +54,7 @@ globalThis.fetch = (url, init) => {
     return jsonResponse({ runId: 'run-test' });
   }
   if (path.startsWith('/__agent/cancel/')) return jsonResponse({ ok: true });
+  if (path === '/__agent/scratch-files/run-test') return jsonResponse({ files: scratchFiles });
   throw new Error(`unexpected fetch: ${path}`);
 };
 
@@ -70,6 +74,7 @@ test.beforeEach(() => {
   bridgeUp = true;
   agentModelOptions = {};
   lastRunBody = null;
+  scratchFiles = [];
   runEvents = [
     { type: 'message', text: 'Working on it.' },
     { type: 'done', summary: 'The answer is 42.', exitCode: 0 },
@@ -81,7 +86,8 @@ test.beforeEach(() => {
 test('every bridge agent is offered as a provider under the cli-agent: prefix', () => {
   const providers = listProviders();
   assert.deepEqual(providers.map(p => p.id).sort(),
-    ['cli-agent:antigravity', 'cli-agent:claude-code', 'cli-agent:codex', 'cli-agent:grok']);
+    ['cli-agent:antigravity', 'cli-agent:claude-code', 'cli-agent:codex', 'cli-agent:cursor',
+      'cli-agent:devin', 'cli-agent:grok', 'cli-agent:opencode']);
   for (const provider of providers) {
     assert.equal(provider.type, 'cli-agent');
     assert.equal(provider.synthetic, true, 'must be flagged so the registry never persists it');
@@ -120,12 +126,18 @@ test('Grok exposes the models enumerated by its CLI', async () => {
 
 test('fetchModels preserves catalogue display labels for Gemini effort variants', async () => {
   agentModelOptions.antigravity = [
+    { id: 'gemini-3.8-flash-high', label: 'Gemini 3.8 Flash (High)' },
+    { id: 'gemini-3.8-flash-medium', label: 'Gemini 3.8 Flash (Medium)' },
+    { id: 'gemini-3.8-flash-low', label: 'Gemini 3.8 Flash (Low)' },
     { id: 'gemini-3.7-flash-high', label: 'Gemini 3.7 Flash (High)' },
     { id: 'gemini-3.7-flash-medium', label: 'Gemini 3.7 Flash (Medium)' },
     { id: 'gemini-3.7-flash-low', label: 'Gemini 3.7 Flash (Low)' },
   ];
   const models = await fetchModels(createProvider({ id: 'antigravity', label: 'Antigravity' }));
   assert.deepEqual(models.slice(1).map(model => [model.modelId, model.name]), [
+    ['gemini-3.8-flash-high', 'Gemini 3.8 Flash (High)'],
+    ['gemini-3.8-flash-medium', 'Gemini 3.8 Flash (Medium)'],
+    ['gemini-3.8-flash-low', 'Gemini 3.8 Flash (Low)'],
     ['gemini-3.7-flash-high', 'Gemini 3.7 Flash (High)'],
     ['gemini-3.7-flash-medium', 'Gemini 3.7 Flash (Medium)'],
     ['gemini-3.7-flash-low', 'Gemini 3.7 Flash (Low)'],
@@ -221,7 +233,8 @@ test('streamChat streams live messages and resolves with the run summary', async
   assert.equal(stats.length, 1);
   assert.equal(lastRunBody.agent, 'claude-code');
   assert.equal(lastRunBody.options.model, 'opus');
-  assert.equal(lastRunBody.prompt, 'Be terse.\n\n---\n\nWhat is the answer?');
+  assert.equal(lastRunBody.prompt, `${CHAT_MODE_PREAMBLE}\n\n---\n\nBe terse.\n\n---\n\nWhat is the answer?`,
+    'a chat-shaped run is told its reply is the only thing the app receives');
   assert.equal(lastRunBody.projectDir, '', 'no project dir — the bridge supplies its scratch dir');
 });
 
@@ -257,6 +270,17 @@ test('Antigravity picker variants become a base model plus reasoning effort', as
   }
 });
 
+test('Gemini 3.8 picker variants become the new base model plus reasoning effort', async () => {
+  for (const effort of ['low', 'medium', 'high']) {
+    await streamChat({
+      provider: createProvider({ id: 'antigravity', label: 'Antigravity' }),
+      modelId: `gemini-3.8-flash-${effort}`,
+      userPrompt: 'Hi',
+    });
+    assert.deepEqual(lastRunBody.options, { model: 'gemini-3.8-flash', effort });
+  }
+});
+
 test('Antigravity picker variant effort wins over a stale generation parameter', async () => {
   await streamChat({
     provider: createProvider({ id: 'antigravity', label: 'Antigravity' }),
@@ -276,6 +300,41 @@ test('Codex receives every GPT-5.6 reasoning level', async () => {
       params: { reasoning_effort: effort },
     });
     assert.deepEqual(lastRunBody.options, { model: 'gpt-5.6-sol', effort });
+  }
+});
+
+test('Claude Code receives its --effort levels, and never Codex-only ones', async () => {
+  for (const effort of ['low', 'medium', 'high', 'xhigh', 'max']) {
+    await streamChat({
+      provider: createProvider({ id: 'claude-code', label: 'Claude Code' }),
+      modelId: 'opus',
+      userPrompt: 'Hi',
+      params: { reasoning_effort: effort },
+    });
+    assert.deepEqual(lastRunBody.options, { model: 'opus', effort });
+  }
+  await streamChat({
+    provider: createProvider({ id: 'claude-code', label: 'Claude Code' }),
+    modelId: 'opus',
+    userPrompt: 'Hi',
+    params: { reasoning_effort: 'ultra' },
+  });
+  assert.deepEqual(lastRunBody.options, { model: 'opus' });
+});
+
+test('a run with no reasoning_effort uses the level the picker saved for that model', async () => {
+  const store = { 'devtools-hub-cli-agent-efforts': JSON.stringify({ 'claude-code:sonnet': 'xhigh', 'claude-code:__default__': 'low' }) };
+  globalThis.localStorage = { getItem: key => store[key] ?? null, setItem: (key, value) => { store[key] = value; } };
+  try {
+    const provider = createProvider({ id: 'claude-code', label: 'Claude Code' });
+    await streamChat({ provider, modelId: 'sonnet', userPrompt: 'Hi' });
+    assert.deepEqual(lastRunBody.options, { model: 'sonnet', effort: 'xhigh' });
+    await streamChat({ provider, modelId: CLI_DEFAULT_MODEL, userPrompt: 'Hi' });
+    assert.deepEqual(lastRunBody.options, { effort: 'low' });
+    await streamChat({ provider, modelId: 'sonnet', userPrompt: 'Hi', params: { reasoning_effort: 'medium' } });
+    assert.deepEqual(lastRunBody.options, { model: 'sonnet', effort: 'medium' });
+  } finally {
+    delete globalThis.localStorage;
   }
 });
 
@@ -326,6 +385,94 @@ test('a silent failed run raises the agent error rather than returning empty tex
     }),
     /Antigravity CLI: agy: no output produced/,
   );
+});
+
+test('a failed Codex run cannot turn its last progress message into an answer', async () => {
+  runEvents = [
+    { type: 'message', text: 'I am building the range.' },
+    { type: 'error', message: 'Agent idle timeout exceeded' },
+    { type: 'done', summary: 'I am building the range.', exitCode: -15 },
+  ];
+  await assert.rejects(() => streamChat({
+    provider: providerFromId('cli-agent:codex'), modelId: 'gpt-6-astra', userPrompt: 'Build a range',
+  }), /Agent idle timeout exceeded/);
+  assert.equal(lastRunBody.budgets.idleTimeoutSeconds, 900);
+  assert.equal(lastRunBody.budgets.maxAgentSeconds, 900);
+});
+
+test('Claude quota errors are rejected even when the result contains text', async () => {
+  runEvents = [
+    { type: 'message', text: 'You have hit your session limit' },
+    { type: 'error', message: 'You have hit your session limit' },
+    { type: 'done', summary: 'You have hit your session limit', exitCode: 1 },
+  ];
+  await assert.rejects(() => chatCompletion({
+    provider: providerFromId('cli-agent:claude-code'), messages: [{ role: 'user', content: 'Build a page' }],
+  }), /session limit/);
+});
+
+test('a nonzero exit without an error event is still a failure', async () => {
+  runEvents = [
+    { type: 'message', text: 'Partial output' },
+    { type: 'done', summary: 'Partial output', exitCode: 1 },
+  ];
+  await assert.rejects(() => streamChat({
+    provider: providerFromId('cli-agent:codex'), userPrompt: 'Build a page',
+  }), /exited with code 1/);
+});
+
+test('budget errors cannot be hidden by an otherwise successful completion', async () => {
+  runEvents = [
+    { type: 'error', message: 'Agent token budget exceeded' },
+    { type: 'done', summary: 'Some answer', exitCode: 0 },
+  ];
+  await assert.rejects(() => streamChat({
+    provider: providerFromId('cli-agent:codex'), userPrompt: 'Build a page',
+  }), /token budget exceeded/);
+});
+
+test('files an agent wrote instead of answering are folded back into the reply', async () => {
+  runEvents = [{ type: 'done', summary: 'Built it — open index.html.', exitCode: 0 }];
+  scratchFiles = [
+    { path: 'game.js', size: 9, text: 'let a=1;\n' },
+    { path: 'index.html', size: 30, text: '<!doctype html><script src="game.js"></script>\n' },
+    { path: 'sprite.png', size: 4096 },
+  ];
+  const chunks = [];
+  const text = await streamChat({
+    provider: createProvider({ id: 'devin', label: 'Devin' }),
+    userPrompt: 'Build a game',
+    onChunk: c => chunks.push(c),
+  });
+  assert.ok(text.startsWith('`index.html`:\n\n```html\n<!doctype html>'), 'index.html leads so HTML extractors find it first');
+  assert.match(text, /```javascript\nlet a=1;\n```/);
+  assert.match(text, /too large or binary to include: sprite\.png/);
+  assert.ok(text.endsWith('Built it — open index.html.'), 'the agent\'s own reply is kept');
+  assert.equal(chunks.at(-1), text, 'the caller lands on the folded answer');
+});
+
+test('a reply that already contains the file is returned unchanged', () => {
+  const html = '<!doctype html><title>x</title><body>hello</body>';
+  const reply = `Here it is:\n\n\`\`\`html\n${html}\n\`\`\``;
+  assert.equal(foldScratchFiles(reply, [{ path: 'index.html', text: `${html}\n` }]), reply);
+  assert.equal(foldScratchFiles('plain answer', []), 'plain answer');
+});
+
+test('streamed deltas continue the message instead of starting new paragraphs', async () => {
+  runEvents = [
+    { type: 'message', text: 'I built a single', delta: true },
+    { type: 'message', text: '-page Tow', delta: true },
+    { type: 'message', text: 'er game.', delta: true },
+    { type: 'done', summary: '', exitCode: 0 },
+  ];
+  const chunks = [];
+  const text = await streamChat({
+    provider: createProvider({ id: 'antigravity', label: 'Antigravity' }),
+    userPrompt: 'Go',
+    onChunk: c => chunks.push(c),
+  });
+  assert.equal(text, 'I built a single-page Tower game.');
+  assert.equal(chunks[1], 'I built a single-page Tow');
 });
 
 test('tool-calling is refused instead of being silently dropped', async () => {

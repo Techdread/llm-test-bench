@@ -417,6 +417,170 @@ body::before {
   border-top: 1px solid var(--border-color);
 }
 
+/* ── Shared WAN2GP generated-image library ── */
+.wan-image-library-overlay { padding: 18px; }
+
+.wan-image-library-dialog {
+  width: min(1180px, 96vw);
+  max-width: 96vw;
+  height: min(860px, 94vh);
+  max-height: 94vh;
+}
+
+.wan-image-library-heading { min-width: 0; }
+.wan-image-library-heading h2 { display: flex; align-items: center; gap: 8px; }
+.wan-image-library-heading h2 i { color: var(--accent); }
+.wan-image-library-heading span { display: block; margin-top: 2px; color: var(--text-muted); font-size: 11px; }
+
+.wan-image-library-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.wan-image-library-controls > label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.wan-image-library-controls select,
+.wan-image-library-search {
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.wan-image-library-controls select { padding: 5px 7px; }
+
+.wan-image-library-search {
+  flex: 1;
+  min-width: 180px;
+  padding: 0 9px;
+}
+
+.wan-image-library-search i { color: var(--text-muted); }
+.wan-image-library-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.wan-image-library-error {
+  padding: 8px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--danger) 45%, var(--border-color));
+  background: color-mix(in srgb, var(--danger) 10%, var(--bg-primary));
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.wan-image-library-body { flex: 1; min-height: 0; padding: 12px; }
+
+.wan-image-library-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--wan-image-columns, 8), minmax(0, 1fr));
+  align-content: start;
+  gap: 8px;
+}
+
+.wan-image-library-tile {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.wan-image-library-tile:hover { border-color: var(--accent); background: var(--bg-hover); }
+.wan-image-library-tile.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+
+.wan-image-library-thumb {
+  display: flex;
+  width: 100%;
+  aspect-ratio: 1;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+}
+
+.wan-image-library-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.wan-image-library-name,
+.wan-image-library-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wan-image-library-name { font-size: 10px; font-weight: 600; }
+.wan-image-library-meta { color: var(--text-muted); font-size: 9px; }
+
+.wan-image-library-empty {
+  display: flex;
+  min-height: 260px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.wan-image-library-empty > i { font-size: 28px; }
+
+.wan-image-library-footer { align-items: center; }
+.wan-image-library-count { flex: 1; min-width: 0; color: var(--text-muted); font-size: 11px; }
+.wan-image-library-count strong { color: var(--text-primary); }
+.wan-image-library-pages { display: flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: 11px; }
+
+/* Portable voxel generations reuse the shared generated-media library shell. */
+.voxel-generation-library-thumb { position: relative; }
+.voxel-generation-library-thumb img {
+  object-fit: contain;
+  background:
+    linear-gradient(45deg, var(--bg-secondary) 25%, transparent 25%) 0 0 / 16px 16px,
+    linear-gradient(-45deg, var(--bg-secondary) 25%, transparent 25%) 0 8px / 16px 16px,
+    linear-gradient(45deg, transparent 75%, var(--bg-secondary) 75%) 8px -8px / 16px 16px,
+    linear-gradient(-45deg, transparent 75%, var(--bg-secondary) 75%) -8px 0 / 16px 16px;
+}
+.voxel-generation-frame-badge {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  color: var(--text-primary);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+@media (max-width: 800px) {
+  .wan-image-library-dialog { width: 98vw; max-width: 98vw; }
+  .wan-image-library-controls { flex-wrap: wrap; }
+  .wan-image-library-search { flex-basis: 100%; }
+  .wan-image-library-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .wan-image-library-footer { flex-wrap: wrap; }
+  .wan-image-library-count { flex-basis: 100%; }
+}
+
 /* ── Form ── */
 .form-group {
   display: flex;
@@ -2176,3 +2340,118 @@ body[data-wallpaper="grid"]::before {
   .record-video-preview-actions { flex-wrap: wrap; }
   .record-video-preview-actions .toolbar-spacer { display: none; }
 }
+
+/* ── CLI agent model curation (CliAgentModelsDialog) ── */
+.cli-models-modal .modal-body { max-height: 62vh; }
+
+.cli-models-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.cli-models-error {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--danger, #e5534b);
+}
+
+.cli-models-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cli-models-toolbar input[type="search"] {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+.cli-models-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cli-models-family > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cli-models-family > summary::-webkit-details-marker { display: none; }
+.cli-models-family > summary:hover { background: var(--bg-tertiary); }
+
+/* The rows are collapsed by default, so the caret is the only thing saying a
+   family opens at all. */
+.cli-models-family > summary::before {
+  content: "\25b8";
+  width: 10px;
+  color: var(--text-muted);
+  transition: transform 0.12s ease;
+}
+
+.cli-models-family[open] > summary::before { transform: rotate(90deg); }
+
+.cli-models-family.cli-models-family-single > summary::before { visibility: hidden; }
+
+.cli-models-family-label {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.cli-models-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cli-models-variants {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0 8px 26px;
+}
+
+.cli-models-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+
+.cli-models-row:hover { background: var(--bg-tertiary); }
+.cli-models-row-label { flex: 1; color: var(--text-secondary); }
+.cli-models-row code { font-size: 0.72rem; color: var(--text-muted); }
+
+.cli-models-summary {
+  margin-right: auto;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  align-self: center;
+}
+
+/* Settings page: one row per bridge agent. */
+.cli-agent-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cli-agent-row:last-child { border-bottom: none; }
+.cli-agent-row-info { flex: 1; min-width: 0; }
+.cli-agent-row-name { font-weight: 600; color: var(--text-primary); }
+.cli-agent-row-meta { font-size: 0.78rem; color: var(--text-muted); }

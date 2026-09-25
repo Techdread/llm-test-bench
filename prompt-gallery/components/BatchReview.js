@@ -2,6 +2,8 @@ import { html } from 'htm/preact';
 import { Fragment } from 'preact';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'preact/hooks';
 import { VerificationBadge, VerificationDetails } from './VerificationBadge.js';
+import { RatingWidget } from './RatingWidget.js';
+import { ratingFromKey, RATING_MAX } from '../services/rating.js';
 
 // Live HTML preview in a sandboxed iframe. srcdoc is (re)applied after the
 // element is laid out and cleared first, so swapping generations tears down the
@@ -22,7 +24,7 @@ export function HtmlLive({ html: content }) {
 // Full-screen lightbox for examining a single generation up close. Sits above
 // everything and closes on backdrop click, the X, or Escape. A capture-phase
 // key handler keeps Escape/arrows from leaking to the review nav underneath.
-export function HtmlLightbox({ html: content, title, subtitle, onClose }) {
+export function HtmlLightbox({ html: content, title, subtitle, emptyMessage = '', onClose }) {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
@@ -45,7 +47,11 @@ export function HtmlLightbox({ html: content, title, subtitle, onClose }) {
           </div>
           <button class="btn-icon" onClick=${onClose} title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="html-lightbox-stage"><${HtmlLive} html=${content} /></div>
+        <div class="html-lightbox-stage">
+          ${content
+            ? html`<${HtmlLive} html=${content} />`
+            : html`<div class="html-lightbox-empty"><i class="fa-solid fa-spinner fa-spin"></i><span>${emptyMessage || 'Waiting for output…'}</span></div>`}
+        </div>
       </div>
     </div>
   `;
@@ -54,11 +60,13 @@ export function HtmlLightbox({ html: content, title, subtitle, onClose }) {
 // A results list + big preview with ‹ › arrows, shared by the just-finished run
 // and the past-run browser.
 //
-// rows: [{ key, title, prompt, id, html, icon, cls, label, autoScore, healed, error }]
+// rows: [{ key, title, prompt, id, html, icon, cls, label, autoScore, healed, error, rating }]
 //       Rows without `html` (failed/skipped) still show in the list but are
 //       skipped by the arrows.
 // resetKey: changes when `rows` describes a different run — jumps back to the first.
-export function BatchReview({ rows, resetKey, onOpen }) {
+// onRate(id, value): when given, the shown generation can be judged 0–10 with
+//       the stars or the number keys (1–9, 0 = 10).
+export function BatchReview({ rows, resetKey, onOpen, onRate }) {
   const [pos, setPos] = useState(0);
   const [zoom, setZoom] = useState(null);
 
@@ -92,6 +100,23 @@ export function BatchReview({ rows, resetKey, onOpen }) {
 
   const fmtScore = (s) => (s == null ? '' : `${Math.round(s * 100)}%`);
   const cur = idx < 0 ? null : rows[idx];
+  const canRate = !!(onRate && cur?.id);
+
+  // Judge while stepping through: number keys rate the generation on screen.
+  const curId = cur?.id || '';
+  useEffect(() => {
+    if (!onRate || !curId) return undefined;
+    const onKey = (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.target?.closest?.('input, select, textarea, [contenteditable]')) return;
+      const value = ratingFromKey(e.key);
+      if (value == null) return;
+      e.preventDefault();
+      onRate(curId, value);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onRate, curId]);
 
   // Per-generation telemetry: how fast, and whether the model actually thought.
   const statsBits = (s) => {
@@ -125,6 +150,7 @@ export function BatchReview({ rows, resetKey, onOpen }) {
               </div>
               <span class="batch-run-status">
                 ${r.label}
+                ${r.rating > 0 ? html` <span class="batch-rating-chip" title=${`Rated ${r.rating}/${RATING_MAX}`}><i class="fa-solid fa-star"></i> ${r.rating}</span>` : null}
                 ${r.autoScore != null ? html` <span class="batch-score-chip">${fmtScore(r.autoScore)}</span>` : null}
                 ${r.healed ? html` <span class="batch-healed-chip">fixed</span>` : null}
                 ${r.verification ? html` <${VerificationBadge} verification=${r.verification} />` : null}
@@ -167,6 +193,13 @@ export function BatchReview({ rows, resetKey, onOpen }) {
               </button>
             `}
           </div>
+          ${canRate && html`
+            <div class="batch-review-judge">
+              <span class="batch-review-judge-label">Your rating</span>
+              <${RatingWidget} rating=${cur.rating || 0} onChange=${(value) => onRate(cur.id, value)} size=${16} />
+              <span class="batch-review-judge-hint">keys 1–9, 0 = 10 · click the lit star to clear</span>
+            </div>
+          `}
           ${(cur.paramsLabel || statsBits(cur.stats)) && html`
             <div class="batch-review-meta">
               ${cur.paramsLabel ? html`<span class="batch-params-chip"><i class="fa-solid fa-sliders"></i> ${cur.paramsLabel}</span>` : null}

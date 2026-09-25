@@ -1,3 +1,5 @@
+import { ratingOf, FAVORITE_RATING } from './rating.js';
+
 const RECENT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 function dateValue(value) {
@@ -6,7 +8,7 @@ function dateValue(value) {
 }
 
 function ratingValue(generation) {
-  return Number(generation.metadata?.rating) || 0;
+  return ratingOf(generation.metadata);
 }
 
 function text(value) {
@@ -67,7 +69,7 @@ function matchesCollection(generation, collection, now) {
   const archived = isArchived(generation);
   switch (collection) {
     case 'unreviewed': return !archived && ratingValue(generation) === 0;
-    case 'favorites': return !archived && ratingValue(generation) >= 4;
+    case 'favorites': return !archived && ratingValue(generation) >= FAVORITE_RATING;
     case 'refined': return !archived && isRefined(generation);
     case 'verified': return !archived && verificationStatus(generation) === 'passed';
     case 'verification-warn': return !archived && verificationStatus(generation) === 'warned';
@@ -150,7 +152,7 @@ export function groupGenerationsByFolder(generations) {
       variantCount: variants.length,
       activeCount: activeVariants.length,
       unreviewedCount: activeVariants.filter(generation => ratingValue(generation) === 0).length,
-      favoriteCount: activeVariants.filter(generation => ratingValue(generation) >= 4).length,
+      favoriteCount: activeVariants.filter(generation => ratingValue(generation) >= FAVORITE_RATING).length,
       refinedCount: activeVariants.filter(isRefined).length,
       verifiedCount: activeVariants.filter(generation => verificationStatus(generation) === 'passed').length,
       verificationWarnCount: activeVariants.filter(generation => verificationStatus(generation) === 'warned').length,

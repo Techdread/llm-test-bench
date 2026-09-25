@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurable Planet Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 320px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            background: rgba(15, 15, 20, 0.95);
+            border-radius: 16px;
+            padding: 24px;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(100, 100, 255, 0.3) transparent;
+        }
+
+        #controls::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #controls::-webkit-scrollbar-thumb {
+            background: rgba(100, 100, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 12px;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .preset-btn {
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            background: rgba(100, 100, 255, 0.2);
+            border-color: rgba(100, 100, 255, 0.4);
+        }
+
+        .preset-btn.active {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.4) 0%, rgba(118, 75, 162, 0.4) 100%);
+            border-color: rgba(102, 126, 234, 0.6);
+        }
+
+        .slider-group {
+            margin-bottom: 16px;
+        }
+
+        .slider-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .slider-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .slider-value {
+            font-size: 0.8rem;
+            color: rgba(100, 126, 234, 1);
+            font-weight: 600;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            transition: transform 0.15s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: transparent;
+        }
+
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 2px;
+        }
+
+        input[type="color"]::-webkit-color-swatch {
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .star-field {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @media (max-width: 768px) {
+            #controls {
+                width: calc(100% - 40px);
+                max-height: 50vh;
+                top: auto;
+                bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div id="controls">
+        <h1>🌍 Planet Generator</h1>
+
+        <div class="section">
+            <div class="section-title">Planet Presets</div>
+            <div class="preset-grid">
+                <button class="preset-btn active" data-preset="earth">Earth</button>
+                <button class="preset-btn" data-preset="venus">Venus</button>
+                <button class="preset-btn" data-preset="mars">Mars</button>
+                <button class="preset-btn" data-preset="jupiter">Jupiter</button>
+                <button class="preset-btn" data-preset="saturn">Saturn</button>
+                <button class="preset-btn" data-preset="neptune">Neptune</button>
+                <button class="preset-btn" data-preset="uranus">Uranus</button>
+                <button class="preset-btn" data-preset="mercury">Mercury</button>
+                <button class="preset-btn" data-preset="dwarf">Dwarf Planet</button>
+                <button class="preset-btn" data-preset="hotjupiter">Hot Jupiter</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Size & Motion</div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Radius</span>
+                    <span class="slider-value" id="radius-value">1.0</span>
+                </div>
+                <input type="range" id="radius" min="0.2" max="3" step="0.1" value="1">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Rotation Speed</span>
+                    <span class="slider-value" id="rotation-value">1.0</span>
+                </div>
+                <input type="range" id="rotation" min="0" max="5" step="0.1" value="1">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Tilt (Degrees)</span>
+                    <span class="slider-value" id="tilt-value">23°</span>
+                </div>
+                <input type="range" id="tilt" min="0" max="90" step="1" value="23">
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Terrain</div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Terrain Amplitude</span>
+                    <span class="slider-value" id="amplitude-value">0.1</span>
+                </div>
+                <input type="range" id="amplitude" min="0" max="0.5" step="0.01" value="0.1">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Terrain Frequency</span>
+                    <span class="slider-value" id="frequency-value">3.0</span>
+                </div>
+                <input type="range" id="frequency" min="1" max="20" step="0.5" value="3">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Terrain Octaves</span>
+                    <span class="slider-value" id="octaves-value">4</span>
+                </div>
+                <input type="range" id="octaves" min="1" max="8" step="1" value="4">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Crater Amount</span>
+                    <span class="slider-value" id="craters-value">0.3</span>
+                </div>
+                <input type="range" id="craters" min="0" max="1" step="0.05" value="0.3">
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Colors</div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Primary Color</span>
+                </div>
+                <input type="color" id="color1" value="#3b82f6">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Secondary Color</span>
+                </div>
+                <input type="color" id="color2" value="#22c55e">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Accent Color</span>
+                </div>
+                <input type="color" id="color3" value="#ffffff">
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Atmosphere</div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Atmosphere Strength</span>
+                    <span class="slider-value" id="atmosphere-value">0.5</span>
+                </div>
+                <input type="range" id="atmosphere" min="0" max="1" step="0.05" value="0.5">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Atmosphere Color</span>
+                </div>
+                <input type="color" id="atmosphereColor" value="#87ceeb">
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="hasAtmosphere" checked>
+                <label for="hasAtmosphere">Enable Atmosphere</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Clouds</div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Cloud Opacity</span>
+                    <span class="slider-value" id="clouds-value">0.5</span>
+                </div>
+                <input type="range" id="clouds" min="0" max="1" step="0.05" value="0.5">
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="hasClouds" checked>
+                <label for="hasClouds">Enable Clouds</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Rings</div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Ring Size</span>
+                    <span class="slider-value" id="ringSize-value">1.5</span>
+                </div>
+                <input type="range" id="ringSize" min="1.3" max="3" step="0.1" value="1.5">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Ring Opacity</span>
+                    <span class="slider-value" id="ringOpacity-value">0.7</span>
+                </div>
+                <input type="range" id="ringOpacity" min="0" max="1" step="0.05" value="0.7">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Ring Color</span>
+                </div>
+                <input type="color" id="ringColor" value="#c9a959">
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="hasRings">
+                <label for="hasRings">Enable Rings</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Surface Effects</div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Specular Highlight</span>
+                    <span class="slider-value" id="specular-value">0.3</span>
+                </div>
+                <input type="range" id="specular" min="0" max="1" step="0.05" value="0.3">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Bump Scale</span>
+                    <span class="slider-value" id="bump-value">0.05</span>
+                </div>
+                <input type="range" id="bump" min="0" max="0.2" step="0.01" value="0.05">
+            </div>
+            <div class="slider-group">
+                <div class="slider-header">
+                    <span class="slider-label">Stripes</span>
+                    <span class="slider-value" id="stripes-value">0.0</span>
+                </div>
+                <input type="range" id="stripes" min="0" max="1" step="0.05" value="0">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // Planet Presets
+        const presets = {
+            earth: {
+                radius: 1,
+                rotation: 1,
+                tilt: 23,
+                amplitude: 0.1,
+                frequency: 3,
+                octaves: 4,
+                craters: 0.1,
+                color1: '#3b82f6',
+                color2: '#22c55e',
+                color3: '#ffffff',
+                atmosphere: 0.5,
+                atmosphereColor: '#87ceeb',
+                hasAtmosphere: true,
+                clouds: 0.5,
+                hasClouds: true,
+                hasRings: false,
+                ringSize: 1.5,
+                ringOpacity: 0.7,
+                ringColor: '#c9a959',
+                specular: 0.3,
+                bump: 0.05,
+                stripes: 0
+            },
+            venus: {
+                radius: 0.95,
+                rotation: 0.004,
+                tilt: 177,
+                amplitude: 0.15,
+                frequency: 2,
+                octaves: 3,
+                craters: 0.2,
+                color1: '#e8a838',
+                color2: '#d4722c',
+                color3: '#f5deb3',
+                atmosphere: 0.8,
+                atmosphereColor: '#ffd700',
+                hasAtmosphere: true,
+                clouds: 0.9,
+                hasClouds: true,
+                hasRings: false,
+                ringSize: 1.5,
+                ringOpacity: 0.7,
+                ringColor: '#c9a959',
+                specular: 0.1,
+                bump: 0.02,
+                stripes: 0.6
+            },
+            mars: {
+                radius: 0.53,
+                rotation: 0.97,
+                tilt: 25,
+                amplitude: 0.12,
+                frequency: 4,
+                octaves: 4,
+                craters: 0.4,
+                color1: '#c1440e',
+                color2: '#a63d1f',
+                color3: '#e8d4b8',
+                atmosphere: 0.15,
+                atmosphereColor: '#ff9977',
+                hasAtmosphere: true,
+                clouds: 0.1,
+                hasClouds: true,
+                hasRings: false,
+                ringSize: 1.5,
+                ringOpacity: 0.7,
+                ringColor: '#c9a959',
+                specular: 0.1,
+                bump: 0.08,
+                stripes: 0
+            },
+            jupiter: {
+                radius: 2.5,
+                rotation: 2.4,
+                tilt: 3,
+                amplitude: 0.08,
+                frequency: 6,
+                octaves: 2,
+                craters: 0,
+                color1: '#d4a574',
+                color2: '#c4956a',
+                color3: '#e8d4c4',
+                atmosphere: 0.4,
+                atmosphereColor: '#ffe4c4',
+                hasAtmosphere: true,
+                clouds: 0.6,
+                hasClouds: true,
+                hasRings: false,
+                ringSize: 1.5,
+                ringOpacity: 0.7,
+                ringColor: '#c9a959',
+                specular: 0.2,
+                bump: 0.02,
+                stripes: 0.9
+            },
+            saturn: {
+                radius: 2.2,
+                rotation: 2.2,
+                tilt: 27,
+                amplitude: 0.05,
+                frequency: 4,
+                octaves: 2,
+                craters: 0,
+                color1: '#e8d4a8',
+                color2: '#d4c49a',
+                color3: '#f5e6c8',
+                atmosphere: 0.35,
+                atmosphereColor: '#ffe4b5',
+                hasAtmosphere: true,
+                clouds: 0.5,
+                hasClouds: true,
+                hasRings: true,
+                ringSize: 2.2,
+                ringOpacity: 0.7,
+                ringColor: '#c9a959',
+                specular: 0.15,
+                bump: 0.01,
+                stripes: 0.8
+            },
+            neptune: {
+                radius: 1.5,
+                rotation: 2.1,
+                tilt: 28,
+                amplitude: 0.06,
+                frequency: 3,
+                octaves: 2,
+                craters: 0,
+                color1: '#4166f5',
+                color2: '#4166f5',
+                color3: '#87ceeb',
+                atmosphere: 0.5,
+                atmosphereColor: '#6495ed',
+                hasAtmosphere: true,
+                clouds: 0.6,
+                hasClouds: true,
+                hasRings: false,
+                ringSize: 1.5,
+                ringOpacity: 0.7,
+                ringColor: '#c9a959',
+                specular: 0.3,
+                bump: 0.02,
+                stripes: 0.7
+            },
+            uranus: {
+                radius: 1.6,
+                rotation: -1.4,
+                tilt: 98,
+                amplitude: 0.03,
+                frequency: 2,
+                octaves: 2,
+                craters: 0,
+                color1: '#72d6e2',
+                color2: '#5fcdd8',
+                color3: '#b0e6ec',
+                atmosphere: 0.4,
+                atmosphereColor: '#afeeee',
+                hasAtmosphere: true,
+                clouds: 0.3,
+                hasClouds: true,
+                hasRings: true,
+                ringSize: 1.8,
+                ringOpacity: 0.5,
+                ringColor: '#a0d8d8',
+                specular: 0.25,
+                bump: 0.01,
+                stripes: 0.4
+            },
+            mercury: {
+                radius: 0.38,
+                rotation: 0.017,
+                tilt: 0.034,
+                amplitude: 0.08,
+                frequency: 8,
+                octaves: 6,
+                craters: 0.8,
+                color1: '#8c8c8c',
+                color2: '#6b6b6b',
+                color3: '#b0b0b0',
+                atmosphere: 0,
+                atmosphereColor: '#87ceeb',
+                hasAtmosphere: false,
+                clouds: 0,
+                hasClouds: false,
+                hasRings: false,
+                ringSize: 1.5,
+                ringOpacity: 0.7,
+                ringColor: '#c9a959',
+                specular: 0.1,
+                bump: 0.12,
+                stripes: 0
+            },
+            dwarf: {
+                radius: 0.3,
+                rotation: 0.5,
+                tilt: 10,
+                amplitude: 0.15,
+                frequency: 6,
+                octaves: 5,
+                craters: 0.5,
+                color1: '#d4a574',
+                color2: '#b8956e',
+                color3: '#e8d4c4',
+                atmosphere: 0.1,
+                atmosphereColor: '#ffe4c4',
+                hasAtmosphere: true,
+                clouds: 0,
+                hasClouds: false,
+                hasRings: false,
+                ringSize: 1.5,
+                ringOpacity: 0.7,
+                ringColor: '#c9a959',
+                specular: 0.15,
+                bump: 0.1,
+                stripes: 0
+            },
+            hotjupiter: {
+                radius: 2.8,
+                rotation: 3.0,
+                tilt: 5,
+                amplitude: 0.12,
+                frequency: 5,
+                octaves: 3,
+                craters: 0,
+                color1: '#ff6b35',
+                color2: '#8b4513',
+                color3: '#ffd700',
+                atmosphere: 0.7,
+                atmosphereColor: '#ff4500',
+                hasAtmosphere: true,
+                clouds: 0.7,
+                hasClouds: true,
+                hasRings: false,
+                ringSize: 1.5,
+                ringOpacity: 0.7,
+                ringColor: '#c9a959',
+                specular: 0.4,
+                bump: 0.03,
+                stripes: 0.5
+            }
+        };
+
+        // Three.js Setup
+        let scene, camera, renderer, controls;
+        let planet, planetGeometry, planetMaterial;
+        let clouds, cloudsGeometry, cloudsMaterial;
+        let atmosphere, atmosphereGeometry, atmosphereMaterial;
+        let rings, ringsGeometry, ringsMaterial;
+        let sunLight, ambientLight;
+
+        // Parameters
+        let params = { ...presets.earth };
+
+        // Simplex Noise Implementation
+        class SimplexNoise {
+            constructor(seed = Math.random()) {
+                this.p = new Uint8Array(256);
+                this.perm = new Uint8Array(512);
+                this.permMod12 = new Uint8Array(512);
+
+                for (let i = 0; i < 256; i++) {
+                    this.p[i] = i;
+                }
+
+                for (let i = 255; i > 0; i--) {
+                    seed = (seed * 16807) % 2147483647;
+                    const n = seed % (i + 1);
+                    [this.p[i], this.p[n]] = [this.p[n], this.p[i]];
+                }
+
+                for (let i = 0; i < 512; i++) {
+                    this.perm[i] = this.p[i & 255];
+                    this.permMod12[i] = this.perm[i] % 12;
+                }
+            }
+
+            noise3D(x, y, z) {
+                const F3 = 1 / 3;
+                const G3 = 1 / 6;
+                const grad3 = [
+                    [1, 1, 0], [-1, 1, 0], [1, -1, 0], [-1, -1, 0],
+                    [1, 0, 1], [-1, 0, 1], [1, 0, -1], [-1, 0, -1],
+                    [0, 1, 1], [0, -1, 1], [0, 1, -1], [0, -1, -1]
+                ];
+
+                let s = (x + y + z) * F3;
+                let i = Math.floor(x + s);
+                let j = Math.floor(y + s);
+                let k = Math.floor(z + s);
+                let t = (i + j + k) * G3;
+                let X0 = i - t;
+                let Y0 = j - t;
+                let Z0 = k - t;
+                let x0 = x - X0;
+                let y0 = y - Y0;
+                let z0 = z - Z0;
+
+                let i1, j1, k1, i2, j2, k2;
+                if (x0 >= y0) {
+                    if (y0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
+                    else if (x0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1; }
+                    else { i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1; }
+                } else {
+                    if (y0 < z0) { i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1; }
+                    else if (x0 < z0) { i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1; }
+                    else { i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0; }
+                }
+
+                let x1 = x0 - i1 + G3;
+                let y1 = y0 - j1 + G3;
+                let z1 = z0 - k1 + G3;
+                let x2 = x0 - i2 + 2 * G3;
+                let y2 = y0 - j2 + 2 * G3;
+                let z2 = z0 - k2 + 2 * G3;
+                let x3 = x0 - 1 + 3 * G3;
+                let y3 = y0 - 1 + 3 * G3;
+                let z3 = z0 - 1 + 3 * G3;
+
+                let ii = i & 255;
+                let jj = j & 255;
+                let kk = k & 255;
+
+                let n0, n1, n2, n3;
+                let t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0;
+                n0 = t0 < 0 ? 0 : (t0 *= t0, t0 * t0 * this.dot(grad3[this.permMod12[ii + this.perm[jj + this.perm[kk]]]], x0, y0, z0));
+
+                let t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1;
+                n1 = t1 < 0 ? 0 : (t1 *= t1, t1 * t1 * this.dot(grad3[this.permMod12[ii + i1 + this.perm[jj + j1 + this.perm[kk + k1]]]], x1, y1, z1));
+
+                let t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2;
+                n2 = t2 < 0 ? 0 : (t2 *= t2, t2 * t2 * this.dot(grad3[this.permMod12[ii + i2 + this.perm[jj + j2 + this.perm[kk + k2]]]], x2, y2, z2));
+
+                let t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3;
+                n3 = t3 < 0 ? 0 : (t3 *= t3, t3 * t3 * this.dot(grad3[this.permMod12[ii + 1 + this.perm[jj + 1 + this.perm[kk + 1]]]], x3, y3, z3));
+
+                return 32 * (n0 + n1 + n2 + n3);
+            }
+
+            dot(g, x, y, z) {
+                return g[0] * x + g[1] * y + g[2] * z;
+            }
+
+            fbm(x, y, z, octaves) {
+                let value = 0;
+                let amplitude = 1;
+                let frequency = 1;
+                let maxValue = 0;
+
+                for (let i = 0; i < octaves; i++) {
+                    value += amplitude * this.noise3D(x * frequency, y * frequency, z * frequency);
+                    maxValue += amplitude;
+                    amplitude *= 0.5;
+                    frequency *= 2;
+                }
+
+                return value / maxValue;
+            }
+        }
+
+        const simplex = new SimplexNoise(12345);
+
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+
+            // Camera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setClearColor(0x000000, 1);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 2;
+            controls.maxDistance = 15;
+
+            // Lights
+            ambientLight = new THREE.AmbientLight(0x404040, 0.3);
+            scene.add(ambientLight);
+
+            sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            sunLight.position.set(5, 3, 5);
+            scene.add(sunLight);
+
+            // Create starfield
+            createStarfield();
+
+            // Create planet
+            createPlanet();
+
+            // Create clouds
+            createClouds();
+
+            // Create atmosphere
+            createAtmosphere();
+
+            // Create rings
+            createRings();
+
+            // Apply initial preset
+            applyPreset('earth');
+
+            // Event listeners
+            setupEventListeners();
+
+            // Animation loop
+            animate();
+        }
+
+        function createStarfield() {
+            const starGeometry = new THREE.BufferGeometry();
+            const starCount = 5000;
+            const positions = new Float32Array(starCount * 3);
+            const colors = new Float32Array(starCount * 3);
+
+            for (let i = 0; i < starCount; i++) {
+                const i3 = i * 3;
+                const radius = 100 + Math.random() * 200;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                positions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i3 + 2] = radius * Math.cos(phi);
+
+                const brightness = 0.5 + Math.random() * 0.5;
+                colors[i3] = brightness;
+                colors[i3 + 1] = brightness;
+                colors[i3 + 2] = brightness + Math.random() * 0.2;
+            }
+
+            starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const starMaterial = new THREE.PointsMaterial({
+                size: 0.5,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+        }
+
+        function createPlanet() {
+            planetGeometry = new THREE.SphereGeometry(1, 128, 128);
+
+            planetMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    color1: { value: new THREE.Color(params.color1) },
+                    color2: { value: new THREE.Color(params.color2) },
+                    color3: { value: new THREE.Color(params.color3) },
+                    amplitude: { value: params.amplitude },
+                    frequency: { value: params.frequency },
+                    octaves: { value: params.octaves },
+                    craters: { value: params.craters },
+                    specular: { value: params.specular },
+                    bumpScale: { value: params.bump },
+                    stripes: { value: params.stripes },
+                    lightDirection: { value: new THREE.Vector3(5, 3, 5).normalize() }
+                },
+                vertexShader: `
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+                    varying vec2 vUv;
+                    varying float vElevation;
+
+                    uniform float amplitude;
+                    uniform float frequency;
+                    uniform float octaves;
+                    uniform float craters;
+                    uniform float stripes;
+                    uniform float bumpScale;
+
+                    // Simplex noise functions
+                    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                    vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                    vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+                    vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+                    float snoise(vec3 v) {
+                        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                        vec3 i = floor(v + dot(v, C.yyy));
+                        vec3 x0 = v - i + dot(i, C.xxx);
+                        vec3 g = step(x0.yzx, x0.xyz);
+                        vec3 l = 1.0 - g;
+                        vec3 i1 = min(g.xyz, l.zxy);
+                        vec3 i2 = max(g.xyz, l.zxy);
+                        vec3 x1 = x0 - i1 + C.xxx;
+                        vec3 x2 = x0 - i2 + C.yyy;
+                        vec3 x3 = x0 - D.yyy;
+                        i = mod289(i);
+                        vec4 p = permute(permute(permute(
+                            i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                            + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                            + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+                        float n_ = 0.142857142857;
+                        vec3 ns = n_ * D.wyz - D.xzx;
+                        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                        vec4 x_ = floor(j * ns.z);
+                        vec4 y_ = floor(j - 7.0 * x_);
+                        vec4 x = x_ * ns.x + ns.yyyy;
+                        vec4 y = y_ * ns.x + ns.yyyy;
+                        vec4 h = 1.0 - abs(x) - abs(y);
+                        vec4 b0 = vec4(x.xy, y.xy);
+                        vec4 b1 = vec4(x.zw, y.zw);
+                        vec4 s0 = floor(b0) * 2.0 + 1.0;
+                        vec4 s1 = floor(b1) * 2.0 + 1.0;
+                        vec4 sh = -step(h, vec4(0.0));
+                        vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+                        vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+                        vec3 p0 = vec3(a0.xy, h.x);
+                        vec3 p1 = vec3(a0.zw, h.y);
+                        vec3 p2 = vec3(a1.xy, h.z);
+                        vec3 p3 = vec3(a1.zw, h.w);
+                        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+                        p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+                        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                        m = m * m;
+                        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+                    }
+
+                    float fbm(vec3 p, int octaves) {
+                        float value = 0.0;
+                        float amplitude = 1.0;
+                        float frequency = 1.0;
+                        for(int i = 0; i < 8; i++) {
+                            if(i >= octaves) break;
+                            value += amplitude * snoise(p * frequency);
+                            amplitude *= 0.5;
+                            frequency *= 2.0;
+                        }
+                        return value;
+                    }
+
+                    float crater(vec3 p, float scale) {
+                        float n = snoise(p * scale);
+                        float crater = smoothstep(0.0, 0.8, n);
+                        return crater;
+                    }
+
+                    void main() {
+                        vUv = uv;
+                        vNormal = normalize(normalMatrix * normal);
+
+                        vec3 pos = position;
+
+                        // Terrain noise
+                        float noise = fbm(pos * frequency, int(octaves)) * amplitude;
+
+                        // Add craters
+                        float craterNoise = snoise(pos * 15.0);
+                        float craterFactor = smoothstep(0.3, 0.7, craterNoise) * craters;
+                        noise -= craterFactor * 0.1;
+
+                        // Stripe effect for gas giants
+                        if(stripes > 0.0) {
+                            float stripe = sin(pos.y * 20.0 + fbm(pos * 2.0, 2) * 2.0) * 0.5 + 0.5;
+                            noise += stripe * stripes * 0.05;
+                        }
+
+                        // Apply displacement
+                        float displacement = noise * 0.1;
+                        pos += normal * displacement;
+
+                        vElevation = displacement;
+                        vPosition = pos;
+
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 color1;
+                    uniform vec3 color2;
+                    uniform vec3 color3;
+                    uniform float craters;
+                    uniform float specular;
+                    uniform float stripes;
+                    uniform vec3 lightDirection;
+
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+                    varying vec2 vUv;
+                    varying float vElevation;
+
+                    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                    vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                    vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+                    vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+                    float snoise(vec3 v) {
+                        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                        vec3 i = floor(v + dot(v, C.yyy));
+                        vec3 x0 = v - i + dot(i, C.xxx);
+                        vec3 g = step(x0.yzx, x0.xyz);
+                        vec3 l = 1.0 - g;
+                        vec3 i1 = min(g.xyz, l.zxy);
+                        vec3 i2 = max(g.xyz, l.zxy);
+                        vec3 x1 = x0 - i1 + C.xxx;
+                        vec3 x2 = x0 - i2 + C.yyy;
+                        vec3 x3 = x0 - D.yyy;
+                        i = mod289(i);
+                        vec4 p = permute(permute(permute(
+                            i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                            + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                            + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+                        float n_ = 0.142857142857;
+                        vec3 ns = n_ * D.wyz - D.xzx;
+                        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                        vec4 x_ = floor(j * ns.z);
+                        vec4 y_ = floor(j - 7.0 * x_);
+                        vec4 x = x_ * ns.x + ns.yyyy;
+                        vec4 y = y_ * ns.x + ns.yyyy;
+                        vec4 h = 1.0 - abs(x) - abs(y);
+                        vec4 b0 = vec4(x.xy, y.xy);
+                        vec4 b1 = vec4(x.zw, y.zw);
+                        vec4 s0 = floor(b0) * 2.0 + 1.0;
+                        vec4 s1 = floor(b1) * 2.0 + 1.0;
+                        vec4 sh = -step(h, vec4(0.0));
+                        vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+                        vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+                        vec3 p0 = vec3(a0.xy, h.x);
+                        vec3 p1 = vec3(a0.zw, h.y);
+                        vec3 p2 = vec3(a1.xy, h.z);
+                        vec3 p3 = vec3(a1.zw, h.w);
+                        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+                        p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+                        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                        m = m * m;
+                        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+                    }
+
+                    void main() {
+                        vec3 normal = normalize(vNormal);
+                        vec3 lightDir = normalize(lightDirection);
+
+                        // Base color mixing
+                        float mixFactor = snoise(vPosition * 2.0) * 0.5 + 0.5;
+                        vec3 baseColor = mix(color1, color2, mixFactor);
+
+                        // Add crater coloring
+                        if(craters > 0.0) {
+                            float craterNoise = snoise(vPosition * 15.0);
+                            float craterMask = smoothstep(0.3, 0.7, craterNoise);
+                            baseColor = mix(baseColor, color3 * 0.7, craterMask * craters);
+                        }
+
+                        // Stripe coloring
+                        if(stripes > 0.0) {
+                            float stripePattern = sin(vPosition.y * 20.0 + snoise(vPosition * 2.0) * 2.0) * 0.5 + 0.5;
+                            vec3 stripeColor = mix(color1, color2, stripePattern);
+                            baseColor = mix(baseColor, stripeColor, stripes * 0.7);
+                        }
+
+                        // Lighting
+                        float diff = max(dot(normal, lightDir), 0.0);
+                        vec3 viewDir = normalize(cameraPosition - vPosition);
+                        vec3 reflectDir = reflect(-lightDir, normal);
+                        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0) * specular;
+
+                        // Ambient
+                        float ambient = 0.15;
+
+                        // Elevation coloring
+                        vec3 elevationColor = mix(baseColor, color3, smoothstep(-0.05, 0.05, vElevation));
+
+                        vec3 finalColor = elevationColor * (ambient + diff * 0.85) + vec3(spec);
+
+                        // Fresnel rim lighting
+                        float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.0);
+                        finalColor += fresnel * 0.1;
+
+                        gl_FragColor = vec4(finalColor, 1.0);
+                    }
+                `
+            });
+
+            planet = new THREE.Mesh(planetGeometry, planetMaterial);
+            scene.add(planet);
+        }
+
+        function createClouds() {
+            cloudsGeometry = new THREE.SphereGeometry(1.02, 64, 64);
+
+            cloudsMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    opacity: { value: params.clouds },
+                    color: { value: new THREE.Color(0xffffff) }
+                },
+                vertexShader: `
+                    varying vec3 vNormal;
+                    varying vec2 vUv;
+
+                    float snoise(vec3 v) {
+                        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                        vec3 i = floor(v + dot(v, C.yyy));
+                        vec3 x0 = v - i + dot(i, C.xxx);
+                        vec3 g = step(x0.yzx, x0.xyz);
+                        vec3 l = 1.0 - g;
+                        vec3 i1 = min(g.xyz, l.zxy);
+                        vec3 i2 = max(g.xyz, l.zxy);
+                        vec3 x1 = x0 - i1 + C.xxx;
+                        vec3 x2 = x0 - i2 + C.yyy;
+                        vec3 x3 = x0 - D.yyy;
+                        i = mod289(i);
+                        vec4 p = permute(permute(permute(
+                            i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                            + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                            + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+                        float n_ = 0.142857142857;
+                        vec3 ns = n_ * D.wyz - D.xzx;
+                        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                        vec4 x_ = floor(j * ns.z);
+                        vec4 y_ = floor(j - 7.0 * x_);
+                        vec4 x = x_ * ns.x + ns.yyyy;
+                        vec4 y = y_ * ns.x + ns.yyyy;
+                        vec4 h = 1.0 - abs(x) - abs(y);
+                        vec4 b0 = vec4(x.xy, y.xy);
+                        vec4 b1 = vec4(x.zw, y.zw);
+                        vec4 s0 = floor(b0) * 2.0 + 1.0;
+                        vec4 s1 = floor(b1) * 2.0 + 1.0;
+                        vec4 sh = -step(h, vec4(0.0));
+                        vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+                        vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+                        vec3 p0 = vec3(a0.xy, h.x);
+                        vec3 p1 = vec3(a0.zw, h.y);
+                        vec3 p2 = vec3(a1.xy, h.z);
+                        vec3 p3 = vec3(a1.zw, h.w);
+                        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+                        p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+                        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                        m = m * m;
+                        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+                    }
+
+                    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                    vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                    vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+                    vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+
+                    void main() {
+                        vUv = uv;
+                        vNormal = normalize(normalMatrix * normal);
+
+                        vec3 pos = position;
+                        float cloudNoise = snoise(pos * 8.0) * 0.5 + 0.5;
+                        cloudNoise = smoothstep(0.4, 0.8, cloudNoise);
+                        pos += normal * cloudNoise * 0.02;
+
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float opacity;
+                    uniform vec3 color;
+                    varying vec3 vNormal;
+                    varying vec2 vUv;
+
+                    void main() {
+                        vec3 viewDir = normalize(cameraPosition);
+                        float fresnel = pow(1.0 - max(dot(vNormal, viewDir), 0.0), 2.0);
+                        gl_FragColor = vec4(color, fresnel * 0.5 + opacity * 0.5);
+                    }
+                `,
+                transparent: true,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+
+            clouds = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
+            clouds.visible = params.hasClouds;
+            scene.add(clouds);
+        }
+
+        function createAtmosphere() {
+            atmosphereGeometry = new THREE.SphereGeometry(1.15, 64, 64);
+
+            atmosphereMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    color: { value: new THREE.Color(params.atmosphereColor) },
+                    intensity: { value: params.atmosphere }
+                },
+                vertexShader: `
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+
+                    void main() {
+                        vNormal = normalize(normalMatrix * normal);
+                        vPosition = (modelViewMatrix * vec4(position, 1.0)).xyz;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 color;
+                    uniform float intensity;
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+
+                    void main() {
+                        vec3 viewDir = normalize(-vPosition);
+                        float fresnel = pow(1.0 - max(dot(vNormal, viewDir), 0.0), 3.0);
+                        vec3 finalColor = color * fresnel * intensity;
+                        gl_FragColor = vec4(finalColor, fresnel * intensity * 0.8);
+                    }
+                `,
+                transparent: true,
+                side: THREE.BackSide,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+
+            atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+            atmosphere.visible = params.hasAtmosphere;
+            scene.add(atmosphere);
+        }
+
+        function createRings() {
+            ringsGeometry = new THREE.RingGeometry(1.3, 2.2, 128);
+
+            ringsMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    color: { value: new THREE.Color(params.ringColor) },
+                    opacity: { value: params.ringOpacity },
+                    size: { value: params.ringSize }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 color;
+                    uniform float opacity;
+                    uniform float size;
+                    varying vec2 vUv;
+
+                    float noise(vec2 p) {
+                        return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+                    }
+
+                    void main() {
+                        vec2 center = vec2(0.5, 0.5);
+                        float dist = distance(vUv, center);
+
+                        // Ring pattern
+                        float ringPattern = sin(dist * 100.0) * 0.5 + 0.5;
+                        ringPattern *= noise(vUv * 50.0) * 0.5 + 0.5;
+
+                        // Inner and outer fade
+                        float innerFade = smoothstep(0.1, 0.25, dist);
+                        float outerFade = smoothstep(0.45, 0.35, dist);
+                        float fade = innerFade * outerFade;
+
+                        // Gap in rings
+                        float gap = smoothstep(0.32, 0.33, dist) * smoothstep(0.35, 0.34, dist);
+                        fade *= (1.0 - gap * 0.8);
+
+                        vec3 finalColor = color * ringPattern;
+                        gl_FragColor = vec4(finalColor, fade * opacity);
+                    }
+                `,
+                transparent: true,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            });
+
+            rings = new THREE.Mesh(ringsGeometry, ringsMaterial);
+            rings.rotation.x = Math.PI / 2;
+            rings.visible = params.hasRings;
+            scene.add(rings);
+        }
+
+        function updatePlanet() {
+            // Update planet uniforms
+            planetMaterial.uniforms.color1.value.set(params.color1);
+            planetMaterial.uniforms.color2.value.set(params.color2);
+            planetMaterial.uniforms.color3.value.set(params.color3);
+            planetMaterial.uniforms.amplitude.value = params.amplitude;
+            planetMaterial.uniforms.frequency.value = params.frequency;
+            planetMaterial.uniforms.octaves.value = params.octaves;
+            planetMaterial.uniforms.craters.value = params.craters;
+            planetMaterial.uniforms.specular.value = params.specular;
+            planetMaterial.uniforms.stripes.value = params.stripes;
+
+            // Update planet scale
+            planet.scale.setScalar(params.radius);
+
+            // Update planet tilt
+            planet.rotation.z = THREE.MathUtils.degToRad(params.tilt - 90);
+
+            // Update clouds
+            clouds.visible = params.hasClouds;
+            cloudsMaterial.uniforms.opacity.value = params.clouds;
+            clouds.scale.setScalar(params.radius * 1.02);
+
+            // Update atmosphere
+            atmosphere.visible = params.hasAtmosphere;
+            atmosphereMaterial.uniforms.color.value.set(params.atmosphereColor);
+            atmosphereMaterial.uniforms.intensity.value = params.atmosphere;
+            atmosphere.scale.setScalar(params.radius * 1.15);
+
+            // Update rings
+            rings.visible = params.hasRings;
+            ringsMaterial.uniforms.color.value.set(params.ringColor);
+            ringsMaterial.uniforms.opacity.value = params.ringOpacity;
+            rings.scale.setScalar(params.ringSize);
+
+            // Update light position based on tilt
+            const lightAngle = THREE.MathUtils.degToRad(params.tilt);
+            sunLight.position.set(
+                5 * Math.cos(lightAngle),
+                3,
+                5 * Math.sin(lightAngle)
+            ).normalize().multiplyScalar(5);
+        }
+
+        function applyPreset(presetName) {
+            const preset = presets[presetName];
+            if (!preset) return;
+
+            params = { ...preset };
+
+            // Update all UI elements
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.preset === presetName);
+            });
+
+            document.getElementById('radius').value = params.radius;
+            document.getElementById('radius-value').textContent = params.radius.toFixed(1);
+
+            document.getElementById('rotation').value = params.rotation;
+            document.getElementById('rotation-value').textContent = params.rotation.toFixed(1);
+
+            document.getElementById('tilt').value = params.tilt;
+            document.getElementById('tilt-value').textContent = params.tilt + '°';
+
+            document.getElementById('amplitude').value = params.amplitude;
+            document.getElementById('amplitude-value').textContent = params.amplitude.toFixed(2);
+
+            document.getElementById('frequency').value = params.frequency;
+            document.getElementById('frequency-value').textContent = params.frequency.toFixed(1);
+
+            document.getElementById('octaves').value = params.octaves;
+            document.getElementById('octaves-value').textContent = params.octaves;
+
+            document.getElementById('craters').value = params.craters;
+            document.getElementById('craters-value').textContent = params.craters.toFixed(2);
+
+            document.getElementById('color1').value = params.color1;
+            document.getElementById('color2').value = params.color2;
+            document.getElementById('color3').value = params.color3;
+
+            document.getElementById('atmosphere').value = params.atmosphere;
+            document.getElementById('atmosphere-value').textContent = params.atmosphere.toFixed(2);
+            document.getElementById('atmosphereColor').value = params.atmosphereColor;
+            document.getElementById('hasAtmosphere').checked = params.hasAtmosphere;
+
+            document.getElementById('clouds').value = params.clouds;
+            document.getElementById('clouds-value').textContent = params.clouds.toFixed(2);
+            document.getElementById('hasClouds').checked = params.hasClouds;
+
+            document.getElementById('ringSize').value = params.ringSize;
+            document.getElementById('ringSize-value').textContent = params.ringSize.toFixed(1);
+            document.getElementById('ringOpacity').value = params.ringOpacity;
+            document.getElementById('ringOpacity-value').textContent = params.ringOpacity.toFixed(2);
+            document.getElementById('ringColor').value = params.ringColor;
+            document.getElementById('hasRings').checked = params.hasRings;
+
+            document.getElementById('specular').value = params.specular;
+            document.getElementById('specular-value').textContent = params.specular.toFixed(2);
+            document.getElementById('bump').value = params.bump;
+            document.getElementById('bump-value').textContent = params.bump.toFixed(2);
+            document.getElementById('stripes').value = params.stripes;
+            document.getElementById('stripes-value').textContent = params.stripes.toFixed(2);
+
+            updatePlanet();
+        }
+
+        function setupEventListeners() {
+            // Preset buttons
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    applyPreset(btn.dataset.preset);
+                });
+            });
+
+            // Sliders
+            const sliderConfigs = [
+                { id: 'radius', param: 'radius', display: v => v.toFixed(1) },
+                { id: 'rotation', param: 'rotation', display: v => v.toFixed(1) },
+                { id: 'tilt', param: 'tilt', display: v => v + '°' },
+                { id: 'amplitude', param: 'amplitude', display: v => v.toFixed(2) },
+                { id: 'frequency', param: 'frequency', display: v => v.toFixed(1) },
+                { id: 'octaves', param: 'octaves', display: v => v },
+                { id: 'craters', param: 'craters', display: v => v.toFixed(2) },
+                { id: 'atmosphere', param: 'atmosphere', display: v => v.toFixed(2) },
+                { id: 'clouds', param: 'clouds', display: v => v.toFixed(2) },
+                { id: 'ringSize', param: 'ringSize', display: v => v.toFixed(1) },
+                { id: 'ringOpacity', param: 'ringOpacity', display: v => v.toFixed(2) },
+                { id: 'specular', param: 'specular', display: v => v.toFixed(2) },
+                { id: 'bump', param: 'bump', display: v => v.toFixed(2) },
+                { id: 'stripes', param: 'stripes', display: v => v.toFixed(2) }
+            ];
+
+            sliderConfigs.forEach(config => {
+                const slider = document.getElementById(config.id);
+                slider.addEventListener('input', () => {
+                    params[config.param] = parseFloat(slider.value);
+                    document.getElementById(config.id + '-value').textContent = config.display(params[config.param]);
+                    updatePlanet();
+                });
+            });
+
+            // Color inputs
+            const colorConfigs = [
+                { id: 'color1', param: 'color1' },
+                { id: 'color2', param: 'color2' },
+                { id: 'color3', param: 'color3' },
+                { id: 'atmosphereColor', param: 'atmosphereColor' },
+                { id: 'ringColor', param: 'ringColor' }
+            ];
+
+            colorConfigs.forEach(config => {
+                const input = document.getElementById(config.id);
+                input.addEventListener('input', () => {
+                    params[config.param] = input.value;
+                    updatePlanet();
+                });
+            });
+
+            // Checkboxes
+            const checkboxConfigs = [
+                { id: 'hasAtmosphere', param: 'hasAtmosphere' },
+                { id: 'hasClouds', param: 'hasClouds' },
+                { id: 'hasRings', param: 'hasRings' }
+            ];
+
+            checkboxConfigs.forEach(config => {
+                const checkbox = document.getElementById(config.id);
+                checkbox.addEventListener('change', () => {
+                    params[config.param] = checkbox.checked;
+                    updatePlanet();
+                });
+            });
+
+            // Window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotate planet
+            planet.rotation.y += params.rotation * 0.005;
+            clouds.rotation.y += params.rotation * 0.006;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+</html>

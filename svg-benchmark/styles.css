@@ -1300,6 +1300,11 @@ html, body {
 .btn-xs { padding: 2px 8px; font-size: 11px; line-height: 1.6; }
 
 .batch-dialog { width: 780px; max-width: 94vw; }
+.batch-dialog.is-running {
+  width: 980px;
+  height: min(760px, 94vh);
+  max-height: 94vh;
+}
 .batch-dialog .modal-header h2 { display: flex; align-items: center; gap: 8px; }
 .batch-config { gap: 16px; }
 
@@ -1355,13 +1360,35 @@ html, body {
 .batch-num { width: auto; min-width: 64px; padding: 4px 8px; }
 .batch-opt-hint { color: var(--text-muted); font-size: 12px; }
 
-.batch-running { gap: 14px; }
+.batch-running { gap: 12px; }
+.batch-dialog.is-running .batch-running { flex: 1; min-height: 0; overflow: hidden; }
 .batch-progress { display: flex; flex-direction: column; gap: 6px; }
 .batch-progress-bar { height: 8px; border-radius: 6px; background: var(--bg-tertiary); overflow: hidden; }
 .batch-progress-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; }
 .batch-progress-text { font-size: 12px; color: var(--text-secondary); }
+.batch-progress-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.batch-stream-count {
+  display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted);
+  font-size: 11px; white-space: nowrap;
+}
+.batch-stream-count.is-streaming { color: var(--accent); }
+.batch-pause-state {
+  display: flex; align-items: center; gap: 9px; padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--warning) 55%, var(--border-color));
+  border-radius: 7px; color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, var(--bg-secondary));
+  font-size: 12px;
+}
+.batch-pause-state.paused {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border-color));
+  color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--bg-secondary));
+}
+.batch-pause-state > div { display: flex; flex-direction: column; gap: 1px; }
+.batch-pause-state strong { color: currentColor; }
+.batch-pause-state span { color: var(--text-secondary); font-size: 11px; }
+.batch-resume-button { min-width: 92px; }
 
-.batch-run-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 300px; }
+.batch-run-body { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-height: 300px; flex: 1 1 auto; }
 .batch-run-list {
   max-height: 340px; overflow-y: auto; border: 1px solid var(--border-color);
   border-radius: 8px; background: var(--bg-secondary);
@@ -1377,6 +1404,13 @@ html, body {
 }
 .batch-run-item:last-child { border-bottom: 0; }
 .batch-run-item.is-active { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.batch-run-item.is-inspectable { cursor: pointer; }
+.batch-run-item.is-inspectable:hover { background: var(--bg-tertiary); }
+.batch-run-item.is-inspected {
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-secondary));
+}
+.batch-run-item.is-inspected:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .batch-run-icon { width: 16px; text-align: center; }
 .batch-run-item.ok .batch-run-icon { color: var(--success); }
 .batch-run-item.error .batch-run-icon { color: var(--danger); }
@@ -1398,6 +1432,40 @@ html, body {
   border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;
   background: #fff; display: flex; align-items: center; justify-content: center;
 }
+.batch-live-panel {
+  display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden;
+  background: var(--bg-secondary);
+}
+.batch-live-panel .batch-preview { flex: 1; min-height: 0; border: 0; border-radius: 0; }
+/* CLI agents: what the agent is doing, under the SVG it is producing. */
+.batch-agent-trace {
+  flex: 0 0 auto; border-top: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+.batch-agent-trace .coding-agent-trace {
+  margin: 0; min-height: 90px; max-height: 38vh; border: 0; border-radius: 0;
+}
+.batch-preview-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 29px; padding: 5px 9px; border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary); font-size: 11px;
+}
+.batch-preview-head > span:first-child {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.batch-preview-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.batch-fullscreen-button,
+.batch-return-live {
+  display: inline-flex; align-items: center; gap: 5px; padding: 0; border: 0;
+  background: none; color: var(--accent); font: inherit; cursor: pointer; white-space: nowrap;
+}
+.batch-fullscreen-button:hover,
+.batch-return-live:hover { text-decoration: underline; }
+.batch-live-chip { display: inline-flex; align-items: center; gap: 5px; color: var(--success); white-space: nowrap; }
+.batch-live-chip i { font-size: 6px; }
+.batch-live-chip.is-paused { color: var(--accent); }
+.batch-live-chip.is-paused i { font-size: 10px; }
 .batch-svg-live { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; padding: 8px; }
 .batch-svg-live svg { max-width: 100%; max-height: 100%; }
 .batch-preview-empty {
@@ -1464,6 +1532,9 @@ html, body {
 .batch-stat.is-bad strong { color: var(--danger); }
 
 @media (max-width: 720px) {
+  .batch-dialog.is-running { height: 94vh; }
+  .batch-dialog.is-running .batch-running { overflow-y: auto; }
+  .batch-progress-meta { align-items: flex-start; flex-direction: column; gap: 4px; }
   .batch-run-body { grid-template-columns: 1fr; }
   .batch-preview { min-height: 200px; }
 }
@@ -1603,3 +1674,33 @@ html, body {
 }
 .svg-lightbox-stage .batch-svg-live { width: 100%; height: 100%; }
 .svg-lightbox-stage svg { max-width: 100%; max-height: 100%; }
+
+/* ── Image-rendered SVGs (components/SvgImage.js) ──
+   Well-formed SVGs render as <img> so animation plays; partial ones fall back
+   to sanitized inline markup. Both fill whatever box they are placed in. */
+.svg-render { width: 100%; height: 100%; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.svg-render-img { width: 100%; height: 100%; object-fit: contain; display: block; user-select: none; }
+.svg-render.is-inline svg { max-width: 100%; max-height: 100%; }
+
+/* ── Prompt sets (Core / Animated) ── */
+.batch-set-switch { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.batch-set-count {
+  margin-left: 6px; padding: 0 5px; border-radius: 8px; font-size: 10px;
+  background: color-mix(in srgb, currentColor 14%, transparent); font-variant-numeric: tabular-nums;
+}
+.batch-set-hint { color: var(--text-muted); font-size: 11px; }
+.svg-prompt-set-badge, .runs-set-badge {
+  display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 0 6px;
+  border: 1px solid #a855f7; border-radius: 8px; color: #a855f7; font-size: 10px; font-weight: 500;
+  vertical-align: middle; white-space: nowrap;
+}
+.runs-set-badge.set-mixed { border-color: #f59e0b; color: #f59e0b; }
+
+/* Motion check result for animated submissions. */
+.batch-motion-chip {
+  display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; padding: 0 6px;
+  border: 1px solid currentColor; border-radius: 8px; font-size: 10px; white-space: nowrap;
+}
+.batch-motion-chip.is-moving { color: var(--success); }
+.batch-motion-chip.is-warn { color: #f59e0b; }
+.batch-motion-chip.is-static { color: var(--danger); }

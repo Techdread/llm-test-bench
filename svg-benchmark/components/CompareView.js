@@ -1,6 +1,6 @@
 import { html } from 'htm/preact';
 import { useState } from 'preact/hooks';
-import { sanitizeSvgMarkup } from '../../shared/services/content-sanitizer.js';
+import { SvgImage } from './SvgImage.js';
 
 export function CompareView({ submissions, referenceUrl, benchmarkPrompt, onBack }) {
   const [showCode, setShowCode] = useState(false);
@@ -52,7 +52,7 @@ export function CompareView({ submissions, referenceUrl, benchmarkPrompt, onBack
               </div>
             </div>
             <div class="compare-col-svg">
-              <div class="compare-svg-render" dangerouslySetInnerHTML=${{ __html: sanitizeSvgMarkup(sub.svg) }}></div>
+              <${SvgImage} svg=${sub.svg} className="compare-svg-render" />
             </div>
             ${showCode && html`
               <div class="compare-col-code">

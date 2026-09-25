@@ -2,8 +2,10 @@
 //
 // A tile on the public site links to `<app>/#/showcase/<id>`. The app calls
 // consumeShowcaseRoute() once on mount; if the hash names a showcase item it
-// fetches `_showcase/<id>.json` (written by tools/build-public-mvp.mjs) and
-// hands back the prompt and code so the app can drop straight into its editor.
+// fetches the payload and hands back the prompt and code so the app can drop
+// straight into its editor. On the public build the showcase backend
+// (`api/showcase/<id>`, spec 342) is asked first; `_showcase/<id>.json`, which
+// tools/build-public-mvp.mjs bakes into every build, is the fallback.
 //
 // Deliberately not built on hub-pipes: a tile is a plain <a href>, so the link
 // has to survive being shared, bookmarked and reloaded. localStorage handoffs
@@ -11,6 +13,8 @@
 // is exactly what the builder emits.
 //
 // No-ops cleanly on the private hub, where `_showcase/` does not exist.
+
+import { isPublicDistribution } from './distribution.js';
 
 const ROUTE = /^#\/showcase\/([A-Za-z0-9._-]+)$/;
 
@@ -20,26 +24,37 @@ export function showcaseIdFromHash(hash = globalThis.location?.hash || '') {
   return m ? m[1] : '';
 }
 
-/**
- * Fetch one showcase payload. Returns null when the id is unknown or the
- * build carries no showcase, so callers can fall through to normal startup.
- *
- * @param {string} id
- * @param {{ base?: string, fetchImpl?: typeof fetch }} [opts]
- */
-export async function loadShowcaseItem(id, opts = {}) {
-  if (!id) return null;
-  const base = opts.base ?? '../_showcase';
-  const doFetch = opts.fetchImpl ?? globalThis.fetch;
-  if (typeof doFetch !== 'function') return null;
+async function fetchPayload(doFetch, url) {
   try {
-    const res = await doFetch(`${base}/${encodeURIComponent(id)}.json`);
+    const res = await doFetch(url);
     if (!res.ok) return null;
     const data = await res.json();
     return data && typeof data.code === 'string' ? data : null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Fetch one showcase payload. Returns null when the id is unknown or the
+ * build carries no showcase, so callers can fall through to normal startup.
+ *
+ * @param {string} id
+ * @param {{ base?: string, apiBase?: string, useApi?: boolean, fetchImpl?: typeof fetch }} [opts]
+ *   `useApi` defaults to true on the public build only: the private hub has no
+ *   backend, so asking it would just add a 404 to every showcase link.
+ */
+export async function loadShowcaseItem(id, opts = {}) {
+  if (!id) return null;
+  const doFetch = opts.fetchImpl ?? globalThis.fetch;
+  if (typeof doFetch !== 'function') return null;
+  const name = encodeURIComponent(id);
+  const useApi = opts.useApi ?? isPublicDistribution();
+  if (useApi) {
+    const live = await fetchPayload(doFetch, `${opts.apiBase ?? '../api/showcase'}/${name}`);
+    if (live) return live;
+  }
+  return fetchPayload(doFetch, `${opts.base ?? '../_showcase'}/${name}.json`);
 }
 
 /**

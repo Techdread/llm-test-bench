@@ -5,6 +5,30 @@
 // a fresh data root. Each seed carries the same `slug` its benchmark folder
 // uses, so batch submissions land in the right benchmark.
 
+// Prompt sets keep the harder animated briefs apart from the still-image
+// originals: Batch runs one set at a time and every batch submission records
+// which set it came from. A prompt without `set` is core, which covers the
+// user's own saved benchmarks.
+export const PROMPT_SETS = Object.freeze([
+  { id: 'core', label: 'Core', icon: 'fa-layer-group', hint: 'The original still-image prompts' },
+  { id: 'animated', label: 'Animated', icon: 'fa-film', hint: 'Harder briefs: each animates a core prompt with numbered motion requirements' },
+]);
+
+export function promptSetOf(prompt) {
+  return prompt?.set || 'core';
+}
+
+export function promptSetInfo(id) {
+  return PROMPT_SETS.find(s => s.id === id) || PROMPT_SETS[0];
+}
+
+// Each seed file loads on its own, so a missing animated file never costs the
+// core prompts.
+const SEED_FILES = Object.freeze([
+  { url: './data/prompts.json', set: 'core' },
+  { url: './data/prompts-animated.json', set: 'animated' },
+]);
+
 let seedsCache = null;
 
 export const PROMPT_CATEGORIES = Object.freeze([
@@ -43,19 +67,23 @@ export function normalizePrompt(item = {}) {
     difficulty: item.difficulty || 'moderate',
     tags: Array.isArray(item.tags) ? item.tags : [],
     source: item.source || 'seed',
+    set: promptSetOf(item),
   };
 }
 
 export async function loadSeedPrompts() {
   if (seedsCache) return seedsCache;
-  try {
-    const res = await fetch('./data/prompts.json');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    seedsCache = (data.prompts || []).map(p => normalizePrompt({ ...p, source: 'seed' }));
-  } catch (e) {
-    console.warn('[promptLibrary] failed to load seed prompts:', e?.message || e);
-    seedsCache = [];
-  }
+  const lists = await Promise.all(SEED_FILES.map(async (file) => {
+    try {
+      const res = await fetch(file.url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return (data.prompts || []).map(p => normalizePrompt({ ...p, set: p.set || file.set, source: 'seed' }));
+    } catch (e) {
+      console.warn(`[promptLibrary] failed to load seed prompts from ${file.url}:`, e?.message || e);
+      return [];
+    }
+  }));
+  seedsCache = lists.flat();
   return seedsCache;
 }

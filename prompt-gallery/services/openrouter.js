@@ -4,6 +4,7 @@
 
 import { getApiKey, saveApiKey, hasApiKey } from '../../shared/services/providers-openrouter.js';
 import { streamChat } from '../../shared/services/model-providers.js';
+import { streamHtmlDocument } from './htmlOutput.js';
 
 export { getApiKey, saveApiKey, hasApiKey };
 
@@ -22,7 +23,7 @@ Make the output visually polished and modern.`;
  * @param {Function} [onChunk] - Streaming callback
  */
 export async function generateHtml(prompt, providerId, modelId, onChunk, onStats, params) {
-  return streamChat({
+  return streamHtmlDocument(streamChat, {
     providerId,
     modelId,
     systemPrompt: SYSTEM_PROMPT,

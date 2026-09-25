@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TerraForge — Terrain Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070b11;
+    --panel:rgba(13,18,26,.82);
+    --border:rgba(255,255,255,.09);
+    --txt:#e8eef5;
+    --dim:#8b99a8;
+    --accent:#5eead4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:13px}
+  canvas.webgl{position:fixed;inset:0;display:block;touch-action:none}
+  .vignette{position:fixed;inset:0;pointer-events:none;z-index:5;
+    background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.45) 100%)}
+
+  .brand{position:fixed;top:18px;left:20px;z-index:10;pointer-events:none}
+  .brand h1{font-size:17px;font-weight:800;letter-spacing:.28em;color:#fff}
+  .brand h1 em{color:var(--accent);font-style:normal}
+  .brand p{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-top:3px}
+
+  .panel{position:fixed;z-index:10;background:var(--panel);border:1px solid var(--border);
+    border-radius:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    box-shadow:0 12px 40px rgba(0,0,0,.5);padding:16px}
+  .panel.left{top:78px;left:20px;width:242px;max-height:calc(100vh - 110px);overflow-y:auto}
+  .panel.right{top:18px;right:20px;width:248px}
+  .panel::-webkit-scrollbar{width:6px}
+  .panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
+
+  .sect{font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--dim);margin:14px 0 10px;display:flex;align-items:center;gap:8px}
+  .sect:first-child{margin-top:0}
+  .sect::after{content:'';flex:1;height:1px;background:var(--border)}
+
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .mode{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px 8px;
+    background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:9px;
+    color:var(--dim);font:inherit;font-size:11px;font-weight:600;cursor:pointer;
+    transition:all .15s ease}
+  .mode svg{width:22px;height:22px}
+  .mode:hover{background:rgba(255,255,255,.08);color:var(--txt)}
+  .mode.active{color:#0b1016;border-color:transparent}
+  .mode.active[data-mode="raise"]{background:#4ade80;box-shadow:0 0 18px rgba(74,222,128,.35)}
+  .mode.active[data-mode="lower"]{background:#fb923c;box-shadow:0 0 18px rgba(251,146,60,.35)}
+  .mode.active[data-mode="smooth"]{background:#a78bfa;box-shadow:0 0 18px rgba(167,139,250,.35)}
+  .mode.active[data-mode="flatten"]{background:#facc15;box-shadow:0 0 18px rgba(250,204,21,.35)}
+
+  label.sl{display:flex;justify-content:space-between;font-size:11.5px;font-weight:500;
+    color:#c4cedb;margin-top:4px}
+  label.sl span{color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;
+    border-radius:2px;background:rgba(255,255,255,.14);outline:none;margin:9px 0 13px;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+    border-radius:50%;background:var(--accent);border:2px solid #0b1016;
+    box-shadow:0 0 0 2px rgba(94,234,212,.35);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:12px;height:12px;border-radius:50%;
+    background:var(--accent);border:2px solid #0b1016;cursor:pointer}
+  input[type=range]::-moz-range-track{height:4px;border-radius:2px;background:rgba(255,255,255,.14)}
+
+  .chk{display:flex;align-items:center;gap:8px;font-size:12px;color:#c4cedb;
+    cursor:pointer;margin:2px 0 6px;user-select:none}
+  .chk input{accent-color:var(--accent);width:14px;height:14px;cursor:pointer}
+
+  .hint{margin-top:12px;padding-top:11px;border-top:1px solid var(--border);
+    font-size:10.5px;line-height:1.75;color:var(--dim)}
+  .hint b{color:#c4cedb;font-weight:600}
+
+  #minimap{width:100%;display:block;border-radius:10px;border:1px solid var(--border);
+    background:#000;image-rendering:auto}
+  .btns{display:flex;gap:7px;margin-top:11px}
+  .btn{flex:1;padding:9px 6px;border-radius:8px;border:1px solid var(--border);
+    background:rgba(255,255,255,.05);color:var(--txt);font:inherit;font-size:11.5px;
+    font-weight:600;cursor:pointer;transition:all .15s}
+  .btn:hover{background:rgba(255,255,255,.11)}
+  .btn.primary{background:linear-gradient(135deg,#2dd4bf,#0ea5a4);color:#06231f;
+    border-color:transparent}
+  .btn.primary:hover{filter:brightness(1.12)}
+  .readout{margin-top:10px;font-size:10.5px;color:var(--dim);text-align:center;
+    font-variant-numeric:tabular-nums;min-height:14px;letter-spacing:.04em}
+
+  @media (max-width:720px){
+    .panel.left{top:auto;bottom:12px;left:12px;width:206px;max-height:52vh}
+    .panel.right{top:12px;right:12px;width:170px}
+    .brand{top:12px;left:14px}
+  }
+</style>
+<script type="importmap">
+{"imports":{
+  "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+
+<header class="brand">
+  <h1>TERRA<em>FORGE</em></h1>
+  <p>procedural terrain editor</p>
+</header>
+
+<div class="panel left">
+  <div class="sect">Brush</div>
+  <div class="modes">
+    <button class="mode active" data-mode="raise">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 L9.5 7 L16 17"/><path d="M19.5 16.5 V8.5"/><path d="M16.8 11.2 L19.5 8.5 L22.2 11.2"/></svg>
+      Raise</button>
+    <button class="mode" data-mode="lower">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17 L9.5 7 L16 17"/><path d="M19.5 8.5 V16.5"/><path d="M16.8 13.8 L19.5 16.5 L22.2 13.8"/></svg>
+      Lower</button>
+    <button class="mode" data-mode="smooth">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 Q7 6 11 12 T19 12"/><path d="M3 18 H21"/></svg>
+      Smooth</button>
+    <button class="mode" data-mode="flatten">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16 L8 9 H16 L21 16"/><path d="M3 20 H21"/></svg>
+      Flatten</button>
+  </div>
+
+  <label class="sl">Brush size <span id="sizeVal">12.0</span></label>
+  <input type="range" id="size" min="2" max="40" step="0.5" value="12">
+  <label class="sl">Strength <span id="strVal">35%</span></label>
+  <input type="range" id="strength" min="1" max="100" step="1" value="35">
+
+  <div class="sect">Environment</div>
+  <label class="sl">Water level <span id="waterVal">-6.0</span></label>
+  <input type="range" id="water" min="-30" max="70" step="0.5" value="-6">
+  <label class="sl">Snow line <span id="snowVal">45</span></label>
+  <input type="range" id="snow" min="10" max="90" step="1" value="45">
+  <label class="chk"><input type="checkbox" id="grid" checked> Surface grid overlay</label>
+
+  <div class="hint">
+    <b>LMB</b> sculpt &nbsp;·&nbsp; <b>RMB</b> orbit &nbsp;·&nbsp; <b>wheel</b> zoom &nbsp;·&nbsp; <b>MMB</b> pan<br>
+    <b>1–4</b> brush mode &nbsp;·&nbsp; <b>[</b> <b>]</b> brush size &nbsp;·&nbsp; <b>G</b> grid
+  </div>
+</div>
+
+<div class="panel right">
+  <div class="sect">Minimap</div>
+  <canvas id="minimap" width="256" height="256"></canvas>
+  <div class="btns">
+    <button class="btn primary" id="export">Export heightmap</button>
+    <button class="btn" id="reset">Reset</button>
+  </div>
+  <div class="readout" id="readout">hover terrain to inspect</div>
+</div>
+
+<div class="vignette"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ---------- constants & state ---------- */
+const SIZE = 200, RES = 256, CELL = SIZE / (RES - 1);
+const HMIN = -30, HMAX = 90;
+const heights = new Float32Array(RES * RES);          // flat at 0
+
+let mode = 'raise';
+let brushRadius = 12, brushStrength = 0.35;
+let waterLevel = -6, snowH = 45, showGrid = true;
+
+const MODES = {
+  raise:   { color: 0x4ade80, css: '#4ade80' },
+  lower:   { color: 0xfb923c, css: '#fb923c' },
+  smooth:  { color: 0xa78bfa, css: '#a78bfa' },
+  flatten: { color: 0xfacc15, css: '#facc15' }
+};
+
+/* ---------- renderer / scene ---------- */
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.domElement.className = 'webgl';
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x16283e, 340, 1100);
+
+// vertical gradient sky backdrop
+{
+  const c = document.createElement('canvas'); c.width = 2; c.height = 512;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, 512);
+  g.addColorStop(0, '#04070d'); g.addColorStop(.45, '#0c1a2c');
+  g.addColorStop(.72, '#1d3a54'); g.addColorStop(.9, '#3f6b8a'); g.addColorStop(1, '#6f9db4');
+  x.fillStyle = g; x.fillRect(0, 0, 2, 512);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  scene.background = t;
+}
+
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 3000);
+camera.position.set(108, 88, 132);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 6, 0);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 25; controls.maxDistance = 750;
+controls.maxPolarAngle = 1.52;
+controls.mouseButtons = { LEFT: -1, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.ROTATE };
+controls.touches = { ONE: -1, TWO: THREE.TOUCH.DOLLY_PAN };
+controls.screenSpacePanning = false;
+
+/* ---------- lights ---------- */
+scene.add(new THREE.HemisphereLight(0x9db8d9, 0x2a3026, 0.55));
+const sun = new THREE.DirectionalLight(0xffe7c4, 2.7);
+sun.position.set(140, 190, 90);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = -150; sun.shadow.camera.right = 150;
+sun.shadow.camera.top = 150;   sun.shadow.camera.bottom = -150;
+sun.shadow.camera.near = 40;   sun.shadow.camera.far = 520;
+sun.shadow.bias = -0.0004;     sun.shadow.normalBias = 1.2;
+scene.add(sun);
+const LIGHT_DIR = sun.position.clone().normalize();
+
+/* ---------- procedural textures ---------- */
+function vnoise(size, cells) {                       // tileable value noise
+  const g = new Float32Array((cells + 1) * (cells + 1));
+  for (let i = 0; i < g.length; i++) g[i] = Math.random();
+  for (let x = 0; x <= cells; x++) g[cells * (cells + 1) + x] = g[x];
+  for (let y = 0; y <= cells; y++) g[y * (cells + 1) + cells] = g[y * (cells + 1)];
+  const out = new Float32Array(size * size);
+  for (let y = 0; y < size; y++) {
+    const fy = y / size * cells, y0 = Math.floor(fy), ty = fy - y0;
+    for (let x = 0; x < size; x++) {
+      const fx = x / size * cells, x0 = Math.floor(fx), tx = fx - x0;
+      const a = g[y0 * (cells + 1) + x0],       b = g[y0 * (cells + 1) + x0 + 1];
+      const c2 = g[(y0 + 1) * (cells + 1) + x0], d = g[(y0 + 1) * (cells + 1) + x0 + 1];
+      out[y * size + x] = a + (b - a) * tx + (c2 - a) * ty + (a - b - c2 + d) * tx * ty;
+    }
+  }
+  return out;
+}
+const clamp255 = v => v < 0 ? 0 : v > 255 ? 255 : v;
+function makeTex(size, fn, srgb = true) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = size;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(size, size);
+  const A = vnoise(size, 12), B = vnoise(size, 42), C = vnoise(size, 110);
+  for (let i = 0; i < size * size; i++) {
+    const c = fn(A[i], B[i], C[i]);
+    img.data[i * 4] = clamp255(c[0]); img.data[i * 4 + 1] = clamp255(c[1]);
+    img.data[i * 4 + 2] = clamp255(c[2]); img.data[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return t;
+}
+const grassTex = makeTex(256, (a, b, c) => {
+  const n = a * .55 + b * .3 + c * .15;
+  let r = 74 + n * 55, g = 112 + n * 62, bl = 48 + n * 30;
+  if (a > .72) { r += 34; g += 22; bl -= 8; }
+  return [r, g, bl];
+});
+const rockTex = makeTex(256, (a, b, c) => {
+  const n = a * .5 + b * .3 + c * .2;
+  let v = 86 + n * 96; if (b < .32) v *= .72;
+  return [v * 1.03, v * .97, v * .9];
+});
+const snowTex = makeTex(256, (a, b, c) => {
+  const v = 226 + (b * .6 + c * .4) * 28;
+  return [v - 10, v - 4, v];
+});
+const sandTex = makeTex(256, (a, b, c) => {
+  const n = b * .6 + c * .4;
+  return [188 + n * 38, 168 + n * 34, 124 + n * 26];
+});
+const noiseTex = makeTex(256, a => [a * 255, a * 255, a * 255], false);
+const waterTex = makeTex(256, (a, b) => {
+  const n = a * .6 + b * .4;
+  return [18 + n * 26, 84 + n * 54, 126 + n * 62];
+});
+waterTex.repeat.set(14, 14);
+
+/* ---------- terrain ---------- */
+const geo = new THREE.PlaneGeometry(SIZE, SIZE, RES - 1, RES - 1);
+geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 400); // raycast-safe
+const posAttr = geo.attributes.position;
+const nrmAttr = geo.attributes.normal;
+
+const terrMat = new THREE.MeshStandardMaterial({ roughness: .95, metalness: 0 });
+terrMat.onBeforeCompile = sh => {
+  Object.assign(sh.uniforms, {
+    grassMap: { value: grassTex }, rockMap: { value: rockTex },
+    snowMap:  { value: snowTex },  sandMap: { value: sandTex },
+    noiseMap: { value: noiseTex },
+    uWater: { value: waterLevel }, uSnowH: { value: snowH }, uRockH: { value: 40 },
+    uTexScale: { value: .085 }, uShowGrid: { value: 1 }, uGridStep: { value: CELL * 8 }
+  });
+  sh.vertexShader = sh.vertexShader
+    .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;varying vec3 vWNorm;')
+    .replace('#include <fog_vertex>',
+      'vWPos=(modelMatrix*vec4(transformed,1.0)).xyz;\n' +
+      'vWNorm=normalize(mat3(modelMatrix)*objectNormal);\n#include <fog_vertex>');
+  sh.fragmentShader = sh.fragmentShader
+    .replace('#include <common>', `#include <common>
+      uniform sampler2D grassMap,rockMap,snowMap,sandMap,noiseMap;
+      uniform float uWater,uSnowH,uRockH,uTexScale,uShowGrid,uGridStep;
+      varying vec3 vWPos;varying vec3 vWNorm;`)
+    .replace('#include <map_fragment>', `{
+      vec2 tuv=vWPos.xz*uTexScale;
+      vec3 gcol=texture2D(grassMap,tuv).rgb;
+      vec3 rcol=texture2D(rockMap,tuv).rgb;
+      vec3 scol=texture2D(snowMap,tuv).rgb;
+      vec3 sdcol=texture2D(sandMap,tuv).rgb;
+      float nz=texture2D(noiseMap,vWPos.xz*0.013).r;
+      float slope=1.0-clamp(vWNorm.y,0.0,1.0);
+      float rockS=smoothstep(0.30,0.52,slope+(nz-0.5)*0.12);
+      float rockHf=smoothstep(uRockH-7.0,uRockH+7.0,vWPos.y+(nz-0.5)*9.0);
+      float rockF=max(rockS,rockHf*0.85);
+      float snowF=smoothstep(uSnowH-5.0,uSnowH+5.0,vWPos.y+(nz-0.5)*10.0)*(1.0-rockS*0.85);
+      vec3 col=mix(gcol,rcol,clamp(rockF,0.0,1.0));
+      col=mix(col,scol,clamp(snowF,0.0,1.0));
+      float sandF=smoothstep(uWater+3.5,uWater+0.8,vWPos.y)*smoothstep(uWater-14.0,uWater-2.0,vWPos.y);
+      col=mix(col,sdcol,sandF*(1.0-snowF));
+      float sub=smoothstep(uWater-0.5,uWater-9.0,vWPos.y);
+      col*=mix(vec3(1.0),vec3(0.42,0.62,0.72),sub);
+      if(uShowGrid>0.5){
+        vec2 fr=fract(vWPos.xz/uGridStep);
+        vec2 dl=min(fr,1.0-fr)*uGridStep;
+        float line=1.0-smoothstep(0.10,0.24,min(dl.x,dl.y));
+        col=mix(col,vec3(0.85,0.95,1.0),line*0.30);
+      }
+      diffuseColor.rgb*=col;
+    }`);
+  terrMat.userData.sh = sh;
+};
+
+const terrain = new THREE.Mesh(geo, terrMat);
+terrain.rotation.x = -Math.PI / 2;
+terrain.castShadow = terrain.receiveShadow = true;
+scene.add(terrain);
+
+/* ---------- water ---------- */
+const water = new THREE.Mesh(
+  new THREE.PlaneGeometry(SIZE * 4, SIZE * 4),
+  new THREE.MeshStandardMaterial({
+    map: waterTex, color: 0x9fd4e8, transparent: true, opacity: .78,
+    roughness: .15, metalness: 0, depthWrite: false, side: THREE.DoubleSide
+  })
+);
+water.rotation.x = -Math.PI / 2;
+water.position.y = waterLevel;
+water.receiveShadow = true;
+scene.add(water);
+
+/* ---------- brush indicator (terrain-conforming ring + disc) ---------- */
+const RSEG = 96;
+const brushGroup = new THREE.Group(); brushGroup.visible = false; scene.add(brushGroup);
+const ringPos = new Float32Array(RSEG * 3);
+const ringGeo = new THREE.BufferGeometry();
+ringGeo.setAttribute('position', new THREE.BufferAttribute(ringPos, 3));
+const ringMat = new THREE.LineBasicMaterial({ transparent: true, opacity: .95 });
+const ring = new THREE.LineLoop(ringGeo, ringMat);
+ring.frustumCulled = false;
+const discPos = new Float32Array((RSEG + 1) * 3);
+const discIdx = [];
+for (let k = 0; k < RSEG; k++) discIdx.push(0, k + 1, (k + 1) % RSEG + 1);
+const discGeo = new THREE.BufferGeometry();
+discGeo.setAttribute('position', new THREE.BufferAttribute(discPos, 3));
+discGeo.setIndex(discIdx);
+const discMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: .1, side: THREE.DoubleSide, depthWrite: false });
+const disc = new THREE.Mesh(discGeo, discMat);
+disc.frustumCulled = false;
+brushGroup.add(ring, disc);
+
+/* ---------- heightfield helpers ---------- */
+function sampleH(wx, wz) {
+  const fx = Math.min(Math.max((wx + SIZE / 2) / CELL, 0), RES - 1.001);
+  const fy = Math.min(Math.max((wz + SIZE / 2) / CELL, 0), RES - 1.001);
+  const x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0;
+  const h00 = heights[y0 * RES + x0], h10 = heights[y0 * RES + x0 + 1];
+  const h01 = heights[(y0 + 1) * RES + x0], h11 = heights[(y0 + 1) * RES + x0 + 1];
+  return h00 + (h10 - h00) * tx + (h01 - h00) * ty + (h00 - h10 - h01 + h11) * tx * ty;
+}
+function updateNormals() {
+  const H = heights, n = nrmAttr.array, c2 = 2 * CELL;
+  for (let iy = 0; iy < RES; iy++) {
+    const yu = iy > 0 ? iy - 1 : 0, yd = iy < RES - 1 ? iy + 1 : RES - 1;
+    for (let ix = 0; ix < RES; ix++) {
+      const xl = ix > 0 ? ix - 1 : 0, xr = ix < RES - 1 ? ix + 1 : RES - 1;
+      const hx = H[iy * RES + xr] - H[iy * RES + xl];
+      const hy = H[yd * RES + ix] - H[yu * RES + ix];
+      const il = 1 / Math.hypot(hx, hy, c2), o = (iy * RES + ix) * 3;
+      n[o] = -hx * il; n[o + 1] = hy * il; n[o + 2] = c2 * il;
+    }
+  }
+  nrmAttr.needsUpdate = true;
+}
+let geomDirty = true;
+function syncGeom() {
+  const a = posAttr.array;
+  for (let i = 0; i < RES * RES; i++) a[i * 3 + 2] = heights[i];
+  posAttr.needsUpdate = true;
+  updateNormals();
+}
+updateNormals();
+
+/* ---------- sculpting ---------- */
+function applyBrush(p, dt) {
+  const cx = (p.x + SIZE / 2) / CELL, cy = (p.z + SIZE / 2) / CELL;
+  const gr = brushRadius / CELL;
+  const x0 = Math.max(0, Math.floor(cx - gr)), x1 = Math.min(RES - 1, Math.ceil(cx + gr));
+  const y0 = Math.max(0, Math.floor(cy - gr)), y1 = Math.min(RES - 1, Math.ceil(cy + gr));
+  const s = brushStrength;
+  for (let iy = y0; iy <= y1; iy++) {
+    for (let ix = x0; ix <= x1; ix++) {
+      const dx = (ix - cx) / gr, dy = (iy - cy) / gr;
+      const d2 = dx * dx + dy * dy;
+      if (d2 > 1) continue;
+      const t = 1 - Math.sqrt(d2), w = t * t * (3 - 2 * t);
+      const i = iy * RES + ix, h = heights[i];
+      if (mode === 'raise')        heights[i] = h + s * 30 * dt * w;
+      else if (mode === 'lower')   heights[i] = h - s * 30 * dt * w;
+      else if (mode === 'smooth') {
+        const l = heights[iy * RES + Math.max(0, ix - 1)], r = heights[iy * RES + Math.min(RES - 1, ix + 1)];
+        const u = heights[Math.max(0, iy - 1) * RES + ix], dn = heights[Math.min(RES - 1, iy + 1) * RES + ix];
+        heights[i] = h + ((l + r + u + dn) * .25 - h) * Math.min(1, s * 8 * dt) * w;
+      }
+      else if (mode === 'flatten') heights[i] = h + (flattenTarget - h) * Math.min(1, s * 8 * dt) * w;
+      if (heights[i] < HMIN) heights[i] = HMIN; else if (heights[i] > HMAX) heights[i] = HMAX;
+    }
+  }
+  geomDirty = true;
+}
+
+/* ---------- input ---------- */
+const raycaster = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const hitPoint = new THREE.Vector3();
+let pointerIn = false, painting = false, hasHit = false;
+let flattenTarget = 0, strokeStart = false;
+const pointers = new Set();
+const el = renderer.domElement;
+const setNDC = e => {
+  const r = el.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+};
+el.addEventListener('pointermove', e => { setNDC(e); pointerIn = true; });
+el.addEventListener('pointerdown', e => {
+  pointers.add(e.pointerId);
+  if (pointers.size > 1) { painting = false; return; }
+  if (e.button === 0) {
+    setNDC(e); pointerIn = true;
+    painting = true; strokeStart = true;
+    try { el.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+});
+const endStroke = e => { pointers.delete(e.pointerId); if (pointers.size === 0) painting = false; };
+el.addEventListener('pointerup', endStroke);
+el.addEventListener('pointercancel', endStroke);
+el.addEventListener('pointerleave', () => { pointerIn = false; });
+el.addEventListener('contextmenu', e => e.preventDefault());
+window.addEventListener('blur', () => { painting = false; pointers.clear(); });
+
+/* ---------- UI wiring ---------- */
+const $ = id => document.getElementById(id);
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  ringMat.color.setHex(MODES[m].color);
+  discMat.color.setHex(MODES[m].color);
+}
+setMode('raise');
+document.querySelectorAll('.mode').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+
+const sizeEl = $('size'), strEl = $('strength'), waterEl = $('water'), snowEl = $('snow');
+let miniDirty = true;
+sizeEl.addEventListener('input', () => { brushRadius = +sizeEl.value; $('sizeVal').textContent = brushRadius.toFixed(1); });
+strEl.addEventListener('input', () => { brushStrength = +strEl.value / 100; $('strVal').textContent = strEl.value + '%'; });
+waterEl.addEventListener('input', () => { waterLevel = +waterEl.value; $('waterVal').textContent = waterLevel.toFixed(1); miniDirty = true; });
+snowEl.addEventListener('input', () => { snowH = +snowEl.value; $('snowVal').textContent = snowH; miniDirty = true; });
+$('grid').addEventListener('change', e => { showGrid = e.target.checked; });
+
+window.addEventListener('keydown', e => {
+  if (e.key >= '1' && e.key <= '4') setMode(['raise', 'lower', 'smooth', 'flatten'][+e.key - 1]);
+  else if (e.key === '[') { sizeEl.value = Math.max(2, +sizeEl.value - 2); sizeEl.dispatchEvent(new Event('input')); }
+  else if (e.key === ']') { sizeEl.value = Math.min(40, +sizeEl.value + 2); sizeEl.dispatchEvent(new Event('input')); }
+  else if (e.key === 'g' || e.key === 'G') { $('grid').checked = !$('grid').checked; showGrid = $('grid').checked; }
+});
+
+$('reset').addEventListener('click', () => { heights.fill(0); geomDirty = true; });
+$('export').addEventListener('click', () => {
+  const c = document.createElement('canvas'); c.width = c.height = RES;
+  const x = c.getContext('2d'), img = x.createImageData(RES, RES);
+  for (let i = 0; i < RES * RES; i++) {
+    const v = Math.round(Math.min(Math.max((heights[i] - HMIN) / (HMAX - HMIN), 0), 1) * 255);
+    img.data[i * 4] = img.data[i * 4 + 1] = img.data[i * 4 + 2] = v;
+    img.data[i * 4 + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  const a = document.createElement('a');
+  a.download = 'terraforge-heightmap.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+});
+
+/* ---------- minimap ---------- */
+const mini = $('minimap'), mctx = mini.getContext('2d');
+const miniOff = document.createElement('canvas'); miniOff.width = miniOff.height = RES;
+const miniOffCtx = miniOff.getContext('2d');
+const miniImg = miniOffCtx.createImageData(RES, RES);
+const smoothstep = (a, b, x) => { const t = Math.min(Math.max((x - a) / (b - a), 0), 1); return t * t * (3 - 2 * t); };
+function updateMinimapBase() {
+  const d = miniImg.data, H = heights, c2 = 2 * CELL;
+  for (let iy = 0; iy < RES; iy++) {
+    const yu = iy > 0 ? iy - 1 : 0, yd = iy < RES - 1 ? iy + 1 : RES - 1;
+    for (let ix = 0; ix < RES; ix++) {
+      const i = iy * RES + ix, h = H[i];
+      const hx = H[iy * RES + Math.min(RES - 1, ix + 1)] - H[iy * RES + Math.max(0, ix - 1)];
+      const hy = H[yd * RES + ix] - H[yu * RES + ix];
+      const il = 1 / Math.hypot(hx, hy, c2);
+      const ny = c2 * il, slope = 1 - ny;                  // world normal y
+      const wnx = -hx * il, wny = c2 * il, wnz = -hy * il; // world-space normal
+      const shade = .55 + .5 * Math.max(0, wnx * LIGHT_DIR.x + wny * LIGHT_DIR.y + wnz * LIGHT_DIR.z);
+      const rockS = smoothstep(.30, .52, slope);
+      const rockF = Math.max(rockS, smoothstep(33, 47, h) * .85);
+      const snowF = smoothstep(snowH - 5, snowH + 5, h) * (1 - rockS * .85);
+      let r = 96 + (118 - 96) * rockF, g = 138 + (114 - 138) * rockF, b = 64 + (104 - 64) * rockF;
+      r += (240 - r) * snowF; g += (243 - g) * snowF; b += (250 - b) * snowF;
+      const sandF = smoothstep(waterLevel + 3.5, waterLevel + .8, h) * smoothstep(waterLevel - 14, waterLevel - 2, h);
+      r += (196 - r) * sandF * (1 - snowF); g += (178 - g) * sandF * (1 - snowF); b += (130 - b) * sandF * (1 - snowF);
+      if (h < waterLevel) {                                // submerged → water overlay
+        const a = Math.min(.25 + (waterLevel - h) / 10, .88);
+        r += (30 - r) * a; g += (110 - g) * a; b += (150 - b) * a;
+      }
+      const o = i * 4;
+      d[o] = r * shade; d[o + 1] = g * shade; d[o + 2] = b * shade; d[o + 3] = 255;
+    }
+  }
+  miniOffCtx.putImageData(miniImg, 0, 0);
+}
+function drawMinimap() {
+  mctx.imageSmoothingEnabled = true;
+  mctx.drawImage(miniOff, 0, 0, RES, RES);
+  const k = RES / SIZE;
+  // camera marker + view direction
+  const cx = (camera.position.x + SIZE / 2) * k, cy = (camera.position.z + SIZE / 2) * k;
+  const tx = (controls.target.x + SIZE / 2) * k, ty = (controls.target.z + SIZE / 2) * k;
+  mctx.strokeStyle = 'rgba(255,255,255,.55)'; mctx.lineWidth = 1;
+  mctx.beginPath(); mctx.moveTo(cx, cy); mctx.lineTo(tx, ty); mctx.stroke();
+  mctx.fillStyle = '#fff';
+  mctx.beginPath(); mctx.arc(cx, cy, 2.5, 0, 7); mctx.fill();
+  // brush marker
+  if (hasHit && (pointerIn || painting)) {
+    mctx.strokeStyle = MODES[mode].css; mctx.lineWidth = 1.5;
+    mctx.beginPath();
+    mctx.arc((hitPoint.x + SIZE / 2) * k, (hitPoint.z + SIZE / 2) * k, brushRadius * k, 0, 7);
+    mctx.stroke();
+  }
+}
+
+/* ---------- brush indicator update ---------- */
+function updateBrush(p) {
+  const r = brushRadius;
+  discPos[0] = p.x; discPos[1] = p.y + .45; discPos[2] = p.z;
+  for (let k = 0; k < RSEG; k++) {
+    const a = k / RSEG * Math.PI * 2;
+    const wx = p.x + Math.cos(a) * r, wz = p.z + Math.sin(a) * r;
+    const wy = sampleH(wx, wz) + .45;
+    ringPos[k * 3] = wx; ringPos[k * 3 + 1] = wy; ringPos[k * 3 + 2] = wz;
+    discPos[(k + 1) * 3] = wx; discPos[(k + 1) * 3 + 1] = wy; discPos[(k + 1) * 3 + 2] = wz;
+  }
+  ringGeo.attributes.position.needsUpdate = true;
+  discGeo.attributes.position.needsUpdate = true;
+}
+
+/* ---------- main loop ---------- */
+const readout = $('readout');
+let last = performance.now();
+function tick(now) {
+  requestAnimationFrame(tick);
+  const dt = Math.min((now - last) / 1000, .05); last = now;
+  controls.update();
+
+  if (pointerIn || painting) {
+    raycaster.setFromCamera(ndc, camera);
+    const hits = raycaster.intersectObject(terrain, false);
+    hasHit = hits.length > 0;
+    if (hasHit) hitPoint.copy(hits[0].point);
+  }
+  if (hasHit && (pointerIn || painting)) {
+    brushGroup.visible = true;
+    updateBrush(hitPoint);
+    readout.textContent =
+      `h ${hitPoint.y.toFixed(1)}  ·  x ${hitPoint.x.toFixed(0)}  z ${hitPoint.z.toFixed(0)}  ·  ${mode}`;
+  } else {
+    brushGroup.visible = false;
+    readout.textContent = 'hover terrain to inspect';
+  }
+  if (painting && hasHit) {
+    if (strokeStart) { flattenTarget = hitPoint.y; strokeStart = false; }
+    applyBrush(hitPoint, dt);
+  }
+  if (geomDirty) { syncGeom(); geomDirty = false; miniDirty = true; }
+
+  const sh = terrMat.userData.sh;
+  if (sh) {
+    sh.uniforms.uWater.value = waterLevel;
+    sh.uniforms.uSnowH.value = snowH;
+    sh.uniforms.uShowGrid.value = showGrid ? 1 : 0;
+  }
+  water.position.y = waterLevel;
+  waterTex.offset.x += dt * .008; waterTex.offset.y += dt * .005;
+
+  if (miniDirty) { updateMinimapBase(); miniDirty = false; }
+  drawMinimap();
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(tick);
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

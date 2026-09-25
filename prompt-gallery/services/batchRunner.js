@@ -118,11 +118,21 @@ export async function runBatch({ prompts, model, options, deps, onEvent, shouldS
         },
         deps: {
           generate: ({ prompt, promptItem, checklist, onChunk, onStats }) => deps.generate(prompt, {
-            model, promptItem, checklist, onChunk, onStats,
+            model, promptItem, checklist, onChunk,
+            onStats: stats => {
+              onStats?.(stats);
+              emit({ type: 'stats', index: i, stats });
+            },
           }),
           sandbox: html => deps.runSandbox(html),
           audit: args => deps.audit(args),
-          repair: args => deps.repair(args),
+          repair: args => deps.repair({
+            ...args,
+            onStats: stats => {
+              args.onStats?.(stats);
+              emit({ type: 'stats', index: i, stats });
+            },
+          }),
           save: args => deps.save(args),
         },
         shouldStop: stop,
@@ -183,6 +193,7 @@ export async function runBatch({ prompts, model, options, deps, onEvent, shouldS
         genHtml = await deps.generate(p.prompt, {
           model,
           onChunk: (partial) => emit({ type: 'chunk', index: i, html: partial }),
+          onStats: stats => emit({ type: 'stats', index: i, stats }),
         });
         genError = null;
         if (genHtml && genHtml.trim()) break;
@@ -227,6 +238,7 @@ export async function runBatch({ prompts, model, options, deps, onEvent, shouldS
             html: finalHtml,
             errors: (runStatus.errors && runStatus.errors.length) ? runStatus.errors : ['Execution timed out — possible infinite loop'],
             onChunk: (partial) => emit({ type: 'chunk', index: i, html: partial }),
+            onStats: stats => emit({ type: 'stats', index: i, stats }),
           });
           if (fixed && fixed.trim()) {
             finalHtml = fixed;

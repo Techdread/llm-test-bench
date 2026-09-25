@@ -1,6 +1,7 @@
 import { html } from 'htm/preact';
 import { useState, useCallback } from 'preact/hooks';
 import { RatingWidget } from './RatingWidget.js';
+import { ratingOf, withRating } from '../services/rating.js';
 import { sendToCodeMorphLab } from '../../shared/services/code-morph-handoff.js';
 import { sendToBugfixBench } from '../../shared/services/bugfix-bench-handoff.js';
 import { VerificationDetails } from './VerificationBadge.js';
@@ -16,7 +17,7 @@ export function MetadataPanel({ generation, response, onUpdateMetadata, onSavePr
   const displayName = folderId || id;
 
   const handleRatingChange = useCallback((rating) => {
-    onUpdateMetadata(id, { ...meta, rating });
+    onUpdateMetadata(id, withRating(meta, rating));
   }, [id, meta, onUpdateMetadata]);
 
   const handleAddTag = useCallback((e) => {
@@ -72,7 +73,7 @@ export function MetadataPanel({ generation, response, onUpdateMetadata, onSavePr
         <!-- Rating -->
         <div class="metadata-field">
           <span class="metadata-label">Rating</span>
-          <${RatingWidget} rating=${meta.rating || 0} onChange=${handleRatingChange} size=${18} />
+          <${RatingWidget} rating=${ratingOf(meta)} onChange=${handleRatingChange} size=${15} />
         </div>
 
         <!-- Model -->

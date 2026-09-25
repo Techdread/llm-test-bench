@@ -31,11 +31,13 @@ const PREFS_DEFAULTS = { theme: 'dark', provider: '', model: '', backend: 'model
 import * as openrouter from './services/openrouter.js';
 import { buildSvgBenchmarkAgentTask, SVG_BENCHMARK_AGENT_OUTPUT } from './services/codingAgent.js';
 import { AGENTS } from '../shared/services/agent-backend.js';
+import { CLI_DEFAULT_MODEL, CLI_PROVIDER_PREFIX } from '../shared/services/executor-models.js';
 import * as modelProviders from '../shared/services/model-providers.js';
 import { prefs, hydrateAppPrefs, setPref, setPrefs, subscribeAppPrefs } from '../shared/services/app-prefs.js';
 import * as benchmarks from './services/benchmarks.js';
-import { loadSeedPrompts } from './services/promptLibrary.js';
-import { analyzeSvg, compareSvgToReference } from './services/pixeldiff.js';
+import { loadSeedPrompts, promptSetOf } from './services/promptLibrary.js';
+import { analyzeSvg, compareSvgToReference, renderSvgToCanvas } from './services/pixeldiff.js';
+import { checkAnimation } from './services/animationCheck.js';
 import { exportSvgAsGif } from '../shared/services/gif-export.js';
 import { crossAppHandoffsEnabled, isPublicDistribution } from '../shared/services/distribution.js';
 import { consumeShowcaseRoute } from '../shared/services/showcase.js';
@@ -693,6 +695,7 @@ function App() {
       bySlug.set(s.slug, {
         id: s.id, slug: s.slug, title: s.title, prompt: s.prompt,
         category: s.category, difficulty: s.difficulty,
+        set: promptSetOf(s), basedOn: s.basedOn || null,
         tags: s.tags || [], notes: s.notes || '', source: s.source || 'seed',
         // Harvest counts describe the private source collection, not this
         // user's data root. Only live benchmarks count as represented here.
@@ -702,7 +705,10 @@ function App() {
     for (const b of benchmarkList) {
       const existing = bySlug.get(b.slug);
       bySlug.set(b.slug, {
+        id: existing?.id,
         slug: b.slug,
+        set: existing?.set || b.meta?.set || 'core',
+        basedOn: existing?.basedOn || b.meta?.basedOn || null,
         title: existing?.title || deriveTitle(b.prompt, b.slug),
         prompt: b.prompt || existing?.prompt || '',
         category: existing?.category || b.meta?.category || 'general',
@@ -722,31 +728,53 @@ function App() {
     () => allModels.find(m => m.providerId === selectedProviderId && m.modelId === selectedModelId) || null,
     [allModels, selectedProviderId, selectedModelId],
   );
-  const batchModel = useMemo(() => ({
-    providerId: selectedProviderId,
-    modelId: selectedModelId,
-    label: batchModelInfo?.displayLabel || batchModelInfo?.name || selectedModelId || '',
-  }), [selectedProviderId, selectedModelId, batchModelInfo]);
+  // The batch runs whatever the toolbar points at. A CLI agent goes through the
+  // cli-agent provider, which reports its tool calls and thinking to the
+  // dialog's trace as well as the reply text.
+  const batchModel = useMemo(() => {
+    if (backend === 'agent') {
+      const agent = AGENTS.find(item => item.id === selectedAgentId);
+      const agentModelId = agentModels[selectedAgentId] || '';
+      return {
+        providerId: `${CLI_PROVIDER_PREFIX}${selectedAgentId}`,
+        modelId: agentModelId || CLI_DEFAULT_MODEL,
+        label: `${agent?.label || selectedAgentId} CLI / ${agentModelId || 'default'}`,
+        isAgent: true,
+      };
+    }
+    return {
+      providerId: selectedProviderId,
+      modelId: selectedModelId,
+      label: batchModelInfo?.displayLabel || batchModelInfo?.name || selectedModelId || '',
+      isAgent: false,
+    };
+  }, [backend, selectedAgentId, agentModels, selectedProviderId, selectedModelId, batchModelInfo]);
 
   const batchDeps = useMemo(() => ({
-    ensureBenchmark: async (p) => {
-      const slug = p.slug || benchmarks.slugify(p.prompt);
-      const exists = benchmarkList.some(b => b.slug === slug);
-      if (!exists) await benchmarks.createBenchmark(rootHandle, p.prompt, p.category, p.difficulty);
-      return slug;
-    },
-    generate: async (promptText, { onChunk, params, onStats } = {}) => {
+    // Creates the folder under the prompt's own slug. createBenchmark names it
+    // slugify(prompt), which for curated and animated seeds is a different
+    // folder from the one submissions are saved to.
+    ensureBenchmark: (p) => benchmarks.ensureBenchmark(rootHandle, {
+      slug: p.slug || benchmarks.slugify(p.prompt),
+      prompt: p.prompt, category: p.category, difficulty: p.difficulty,
+      set: p.set, basedOn: p.basedOn,
+    }),
+    generate: async (promptText, { onChunk, params, onStats, onAgentEvent, onAgentLive } = {}) => {
       let final = '';
-      await openrouter.generateSvg(promptText, selectedProviderId, selectedModelId, (partial) => {
+      await openrouter.generateSvg(promptText, batchModel.providerId, batchModel.modelId, (partial) => {
         final = stripSvgFences(partial);
-        onChunk?.(final);
-      }, { params, onStats });
+        if (!batchModel.isAgent || /<svg/i.test(final)) onChunk?.(final);
+      }, { params, onStats, onAgentEvent, onAgentLive });
       return final;
     },
     validate: (svg) => validateSvg(svg),
-    heal: async ({ prompt, svg, reason, params, onChunk }) => {
-      const out = await openrouter.healSvg(prompt, svg, reason, selectedProviderId, selectedModelId,
-        (partial) => onChunk?.(stripSvgFences(partial)), { params });
+    heal: async ({ prompt, svg, reason, params, onChunk, onStats, onAgentEvent, onAgentLive }) => {
+      const out = await openrouter.healSvg(prompt, svg, reason, batchModel.providerId, batchModel.modelId,
+        (partial) => {
+          const stripped = stripSvgFences(partial);
+          // An agent's narration is not SVG: keep it in the trace, not the preview.
+          if (!batchModel.isAgent || /<svg/i.test(stripped)) onChunk?.(stripped);
+        }, { params, onStats, onAgentEvent, onAgentLive });
       return stripSvgFences(out);
     },
     score: async (svg, slug) => {
@@ -755,7 +783,11 @@ function App() {
       if (!ref) return null;
       try { const r = await compareSvgToReference(svg, ref); return r.score; } catch (e) { return null; }
     },
-    save: async ({ prompt, svg, model: mdl, slug, autoScore, kind, healed, healAttempts, valid, params, stats }) => {
+    checkAnimation: (svg) => checkAnimation(svg, {
+      renderFrame: async (markup, size) => (await renderSvgToCanvas(markup, size, size))
+        .getContext('2d').getImageData(0, 0, size, size),
+    }),
+    save: async ({ prompt, svg, model: mdl, slug, autoScore, animation, kind, healed, healAttempts, valid, params, stats }) => {
       const modelSlug = (mdl.label || mdl.modelId || 'manual')
         .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
       const submissionId = `${modelSlug}-batch-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`;
@@ -775,7 +807,12 @@ function App() {
           ? `Batch auto-fixed (${healAttempts} attempt${healAttempts === 1 ? '' : 's'})`
           : 'Batch generated',
         submittedAt: new Date().toISOString(),
-        batch: { id: batchIdRef.current, kind, healed: !!healed, healAttempts: healAttempts || 0 },
+        batch: {
+          id: batchIdRef.current, kind, healed: !!healed, healAttempts: healAttempts || 0,
+          promptSet: promptSetOf(prompt),
+        },
+        // Motion check result for animated prompts: { animated, moves, motion, loops, issues, ... }.
+        animation: animation || null,
         // What was asked for, and what actually happened — the raw material for
         // "which settings suit this model+quant".
         params: params && Object.keys(params).length ? params : null,
@@ -800,7 +837,7 @@ function App() {
       return b.submissionModels.some(m =>
         (mdl.modelId && m.modelId === mdl.modelId) || (mdl.label && m.model === mdl.label));
     },
-  }), [selectedProviderId, selectedModelId, rootHandle, benchmarkList]);
+  }), [batchModel, rootHandle, benchmarkList]);
 
   // Past Runs view only needs to read runs + their SVGs from disk.
   const runsDeps = useMemo(() => ({
@@ -1091,7 +1128,12 @@ function App() {
         model=${batchModel}
         allModels=${allModels}
         modelsLoading=${modelsLoading}
-        onModelChange=${handleModelChange}
+        backend=${backend}
+        selectedProviderId=${selectedProviderId}
+        selectedModelId=${selectedModelId}
+        agentId=${selectedAgentId}
+        agentModelId=${agentModels[selectedAgentId] || ''}
+        onExecutorChange=${handleExecutorChange}
         onProviderSettingsClick=${() => setShowProviderSettings(true)}
         hasDirectory=${!!rootHandle}
         onPickDirectory=${handlePickDirectory}

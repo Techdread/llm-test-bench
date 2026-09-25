@@ -1,0 +1,110 @@
+
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 450">
+  <defs>
+    <radialGradient id="bodyGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#D9723A"/>
+      <stop offset="100%" stop-color="#B8552A"/>
+    </radialGradient>
+    <radialGradient id="headGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#D9723A"/>
+      <stop offset="100%" stop-color="#C46030"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Tail -->
+  <g id="tail">
+    <!-- Thick ringed tail curving to the right -->
+    <path d="M280,310 C350,300 400,260 390,200 C380,140 340,100 290,110 C270,115 260,130 270,145 C280,160 300,155 310,165" 
+          fill="none" stroke="#C46030" stroke-width="38" stroke-linecap="round"/>
+    <!-- Tail rings -->
+    <path d="M320,275 C330,265 345,255 355,245" fill="none" stroke="#8B3A1E" stroke-width="38" stroke-linecap="round"/>
+    <path d="M370,220 C375,205 370,190 360,175" fill="none" stroke="#8B3A1E" stroke-width="38" stroke-linecap="round"/>
+    <path d="M340,155 C330,145 320,138 310,132" fill="none" stroke="#8B3A1E" stroke-width="38" stroke-linecap="round"/>
+    <!-- Tail tip -->
+    <circle cx="310" cy="165" r="19" fill="#C46030"/>
+  </g>
+
+  <!-- Back legs -->
+  <ellipse cx="175" cy="380" rx="32" ry="22" fill="#6B2D1A"/>
+  <ellipse cx="225" cy="380" rx="32" ry="22" fill="#6B2D1A"/>
+
+  <!-- Body -->
+  <ellipse cx="200" cy="310" rx="95" ry="85" fill="url(#bodyGrad)"/>
+  
+  <!-- Belly (lighter area) -->
+  <ellipse cx="200" cy="330" rx="60" ry="55" fill="#E8A87C"/>
+
+  <!-- Front legs -->
+  <rect x="148" y="340" width="30" height="60" rx="15" fill="#6B2D1A"/>
+  <rect x="222" y="340" width="30" height="60" rx="15" fill="#6B2D1A"/>
+
+  <!-- Paws -->
+  <ellipse cx="163" cy="400" rx="18" ry="10" fill="#5C2515"/>
+  <ellipse cx="237" cy="400" rx="18" ry="10" fill="#5C2515"/>
+
+  <!-- Ears -->
+  <g id="ears">
+    <!-- Left ear -->
+    <path d="M140,165 C125,130 130,110 150,115 C170,120 175,145 170,165" fill="#C46030"/>
+    <path d="M145,160 C135,135 138,120 150,122 C162,124 165,145 162,160" fill="#F5E6D3"/>
+    <!-- Right ear -->
+    <path d="M260,165 C275,130 270,110 250,115 C230,120 225,145 230,165" fill="#C46030"/>
+    <path d="M255,160 C265,135 262,120 250,122 C238,124 235,145 238,160" fill="#F5E6D3"/>
+  </g>
+
+  <!-- Head -->
+  <ellipse cx="200" cy="200" rx="85" ry="72" fill="url(#headGrad)"/>
+
+  <!-- White face markings - cheeks -->
+  <ellipse cx="145" cy="215" rx="35" ry="28" fill="#F5E6D3"/>
+  <ellipse cx="255" cy="215" rx="35" ry="28" fill="#F5E6D3"/>
+
+  <!-- White face markings - around eyes -->
+  <ellipse cx="170" cy="190" rx="28" ry="24" fill="#F5E6D3"/>
+  <ellipse cx="230" cy="190" rx="28" ry="24" fill="#F5E6D3"/>
+
+  <!-- White muzzle -->
+  <ellipse cx="200" cy="225" rx="30" ry="22" fill="#F5E6D3"/>
+
+  <!-- Dark tear marks -->
+  <path d="M170,195 C165,210 158,225 155,240 C158,235 165,220 172,200" fill="#5C2E1A"/>
+  <path d="M230,195 C235,210 242,225 245,240 C242,235 235,220 228,200" fill="#5C2E1A"/>
+
+  <!-- Eyes -->
+  <g id="eyes">
+    <!-- Left eye -->
+    <ellipse cx="172" cy="192" rx="14" ry="16" fill="#2A1510"/>
+    <circle cx="168" cy="186" r="5" fill="white"/>
+    <circle cx="175" cy="196" r="2.5" fill="white"/>
+    
+    <!-- Right eye -->
+    <ellipse cx="228" cy="192" rx="14" ry="16" fill="#2A1510"/>
+    <circle cx="224" cy="186" r="5" fill="white"/>
+    <circle cx="231" cy="196" r="2.5" fill="white"/>
+  </g>
+
+  <!-- Nose -->
+  <path d="M193,220 L207,220 L200,230 Z" fill="#2A1510"/>
+  
+  <!-- Mouth -->
+  <path d="M190,235 Q200,245 210,235" fill="none" stroke="#2A1510" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Whisker dots -->
+  <circle cx="168" cy="228" r="1.5" fill="#8B4513"/>
+  <circle cx="162" cy="232" r="1.5" fill="#8B4513"/>
+  <circle cx="170" cy="236" r="1.5" fill="#8B4513"/>
+  <circle cx="232" cy="228" r="1.5" fill="#8B4513"/>
+  <circle cx="238" cy="232" r="1.5" fill="#8B4513"/>
+  <circle cx="230" cy="236" r="1.5" fill="#8B4513"/>
+
+  <!-- Subtle blush -->
+  <ellipse cx="155" cy="225" rx="12" ry="8" fill="#E8A090" opacity="0.4"/>
+  <ellipse cx="245" cy="225" rx="12" ry="8" fill="#E8A090" opacity="0.4"/>
+
+  <!-- Fur texture lines on body -->
+  <path d="M160,300 Q170,290 180,300" fill="none" stroke="#B8552A" stroke-width="1.5" opacity="0.4"/>
+  <path d="M220,300 Q230,290 240,300" fill="none" stroke="#B8552A" stroke-width="1.5" opacity="0.4"/>
+  <path d="M175,320 Q185,310 195,320" fill="none" stroke="#B8552A" stroke-width="1.5" opacity="0.4"/>
+  <path d="M205,320 Q215,310 225,320" fill="none" stroke="#B8552A" stroke-width="1.5" opacity="0.4"/>
+</svg>

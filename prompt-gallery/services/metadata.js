@@ -3,6 +3,7 @@
 //   {sanitizedModel}_{shortId}.html  +  {sanitizedModel}_{shortId}.json
 // Legacy format (auto-detected): response.html + metadata.json
 import * as fs from '../../shared/services/fs.js';
+import { mapPool } from '../../shared/services/async-pool.js';
 import { STANDARD_SUBFOLDERS } from '../../shared/services/data-root-manager.js';
 
 // Bootstrapped by the data-root contract inside every app namespace, so they
@@ -52,6 +53,8 @@ export function createMetadata(model, tags = [], notes = '') {
  * Returns { id, folderId, variantKey, redirectedFolder } 
  */
 export async function saveGeneration(rootHandle, folderName, prompt, response, metadata) {
+  // Whatever this writes replaces what the cache may hold for that id.
+  forgetResponse();
   let dirHandle;
   let actualFolder = folderName;
 
@@ -186,22 +189,69 @@ export async function updateMetadata(rootHandle, id, metadata) {
   await mw.close();
 }
 
+// A generation's page is the big part of it: 180 folders here hold 2,271 HTML
+// files, 59 MB. Reading them all to draw a list was free from a local folder
+// and is anything but over the network (the Quest), so the scan reads metadata
+// only and the page is fetched when something actually shows it. Keyed by
+// `${folderId}/${variantKey}`, dropped whenever that generation is written.
+const responseCache = new Map();
+
+export function forgetResponse(id) {
+  if (id === undefined) responseCache.clear();
+  else responseCache.delete(id);
+}
+
+/** The page for one generation, from cache or disk. '' when it has none. */
+export async function loadResponse(rootHandle, id) {
+  if (responseCache.has(id)) return responseCache.get(id);
+  const { folderId, variantKey } = parseId(id);
+  let html = '';
+  try {
+    const dirHandle = await rootHandle.getDirectoryHandle(folderId);
+    const fileName = variantKey ? `${variantKey}.html` : 'response.html';
+    html = await (await (await dirHandle.getFileHandle(fileName)).getFile()).text();
+  } catch (e) { /* no page saved for this one */ }
+  responseCache.set(id, html);
+  return html;
+}
+
+/** `generation` with its page filled in (the same object when it already is). */
+export async function ensureResponse(rootHandle, generation) {
+  if (!generation || generation.response) return generation;
+  if (generation.hasResponse === false) return generation;
+  return { ...generation, response: await loadResponse(rootHandle, generation.id) };
+}
+
+export async function ensureResponses(rootHandle, generations = []) {
+  return Promise.all(generations.map(g => ensureResponse(rootHandle, g)));
+}
+
 /**
  * List all generations across all folders.
  * Each variant appears as a separate entry.
  * Handles both new (variant) and legacy formats.
+ *
+ * Pages are NOT read here — `generation.response` is '' and `hasResponse` says
+ * whether there is one. Use loadResponse/ensureResponse to get it.
  */
 export async function listGenerations(rootHandle) {
   const generations = [];
 
+  // Folders are independent, so they are read a few at a time. Serially, one
+  // round trip per file over the server data root added up to minutes.
+  const folders = [];
   for await (const [name, handle] of rootHandle) {
-    if (handle.kind !== 'directory') continue;
+    if (handle.kind === 'directory') folders.push([name, handle]);
+  }
+
+  const perFolder = await mapPool(folders, async ([name, handle]) => {
+    const found = [];
     // Folders starting with "_" are reserved app data (e.g. _library), not generations
-    if (name.startsWith('_')) continue;
+    if (name.startsWith('_')) return found;
     // …as are the data-root contract's own subfolders. Without this, the JSON
     // the hub writes into config/ reads as a variant and a phantom "Config"
     // project shows up in the gallery and the compare picker.
-    if (RESERVED_FOLDERS.has(name)) continue;
+    if (RESERVED_FOLDERS.has(name)) return found;
 
     // prompt.md belongs to the folder, so read it once and attach it to every
     // variant. This keeps gallery search and grouping prompt-aware without
@@ -214,6 +264,7 @@ export async function listGenerations(rootHandle) {
 
     // Scan folder for variant .json files and legacy metadata.json
     const variantJsons = [];
+    const pages = new Set();
     let hasLegacyMeta = false;
 
     for await (const [fileName, fileHandle] of handle) {
@@ -222,6 +273,8 @@ export async function listGenerations(rootHandle) {
         hasLegacyMeta = true;
       } else if (fileName.endsWith('.json')) {
         variantJsons.push({ key: fileName.replace(/\.json$/, ''), handle: fileHandle });
+      } else if (fileName.endsWith('.html')) {
+        pages.add(fileName);
       }
     }
 
@@ -231,17 +284,14 @@ export async function listGenerations(rootHandle) {
         try {
           const mFile = await vj.handle.getFile();
           const metadata = JSON.parse(await mFile.text());
-          let response = '';
-          try {
-            const rf = await handle.getFileHandle(`${vj.key}.html`);
-            response = await (await rf.getFile()).text();
-          } catch (e) { /* no response file */ }
-          generations.push({
-            id: `${name}/${vj.key}`,
+          const id = `${name}/${vj.key}`;
+          found.push({
+            id,
             folderId: name,
             variantKey: vj.key,
             prompt,
-            response,
+            response: responseCache.get(id) || '',
+            hasResponse: pages.has(`${vj.key}.html`),
             metadata,
           });
         } catch (e) { /* skip invalid */ }
@@ -251,22 +301,20 @@ export async function listGenerations(rootHandle) {
       try {
         const mf = await handle.getFileHandle('metadata.json');
         const metadata = JSON.parse(await (await mf.getFile()).text());
-        let response = '';
-        try {
-          const rf = await handle.getFileHandle('response.html');
-          response = await (await rf.getFile()).text();
-        } catch (e) { /* no response */ }
-        generations.push({
+        found.push({
           id: name,
           folderId: name,
           variantKey: null,
           prompt,
-          response,
+          response: responseCache.get(name) || '',
+          hasResponse: pages.has('response.html'),
           metadata,
         });
       } catch (e) { /* not a valid generation folder */ }
     }
-  }
+    return found;
+  });
+  for (const list of perFolder) generations.push(...list);
 
   return generations;
 }
@@ -277,6 +325,7 @@ export async function listGenerations(rootHandle) {
  */
 export async function deleteGeneration(rootHandle, id) {
   const { folderId, variantKey } = parseId(id);
+  forgetResponse(id);
 
   if (!variantKey) {
     // Legacy — delete entire folder

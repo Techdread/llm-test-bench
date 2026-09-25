@@ -5,6 +5,7 @@
 import { html } from 'htm/preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { ProviderModelSelector } from './ProviderModelSelector.js';
+import { AgentEffortSelect, seedAgentModelEffort } from './AgentEffortSelect.js';
 import {
   AGENTS,
   getAgentModelEffort,
@@ -12,7 +13,6 @@ import {
   isAgentBridgeReachable,
   listAgentModelOptions,
   resolveAgentModelSelection,
-  saveAgentModelEffort,
 } from '../services/agent-backend.js';
 import {
   buildExecutorModels,
@@ -23,10 +23,6 @@ import {
 } from '../services/executor-models.js';
 
 export { buildExecutorModels, buildExecutorMetadata, CLI_DEFAULT_MODEL, CLI_PROVIDER_PREFIX, decodeExecutorSelection };
-
-const EFFORT_LABELS = {
-  low: 'Low', medium: 'Medium', high: 'High', xhigh: 'Extra high', max: 'Max', ultra: 'Ultra',
-};
 
 export function ExecutorModelSelector({
   models = [],
@@ -41,7 +37,6 @@ export function ExecutorModelSelector({
   onSettingsClick,
 }) {
   const [agentModels, setAgentModels] = useState({});
-  const [effortRevision, setEffortRevision] = useState(0);
   // null while probing, so the CLI rows never flicker in and out on load.
   const [bridgeReachable, setBridgeReachable] = useState(null);
 
@@ -71,38 +66,19 @@ export function ExecutorModelSelector({
   );
   const selectedProviderId = backend === 'agent' ? `${CLI_PROVIDER_PREFIX}${agentId}` : providerId;
   const choices = backend === 'agent' ? groupAgentModelOptions(agentModels[agentId] || []) : [];
-  const storedEffort = useMemo(
-    () => getAgentModelEffort(agentId, agentModelId),
-    [agentId, agentModelId, effortRevision],
-  );
   const agentSelection = resolveAgentModelSelection(
     agentModelId,
-    storedEffort,
+    getAgentModelEffort(agentId, agentModelId),
     choices,
   );
   const selectedModelId = backend === 'agent' ? (agentSelection.modelId || CLI_DEFAULT_MODEL) : modelId;
-  const selectedChoice = choices.find(choice => choice.id === agentSelection.modelId);
-  const effortOptions = selectedChoice?.efforts || [];
-  const fixedEffort = selectedChoice?.fixedEffort || '';
-  const selectedEffort = effortOptions.includes(agentSelection.effort)
-    ? agentSelection.effort
-    : (selectedChoice?.defaultEffort || effortOptions[0] || '');
-  const effortDescription = selectedChoice?.effortDescriptions?.[selectedEffort] || '';
 
   const handleModelChange = (nextProviderId, nextModelId) => {
     const next = decodeExecutorSelection(nextProviderId, nextModelId);
-    if (next.backend === 'agent' && next.modelId) {
-      const nextChoices = groupAgentModelOptions(agentModels[next.agentId] || []);
-      const nextChoice = nextChoices.find(choice => choice.id === next.modelId);
-      const nextEffort = getAgentModelEffort(next.agentId, next.modelId, nextChoice?.defaultEffort || '');
-      if (nextEffort) saveAgentModelEffort(next.agentId, next.modelId, nextEffort);
+    if (next.backend === 'agent') {
+      seedAgentModelEffort(next.agentId, next.modelId, groupAgentModelOptions(agentModels[next.agentId] || []));
     }
     onChange?.(next);
-  };
-
-  const handleEffortChange = (event) => {
-    if (!saveAgentModelEffort(agentId, agentSelection.modelId, event.target.value)) return;
-    setEffortRevision(value => value + 1);
   };
 
   return html`
@@ -116,16 +92,13 @@ export function ExecutorModelSelector({
         loading=${loading && backend !== 'agent'}
         onSettingsClick=${onSettingsClick}
       />
-      ${backend === 'agent' && (effortOptions.length > 0 || fixedEffort) && html`
-        <label class="executor-effort" title=${effortDescription || 'Reasoning effort'}>
-          <span class="sr-only">Reasoning effort</span>
-          ${fixedEffort
-            ? html`<select value=${fixedEffort} disabled><option value=${fixedEffort}>Thinking (fixed)</option></select>`
-            : html`<select value=${selectedEffort} onChange=${handleEffortChange} disabled=${disabled || effortOptions.length === 1}>
-                ${effortOptions.map(level => html`
-                  <option value=${level}>${EFFORT_LABELS[level] || level}${level === selectedChoice?.defaultEffort ? ' (default)' : ''}${effortOptions.length === 1 ? ' (fixed)' : ''}</option>`)}
-              </select>`}
-        </label>`}
+      ${backend === 'agent' && html`
+        <${AgentEffortSelect}
+          agentId=${agentId}
+          modelId=${agentSelection.modelId}
+          choices=${choices}
+          disabled=${disabled}
+        />`}
     </div>
   `;
 }

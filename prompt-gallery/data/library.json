@@ -562,6 +562,276 @@
       "prompt": "Build a single HTML page that renders up to 1,000,000 particles at interactive frame rates using WebGL2 in plain JavaScript — no libraries. Use GPU-friendly techniques (instancing or transform feedback; do not update particles one-by-one on the CPU). The mouse acts as an attractor, switching to a repulsor while the button is held. Colour particles by speed, add slight motion blur or trail fading, and include a particle count selector (10k / 100k / 1M), an FPS counter, and a force-strength slider. It should remain above 30fps at 1M particles on a typical discrete GPU.",
       "notes": "Watch for: CPU-side per-particle loops (instant failure at 1M); requiring WebGL2 without a fallback message; attractor force exploding velocities; FPS counter measuring the wrong thing.",
       "createdAt": "2026-06-10T00:00:00Z"
+    },
+    {
+      "id": "webxr-controller-playground",
+      "title": "VR Controller Playground",
+      "category": "webxr",
+      "tags": ["interaction", "physics", "controllers", "sandbox"],
+      "prompt": "Build a single-page WebXR playground for the Meta Quest 3 using Three.js. Enter VR with a VRButton, use a local-floor reference space, and render both Touch controllers with XRControllerModelFactory plus laser pointers. The user can point at and grab physics-driven cubes and spheres from a table, throw them with a release velocity that matches the real hand motion, and feel a haptic pulse on grab and on collision. Include a world-space UI panel with buttons and a gravity slider driven by the laser pointer, an FPS/latency readout, and a desktop fallback with an orbit camera and mouse-drag grabbing so the scene can be reviewed without a headset.",
+      "notes": "Watch for: three.js addons (VRButton, XRControllerModelFactory) imported without an import map so nothing loads; throw velocity taken from a single frame's delta instead of smoothed controller motion; a grabbed object reparented without preserving its world transform, so it jumps; the UI panel not raycastable; nothing rendered at all outside a VR session.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-teleport-gallery",
+      "title": "VR Teleport Gallery",
+      "category": "webxr",
+      "tags": ["locomotion", "room-scale", "exploration", "scene"],
+      "prompt": "Build a single-page Three.js WebXR art gallery for the Quest 3 with three locomotion modes the user can switch between: parabolic-arc teleport on the right thumbstick with a landing marker that turns red on invalid surfaces, snap turn on the left thumbstick with a configurable angle, and optional smooth locomotion with a comfort vignette. Lay out several connected rooms with framed pictures, doorways, benches and a skylight, and put the settings panel on the left controller's wrist. Teleport must only accept floor geometry and must move the player rig, not the camera. Include a desktop WASD plus pointer-lock fallback.",
+      "notes": "Watch for: teleport moving the camera object instead of the XR rig group; the arc passing through walls and still allowing the teleport; snap turn rotating about the world origin rather than about the user's head position; the vignette drawn as a screen overlay that breaks stereo; no usable controls on desktop.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-paint-studio",
+      "title": "VR Paint Studio",
+      "category": "webxr",
+      "tags": ["tool", "editor", "controllers", "generative-art"],
+      "prompt": "Build a single-page Three.js WebXR 3D painting app for the Quest 3. Holding the trigger draws a ribbon stroke that follows the controller, with width driven by trigger pressure and the ribbon oriented to stay readable from the viewer. The off-hand controller carries a wrist palette: colour wheel, brush type (flat ribbon, tube, glowing neon, sparkle particles), width, and undo/redo/clear. Both grips together grab the whole painting to move, rotate and scale it. Include a grid floor for reference, stroke count and triangle budget on screen, and export of the artwork as a downloadable file. Provide a desktop mouse-drawing fallback.",
+      "notes": "Watch for: every stroke rebuilding a BufferGeometry each frame and destroying framerate; the ribbon flipping or pinching when the controller rolls; undo clearing everything instead of the last stroke; the palette placed in world space instead of attached to the controller; the export downloading an empty or unopenable file.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-passthrough-room-planner",
+      "title": "Passthrough Room Planner",
+      "category": "webxr",
+      "tags": ["mixed-reality", "tool", "productivity", "interaction"],
+      "prompt": "Build a single-page WebXR mixed-reality room planner for the Quest 3's passthrough. Request an immersive-ar session with hit-test and plane-detection as optional features, show a placement reticle on real surfaces, and let the user place, move, rotate and delete furniture (sofa, table, chair, lamp, rug, shelf) chosen from a wrist menu using the controller ray. Items snap to the detected floor and align to walls, cast a soft contact shadow onto the passthrough, and a tape-measure tool reports distances in metres. Persist the layout to localStorage. Degrade gracefully to an opaque VR room, and then to a plain desktop scene, when passthrough is unavailable.",
+      "notes": "Watch for: the session requested without optionalFeatures so hit-test and plane-detection silently do nothing; an opaque background or skybox occluding the passthrough feed; objects placed at the reticle's screen position rather than its world pose; no message or fallback when immersive-ar is unsupported; measurements reported in scene units instead of metres.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-hand-tracking-instrument",
+      "title": "Hand-Tracking Instrument",
+      "category": "webxr",
+      "tags": ["hand-tracking", "audio", "music", "interaction"],
+      "prompt": "Build a single-page Three.js WebXR musical instrument for the Quest 3 played entirely with hand tracking — no controllers. Request the hand-tracking feature, render both hands from their XRHand joint poses each frame, and float a curved arc of pads within arm's reach that light up and sound when a fingertip crosses into them. Synthesise everything with the Web Audio API (no audio files) using per-note envelopes, a pinch on the left hand to change voice, and pinch-and-drag to reposition the whole instrument. Show a clear indicator when tracking is lost and recover cleanly. Provide a mouse-clickable desktop fallback.",
+      "notes": "Watch for: joint poses read once at session start instead of from each XRFrame; a note retriggering every frame while the finger stays inside a pad; the AudioContext never resumed after a user gesture so there is silence; no handling of hands dropping out of tracking; pinch detected on a bare distance threshold with no hysteresis, so it chatters.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-archery-range",
+      "title": "VR Archery Range",
+      "category": "webxr",
+      "tags": ["game", "physics", "controllers", "arcade"],
+      "prompt": "Build a single-page Three.js WebXR archery range for the Quest 3. One controller grips the bow and the other grabs the string; draw strength comes from the world-space distance between the two controllers, the bow and string deform visibly as it is drawn, and releasing the trigger looses an arrow with matching speed, a gravity arc and a haptic thump. Targets stand at varying distances with scoring rings, some sliding side to side, and arrows stick where they land. Include a timed round, per-shot score with ring detection, a wind indicator, and a localStorage high-score table. Provide a desktop mouse aim-and-charge fallback.",
+      "notes": "Watch for: draw distance measured in local rather than world space so it changes as the player turns; arrows spawning behind or inside the bow mesh; no gravity, making every shot trivial; hit scoring against a bounding box so the rings are meaningless; haptics called on an input source that has no gamepad, throwing an error.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-rhythm-sabers",
+      "title": "Rhythm Saber Arena",
+      "category": "webxr",
+      "tags": ["game", "music", "arcade", "controllers"],
+      "prompt": "Build a single-page Three.js WebXR rhythm game for the Quest 3 in the saber-slicing style. Two glowing blades attached to the controllers cut blocks flying toward the player on a beat grid; each block carries a required colour and slice direction, and a cut only counts when the correct saber crosses it moving roughly the right way and above a minimum speed — otherwise the block breaks the combo. Generate the track procedurally with the Web Audio API and derive the chart from the audio clock, with no audio files. Include combo and score, obstacle walls to duck or lean around, haptics on a clean cut, and a desktop keyboard fallback for reviewing the chart.",
+      "notes": "Watch for: hits scored on proximity alone, ignoring slice direction and speed; saber motion sampled once per frame with no swept test, so fast swings tunnel straight through blocks; the chart drifting because timing uses requestAnimationFrame time instead of AudioContext.currentTime; a fresh mesh and material allocated per block instead of pooling.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-data-observatory",
+      "title": "VR Data Observatory",
+      "category": "webxr",
+      "tags": ["visualization", "tool", "room-scale", "interaction"],
+      "prompt": "Build a single-page Three.js WebXR data explorer for the Quest 3. Embed a dataset of at least 200 rows with four numeric columns and one category, and render it as a 3D scatter plot in a room-scale volume with labelled, scaled axes alongside a linked bar-chart panel. Pointing a controller ray at a point shows a floating tooltip that faces the head; the trigger selects a category and highlights it across both views. One grip moves the plot, both grips together scale and rotate it around the midpoint between the hands. A wrist menu switches between scatter, bars and parallel coordinates. Include a desktop orbit-control fallback.",
+      "notes": "Watch for: two-handed scaling computed from the current controller distance with no stored reference, so the plot jumps the instant it is grabbed; a canvas-texture label allocated per data point, collapsing framerate; tooltips that do not billboard toward the head; axes drawn without ticks or units; raycast picking that silently fails against instanced geometry.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-cockpit-flight",
+      "title": "VR Cockpit Space Flight",
+      "category": "webxr",
+      "tags": ["game", "seated", "space-themed", "simulation"],
+      "prompt": "Build a single-page Three.js WebXR seated space-flight sim for the Quest 3. The player sits in a cockpit whose throttle lever and flight stick are physical objects the controllers grab: the stick's constrained tilt drives pitch, yaw and roll, the throttle's travel along its rail drives speed, and both move mechanically with detents and resistance. Fly through an asteroid field with a starfield, a radar dish, shield and hull gauges on real cockpit panels, rings to fly through, and a docking approach with alignment cues. Keep the cockpit rigidly fixed to the player's reference space, offer a comfort-vignette toggle and a recentre button, and provide a desktop keyboard-and-mouse fallback.",
+      "notes": "Watch for: the cockpit drifting relative to the head so the whole scene swims and induces sickness; a grabbed lever following the controller freely instead of being projected onto its axis and clamped; pitch/yaw/roll applied as world-space Euler angles, producing gimbal artefacts; collision checks looping over every asteroid every frame; no way to recentre the seated view.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-escape-room",
+      "title": "VR Escape Room",
+      "category": "webxr",
+      "tags": ["game", "puzzle", "interaction", "physics"],
+      "prompt": "Build a single-page Three.js WebXR escape room for the Quest 3 built on physical interaction rather than menus. A sealed study contains a combination dial turned by twisting a grabbed controller, a lever to pull, drawers and a door that open only by grabbing and dragging along their real axis, a key that must be carried to a lock, a UV torch that reveals hidden markings on the walls, and a note whose code opens the safe. The puzzles chain so the room must be solved in order. Include teleport locomotion, grab-anywhere handling with haptics, an in-world hint plaque, a reset button, and a desktop click-to-interact fallback.",
+      "notes": "Watch for: interactions reduced to clicking floating buttons instead of constrained physical motion; the dial reading absolute controller rotation so it snaps to a new value the moment it is grabbed; drawers and doors sliding off their rails or passing through the furniture; the chain solvable out of order or the safe openable without the code; no way to reset the room after a mistake.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-scale-explorer",
+      "title": "Hold-the-Solar-System",
+      "category": "webxr",
+      "tags": ["educational", "space-themed", "simulation", "room-scale"],
+      "prompt": "Build a single-page Three.js WebXR orrery for the Quest 3 that the player can hold and grow. It begins as a table-top model with correct relative orbital periods and inclinations; grabbing it with both grips and pulling the hands apart scales it continuously from a model in the palm to a system the player stands inside, with the sun's light falloff, planet sizes and orbit lines all staying believable across the range. Pointing at a planet raises an info card that faces the head, the trigger flies the view smoothly to it, and a wrist dial scrubs time forward and backward from a single time value. Include a desktop orbit-control fallback.",
+      "notes": "Watch for: scale applied to the camera rig instead of the model, which breaks the floor height and the stereo separation; two-handed scaling with no stored initial hand distance so the model snaps on grab; orbital periods invented rather than proportional to the real ones; info cards clipping inside planets; time scrubbing accumulating drift instead of being derived from one clock value.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "webxr-raw-webgl2",
+      "title": "Raw WebXR, No Libraries",
+      "category": "webxr",
+      "tags": ["no-libraries", "raw-webgl", "webgl2", "performance"],
+      "prompt": "Build a single-page WebXR experience for the Quest 3 using raw WebGL2 and the WebXR Device API only — no Three.js and no libraries of any kind. Request an immersive-vr session with a local-floor reference space, render every view of each XRFrame from the XRWebGLLayer's viewports, and draw a grid floor plus a field of lit, spinning cubes with your own GLSL shaders and your own matrix maths. Read both controllers from their grip and target-ray spaces, draw a ray from each, and let the trigger recolour whichever cube it points at. Include an Enter VR button, a clear message when WebXR is unsupported, and a non-XR desktop preview of the same scene with a mouse-orbit camera.",
+      "notes": "Watch for: the scene drawn once per frame instead of once per view, giving a mono or one-eyed image; the XRWebGLLayer framebuffer never bound, so the headset shows black; window.requestAnimationFrame used instead of the session's own frame loop; view and projection matrices multiplied in the wrong order; no path at all when navigator.xr is missing.",
+      "createdAt": "2026-09-02T00:00:00Z"
+    },
+    {
+      "id": "sim-city-builder",
+      "title": "SimCity-Style City Simulator",
+      "category": "simulation",
+      "tags": ["city-builder", "zoning", "economy", "canvas"],
+      "prompt": "Build a single-page city-building simulator in the spirit of the original SimCity, using HTML5 Canvas and vanilla JavaScript with no external assets. The map is a 64×64 tile grid with terrain (land, water, trees). The player lays roads, power lines and power plants, and zones Residential, Commercial and Industrial land; zones only grow when they are connected to a road and powered. Model RCI demand as three meters that respond to the balance of jobs and population, land value driven by pollution, crime and proximity to parks, and police/fire station coverage radii. Run a monthly budget with tax rate sliders, maintenance costs and a running treasury. Include overlay views (power, pollution, land value, crime, traffic density), pause/1×/3× speed controls, a date and population readout, random disasters (fire that spreads, tornado), and save/load to localStorage.",
+      "notes": "Watch for: zones that grow without road or power connectivity; power flood-fill recomputed every frame instead of on change so large cities crawl; RCI demand that never responds to the jobs/population balance; overlays that are just recolored tiles with no underlying field; a budget that can go infinitely negative with no consequence.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-gaia-planet",
+      "title": "Gaia Planet Simulator",
+      "category": "simulation",
+      "tags": ["planet", "climate", "evolution", "canvas"],
+      "prompt": "Build a single-page planetary simulator in the spirit of SimEarth, using Canvas and vanilla JavaScript. Show a wrap-around equirectangular world map (e.g. 128×64 cells) where each cell tracks elevation, temperature, rainfall and biome (ocean, ice, desert, grassland, forest, jungle, tundra). Simulate a simple energy balance: solar input by latitude, albedo from ice and cloud, greenhouse strength from atmospheric CO₂, and heat diffusion between neighbouring cells, so an ice-albedo feedback can tip the planet into a snowball or runaway greenhouse. Life spreads and evolves through eras (single-celled → plants → animals → intelligence) based on habitability. Give the player god-controls: raise/lower terrain, seed life, inject or scrub CO₂, adjust solar output, trigger volcanoes and meteor strikes. Include map-layer toggles, global time-series charts (mean temperature, CO₂, ice cover, biomass) and a speed slider covering millions of years per second.",
+      "notes": "Watch for: a temperature field with no latitude gradient; missing ice-albedo feedback so nothing ever tips; biomes assigned from temperature alone ignoring rainfall; the map not wrapping east–west during diffusion; charts that grow unbounded arrays until the tab slows.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-london-bus",
+      "title": "London Bus Simulator",
+      "category": "simulation",
+      "tags": ["threejs", "driving", "london", "3d"],
+      "prompt": "Build a single-page London bus driving simulator with Three.js (import via an import map). The player drives a red double-decker Routemaster built from primitives, on the left-hand side of the road, through a procedurally generated London street grid with terraced buildings, zebra crossings, traffic lights, black cabs and other AI traffic that obeys signals. The route has numbered bus stops with shelters; the player must pull into the stop, open the doors, and wait while waiting passengers board and alighting passengers leave, with boarding time proportional to headcount. Model bus physics with a long wheelbase, weight-dependent acceleration and braking, and a rear that swings wide on tight corners. Score punctuality against a timetable, passenger comfort (penalise harsh braking and cornering g-force), and fines for running red lights or hitting kerbs. Include chase, cab and top-deck cameras, a HUD with speedometer, next stop, schedule delta and passenger count, plus a minimap.",
+      "notes": "Watch for: the bus driving on the right; a turning model that pivots on its centre instead of rear-axle steering geometry; AI traffic that drives through the bus or ignores lights; passengers who teleport instead of walking to the doors; no way to fail the timetable.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-fed-chair",
+      "title": "Fed Chair: Monetary Policy Simulator",
+      "category": "simulation",
+      "tags": ["economics", "macro", "strategy", "charts"],
+      "prompt": "Build a single-page economic simulator where the player is the chair of the Federal Reserve, using vanilla JavaScript and Canvas or SVG charts. Each turn is one FOMC meeting (eight per year). The player sets the federal funds rate in 25bp steps, chooses a balance-sheet policy (QE, hold, QT) and picks a forward-guidance statement from a list of hawkish/neutral/dovish options. Under the hood, run a small New-Keynesian-style model: an IS curve linking real rates to the output gap with a lag, an expectations-augmented Phillips curve, inflation expectations that de-anchor if the Fed loses credibility, an unemployment rate via Okun's law, bond yields and a stock index that react to surprises versus market expectations. Throw random shocks (oil spike, banking panic, pandemic, productivity boom) with headline news tickers. Show a Taylor-rule benchmark for comparison, dashboard charts of inflation, unemployment, GDP growth, rates and credibility, and end-of-term grading on the dual mandate. Include a congressional testimony event with multiple-choice answers that affect credibility.",
+      "notes": "Watch for: policy that affects inflation instantly with no transmission lag; markets reacting to the rate level rather than the surprise versus expectations; expectations that never de-anchor so credibility is decorative; a Taylor rule computed with the wrong sign on the output gap; shocks with no persistence.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-stock-market",
+      "title": "Stock Market Trading Simulator",
+      "category": "simulation",
+      "tags": ["finance", "trading", "charts", "order-book"],
+      "prompt": "Build a single-page stock market trading simulator in vanilla JavaScript with Canvas charts. Simulate eight fictional tickers whose prices follow geometric Brownian motion with sector correlations, volatility clustering and occasional jump events tied to generated news headlines (earnings beats, scandals, sector rallies). Show a live candlestick chart with selectable timeframes, volume bars and moving-average/RSI overlays, plus a Level-2 order book and time-and-sales tape driven by simulated market participants. The player starts with $100,000 and can place market, limit and stop orders, go long or short, and use optional 2× margin with margin calls. Track positions, average cost, realised and unrealised P&L, fees, and an equity curve versus an index of all eight stocks. Include speed controls (pause, 1 tick/s up to 100×), a trading-day clock with open/close auctions, and a final performance report with Sharpe ratio and max drawdown.",
+      "notes": "Watch for: prices that can go negative (arithmetic rather than geometric motion); limit orders filling at the limit price when the market gapped through it; short P&L with the wrong sign; candles built from a single tick; a Sharpe ratio that is not annualised or ignores the risk-free rate.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-school",
+      "title": "School Headteacher Simulator",
+      "category": "simulation",
+      "tags": ["management", "agents", "school", "canvas"],
+      "prompt": "Build a single-page school management simulator where the player is the headteacher, using Canvas and vanilla JavaScript. Show a top-down school floor plan with classrooms, a hall, playground, canteen and staff room, where individual students and teachers walk between rooms following the bell timetable. Each student has attributes (ability, motivation, wellbeing, attendance, friendship group) and each teacher has subject, skill, energy and morale. The player hires and fires staff within a budget, builds the weekly timetable, sets class sizes, spends on facilities (library, science lab, sports hall), and chooses policies (homework load, uniform strictness, after-school clubs, anti-bullying) that trade off grades against wellbeing and teacher burnout. Random events include illness outbreaks, a teacher resigning, a parent complaint, and a surprise inspection that grades the school on attainment, behaviour and leadership. Run the simulation through terms and years with exam results, league-table position and parent applications driving next year's intake and funding.",
+      "notes": "Watch for: students who never actually move between rooms on the bell; a timetable that allows a teacher in two rooms at once; policies that only change a number with no emergent effect on individuals; an inspection that ignores the metrics being simulated; no pressure from the budget.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-epidemic",
+      "title": "Epidemic Outbreak Simulator",
+      "category": "simulation",
+      "tags": ["epidemiology", "agents", "charts", "canvas"],
+      "prompt": "Build a single-page epidemic simulator with Canvas that runs an agent-based SEIR model side by side with the equivalent compartmental differential-equation model. Hundreds of agents move between homes, workplaces, schools and shops across a small town; infection probability depends on proximity, time exposed, and the pathogen's transmissibility. Expose sliders for R₀, incubation and infectious periods, asymptomatic fraction and fatality rate, and interventions: masks, social distancing, school closures, testing and isolation, contact tracing and vaccination rollout with a daily capacity. Show a live stacked area chart of S/E/I/R/D, an effective-R readout, hospital occupancy against a capacity line, and a map heat layer of infections. Include preset scenarios (seasonal flu, measles, novel pandemic) and a cost panel showing the economic damage of each intervention.",
+      "notes": "Watch for: agents that infect at any distance; R₀ slider not actually calibrating the transmission rate; the ODE model and agent model using different parameter meanings so they never agree; interventions toggled with no delay or compliance; chart arrays growing without limit.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-ecosystem",
+      "title": "Predator-Prey Evolution Simulator",
+      "category": "simulation",
+      "tags": ["ecology", "evolution", "agents", "canvas"],
+      "prompt": "Build a single-page ecosystem simulator with Canvas where grass, rabbits and foxes live on a 2D landscape. Grass regrows on a per-tile timer; rabbits eat grass, foxes hunt rabbits, and every creature has energy, age and a genome of heritable traits (speed, vision range, size, reproduction threshold) that mutate slightly on birth, with speed and size costing energy. Creatures steer using simple behaviours: seek food, flee predators, find mates, wander. Show population curves that should oscillate like a Lotka–Volterra system, histograms of each trait over time so the player can watch natural selection, and a click-to-inspect panel for any creature with its lineage. Provide controls to adjust mutation rate, food growth and starting populations, spawn disasters (drought, disease), and speed up time to thousands of ticks per second without rendering.",
+      "notes": "Watch for: populations that crash to zero within seconds because energy costs aren't balanced; traits that mutate but give no fitness advantage or cost; neighbour searches that are O(n²) with no spatial hash; fast-forward still rendering every tick; histograms that never update.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-ant-colony",
+      "title": "Ant Colony Simulator",
+      "category": "simulation",
+      "tags": ["emergence", "pheromones", "agents", "canvas"],
+      "prompt": "Build a single-page ant colony simulator with Canvas and vanilla JavaScript. Thousands of ants leave a nest to forage, laying 'to-home' and 'to-food' pheromone trails on a grid that evaporates and diffuses over time; ants sense pheromone with three forward sensors and steer toward the strongest, producing emergent shortest-path trails. The player can paint food sources, walls and water, and drag the nest. Include caste roles (workers, soldiers), a colony food store that funds new ant spawning, a rival colony that competes for food and fights on contact, and toggles to visualise each pheromone map as a coloured overlay. Expose sliders for evaporation rate, diffusion, sensor angle and ant count, and show live stats for population and food collected per minute.",
+      "notes": "Watch for: ants that know where food is instead of sensing pheromones; trails that never evaporate so every path saturates; per-ant object allocations each frame killing performance; ants walking through walls; no emergent path shortening when two routes exist.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-traffic",
+      "title": "Traffic Flow Simulator",
+      "category": "simulation",
+      "tags": ["traffic", "car-following", "roads", "canvas"],
+      "prompt": "Build a single-page traffic simulator with Canvas that uses the Intelligent Driver Model for car-following and MOBIL for lane changes. Provide three scenarios: a single-lane ring road that demonstrates phantom traffic jams (let the user tap a car to brake briefly and watch the stop-and-go wave travel backwards), a multi-lane motorway with an on-ramp merge and a lane closure, and a four-way junction with configurable traffic-light phase timings versus a roundabout. Expose sliders for inflow rate, desired speed, safe time headway, politeness factor and the fraction of trucks. Show a time-space diagram of vehicle positions, a live flow/density fundamental diagram, and throughput and average delay stats so the player can find the best light timings.",
+      "notes": "Watch for: cars that pass through each other at high density; IDM acceleration going to infinity when the gap reaches zero; lane changes that ignore the vehicle behind in the target lane; the ring-road jam not forming because every car is identical and perfectly smooth; a time-space diagram drawn with no time axis history.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-air-traffic",
+      "title": "Air Traffic Control Simulator",
+      "category": "simulation",
+      "tags": ["atc", "radar", "strategy", "canvas"],
+      "prompt": "Build a single-page air traffic control simulator with a green-on-black radar scope drawn on Canvas, including a rotating sweep, range rings, runways, waypoints and a fading history trail of each aircraft's previous returns. Aircraft enter from the edges with callsigns, type, altitude and destination (land at one of two runways or exit via a named fix). The player selects an aircraft and issues heading, altitude and speed instructions or a clear-to-land command; aircraft turn at a realistic rate, climb and descend gradually, and pilots read back instructions in a text log. Enforce separation minimums (3 nm lateral / 1000 ft vertical) with conflict alerts, fuel limits and go-arounds for bad approaches. Increase traffic density over time, show a score for landed and handed-off flights, and end the shift on a loss of separation.",
+      "notes": "Watch for: aircraft that snap instantly to new headings or altitudes; turns always going the same direction instead of the shortest way; separation checked only laterally; landing accepted from any heading or altitude; a sweep that redraws every aircraft continuously instead of on each pass.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-rocket",
+      "title": "Orbital Rocket Launch Simulator",
+      "category": "simulation",
+      "tags": ["space", "orbital-mechanics", "physics", "canvas"],
+      "prompt": "Build a single-page rocket launch and orbital mechanics simulator on Canvas. The player designs a rocket by stacking stages (each with engine thrust, specific impulse, fuel mass and dry mass) and sees the computed delta-v per stage from the Tsiolkovsky equation. Launch from a planet with atmospheric drag that thins with altitude and a gravity turn controlled by the player's pitch. Integrate the trajectory with a stable integrator (velocity Verlet or RK4) and draw the predicted conic orbit with apoapsis/periapsis markers. Support staging, throttle, time warp (disabled inside the atmosphere), prograde/retrograde burns, and a moon that the player can attempt to reach using a transfer burn with sphere-of-influence switching. Show a HUD with altitude, velocity, dynamic pressure, remaining delta-v and a navball-style heading indicator, plus mission goals (reach orbit, circularise, lunar flyby).",
+      "notes": "Watch for: Euler integration that makes stable orbits spiral out; delta-v shown that ignores staging; time warp that breaks the physics at high multipliers; the predicted orbit not matching the actual path; drag applied in vacuum or with the wrong sign.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-power-grid",
+      "title": "Power Grid Operator Simulator",
+      "category": "simulation",
+      "tags": ["energy", "grid", "strategy", "charts"],
+      "prompt": "Build a single-page electricity grid control-room simulator in vanilla JavaScript. Demand follows a realistic 24-hour curve with weather and a TV-pickup surge; supply comes from dispatchable plants with ramp rates and start-up times (nuclear, coal, gas CCGT, gas peakers, hydro), variable wind and solar driven by a weather forecast that can be wrong, and grid batteries. The player commits and dispatches units ahead of time and in real time. Model system frequency around 50 Hz using inertia: any mismatch between supply and demand moves frequency, low inertia from renewables makes it swing faster, and falling below thresholds triggers automatic load shedding and eventually a blackout. Track cost per MWh, CO₂ emissions and reliability, and display a stacked generation chart, frequency trace and a map of plants and substations. Include scenario days (winter peak, windless week, heatwave, plant trip).",
+      "notes": "Watch for: frequency that does not depend on system inertia; plants that ramp from zero to full instantly; solar producing at night; a stacked chart that doesn't sum to demand; no penalty for over-generation.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-hospital",
+      "title": "Emergency Department Simulator",
+      "category": "simulation",
+      "tags": ["queueing", "healthcare", "management", "canvas"],
+      "prompt": "Build a single-page hospital emergency department simulator with Canvas. Patients arrive by walk-in and ambulance following a time-of-day Poisson arrival rate, are triaged into five acuity levels, and flow through waiting room, cubicles, resus bays, imaging, and either discharge or admission to a ward that has limited beds (bed-blocking backs up the department). The player manages a shift roster of doctors and nurses with fatigue, opens escalation areas, and diverts ambulances at a cost. Show animated patients moving between zones, live metrics for 4-hour target compliance, median wait by acuity, patients leaving without being seen and ambulance handover delays, plus a queue-length chart. Include a major-incident event and let the player compare a staffing plan across a simulated week with a fixed random seed.",
+      "notes": "Watch for: arrivals at a constant rate rather than Poisson with a daily pattern; acuity ignored so critical patients wait behind minor injuries; beds that free instantly with no ward blocking; no seeded RNG so plans can't be compared fairly; staff fatigue that has no effect.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-evolution-creatures",
+      "title": "Evolving Walkers Simulator",
+      "category": "simulation",
+      "tags": ["neuroevolution", "physics", "genetic-algorithm", "canvas"],
+      "prompt": "Build a single-page evolution simulator where creatures made of nodes and muscles (springs that contract rhythmically) learn to walk to the right across a 2D terrain. Implement the soft-body physics with a fixed timestep: gravity, spring forces, ground friction and collision. Each generation of 100 creatures is simulated for 15 seconds headlessly (optionally in a Web Worker) and scored by distance travelled; the best reproduce with mutation of node positions, muscle lengths, strengths and timing, plus occasional structural mutations that add or remove nodes and muscles. Show the current champion replaying, a fitness-over-generations chart with best/median/worst, a species diversity bar, and a gallery of ancestors. Provide buttons to run 1, 10 or 100 generations quickly and to save/load a population.",
+      "notes": "Watch for: physics tied to frame rate so results change between runs; creatures that exploit the simulation by exploding upward; mutations that break connectivity leaving floating nodes; fitness measured from the start node rather than the centre of mass; the UI freezing while generations run.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-farm",
+      "title": "Seasonal Farm Simulator",
+      "category": "simulation",
+      "tags": ["farming", "economy", "seasons", "canvas"],
+      "prompt": "Build a single-page farm management simulator on Canvas with a top-down tiled farm. Crops (wheat, potatoes, rapeseed, barley) each have a planting window, growth stages drawn per tile, water and nitrogen needs, and yields affected by soil quality that depletes and recovers with crop rotation, fallow and fertiliser. Weather is generated daily per season with rain, frost and drought, and the player can irrigate at a cost. Include livestock (sheep, cows) that need grazing land and feed, equipment purchases that speed up field work, hired labour, and a commodity market whose prices move with a supply/demand model and seasonal patterns so the player can store and sell at the right time. Show a calendar, cash-flow chart, field soil-health overlay and an end-of-year accounts statement.",
+      "notes": "Watch for: crops that grow identically regardless of weather or soil; no depletion so monoculture has no downside; a market with purely random prices; seasons that don't constrain planting; days that pass with no field-work capacity limit.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-island-economy",
+      "title": "Island Nation Economy Simulator",
+      "category": "simulation",
+      "tags": ["economics", "agents", "trade", "charts"],
+      "prompt": "Build a single-page agent-based economy simulator for a small island nation in vanilla JavaScript. Hundreds of households and firms interact: households supply labour, consume goods and save; firms hire, set prices and wages based on inventory and demand, invest, and go bankrupt; a bank makes loans at an interest rate and creates money in the process. The player is the finance minister and sets income tax, corporation tax, government spending, a minimum wage and import tariffs, and can trade with the outside world at a floating exchange rate. Show emergent macro statistics (GDP, unemployment, inflation, inequality via a Gini coefficient and Lorenz curve, government debt) with live charts, and a firm-level scatter of size versus profitability. Include a boom-bust credit cycle that can emerge naturally and preset shocks (tourism collapse, commodity boom).",
+      "notes": "Watch for: money appearing or disappearing with no accounting (stock-flow inconsistency); firms setting prices randomly instead of from inventory signals; a Gini coefficient computed on an unsorted list; unemployment that can go negative; policy sliders that change aggregates directly instead of agent behaviour.",
+      "createdAt": "2026-09-18T00:00:00Z"
+    },
+    {
+      "id": "sim-weather-front",
+      "title": "Weather Systems Simulator",
+      "category": "simulation",
+      "tags": ["weather", "fluids", "atmosphere", "canvas"],
+      "prompt": "Build a single-page weather simulator on Canvas over a 2D map of a coastline with mountains. Run a simple atmospheric model on a grid: pressure, temperature, humidity and wind velocity, with advection, a Coriolis effect that makes wind circulate around lows and highs, sea breezes from land–sea heating contrast through the day, orographic lift that forces rain on windward slopes and a rain shadow behind, and cloud formation when air cools past its dew point. The player can place high and low pressure centres, adjust sea temperature and time of year, and watch fronts and storms develop. Render wind as animated streamlines or particles, clouds with opacity from liquid water, rain as a precipitation layer, and isobars as contours. Include a forecast panel for a clicked town showing temperature, wind and rain for the next 48 simulated hours.",
+      "notes": "Watch for: wind blowing straight from high to low pressure with no Coriolis deflection; no rain shadow behind mountains; numerical blow-up from advection with too large a timestep; isobars drawn as noise rather than contours of the actual field; day–night heating missing so sea breezes never form.",
+      "createdAt": "2026-09-18T00:00:00Z"
     }
   ]
 }

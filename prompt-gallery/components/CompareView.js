@@ -1,6 +1,8 @@
 import { html } from 'htm/preact';
+import { useLazyHtml } from './useLazyHtml.js';
 import { useMemo, useState } from 'preact/hooks';
 import { RatingWidget } from './RatingWidget.js';
+import { ratingOf } from '../services/rating.js';
 import {
   collectGalleryFacets,
   filterVariants,
@@ -25,7 +27,19 @@ function providerLabel(generation) {
   return generation.metadata?.providerName || generation.metadata?.providerId || '';
 }
 
-export function CompareView({ generations, compareIds, onCompareIdsChange, onOpen }) {
+// Only the panes actually being compared fetch their page (the list view has
+// none — see useLazyHtml).
+function ComparePane({ generation, loadHtml }) {
+  const { html: page, loading } = useLazyHtml(generation.id, loadHtml, { initial: generation.response || '' });
+  if (loading && !page) return html`<div class="compare-pane-loading">Loading…</div>`;
+  return html`<iframe
+    srcdoc=${page || ''}
+    sandbox="allow-scripts allow-modals allow-pointer-lock"
+    title=${generation.id}
+  ></iframe>`;
+}
+
+export function CompareView({ generations, compareIds, onCompareIdsChange, onOpen, loadHtml }) {
   const [selecting, setSelecting] = useState(true);
   const [search, setSearch] = useState('');
   const [filterModel, setFilterModel] = useState('');
@@ -105,9 +119,11 @@ export function CompareView({ generations, compareIds, onCompareIdsChange, onOpe
             </select>
             <select class="filter-select" value=${minRating} onChange=${e => setMinRating(Number(e.target.value))} title="Minimum rating">
               <option value="0">Any rating</option>
-              <option value="3">3+ stars</option>
-              <option value="4">4+ stars</option>
-              <option value="5">5 stars</option>
+              <option value="5">5+ stars</option>
+              <option value="7">7+ stars</option>
+              <option value="8">8+ stars</option>
+              <option value="9">9+ stars</option>
+              <option value="10">10 stars</option>
             </select>
             <select class="filter-select" value=${sortBy} onChange=${e => setSortBy(e.target.value)} title="Sort">
               <option value="date-desc">Newest first</option>
@@ -212,7 +228,7 @@ export function CompareView({ generations, compareIds, onCompareIdsChange, onOpe
                                 ${isArchived(g) && html`<span><i class="fa-solid fa-box-archive"></i></span>`}
                               </div>
                             </div>
-                            <${RatingWidget} rating=${g.metadata?.rating || 0} readonly size=${10} />
+                            <${RatingWidget} rating=${ratingOf(g.metadata)} readonly size=${10} />
                           </div>
                         `;
                       })}
@@ -257,7 +273,7 @@ export function CompareView({ generations, compareIds, onCompareIdsChange, onOpe
                 </div>
               </div>
               <div style=${{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <${RatingWidget} rating=${g.metadata?.rating || 0} readonly size=${11} />
+                <${RatingWidget} rating=${ratingOf(g.metadata)} readonly size=${11} />
                 ${onOpen && html`
                   <button class="btn-icon" onClick=${() => onOpen(g.id)} title="Open this generation">
                     <i class="fa-solid fa-up-right-from-square"></i>
@@ -265,11 +281,7 @@ export function CompareView({ generations, compareIds, onCompareIdsChange, onOpe
                 `}
               </div>
             </div>
-            <iframe
-              srcdoc=${g.response || ''}
-              sandbox="allow-scripts allow-modals allow-pointer-lock"
-              title=${g.id}
-            ></iframe>
+            <${ComparePane} generation=${g} loadHtml=${loadHtml} />
           </div>
         `)}
       </div>

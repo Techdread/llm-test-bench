@@ -1,8 +1,17 @@
 import { html } from 'htm/preact';
+import { Fragment } from 'preact';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'preact/hooks';
 import { ExecutorModelSelector } from '../../shared/components/ExecutorModelSelector.js';
 import { CellEditor } from '../../shared/components/CellEditor.js';
+import { HtmlLightbox } from './BatchReview.js';
 import { runBatch } from '../services/batchRunner.js';
+import { PROMPT_SETS, promptSetOf } from '../services/library.js';
+import {
+  completionTokenCount,
+  estimatedTokenCount,
+  formatTokensPerSecond,
+  tokensPerSecond,
+} from '../services/batchMetrics.js';
 
 const STATUS_META = {
   queued:     { icon: 'fa-regular fa-circle',        cls: 'queued',  label: 'Queued' },
@@ -35,7 +44,7 @@ export function BatchRunDialog({
   onProviderSettingsClick,
   hasDirectory,
   onPickDirectory,
-  deps,                  // { generate, runSandbox, heal, save, hasExistingForModel }
+  deps,                  // { generate, runSandbox, heal, save, load, hasExistingForModel }
   runId,
   theme = 'dark',
   onOpenGallery,
@@ -49,6 +58,18 @@ export function BatchRunDialog({
   // Selection — start with everything ticked so "just press Go" runs all.
   const [selectedIds, setSelectedIds] = useState(() => new Set(prompts.map(p => p.id)));
 
+  // One prompt set at a time. Ticks are remembered per prompt, but only the set
+  // on screen is counted or run, so Core and Advanced never get lumped together.
+  const [promptSet, setPromptSet] = useState('core');
+  const availableSets = useMemo(
+    () => PROMPT_SETS
+      .map(s => ({ ...s, count: prompts.filter(p => promptSetOf(p) === s.id).length }))
+      .filter(s => s.id === 'core' || s.count > 0),
+    [prompts],
+  );
+  const setPrompts = useMemo(() => prompts.filter(p => promptSetOf(p) === promptSet), [prompts, promptSet]);
+  const activeSetMeta = availableSets.find(s => s.id === promptSet);
+
   // Options
   const [mode, setMode] = useState('quick');
   const [healAttempts, setHealAttempts] = useState(1);
@@ -57,6 +78,7 @@ export function BatchRunDialog({
   const [skipExisting, setSkipExisting] = useState(false);
   const [apiRetries, setApiRetries] = useState(1);
   const [delaySec, setDelaySec] = useState(0);
+  const [showLiveOutput, setShowLiveOutput] = useState(true);
 
   // Run state
   const [items, setItems] = useState([]);       // aligned to the run list
@@ -64,31 +86,40 @@ export function BatchRunDialog({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [inspectedIndex, setInspectedIndex] = useState(-1);
   const [outputs, setOutputs] = useState([]);
+  const [outputStats, setOutputStats] = useState([]);
+  const [fullscreenIndex, setFullscreenIndex] = useState(-1);
+  const [fullscreenLoading, setFullscreenLoading] = useState(false);
   const [summary, setSummary] = useState(null);
   const [pauseState, setPauseState] = useState('running'); // running | pausing | paused
   const [pauseContext, setPauseContext] = useState(null);
+  const [rateClock, setRateClock] = useState(() => Date.now());
   const stopRef = useRef(false);
   const pauseRequestedRef = useRef(false);
   const pauseResolverRef = useRef(null);
   const listEndRef = useRef(null);
   const activeIndexRef = useRef(-1);
   const followActiveRef = useRef(true);
+  const showLiveOutputRef = useRef(showLiveOutput);
+  const fullscreenIndexRef = useRef(-1);
+  const streamTimingsRef = useRef([]);
+  showLiveOutputRef.current = showLiveOutput;
+  fullscreenIndexRef.current = fullscreenIndex;
 
   const activeBackend = backend || model?.backend || 'model';
   const activeProviderId = selectedProviderId || (activeBackend === 'model' ? model?.providerId : '');
   const activeModelId = selectedModelId || (activeBackend === 'model' ? model?.modelId : '');
   const hasModel = !!(model?.providerId && model?.modelId);
-  const selectedCount = selectedIds.size;
+  const selectedCount = setPrompts.filter(p => selectedIds.has(p.id)).length;
 
   const alreadyRunCount = useMemo(() => {
     if (!hasModel) return 0;
     let n = 0;
-    for (const p of prompts) {
+    for (const p of setPrompts) {
       if (!selectedIds.has(p.id)) continue;
       try { if (deps.hasExistingForModel?.(p, model)) n++; } catch (e) { /* ignore */ }
     }
     return n;
-  }, [prompts, selectedIds, model, hasModel, deps]);
+  }, [setPrompts, selectedIds, model, hasModel, deps]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -106,21 +137,50 @@ export function BatchRunDialog({
     });
   }, []);
 
-  const selectAll = useCallback(() => setSelectedIds(new Set(prompts.map(p => p.id))), [prompts]);
-  const selectNone = useCallback(() => setSelectedIds(new Set()), []);
+  // All / None touch only the set on screen.
+  const selectAll = useCallback(() => setSelectedIds(prev => {
+    const next = new Set(prev);
+    for (const p of setPrompts) next.add(p.id);
+    return next;
+  }), [setPrompts]);
+  const selectNone = useCallback(() => setSelectedIds(prev => {
+    const next = new Set(prev);
+    for (const p of setPrompts) next.delete(p.id);
+    return next;
+  }), [setPrompts]);
 
   const handleEvent = useCallback((event) => {
     if (event.type === 'item') {
       if (event.status === 'start') {
         activeIndexRef.current = event.index;
+        streamTimingsRef.current[event.index] = null;
         setActiveIndex(event.index);
-        setOutputs(prev => {
+        if (showLiveOutputRef.current) {
+          setOutputs(prev => {
+            const next = prev.slice();
+            next[event.index] = '';
+            return next;
+          });
+          setOutputStats(prev => {
+            const next = prev.slice();
+            next[event.index] = null;
+            return next;
+          });
+          if (followActiveRef.current) setInspectedIndex(event.index);
+        }
+        return;
+      }
+      const captureOutput = showLiveOutputRef.current || fullscreenIndexRef.current === event.index;
+      if (captureOutput && ['generating', 'healing', 'repairing'].includes(event.status)) {
+        streamTimingsRef.current[event.index] = null;
+        setOutputStats(prev => {
           const next = prev.slice();
-          next[event.index] = '';
+          next[event.index] = null;
           return next;
         });
-        if (followActiveRef.current) setInspectedIndex(event.index);
-        return;
+      } else {
+        const timing = streamTimingsRef.current[event.index];
+        if (timing?.startedAt && !timing.endedAt) timing.endedAt = Date.now();
       }
       setItems(prev => {
         const next = prev.slice();
@@ -138,11 +198,25 @@ export function BatchRunDialog({
         return next;
       });
     } else if (event.type === 'preview' || event.type === 'chunk') {
+      if (!showLiveOutputRef.current && fullscreenIndexRef.current !== event.index) return;
+      if (event.type === 'chunk' && event.html) {
+        const now = Date.now();
+        const timing = streamTimingsRef.current[event.index];
+        if (!timing?.startedAt) streamTimingsRef.current[event.index] = { startedAt: now, endedAt: null };
+        setRateClock(now);
+      }
       // Keep every prompt's latest complete/partial output. This lets users
       // inspect earlier generations without detaching the active stream.
       setOutputs(prev => {
         const next = prev.slice();
         next[event.index] = event.html || '';
+        return next;
+      });
+    } else if (event.type === 'stats') {
+      if (!showLiveOutputRef.current && fullscreenIndexRef.current !== event.index) return;
+      setOutputStats(prev => {
+        const next = prev.slice();
+        next[event.index] = event.stats || null;
         return next;
       });
     } else if (event.type === 'done') {
@@ -165,13 +239,17 @@ export function BatchRunDialog({
   const start = useCallback(async () => {
     if (!hasModel) { addToast('Select a model first', 'error'); return; }
     if (!hasDirectory) { addToast('Connect a directory first — generations are saved there', 'error'); return; }
-    const list = prompts.filter(p => selectedIds.has(p.id));
+    const list = setPrompts.filter(p => selectedIds.has(p.id));
     if (list.length === 0) { addToast('Select at least one prompt', 'error'); return; }
 
     setRunList(list);
     setItems(list.map(() => ({ status: 'queued' })));
-    setOutputs(list.map(() => ''));
+    setOutputs(showLiveOutput ? list.map(() => '') : []);
+    setOutputStats(showLiveOutput ? list.map(() => null) : []);
     setSummary(null);
+    fullscreenIndexRef.current = -1;
+    setFullscreenIndex(-1);
+    setFullscreenLoading(false);
     setInspectedIndex(-1);
     setActiveIndex(-1);
     activeIndexRef.current = -1;
@@ -216,8 +294,8 @@ export function BatchRunDialog({
       setActiveIndex(-1);
       setPhase('done');
     }
-  }, [hasModel, hasDirectory, prompts, selectedIds, model, mode, healAttempts, maxRepairRounds, saveBothOnHeal,
-      skipExisting, delaySec, apiRetries, runId, deps, handleEvent, waitAtPauseBoundary, addToast]);
+  }, [hasModel, hasDirectory, setPrompts, selectedIds, model, mode, healAttempts, maxRepairRounds, saveBothOnHeal,
+      skipExisting, delaySec, apiRetries, showLiveOutput, runId, deps, handleEvent, waitAtPauseBoundary, addToast]);
 
   const pause = useCallback(() => {
     if (pauseRequestedRef.current || stopRef.current) return;
@@ -252,8 +330,32 @@ export function BatchRunDialog({
   const isStreaming = ['generating', 'healing', 'repairing'].includes(activeStatus);
   const displayedHtml = inspectedIndex >= 0 ? (outputs[inspectedIndex] || '') : '';
   const displayedCharacters = displayedHtml.length;
+  const reportedTokens = inspectedIndex >= 0 ? completionTokenCount(outputStats[inspectedIndex]) : null;
+  const displayedTokens = reportedTokens ?? estimatedTokenCount(displayedHtml);
+  const displayedTokenLabel = `${displayedTokens.toLocaleString()} token${displayedTokens === 1 ? '' : 's'} generated`;
   const viewingActive = inspectedIndex >= 0 && inspectedIndex === activeIndex;
+  const displayedTokenRate = tokensPerSecond(
+    inspectedIndex >= 0 ? outputStats[inspectedIndex] : null,
+    displayedTokens,
+    inspectedIndex >= 0 ? streamTimingsRef.current[inspectedIndex] : null,
+    rateClock,
+  );
+  const displayedTokenRateLabel = formatTokensPerSecond(displayedTokenRate);
   const inspectedTitle = inspectedIndex >= 0 ? (runList[inspectedIndex]?.title || '') : '';
+  const fullscreenHtml = fullscreenIndex >= 0 ? (outputs[fullscreenIndex] || '') : '';
+  const fullscreenTitle = fullscreenIndex >= 0 ? (runList[fullscreenIndex]?.title || 'Generation') : '';
+  const fullscreenIsActive = phase === 'running' && fullscreenIndex === activeIndex;
+  const fullscreenSubtitle = fullscreenIsActive
+    ? 'Live generation · the batch continues in the background'
+    : phase === 'running'
+      ? 'Pinned generation · the batch continues in the background'
+      : 'Saved batch generation';
+
+  useEffect(() => {
+    if (phase !== 'running' || !viewingActive || !isStreaming || !displayedCharacters) return undefined;
+    const timer = window.setInterval(() => setRateClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [phase, viewingActive, isStreaming, displayedCharacters]);
 
   const inspectOutput = useCallback((index) => {
     if (index < 0 || (!outputs[index] && index !== activeIndexRef.current)) return;
@@ -265,6 +367,52 @@ export function BatchRunDialog({
     if (activeIndexRef.current < 0) return;
     followActiveRef.current = true;
     setInspectedIndex(activeIndexRef.current);
+  }, []);
+
+  const openFullscreen = useCallback(async (index) => {
+    if (index < 0 || !runList[index]) return;
+    fullscreenIndexRef.current = index;
+    setFullscreenIndex(index);
+    setFullscreenLoading(false);
+    if (outputs[index]) return;
+
+    const savedId = items[index]?.savedIds?.at(-1);
+    if (!savedId || !deps.load) return; // Active streams will populate on their next chunk/preview.
+    setFullscreenLoading(true);
+    try {
+      const generation = await deps.load(savedId);
+      if (fullscreenIndexRef.current !== index) return;
+      const loadedHtml = generation?.response || '';
+      setOutputs(prev => {
+        const next = prev.slice();
+        next[index] = loadedHtml;
+        return next;
+      });
+      if (!loadedHtml) addToast('The saved generation has no HTML to preview', 'error');
+    } catch (error) {
+      if (fullscreenIndexRef.current === index) addToast('Failed to open generation: ' + error.message, 'error');
+    } finally {
+      if (fullscreenIndexRef.current === index) setFullscreenLoading(false);
+    }
+  }, [runList, outputs, items, deps, addToast]);
+
+  const closeFullscreen = useCallback(() => {
+    const index = fullscreenIndexRef.current;
+    fullscreenIndexRef.current = -1;
+    setFullscreenIndex(-1);
+    setFullscreenLoading(false);
+    if (!showLiveOutputRef.current && index >= 0) {
+      setOutputs(prev => {
+        const next = prev.slice();
+        next[index] = '';
+        return next;
+      });
+      setOutputStats(prev => {
+        const next = prev.slice();
+        next[index] = null;
+        return next;
+      });
+    }
   }, []);
 
   // ── Renderers ──
@@ -302,16 +450,31 @@ export function BatchRunDialog({
 
       <div class="batch-section">
         <div class="batch-section-head">
-          <span><i class="fa-solid fa-list-check"></i> Prompts (${selectedCount}/${prompts.length})</span>
+          <span><i class="fa-solid fa-list-check"></i> Prompts (${selectedCount}/${setPrompts.length})</span>
           <span class="batch-select-actions">
-            <button class="btn btn-xs" onClick=${selectAll}>All</button>
-            <button class="btn btn-xs" onClick=${selectNone}>None</button>
+            <button class="btn btn-xs" onClick=${selectAll} title="Tick every prompt in this set">All</button>
+            <button class="btn btn-xs" onClick=${selectNone} title="Untick every prompt in this set">None</button>
           </span>
         </div>
+        ${availableSets.length > 1 && html`
+          <div class="batch-set-switch" role="group" aria-label="Prompt set">
+            ${availableSets.map(s => html`
+              <button
+                key=${s.id}
+                type="button"
+                class=${`library-cat-chip ${promptSet === s.id ? 'active' : ''}`}
+                aria-pressed=${promptSet === s.id}
+                title=${s.hint}
+                onClick=${() => setPromptSet(s.id)}
+              ><i class=${`fa-solid ${s.icon}`}></i>${s.label}<span class="batch-set-count">${s.count}</span></button>
+            `)}
+            ${activeSetMeta?.hint && html`<span class="batch-set-hint">${activeSetMeta.hint}. Only this set runs.</span>`}
+          </div>
+        `}
         <div class="batch-prompt-list">
-          ${prompts.length === 0
-            ? html`<div class="batch-empty">No prompts to run — the current filter is empty.</div>`
-            : prompts.map(p => html`
+          ${setPrompts.length === 0
+            ? html`<div class="batch-empty">No prompts to run in this set.</div>`
+            : setPrompts.map(p => html`
               <label class="batch-prompt-row" key=${p.id}>
                 <input type="checkbox" checked=${selectedIds.has(p.id)} onChange=${() => toggleOne(p.id)} />
                 <span class="batch-prompt-title" title=${p.title}>${p.title}</span>
@@ -370,6 +533,11 @@ export function BatchRunDialog({
             <input type="checkbox" checked=${skipExisting} onChange=${(e) => setSkipExisting(e.target.checked)} />
             <span>Skip prompts already run for this model</span>
           </label>
+          <label class="batch-opt batch-live-output-option">
+            <input type="checkbox" checked=${showLiveOutput} onChange=${(e) => setShowLiveOutput(e.target.checked)} />
+            <span>Show live generation in this dialog</span>
+            <span class="batch-opt-hint">Turn off to reduce browser memory use during large batches.</span>
+          </label>
           <label class="batch-opt">
             <span>Retry on API failure</span>
             <select class="form-input batch-num" value=${apiRetries} onChange=${(e) => setApiRetries(Number(e.target.value))}>
@@ -403,12 +571,14 @@ export function BatchRunDialog({
             ? ` · paused${pauseContext?.prompt?.title ? ` before "${pauseContext.prompt.title}"` : ''}`
             : phase === 'running' && activeIndex >= 0 ? ` · running "${runList[activeIndex]?.title || ''}"` : ''}</div>
           <div class=${`batch-stream-count ${isStreaming ? 'is-streaming' : ''}`} aria-live="polite">
-            ${!viewingActive && inspectedIndex >= 0
-              ? html`<i class="fa-solid fa-eye"></i> Viewing saved output · ${displayedCharacters.toLocaleString()} chars`
+            ${!showLiveOutput
+              ? html`<i class="fa-solid fa-eye-slash"></i> Live generation hidden to reduce memory use`
+              : !viewingActive && inspectedIndex >= 0
+              ? html`<i class="fa-solid fa-eye"></i> Viewing saved output · ${displayedCharacters.toLocaleString()} chars · ${displayedTokenLabel} · ${displayedTokenRateLabel}`
               : html`
                 <i class=${`fa-solid ${isStreaming ? 'fa-spinner fa-spin' : displayedCharacters ? 'fa-code' : 'fa-hourglass-half'}`}></i>
                 ${displayedCharacters
-                  ? `${displayedCharacters.toLocaleString()} character${displayedCharacters === 1 ? '' : 's'} streamed`
+                  ? `${displayedCharacters.toLocaleString()} character${displayedCharacters === 1 ? '' : 's'} streamed · ${displayedTokenLabel} · ${displayedTokenRateLabel}`
                   : 'Waiting for the first code chunk…'}
               `}
           </div>
@@ -434,7 +604,8 @@ export function BatchRunDialog({
             const m = STATUS_META[it.status] || STATUS_META.queued;
             const isActive = idx === activeIndex;
             const isInspected = idx === inspectedIndex;
-            const canInspect = !!outputs[idx] || isActive;
+            const canInspect = showLiveOutput && (!!outputs[idx] || isActive);
+            const canOpenFullscreen = isActive || !!outputs[idx] || !!it.savedIds?.length;
             return html`
               <div
                 class=${`batch-run-item ${m.cls} ${isActive ? 'is-active' : ''} ${isInspected ? 'is-inspected' : ''} ${canInspect ? 'is-inspectable' : ''}`}
@@ -457,44 +628,72 @@ export function BatchRunDialog({
                   ${it.status === 'healing' && it.healAttempt ? `heal ${it.healAttempt}`
                     : it.status === 'repairing' && it.repairRound ? `Repairing · round ${it.repairRound}` : m.label}
                   ${it.healed && it.status === 'saved' ? html` <span class="batch-healed-chip">healed</span>` : null}
+                  ${canOpenFullscreen ? html`
+                    <button class="batch-fullscreen-button" title="Open interactive full-screen generation"
+                      onClick=${(event) => { event.stopPropagation(); openFullscreen(idx); }}>
+                      <i class="fa-solid fa-expand"></i>
+                    </button>` : null}
                 </span>
               </div>
             `;
           })}
           <div ref=${listEndRef}></div>
         </div>
-        <div class="batch-preview">
-          <div class="batch-preview-head">
-            <span title=${inspectedTitle}><i class="fa-solid fa-display"></i> ${inspectedTitle || 'Preview'}</span>
-            ${!viewingActive && activeIndex >= 0
-              ? html`<button class="batch-return-live" onClick=${returnToLive}><i class="fa-solid fa-tower-broadcast"></i> Return to live</button>`
-              : pauseState === 'paused'
-                ? html`<span class="batch-live-chip is-paused"><i class="fa-solid fa-circle-pause"></i> Paused</span>`
-                : html`<span class="batch-live-chip"><i class="fa-solid fa-circle"></i> Live</span>`}
-          </div>
-          ${displayedHtml
-            ? html`<iframe class="batch-preview-frame" sandbox="allow-scripts" srcdoc=${displayedHtml} title=${`Preview: ${inspectedTitle || 'current generation'}`}></iframe>`
-            : html`<div class="batch-preview-empty"><i class="fa-solid fa-hourglass-half"></i><span>Live preview appears here</span></div>`}
-        </div>
+        ${showLiveOutput
+          ? html`
+            <div class="batch-preview">
+              <div class="batch-preview-head">
+                <span title=${inspectedTitle}><i class="fa-solid fa-display"></i> ${inspectedTitle || 'Preview'}</span>
+                <span class="batch-preview-actions">
+                  ${displayedHtml ? html`
+                    <button class="batch-fullscreen-button" title="Open interactive full-screen generation"
+                      onClick=${() => openFullscreen(inspectedIndex)}>
+                      <i class="fa-solid fa-expand"></i> Full screen
+                    </button>` : null}
+                  ${!viewingActive && activeIndex >= 0
+                    ? html`<button class="batch-return-live" onClick=${returnToLive}><i class="fa-solid fa-tower-broadcast"></i> Return to live</button>`
+                    : pauseState === 'paused'
+                      ? html`<span class="batch-live-chip is-paused"><i class="fa-solid fa-circle-pause"></i> Paused</span>`
+                      : html`<span class="batch-live-chip"><i class="fa-solid fa-circle"></i> Live</span>`}
+                </span>
+              </div>
+              ${displayedHtml
+                ? html`<iframe class="batch-preview-frame" sandbox="allow-scripts" srcdoc=${displayedHtml} title=${`Preview: ${inspectedTitle || 'current generation'}`}></iframe>`
+                : html`<div class="batch-preview-empty"><i class="fa-solid fa-hourglass-half"></i><span>Live preview appears here</span></div>`}
+            </div>`
+          : html`
+            <div class="batch-preview batch-preview-disabled" role="status">
+              <div class="batch-preview-empty">
+                <i class="fa-solid fa-eye-slash"></i>
+                <strong>Live generation hidden</strong>
+                <span>Preview and code rendering are off for this run.</span>
+                ${activeIndex >= 0 ? html`
+                  <button class="btn btn-sm batch-open-active-fullscreen" onClick=${() => openFullscreen(activeIndex)}>
+                    <i class="fa-solid fa-expand"></i> Open current generation full screen
+                  </button>` : null}
+              </div>
+            </div>`}
       </div>
 
-      <section class="batch-code-stream" aria-label="Streaming HTML output">
-        <div class="batch-code-stream-head">
-          <span><i class="fa-solid fa-code"></i> ${viewingActive && pauseState === 'running' ? 'Live HTML stream' : 'Generated HTML'}${inspectedTitle ? ` · ${inspectedTitle}` : ''}</span>
-          <span>${displayedCharacters.toLocaleString()} chars</span>
-        </div>
-        <${CellEditor}
-          className="batch-stream-editor"
-          value=${displayedHtml}
-          kind="html"
-          theme=${theme}
-          readOnly=${true}
-          minLines=${9}
-          maxLines=${9}
-          fontSize=${12}
-          followOutput=${viewingActive}
-        />
-      </section>
+      ${showLiveOutput && html`
+        <section class="batch-code-stream" aria-label="Streaming HTML output">
+          <div class="batch-code-stream-head">
+            <span><i class="fa-solid fa-code"></i> ${viewingActive && pauseState === 'running' ? 'Live HTML stream' : 'Generated HTML'}${inspectedTitle ? ` · ${inspectedTitle}` : ''}</span>
+            <span>${displayedCharacters.toLocaleString()} chars · ${displayedTokens.toLocaleString()} tokens · ${displayedTokenRateLabel}</span>
+          </div>
+          <${CellEditor}
+            className="batch-stream-editor"
+            value=${displayedHtml}
+            kind="html"
+            theme=${theme}
+            readOnly=${true}
+            minLines=${9}
+            maxLines=${9}
+            fontSize=${12}
+            followOutput=${viewingActive}
+          />
+        </section>
+      `}
     </div>
 
     <div class="modal-footer">
@@ -548,6 +747,9 @@ export function BatchRunDialog({
                 ${m.label}${it.healed ? html` <span class="batch-healed-chip">healed</span>` : null}
                 ${it.repairRound ? html` <span class="batch-healed-chip">${it.repairRound} repair${it.repairRound === 1 ? '' : 's'}</span>` : null}
                 ${it.status === 'error' && it.message ? html`<span class="batch-run-err" title=${it.message}> — ${it.message}</span>` : null}
+                ${it.savedIds?.length ? html`
+                  <button class="batch-fullscreen-button" title="Open interactive full-screen generation"
+                    onClick=${() => openFullscreen(idx)}><i class="fa-solid fa-expand"></i></button>` : null}
               </span>
             </div>
           `;
@@ -557,28 +759,40 @@ export function BatchRunDialog({
 
     <div class="modal-footer">
       <button class="btn" onClick=${() => setPhase('config')}><i class="fa-solid fa-rotate-left"></i> New Run</button>
-      ${onOpenRuns && html`
-        <button class="btn" onClick=${() => { onOpenRuns(); onClose(); }}>
-          <i class="fa-solid fa-layer-group"></i> Review Run
-        </button>
-      `}
-      <button class="btn btn-primary" onClick=${() => { onOpenGallery?.(); onClose(); }}>
+      <button class="btn" onClick=${() => { onOpenGallery?.(); onClose(); }}>
         <i class="fa-solid fa-images"></i> View in Gallery
       </button>
+      ${onOpenRuns && html`
+        <button class="btn btn-primary" onClick=${() => { onOpenRuns(runId); onClose(); }}
+          title="Open this run's generations in the Runs tab">
+          <i class="fa-solid fa-layer-group"></i> Review This Run
+        </button>
+      `}
     </div>
   `;
 
   return html`
-    <div class="modal-overlay">
-      <div class=${`modal batch-dialog ${phase === 'running' ? 'is-running' : ''}`} onClick=${(e) => e.stopPropagation()}>
-        <div class="modal-header">
-          <h2><i class="fa-solid fa-layer-group"></i> Batch Run</h2>
-          ${phase !== 'running' && html`
-            <button class="btn-icon" onClick=${onClose}><i class="fa-solid fa-xmark"></i></button>
-          `}
+    <${Fragment}>
+      <div class="modal-overlay">
+        <div class=${`modal batch-dialog ${phase === 'running' ? 'is-running' : ''}`} onClick=${(e) => e.stopPropagation()}>
+          <div class="modal-header">
+            <h2><i class="fa-solid fa-layer-group"></i> Batch Run</h2>
+            ${phase !== 'running' && html`
+              <button class="btn-icon" onClick=${onClose}><i class="fa-solid fa-xmark"></i></button>
+            `}
+          </div>
+          ${phase === 'config' ? renderConfig() : phase === 'running' ? renderRunning() : renderDone()}
         </div>
-        ${phase === 'config' ? renderConfig() : phase === 'running' ? renderRunning() : renderDone()}
       </div>
-    </div>
+      ${fullscreenIndex >= 0 && html`
+        <${HtmlLightbox}
+          html=${fullscreenHtml}
+          title=${fullscreenTitle}
+          subtitle=${fullscreenSubtitle}
+          emptyMessage=${fullscreenLoading ? 'Loading the saved generation…' : 'Waiting for the next output chunk…'}
+          onClose=${closeFullscreen}
+        />
+      `}
+    <//>
   `;
 }

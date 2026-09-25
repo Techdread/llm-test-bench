@@ -4,6 +4,7 @@
 // tool-calling loop.
 
 import { streamChat } from '../../shared/services/model-providers.js';
+import { streamHtmlDocument } from './htmlOutput.js';
 
 const HEAL_SYSTEM = `You are an expert web developer fixing a broken single-page HTML document.
 You will receive the original prompt the page was generated from, the current HTML, and the runtime errors captured when the page ran in a sandbox.
@@ -75,19 +76,20 @@ function buildContext(prompt, htmlContent) {
  * Fix the captured runtime errors. Streams the corrected document.
  * onChunk receives the accumulated text so far (not deltas).
  */
-export async function healHtml({ providerId, modelId, prompt, html, errors, onChunk, params }) {
+export async function healHtml({ providerId, modelId, prompt, html, errors, onChunk, onStats, params }) {
   const parts = buildContext(prompt, html);
   parts.push(`RUNTIME ERRORS CAPTURED IN SANDBOX:\n${errors.map((e, i) => `${i + 1}. ${e}`).join('\n')}`);
   parts.push('Fix these errors and return the complete corrected HTML document.');
 
   let accumulated = '';
-  const result = await streamChat({
+  const result = await streamHtmlDocument(streamChat, {
     providerId,
     modelId,
     systemPrompt: HEAL_SYSTEM,
     userPrompt: parts.join('\n\n'),
     appTitle: 'Prompt Gallery',
     params,
+    onStats,
     onChunk: (text) => {
       accumulated = text || '';
       onChunk?.(stripCodeFences(accumulated));
@@ -128,7 +130,7 @@ export async function applyImprovements({ providerId, modelId, prompt, html, ins
   parts.push('Implement these improvements and return the complete updated HTML document.');
 
   let accumulated = '';
-  const result = await streamChat({
+  const result = await streamHtmlDocument(streamChat, {
     providerId,
     modelId,
     systemPrompt: APPLY_SYSTEM,
@@ -191,7 +193,7 @@ export async function repairAgainstAudit({
     'Repair only these requirements and return the complete corrected HTML document.',
   ].filter(Boolean).join('\n\n');
   let accumulated = '';
-  const result = await streamChat({
+  const result = await streamHtmlDocument(streamChat, {
     providerId,
     modelId,
     systemPrompt: REPAIR_AUDIT_SYSTEM,

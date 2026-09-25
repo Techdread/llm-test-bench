@@ -53,6 +53,213 @@
    "rating": "8/10",
    "poster": "",
    "ext": ".svg"
+  },
+  {
+   "id": "canvas-asteroids",
+   "bench": "prompt-gallery",
+   "title": "Canvas Asteroids",
+   "note": "LM Studio 3090 / Gemma 4 31b It",
+   "rating": "5/5",
+   "poster": "canvas-asteroids.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "owl-eyes",
+   "bench": "svg-benchmark",
+   "title": "Owl Eyes",
+   "note": "OpenRouter / Qwen: Qwen3.6 Plus (free)",
+   "rating": "10/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "pelican-bike",
+   "bench": "svg-benchmark",
+   "title": "Pelican Riding a Bike",
+   "note": "Claude Code CLI",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "fractal-tunnel",
+   "bench": "prompt-gallery",
+   "title": "Fractal Tunnel",
+   "note": "OpenRouter / OpenAI: GPT-5.6 Luna",
+   "rating": "5/5",
+   "poster": "fractal-tunnel.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "solar-house",
+   "bench": "svg-benchmark",
+   "title": "House with Solar Panels",
+   "note": "Codex · gpt-6-astra CLI",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "lava-planet",
+   "bench": "prompt-gallery",
+   "title": "Lava Planet",
+   "note": "OpenRouter / Z.ai: GLM 5.2",
+   "rating": "5/5",
+   "poster": "lava-planet.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "eiffel-tower",
+   "bench": "svg-benchmark",
+   "title": "Eiffel Tower",
+   "note": "OpenRouter / Qwen: Qwen3.6 Plus (free)",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "planet-simulator",
+   "bench": "prompt-gallery",
+   "title": "Planet Simulator",
+   "note": "OpenRouter / MiniMax: MiniMax M2.7",
+   "rating": "5/5",
+   "poster": "planet-simulator.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "tree-frog",
+   "bench": "svg-benchmark",
+   "title": "Tree Frog",
+   "note": "LM Studio AI-Max / Qwen3.6 35b A3b",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "recursive-seasonal-tree",
+   "bench": "prompt-gallery",
+   "title": "Recursive Seasonal Tree",
+   "note": "Codex",
+   "rating": "5/5",
+   "poster": "recursive-seasonal-tree.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "hedgehog",
+   "bench": "svg-benchmark",
+   "title": "Hedgehog",
+   "note": "Antigravity CLI / Gemini 3.7 Flash (High)",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "terrain-painter",
+   "bench": "prompt-gallery",
+   "title": "Terrain Painter",
+   "note": "Devin CLI / swe-2-max",
+   "rating": "5/5",
+   "poster": "terrain-painter.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "brain-lightbulb",
+   "bench": "svg-benchmark",
+   "title": "Brain Lightbulb",
+   "note": "LM Studio AI-Max / Qwen3.6 27b@Q4 K S",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "tetris",
+   "bench": "prompt-gallery",
+   "title": "Tetris",
+   "note": "LM Studio AI-Max / Qwen3.6 27b@Q4 K S",
+   "rating": "5/5",
+   "poster": "tetris.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "lighthouse",
+   "bench": "svg-benchmark",
+   "title": "Lighthouse",
+   "note": "OpenRouter / Qwen: Qwen3.6 Plus (free)",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "tower-defense",
+   "bench": "prompt-gallery",
+   "title": "Tower Defense",
+   "note": "Antigravity CLI Default",
+   "rating": "5/5",
+   "poster": "tower-defense.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "gold-medal",
+   "bench": "svg-benchmark",
+   "title": "Gold Medal",
+   "note": "LM Studio AI-Max / Gemma 4 31b It",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "exploding-modular-cube",
+   "bench": "prompt-gallery",
+   "title": "Exploding Modular Cube",
+   "note": "Devin CLI / swe-2-max",
+   "rating": "9/10",
+   "poster": "exploding-modular-cube.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "origami-crane",
+   "bench": "svg-benchmark",
+   "title": "Origami Crane",
+   "note": "OpenRouter / Qwen: Qwen3.6 Plus Preview (free)",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "neon-city-flythrough",
+   "bench": "prompt-gallery",
+   "title": "Neon City Flythrough",
+   "note": "Devin CLI / swe-2-max",
+   "rating": "9/10",
+   "poster": "neon-city-flythrough.jpg",
+   "ext": ".html"
+  },
+  {
+   "id": "red-panda",
+   "bench": "svg-benchmark",
+   "title": "Red Panda",
+   "note": "LM Studio AI-Max / Qwen3.6 35b A3b@Q8 0",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "blue-whale",
+   "bench": "svg-benchmark",
+   "title": "Blue Whale",
+   "note": "OpenRouter / Qwen: Qwen3.6 Plus Preview (free)",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
+  },
+  {
+   "id": "gold-trophy",
+   "bench": "svg-benchmark",
+   "title": "Gold Trophy",
+   "note": "OpenRouter / MiniMax: MiniMax M2.5 (free)",
+   "rating": "9/10",
+   "poster": "",
+   "ext": ".svg"
   }
  ]
 }

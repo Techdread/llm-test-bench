@@ -23,6 +23,9 @@ test('agent bridge detection rejects a static host HTML fallback', () => {
 });
 
 const catalogue = [
+  { id: 'gemini-3.8-flash-high', label: 'Gemini 3.8 Flash (High)' },
+  { id: 'gemini-3.8-flash-medium', label: 'Gemini 3.8 Flash (Medium)' },
+  { id: 'gemini-3.8-flash-low', label: 'Gemini 3.8 Flash (Low)' },
   { id: 'gemini-3.7-flash-high', label: 'Gemini 3.7 Flash (High)' },
   { id: 'gemini-3.7-flash-medium', label: 'Gemini 3.7 Flash (Medium)' },
   { id: 'gemini-3.7-flash-low', label: 'Gemini 3.7 Flash (Low)' },
@@ -36,6 +39,7 @@ const catalogue = [
 test('Antigravity catalogue variants collapse into base-model choices', () => {
   const choices = groupAgentModelOptions(catalogue);
   assert.deepEqual(choices.map(choice => [choice.id, choice.label, choice.efforts, choice.fixedEffort]), [
+    ['gemini-3.8-flash', 'Gemini 3.8 Flash', ['low', 'medium', 'high'], ''],
     ['gemini-3.7-flash', 'Gemini 3.7 Flash', ['low', 'medium', 'high'], ''],
     ['gemini-3.1-pro', 'Gemini 3.1 Pro', ['low', 'high'], ''],
     ['claude-sonnet-4-6', 'Claude Sonnet 4.6 (Thinking)', [], 'thinking'],

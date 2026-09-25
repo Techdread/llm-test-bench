@@ -13,6 +13,7 @@
 //           {model-slug}.json — { model, manualScore, autoScore, dimensions, elementCount, fileSize, notes, submittedAt }
 
 import { getNestedDirectoryHandle } from '../../shared/services/fs.js';
+import { mapPool } from '../../shared/services/async-pool.js';
 
 const ROOT_FOLDER = 'svg-data';
 const BENCHMARKS_FOLDER = 'benchmarks';
@@ -39,12 +40,67 @@ async function getSubmissionsDir(rootHandle, slug) {
 
 // ── List all benchmarks ──
 
+// What the list needs from a benchmark's submissions — count, best score and
+// which models ran — used to mean opening all 2,606 submission files here.
+// They are summarised in `submissions/_index.json`, rebuilt whenever it is
+// missing or out of step with the folder, so the list reads one file per
+// benchmark instead of twenty.
+const SUBMISSION_INDEX = '_index.json';
+
+async function readSubmissionIndex(subDir, jsonNames) {
+  try {
+    const fh = await subDir.getFileHandle(SUBMISSION_INDEX);
+    const index = JSON.parse(await (await fh.getFile()).text());
+    const entries = Array.isArray(index?.entries) ? index.entries : null;
+    // Trust it only while it still describes the folder we just listed.
+    if (entries && entries.length === jsonNames.length
+        && entries.every(e => jsonNames.includes(e.file))) {
+      return entries;
+    }
+  } catch (e) { /* missing, unreadable or stale — rebuilt below */ }
+  return null;
+}
+
+async function buildSubmissionIndex(subDir, jsonNames) {
+  const entries = (await mapPool(jsonNames, async (file) => {
+    try {
+      const data = JSON.parse(await (await (await subDir.getFileHandle(file)).getFile()).text());
+      return {
+        file,
+        model: data.model || '',
+        modelId: data.modelId || null,
+        autoScore: data.autoScore ?? null,
+        submittedAt: data.submittedAt || '',
+        batchId: data.batch?.id || null,
+      };
+    } catch (e) {
+      return null;
+    }
+  })).filter(Boolean);
+  try {
+    const fh = await subDir.getFileHandle(SUBMISSION_INDEX, { create: true });
+    const w = await fh.createWritable();
+    await w.write(JSON.stringify({ version: 1, entries }, null, 2));
+    await w.close();
+  } catch (e) { /* a read-only root still gets the right answer, just not the cache */ }
+  return entries;
+}
+
+/** Keep the summary honest after a write; the next list rebuilds it. */
+async function dropSubmissionIndex(subDir) {
+  try { await subDir.removeEntry(SUBMISSION_INDEX); } catch (e) { /* nothing to drop */ }
+}
+
 export async function listBenchmarks(rootHandle) {
   const benchDir = await getBenchmarksDir(rootHandle);
-  const benchmarks = [];
-
+  const names = [];
   for await (const [name, handle] of benchDir) {
-    if (handle.kind !== 'directory') continue;
+    if (handle.kind === 'directory') names.push(name);
+  }
+
+  // Benchmarks are independent, so they are read a few at a time rather than
+  // one after another — the difference between seconds and minutes remotely.
+  const benchmarks = (await mapPool(names, async (name) => {
     try {
       const bDir = await benchDir.getDirectoryHandle(name);
 
@@ -71,28 +127,31 @@ export async function listBenchmarks(rootHandle) {
         hasReference = true;
       } catch (e) { /* no reference */ }
 
-      // Count submissions
+      // Summarise submissions from the index, rebuilding it when it does not
+      // match what is on disk.
       let submissionCount = 0;
       let bestScore = null;
       const submissionModels = []; // { model, modelId } — used for batch has-run detection
       try {
         const subDir = await bDir.getDirectoryHandle('submissions');
+        const jsonNames = [];
         for await (const [sName, sHandle] of subDir) {
-          if (sHandle.kind === 'file' && sName.endsWith('.json')) {
-            submissionCount++;
-            try {
-              const sf = await sHandle.getFile();
-              const sData = JSON.parse(await sf.text());
-              if (sData.autoScore != null && (bestScore === null || sData.autoScore > bestScore)) {
-                bestScore = sData.autoScore;
-              }
-              submissionModels.push({ model: sData.model || '', modelId: sData.modelId || null });
-            } catch (e) { /* skip */ }
+          if (sHandle.kind === 'file' && sName.endsWith('.json') && sName !== SUBMISSION_INDEX) {
+            jsonNames.push(sName);
           }
+        }
+        const entries = (await readSubmissionIndex(subDir, jsonNames))
+          || (await buildSubmissionIndex(subDir, jsonNames));
+        submissionCount = entries.length;
+        for (const entry of entries) {
+          if (entry.autoScore != null && (bestScore === null || entry.autoScore > bestScore)) {
+            bestScore = entry.autoScore;
+          }
+          submissionModels.push({ model: entry.model || '', modelId: entry.modelId || null });
         }
       } catch (e) { /* no submissions dir */ }
 
-      benchmarks.push({
+      return {
         slug: name,
         prompt,
         meta,
@@ -100,11 +159,12 @@ export async function listBenchmarks(rootHandle) {
         submissionCount,
         bestScore,
         submissionModels,
-      });
+      };
     } catch (e) {
       console.warn(`Failed to load benchmark "${name}":`, e);
+      return null;
     }
-  }
+  })).filter(Boolean);
 
   return benchmarks.sort((a, b) => {
     const da = a.meta.createdAt || '';
@@ -140,6 +200,38 @@ export async function createBenchmark(rootHandle, prompt, category, difficulty) 
   await bDir.getDirectoryHandle('submissions', { create: true });
 
   return slug;
+}
+
+// Make sure a benchmark folder exists under an explicit slug, for seed prompts
+// whose slug is not slugify(prompt): the curated and animated sets. Writes
+// prompt.txt and meta.json only when they are missing, so an existing
+// benchmark's prompt, meta and createdAt are never overwritten.
+export async function ensureBenchmark(rootHandle, { slug, prompt, category, difficulty, set, basedOn }) {
+  const target = slug || slugify(prompt || '') || `benchmark-${Date.now()}`;
+  const bDir = await getBenchmarkDir(rootHandle, target);
+
+  const writeIfMissing = async (name, content) => {
+    try {
+      await bDir.getFileHandle(name);
+      return;
+    } catch (e) { /* missing — write it */ }
+    const fh = await bDir.getFileHandle(name, { create: true });
+    const w = await fh.createWritable();
+    await w.write(content);
+    await w.close();
+  };
+
+  await writeIfMissing('prompt.txt', prompt || '');
+  const meta = {
+    category: category || 'general',
+    difficulty: difficulty || 'moderate',
+    createdAt: new Date().toISOString(),
+  };
+  if (set && set !== 'core') meta.set = set;
+  if (basedOn) meta.basedOn = basedOn;
+  await writeIfMissing('meta.json', JSON.stringify(meta, null, 2));
+  await bDir.getDirectoryHandle('submissions', { create: true });
+  return target;
 }
 
 // ── Save reference image ──
@@ -217,12 +309,12 @@ export async function listSubmissions(rootHandle, slug) {
 
   const jsonFiles = [];
   for await (const [name, handle] of subDir) {
-    if (handle.kind === 'file' && name.endsWith('.json')) {
+    if (handle.kind === 'file' && name.endsWith('.json') && name !== SUBMISSION_INDEX) {
       jsonFiles.push(name);
     }
   }
 
-  for (const jsonName of jsonFiles) {
+  const loaded = await mapPool(jsonFiles, async (jsonName) => {
     const baseName = jsonName.replace('.json', '');
     try {
       const jFile = await subDir.getFileHandle(jsonName);
@@ -236,15 +328,13 @@ export async function listSubmissions(rootHandle, slug) {
         svgContent = await sBlob.text();
       } catch (e) { /* no SVG */ }
 
-      submissions.push({
-        id: baseName,
-        svg: svgContent,
-        ...data,
-      });
+      return { id: baseName, svg: svgContent, ...data };
     } catch (e) {
       console.warn(`Failed to load submission "${baseName}":`, e);
+      return null;
     }
-  }
+  });
+  submissions.push(...loaded.filter(Boolean));
 
   return submissions.sort((a, b) => {
     const da = a.submittedAt || '';
@@ -279,7 +369,7 @@ export async function listBatchRuns(rootHandle) {
     } catch (e) { /* no prompt file */ }
 
     for await (const [sName, sHandle] of subDir) {
-      if (sHandle.kind !== 'file' || !sName.endsWith('.json')) continue;
+      if (sHandle.kind !== 'file' || !sName.endsWith('.json') || sName === SUBMISSION_INDEX) continue;
       try {
         const data = JSON.parse(await (await sHandle.getFile()).text());
         const runId = data.batch?.id;
@@ -290,9 +380,12 @@ export async function listBatchRuns(rootHandle) {
             id: runId,
             model: data.model || 'unknown',
             modelId: data.modelId || null,
+            promptSets: new Set(),
             items: [],
           });
         }
+        // Runs from before prompt sets existed were all core.
+        runs.get(runId).promptSets.add(data.batch.promptSet || 'core');
         runs.get(runId).items.push({
           submissionId: sName.replace(/\.json$/, ''),
           slug: name,
@@ -306,6 +399,8 @@ export async function listBatchRuns(rootHandle) {
           params: data.params || null,
           paramsLabel: data.paramsLabel || null,
           stats: data.stats || null,
+          promptSet: data.batch.promptSet || 'core',
+          animation: data.animation || null,
         });
       } catch (e) { /* skip unreadable submission */ }
     }
@@ -315,8 +410,14 @@ export async function listBatchRuns(rootHandle) {
   for (const run of runs.values()) {
     run.items.sort((a, b) => (a.submittedAt || '').localeCompare(b.submittedAt || ''));
     const scores = run.items.map(i => i.autoScore).filter(s => s != null);
+    const { promptSets, ...rest } = run;
+    const sets = [...promptSets];
+    const checked = run.items.filter(i => i.animation && i.animation.moves != null);
     list.push({
-      ...run,
+      ...rest,
+      promptSet: sets.length === 1 ? sets[0] : 'mixed',
+      movingCount: checked.filter(i => i.animation.moves).length,
+      motionCheckedCount: checked.length,
       count: run.items.length,
       startedAt: run.items[0]?.submittedAt || '',
       avgScore: scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null,
@@ -344,6 +445,7 @@ export async function loadRunSvgs(rootHandle, items) {
 
 export async function saveSubmission(rootHandle, slug, modelSlug, svgContent, metadata) {
   const subDir = await getSubmissionsDir(rootHandle, slug);
+  await dropSubmissionIndex(subDir);
 
   // Save SVG
   const svgFile = await subDir.getFileHandle(modelSlug + '.svg', { create: true });
@@ -362,6 +464,7 @@ export async function saveSubmission(rootHandle, slug, modelSlug, svgContent, me
 
 export async function deleteSubmission(rootHandle, slug, modelSlug) {
   const subDir = await getSubmissionsDir(rootHandle, slug);
+  await dropSubmissionIndex(subDir);
   try { await subDir.removeEntry(modelSlug + '.svg'); } catch (e) { /* ok */ }
   try { await subDir.removeEntry(modelSlug + '.json'); } catch (e) { /* ok */ }
 }
@@ -376,6 +479,7 @@ export async function deleteBenchmark(rootHandle, slug) {
 // ── Update submission metadata ──
 
 export async function updateSubmissionMeta(rootHandle, slug, modelSlug, metadata) {
+  await dropSubmissionIndex(await getSubmissionsDir(rootHandle, slug));
   const subDir = await getSubmissionsDir(rootHandle, slug);
   const jsonFile = await subDir.getFileHandle(modelSlug + '.json', { create: true });
   const jsonWritable = await jsonFile.createWritable();

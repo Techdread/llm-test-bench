@@ -14,6 +14,7 @@
 // preserve that behaviour while we work through the wider settings migration.
 import './settings-sync.js';
 import { applyParams, withUsageReporting, createRunStats } from './gen-params.js';
+import { withTelemetry, messagesText } from './generation-telemetry.js';
 
 import {
   suite,
@@ -239,13 +240,15 @@ export async function fetchFreeModels() {
  * Unlike streamChat, this supports arbitrary message arrays and tool-calling.
  * Non-streaming — returns the full parsed response body.
  */
-export async function chatCompletion({ modelId, messages, tools, appTitle }) {
+async function chatCompletionRaw({ modelId, messages, tools, appTitle, telemetry }) {
   const apiKey = await getApiKeyForRequest();
   if (!apiKey) throw new Error('OpenRouter API key not set');
 
-  const body = { model: modelId, messages };
+  let body = { model: modelId, messages };
   if (tools && tools.length > 0) body.tools = tools;
+  if (telemetry) body = withUsageReporting(body, 'openrouter');
 
+  telemetry?.mark('dispatched');
   const res = await fetch(`${API_BASE}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -265,20 +268,32 @@ export async function chatCompletion({ modelId, messages, tools, appTitle }) {
       userPrompt: messages?.find(m => m?.role === 'user')?.content,
     });
   }
-  return res.json();
+  telemetry?.mark('sessionReady');
+  const data = await res.json();
+  if (telemetry) {
+    const stats = createRunStats(undefined, telemetry);
+    if (data?.choices?.[0]?.message?.reasoning) stats.markReasoning();
+    stats.setFinishReason(data?.choices?.[0]?.finish_reason);
+    stats.setUsage(data?.usage);
+  }
+  return data;
 }
 
 /**
  * Stream a raw OpenAI-style chat completion request to OpenRouter.
  * Supports arbitrary message arrays, including multimodal image content.
  */
-export async function streamChatCompletion({ modelId, messages, tools, appTitle, onChunk, returnResponse = false, signal }) {
+async function streamChatCompletionRaw({ modelId, messages, tools, appTitle, onChunk, returnResponse = false, signal, telemetry }) {
   const apiKey = await getApiKeyForRequest();
   if (!apiKey) throw new Error('OpenRouter API key not set');
 
-  const body = { model: modelId, messages, stream: true };
+  let body = { model: modelId, messages, stream: true };
   if (tools && tools.length > 0) body.tools = tools;
+  // Usage (and cost) arrive in a final chunk only when asked for.
+  if (telemetry) body = withUsageReporting(body, 'openrouter');
+  const stats = createRunStats(undefined, telemetry);
 
+  telemetry?.mark('dispatched');
   const res = await fetch(`${API_BASE}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -300,6 +315,7 @@ export async function streamChatCompletion({ modelId, messages, tools, appTitle,
     });
   }
 
+  telemetry?.mark('sessionReady');
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let full = '';
@@ -347,16 +363,21 @@ export async function streamChatCompletion({ modelId, messages, tools, appTitle,
         if (!trimmed || !trimmed.startsWith('data: ')) continue;
         const data = trimmed.slice(6);
         if (data === '[DONE]') break;
-        let choice;
+        let choice, parsed;
         try {
-          choice = JSON.parse(data).choices?.[0] || {};
+          parsed = JSON.parse(data);
+          choice = parsed.choices?.[0] || {};
         } catch { continue; /* skip malformed chunks */ }
         if (choice.finish_reason) finishReason = choice.finish_reason;
+        if (parsed.usage) stats.setUsage(parsed.usage);
         const delta = choice.delta || {};
+        if (delta.reasoning) stats.markReasoning();
         if (delta.content) {
+          stats.markFirstToken();
           full += delta.content;
         }
         if (delta.tool_calls) {
+          telemetry?.mark('firstTool');
           delta.tool_calls.forEach(applyToolCallDelta);
         }
         if (delta.content || delta.tool_calls) {
@@ -369,6 +390,7 @@ export async function streamChatCompletion({ modelId, messages, tools, appTitle,
     try { reader.cancel(); } catch { /* already closed */ }
   }
 
+  stats.setFinishReason(finishReason);
   if (!returnResponse) return full;
   const message = {
     role: 'assistant',
@@ -381,12 +403,12 @@ export async function streamChatCompletion({ modelId, messages, tools, appTitle,
 
 // ── Generic streaming chat completion ──
 
-export async function streamChat({ systemPrompt, userPrompt, modelId, appTitle, onChunk, params, onStats }) {
+async function streamChatRaw({ systemPrompt, userPrompt, modelId, appTitle, onChunk, params, onStats, telemetry }) {
   const apiKey = await getApiKeyForRequest();
   if (!apiKey) throw new Error('OpenRouter API key not set');
   if (!userPrompt) throw new Error('Prompt is empty');
 
-  const stats = createRunStats();
+  const stats = createRunStats(undefined, telemetry);
   let body = applyParams({
     model: modelId,
     messages: [
@@ -395,8 +417,9 @@ export async function streamChat({ systemPrompt, userPrompt, modelId, appTitle, 
     ],
     stream: !!onChunk,
   }, params, 'openrouter');
-  if (onStats) body = withUsageReporting(body, 'openrouter');
+  if (onStats || telemetry) body = withUsageReporting(body, 'openrouter');
 
+  telemetry?.mark('dispatched');
   const res = await fetch(`${API_BASE}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -411,6 +434,7 @@ export async function streamChat({ systemPrompt, userPrompt, modelId, appTitle, 
   if (!res.ok) {
     await throwOpenRouterError(res, { apiKey, modelId, appTitle, userPrompt });
   }
+  telemetry?.mark('sessionReady');
 
   // Streaming response
   if (onChunk) {
@@ -465,11 +489,40 @@ export async function streamChat({ systemPrompt, userPrompt, modelId, appTitle, 
   // Non-streaming response
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content || '';
-  if (onStats) {
+  if (onStats || telemetry) {
     if (data.choices?.[0]?.message?.reasoning) stats.markReasoning();
     stats.setFinishReason(data.choices?.[0]?.finish_reason);
     stats.setUsage(data.usage);
-    onStats(stats.finish());
+    onStats?.(stats.finish());
   }
   return content;
+}
+
+// ── Generation telemetry for direct callers (spec 340) ──
+//
+// Calls routed through model-providers arrive with a `telemetry` key (the
+// provider layer's tracker, or null when recording is off) and are recorded
+// there. A few apps import this module directly; for them — and only when the
+// key is absent — the call opens its own record, so it is never counted twice.
+
+const OPENROUTER_PROVIDER = { id: 'openrouter', type: 'openrouter', name: 'OpenRouter' };
+
+function direct(args, entry, promptText, run) {
+  if ('telemetry' in args) return run(args);
+  return withTelemetry({
+    entry, provider: OPENROUTER_PROVIDER, modelId: args.modelId, appTitle: args.appTitle,
+    params: args.params, streamed: !!args.onChunk, promptText, signal: args.signal,
+  }, (telemetry) => run({ ...args, telemetry, onChunk: telemetry ? telemetry.wrapOnChunk(args.onChunk) : args.onChunk }));
+}
+
+export function streamChat(args = {}) {
+  return direct(args, 'streamChat', [args.systemPrompt, args.userPrompt].filter(Boolean).join('\n\n'), streamChatRaw);
+}
+
+export function chatCompletion(args = {}) {
+  return direct(args, 'chatCompletion', messagesText(args.messages), chatCompletionRaw);
+}
+
+export function streamChatCompletion(args = {}) {
+  return direct(args, 'streamChatCompletion', messagesText(args.messages), streamChatCompletionRaw);
 }

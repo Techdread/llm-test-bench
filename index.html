@@ -1,10 +1,39 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-distribution="public">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Open browser tools for comparing LLM-generated HTML, p5.js sketches, and SVG artwork.">
-  <title>LLM Test Bench</title>
+  <meta name="description" content="Free, open-source browser tools for comparing how LLMs write interactive HTML, p5.js sketches, and SVG art. Run local or hosted models; your files stay on your computer.">
+  <title>LLM Test Bench — compare LLM-generated HTML, p5.js and SVG</title>
+  <link rel="canonical" href="https://neuroviz.uk/">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#080b12">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="LLM Test Bench">
+  <meta property="og:url" content="https://neuroviz.uk/">
+  <meta property="og:title" content="LLM Test Bench — Generate it. Compare it. Keep the evidence.">
+  <meta property="og:description" content="Open-source browser tools for comparing how language models turn the same idea into interactive HTML, p5.js sketches, and SVG artwork.">
+  <meta property="og:image" content="https://neuroviz.uk/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="LLM Test Bench: a grid of model-generated games, 3D scenes, sketches and SVG illustrations.">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "LLM Test Bench",
+    "url": "https://neuroviz.uk/",
+    "description": "Open-source browser tools for comparing how language models turn the same idea into interactive HTML, p5.js sketches, and SVG artwork.",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Any (Chrome or Edge recommended)",
+    "browserRequirements": "Requires the File System Access API for saving results",
+    "isAccessibleForFree": true,
+    "license": "https://opensource.org/licenses/MIT",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" }
+  }
+  </script>
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
@@ -15,6 +44,7 @@
     </a>
     <nav aria-label="Main navigation">
       <a href="#tools">Tools</a>
+      <a href="showcase.html">Showcase</a>
       <a href="settings.html">Settings</a>
       <a href="privacy.html">Privacy</a>
       <a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a>
@@ -40,14 +70,15 @@
       </div>
 
       <!-- Populated from _showcase/index.json by showcase.js; the whole panel
-           is removed if the build carries no showcase. -->
-      <div class="showcase" id="showcase" hidden>
+           stays hidden if the build carries no showcase. -->
+      <div class="showcase" id="showcase" data-showcase-panel hidden>
         <div class="showcase-head">
           <span class="showcase-label">Real output &middot; click to open</span>
-          <span class="showcase-badge" id="showcase-count"></span>
+          <span class="showcase-badge" data-showcase-count></span>
         </div>
         <p class="showcase-intro">Generations from all three benches &mdash; each tile opens its prompt and code in the bench that made it.</p>
-        <div class="showcase-grid" id="showcase-grid"></div>
+        <div class="showcase-grid" data-showcase-grid data-hero data-limit="6"></div>
+        <a class="showcase-more" href="showcase.html">See the full showcase <span aria-hidden="true">&rarr;</span></a>
       </div>
     </section>
 

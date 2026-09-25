@@ -1,13 +1,43 @@
 import { html } from 'htm/preact';
 import { useRef, useEffect, useState } from 'preact/hooks';
+import {
+  completionTokenCount,
+  estimatedTokenCount,
+  formatTokensPerSecond,
+  tokensPerSecond,
+} from '../services/batchMetrics.js';
 
-export function PromptEditor({ prompt, onPromptChange, response, onResponseChange, theme, onMorph, onSavePromptToLibrary }) {
+export function PromptEditor({
+  prompt,
+  onPromptChange,
+  response,
+  onResponseChange,
+  responseStats,
+  responseTiming,
+  isGenerating,
+  theme,
+  onMorph,
+  onSavePromptToLibrary,
+}) {
   const editorRef = useRef(null);
   const containerRef = useRef(null);
   const silentUpdate = useRef(false);
   const copyTimerRef = useRef(null);
   const [showFullscreenPreview, setShowFullscreenPreview] = useState(false);
   const [copiedTarget, setCopiedTarget] = useState('');
+  const [rateClock, setRateClock] = useState(Date.now());
+
+  const responseCharacters = String(response || '').length;
+  const reportedTokens = completionTokenCount(responseStats);
+  const responseTokens = reportedTokens ?? estimatedTokenCount(response);
+  const responseTokenRate = tokensPerSecond(responseStats, responseTokens, responseTiming, rateClock);
+
+  useEffect(() => {
+    if (!isGenerating || !responseCharacters || !responseTiming?.startedAt) return undefined;
+    setRateClock(Date.now());
+    const timer = window.setInterval(() => setRateClock(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [isGenerating, responseCharacters, responseTiming?.startedAt]);
 
   // Initialize Ace Editor for HTML response
   useEffect(() => {
@@ -146,6 +176,15 @@ export function PromptEditor({ prompt, onPromptChange, response, onResponseChang
         <div class="section-header">
           <span><i class="fa-solid fa-code"></i> HTML Response</span>
           <div class="section-header-actions">
+            ${responseCharacters > 0 && html`
+              <div class="response-metrics" aria-label="HTML response generation metrics">
+                <span>${responseCharacters.toLocaleString()} characters streamed</span>
+                <span class="response-metric-divider">·</span>
+                <span>${responseTokens.toLocaleString()} tokens generated</span>
+                <span class="response-metric-divider">·</span>
+                <span>${formatTokensPerSecond(responseTokenRate)}</span>
+              </div>
+            `}
             <button
               class=${`btn-icon copy-btn ${copiedTarget === 'response' ? 'copied' : ''}`}
               onClick=${() => copyText(response, 'response')}

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Segmented Cube — Three.js Explode Demo</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+        width: 100%; height: 100%;
+        overflow: hidden;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: radial-gradient(1200px 800px at 50% 28%, #222a52 0%, #141a38 45%, #0a0d1f 100%);
+        color: #e8ecf8;
+    }
+
+    #app { position: fixed; inset: 0; }
+    canvas { display: block; }
+
+    .panel {
+        position: fixed;
+        top: 22px; left: 22px;
+        width: 258px;
+        padding: 18px 20px 20px;
+        background: rgba(15, 19, 40, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 16px;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+        user-select: none;
+    }
+
+    .brand {
+        display: flex; align-items: center; gap: 10px;
+        margin-bottom: 4px;
+    }
+    .brand .dot {
+        width: 12px; height: 12px; border-radius: 4px;
+        background: linear-gradient(135deg, #8b93ff, #e08be8);
+        box-shadow: 0 0 12px rgba(139, 147, 255, 0.7);
+    }
+    .brand h1 {
+        font-size: 14px; font-weight: 700;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        color: #f2f4ff;
+    }
+    .subtitle {
+        font-size: 11.5px; color: rgba(226, 232, 255, 0.5);
+        margin-bottom: 16px; letter-spacing: 0.02em;
+    }
+
+    .row { margin-bottom: 14px; }
+    .row:last-child { margin-bottom: 0; }
+
+    .label-line {
+        display: flex; justify-content: space-between; align-items: baseline;
+        margin-bottom: 7px;
+    }
+    .label-line label {
+        font-size: 11px; font-weight: 600;
+        letter-spacing: 0.08em; text-transform: uppercase;
+        color: rgba(226, 232, 255, 0.65);
+    }
+    .label-line .val {
+        font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        font-size: 11.5px; color: #a8b0ff;
+        background: rgba(139, 147, 255, 0.12);
+        border: 1px solid rgba(139, 147, 255, 0.25);
+        padding: 1px 7px; border-radius: 6px;
+    }
+
+    input[type="range"] {
+        width: 100%; height: 4px;
+        appearance: none; -webkit-appearance: none;
+        background: rgba(255, 255, 255, 0.14);
+        border-radius: 4px; outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+        appearance: none; -webkit-appearance: none;
+        width: 15px; height: 15px; border-radius: 50%;
+        background: #aab1ff;
+        border: 2px solid #0e1230;
+        box-shadow: 0 0 10px rgba(139, 147, 255, 0.8);
+        cursor: pointer;
+        transition: transform 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    input[type="range"]::-moz-range-thumb {
+        width: 13px; height: 13px; border-radius: 50%;
+        background: #aab1ff; border: 2px solid #0e1230;
+        box-shadow: 0 0 10px rgba(139, 147, 255, 0.8);
+        cursor: pointer;
+    }
+
+    select {
+        width: 100%;
+        padding: 7px 10px;
+        font-size: 12.5px; color: #e8ecf8;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 9px; outline: none; cursor: pointer;
+    }
+    select option { background: #141a38; color: #e8ecf8; }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 16px; }
+
+    button {
+        flex: 1;
+        padding: 9px 0;
+        font-size: 12.5px; font-weight: 600;
+        letter-spacing: 0.04em;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+    button:active { transform: translateY(1px) scale(0.98); }
+
+    .btn-primary {
+        color: #fff;
+        background: linear-gradient(135deg, #6c73ff, #a855f7);
+        border: none;
+        box-shadow: 0 6px 20px rgba(108, 115, 255, 0.4);
+    }
+    .btn-primary:hover {
+        box-shadow: 0 8px 26px rgba(108, 115, 255, 0.6);
+        transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+        color: rgba(226, 232, 255, 0.8);
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+    .btn-ghost:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-1px);
+    }
+
+    .hint {
+        position: fixed;
+        bottom: 20px; left: 50%;
+        transform: translateX(-50%);
+        font-size: 12px;
+        letter-spacing: 0.03em;
+        color: rgba(226, 232, 255, 0.45);
+        background: rgba(15, 19, 40, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        padding: 8px 18px;
+        border-radius: 999px;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        white-space: nowrap;
+        pointer-events: none;
+    }
+    .hint b { color: rgba(226, 232, 255, 0.75); font-weight: 600; }
+
+    @media (max-width: 560px) {
+        .panel { width: calc(100vw - 44px); }
+        .hint { font-size: 11px; padding: 7px 14px; }
+    }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<div class="panel">
+    <div class="brand">
+        <div class="dot"></div>
+        <h1>Segmented Cube</h1>
+    </div>
+    <div class="subtitle">Three.js explode &amp; reassemble demo</div>
+
+    <div class="row">
+        <div class="label-line">
+            <label for="strength">Explosion strength</label>
+            <span class="val" id="strengthVal">1.30×</span>
+        </div>
+        <input type="range" id="strength" min="0.4" max="2.4" step="0.01" value="1.3">
+    </div>
+
+    <div class="row">
+        <div class="label-line">
+            <label for="segments">Segments per side</label>
+        </div>
+        <select id="segments">
+            <option value="2">2 × 2 × 2</option>
+            <option value="3" selected>3 × 3 × 3</option>
+            <option value="4">4 × 4 × 4</option>
+        </select>
+    </div>
+
+    <div class="btn-row">
+        <button class="btn-primary" id="explodeBtn">Explode</button>
+        <button class="btn-ghost" id="resetBtn">Reset</button>
+    </div>
+</div>
+
+<div class="hint"><b>Click</b> the cube to explode &nbsp;·&nbsp; <b>Drag</b> to orbit &nbsp;·&nbsp; <b>Scroll</b> to zoom &nbsp;·&nbsp; <b>Space</b> toggles</div>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+const container = document.getElementById('app');
+const strengthInput = document.getElementById('strength');
+const strengthVal = document.getElementById('strengthVal');
+const segmentsSelect = document.getElementById('segments');
+const explodeBtn = document.getElementById('explodeBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 100);
+camera.position.set(6.0, 4.6, 7.4);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.06;
+container.appendChild(renderer.domElement);
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.minDistance = 4;
+controls.maxDistance = 18;
+controls.target.set(0, 0.1, 0);
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.7;
+
+let idleTimer;
+controls.addEventListener('start', () => {
+    controls.autoRotate = false;
+    clearTimeout(idleTimer);
+});
+controls.addEventListener('end', () => {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => { controls.autoRotate = true; }, 2500);
+});
+
+const hemi = new THREE.HemisphereLight(0xdfe8ff, 0x252b4a, 0.85);
+scene.add(hemi);
+scene.add(new THREE.AmbientLight(0xffffff, 0.28));
+
+const keyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+keyLight.position.set(6, 10, 5);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.set(2048, 2048);
+keyLight.shadow.camera.left = -8;
+keyLight.shadow.camera.right = 8;
+keyLight.shadow.camera.top = 8;
+keyLight.shadow.camera.bottom = -8;
+keyLight.shadow.camera.near = 2;
+keyLight.shadow.camera.far = 30;
+keyLight.shadow.bias = -0.0002;
+keyLight.shadow.normalBias = 0.025;
+scene.add(keyLight);
+
+const fillLight = new THREE.DirectionalLight(0xbfd0ff, 0.55);
+fillLight.position.set(-7, 3, -5);
+scene.add(fillLight);
+
+const rimLight = new THREE.DirectionalLight(0xffd9f2, 0.35);
+rimLight.position.set(2, 4, -8);
+scene.add(rimLight);
+
+const ground = new THREE.Mesh(
+    new THREE.CircleGeometry(16, 72),
+    new THREE.ShadowMaterial({ opacity: 0.3, color: 0x060818 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -2.35;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const ring = new THREE.Mesh(
+    new THREE.RingGeometry(3.14, 3.2, 128),
+    new THREE.MeshBasicMaterial({ color: 0x9aa4ff, transparent: true, opacity: 0.09, side: THREE.DoubleSide })
+);
+ring.rotation.x = -Math.PI / 2;
+ring.position.y = -2.34;
+scene.add(ring);
+
+const cubeGroup = new THREE.Group();
+scene.add(cubeGroup);
+
+let pieces = [];
+let pieceMeshes = [];
+let sharedGeo = null;
+let strength = parseFloat(strengthInput.value);
+let exploded = false;
+
+const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+const randUnit = () => {
+    const v = new THREE.Vector3(
+        Math.random() * 2 - 1,
+        Math.random() * 2 - 1,
+        Math.random() * 2 - 1
+    );
+    return v.lengthSq() < 1e-6 ? v.set(0, 1, 0) : v.normalize();
+};
+
+function build(n) {
+    for (const m of pieceMeshes) {
+        m.material.dispose();
+        cubeGroup.remove(m);
+    }
+    if (sharedGeo) sharedGeo.dispose();
+
+    pieces = [];
+    pieceMeshes = [];
+
+    const total = 3.0;
+    const spacing = total / n;
+    const size = spacing * 0.88;
+    const half = (n - 1) / 2;
+    const maxDist = Math.max(half * spacing * Math.sqrt(3), 1e-4);
+
+    sharedGeo = new RoundedBoxGeometry(size, size, size, 4, size * 0.14);
+
+    for (let x = 0; x < n; x++) {
+        for (let y = 0; y < n; y++) {
+            for (let z = 0; z < n; z++) {
+                const home = new THREE.Vector3(x - half, y - half, z - half).multiplyScalar(spacing);
+                const dist = home.length();
+                const distNorm = dist / maxDist;
+                const dir = dist > 1e-4 ? home.clone().normalize() : randUnit();
+
+                const spread = dir.clone()
+                    .multiplyScalar(0.9 + 1.4 * distNorm)
+                    .addScaledVector(randUnit(), 0.32)
+                    .multiplyScalar(spacing);
+
+                const diag = (x + y + z) / (3 * Math.max(n - 1, 1));
+                const color = new THREE.Color().setHSL(0.58 + 0.3 * diag, 0.55, 0.62);
+
+                const mat = new THREE.MeshStandardMaterial({
+                    color,
+                    roughness: 0.34,
+                    metalness: 0.08,
+                    emissive: color,
+                    emissiveIntensity: 0
+                });
+
+                const mesh = new THREE.Mesh(sharedGeo, mat);
+                mesh.position.copy(home);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                cubeGroup.add(mesh);
+                pieceMeshes.push(mesh);
+
+                const p = {
+                    mesh,
+                    home,
+                    spread,
+                    distNorm,
+                    axis: randUnit(),
+                    spinBase: (Math.PI * (0.9 + Math.random() * 1.8)) * (Math.random() < 0.5 ? -1 : 1),
+                    spinRate: (0.35 + Math.random() * 0.75) * (Math.random() < 0.5 ? -1 : 1),
+                    clock: 0,
+                    p: 0, p0: 0, target: 0,
+                    start: 0, dur: 1,
+                    ease: easeOutCubic,
+                    hov: 0
+                };
+                mesh.userData.piece = p;
+                pieces.push(p);
+            }
+        }
+    }
+    exploded = false;
+    explodeBtn.textContent = 'Explode';
+}
+
+function setExploded(on) {
+    exploded = on;
+    const now = clock.elapsedTime;
+    for (const p of pieces) {
+        p.p0 = p.p;
+        p.target = on ? 1 : 0;
+        p.start = now + (on
+            ? p.distNorm * 0.22 + Math.random() * 0.08
+            : (1 - p.distNorm) * 0.14 + Math.random() * 0.06);
+        p.dur = on ? 0.85 + Math.random() * 0.3 : 1.05 + Math.random() * 0.3;
+        p.ease = on ? easeOutCubic : easeInOutCubic;
+    }
+    explodeBtn.textContent = on ? 'Assemble' : 'Explode';
+}
+
+function reset() {
+    exploded = false;
+    for (const p of pieces) {
+        p.p = 0; p.p0 = 0; p.target = 0; p.clock = 0;
+        p.mesh.position.copy(p.home);
+        p.mesh.quaternion.identity();
+    }
+    explodeBtn.textContent = 'Explode';
+}
+
+explodeBtn.addEventListener('click', () => setExploded(!exploded));
+resetBtn.addEventListener('click', reset);
+
+strengthInput.addEventListener('input', () => {
+    strength = parseFloat(strengthInput.value);
+    strengthVal.textContent = strength.toFixed(2) + '×';
+});
+
+segmentsSelect.addEventListener('change', () => build(parseInt(segmentsSelect.value, 10)));
+
+addEventListener('keydown', e => {
+    if (e.code === 'Space' && e.target === document.body) {
+        e.preventDefault();
+        setExploded(!exploded);
+    }
+});
+
+let downX = 0, downY = 0, downT = 0;
+renderer.domElement.addEventListener('pointerdown', e => {
+    downX = e.clientX; downY = e.clientY; downT = performance.now();
+});
+renderer.domElement.addEventListener('pointerup', e => {
+    const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
+    if (moved < 6 && performance.now() - downT < 350) setExploded(!exploded);
+});
+
+const pointer = new THREE.Vector2();
+let pointerActive = false;
+renderer.domElement.addEventListener('pointermove', e => {
+    pointer.x = (e.clientX / innerWidth) * 2 - 1;
+    pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+    pointerActive = true;
+});
+renderer.domElement.addEventListener('pointerleave', () => {
+    pointerActive = false;
+    hovered = null;
+});
+
+const raycaster = new THREE.Raycaster();
+let hovered = null;
+const clock = new THREE.Clock();
+const tmpQuat = new THREE.Quaternion();
+
+function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    const now = clock.elapsedTime;
+
+    controls.update();
+
+    if (pointerActive) {
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects(pieceMeshes, false);
+        hovered = hits.length ? hits[0].object.userData.piece : null;
+    }
+    document.body.style.cursor = hovered ? 'pointer' : '';
+
+    for (const p of pieces) {
+        const raw = THREE.MathUtils.clamp((now - p.start) / p.dur, 0, 1);
+        p.p = p.p0 + (p.target - p.p0) * p.ease(raw);
+        if (p.p > 0.999) p.clock += dt;
+
+        p.mesh.position.copy(p.home).addScaledVector(p.spread, strength * p.p);
+        tmpQuat.setFromAxisAngle(p.axis, p.p * (p.spinBase + p.clock * p.spinRate));
+        p.mesh.quaternion.copy(tmpQuat);
+
+        p.hov = THREE.MathUtils.damp(p.hov, hovered === p ? 1 : 0, 14, dt);
+        p.mesh.material.emissiveIntensity = 0.6 * p.hov;
+        p.mesh.scale.setScalar(1 + 0.09 * p.hov);
+    }
+
+    renderer.render(scene, camera);
+}
+
+addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+
+build(3);
+animate();
+</script>
+</body>
+</html>

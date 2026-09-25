@@ -11,12 +11,62 @@ import {
   loadHandleOrigin,
   getCurrentOrigin,
 } from './storage.js';
+import { serverRoot, serverRootStatus } from './server-data-root.js';
 
 export const REGISTRY_FILENAME = 'data-root.json';
 export const REGISTRY_VERSION = 1;
 export const STANDARD_SUBFOLDERS = ['config', 'projects', 'runs', 'exports', 'cache', 'logs'];
 
 const APP_ID_RE = /^[a-z0-9][a-z0-9-]*$/;
+
+// ── Server data root ────────────────────────────────────────────────────────
+// A second kind of root: the folder serve.py already owns, reached over
+// `/__data/*`. It is the only one a browser without the File System Access API
+// can use (the Quest, any Android browser), and on a machine that can pick a
+// folder it is the way to share ONE data root between devices instead of a
+// copy per browser. The preference is per origin, in localStorage, because it
+// decides where everything else is read from.
+const MODE_KEY = 'devtools-hub-data-root-mode';
+let serverRootHandle = null;
+let serverProbe = null;
+
+export function folderPickerSupported() {
+  return typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';
+}
+
+/** 'server' | 'folder' — what this browser is set to use. */
+export function getDataRootMode() {
+  try {
+    const stored = localStorage.getItem(MODE_KEY);
+    if (stored === 'server' || stored === 'folder') return stored;
+  } catch { /* private mode */ }
+  // A browser that cannot pick a folder has one option, so it is the default
+  // there and nothing has to be configured on the headset.
+  return folderPickerSupported() ? 'folder' : 'server';
+}
+
+export function setDataRootMode(mode) {
+  if (mode !== 'server' && mode !== 'folder') throw new Error(`Unknown data root mode: ${mode}`);
+  try { localStorage.setItem(MODE_KEY, mode); } catch { /* private mode */ }
+  serverRootHandle = null;
+}
+
+/** The server's data root, or null when this hub is not served by serve.py. */
+export async function getServerRoot({ refresh = false } = {}) {
+  if (refresh) { serverProbe = null; serverRootHandle = null; }
+  if (!serverProbe) serverProbe = serverRootStatus();
+  const status = await serverProbe;
+  if (!status) return null;
+  if (!serverRootHandle) serverRootHandle = serverRoot(status.root || 'data root');
+  return serverRootHandle;
+}
+
+/** Details for the Settings UI: is the server root there, and what is it? */
+export async function getServerRootStatus({ refresh = false } = {}) {
+  if (refresh) serverProbe = null;
+  if (!serverProbe) serverProbe = serverRootStatus();
+  return serverProbe;
+}
 
 function validateAppId(appId) {
   if (typeof appId !== 'string' || !APP_ID_RE.test(appId)) {
@@ -30,6 +80,12 @@ function nowIso() {
 
 /** @returns {Promise<FileSystemDirectoryHandle|null>} */
 export async function getRoot() {
+  if (getDataRootMode() === 'server') {
+    const root = await getServerRoot();
+    if (root) return root;
+    // Fall through: a hub served by a plain static server has no data root of
+    // its own, so a picked folder (if any) is still better than nothing.
+  }
   const handle = await loadHandle();
   if (!handle) return null;
   try {
@@ -61,6 +117,13 @@ export async function getRoot() {
  */
 export async function getRootStatus() {
   const currentOrigin = getCurrentOrigin();
+  if (getDataRootMode() === 'server') {
+    const root = await getServerRoot();
+    if (root) {
+      return { status: 'ready', handle: root, name: root.name, server: true,
+        savedOrigin: currentOrigin, currentOrigin, originMismatch: false };
+    }
+  }
   let handle;
   try {
     handle = await loadHandle();
@@ -116,6 +179,13 @@ export async function setRoot() {
  * @returns {Promise<FileSystemDirectoryHandle|null>}
  */
 export async function connectRoot() {
+  if (getDataRootMode() === 'server') {
+    const root = await getServerRoot();
+    if (root) {
+      await ensureRegistry(root);
+      return root;
+    }
+  }
   let handle;
   try {
     handle = await loadHandle();

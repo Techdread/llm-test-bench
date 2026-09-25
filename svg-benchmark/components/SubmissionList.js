@@ -1,6 +1,6 @@
 import { html } from 'htm/preact';
 import { sendToCodeMorphLab } from '../../shared/services/code-morph-handoff.js';
-import { sanitizeSvgMarkup } from '../../shared/services/content-sanitizer.js';
+import { SvgImage } from './SvgImage.js';
 
 export function SubmissionList({
   benchmark,
@@ -78,7 +78,7 @@ export function SubmissionList({
             ${submissions.map(sub => html`
               <div class="submission-card" key=${sub.id}>
                 <div class="submission-card-preview" onClick=${() => onSelectSubmission(sub.id)}>
-                  <div class="submission-svg-thumb" dangerouslySetInnerHTML=${{ __html: sanitizeSvgMarkup(sub.svg) }}></div>
+                  <${SvgImage} svg=${sub.svg} className="submission-svg-thumb" />
                 </div>
                 <div class="submission-card-body">
                   <div class="submission-card-title">${sub.model || sub.id}</div>

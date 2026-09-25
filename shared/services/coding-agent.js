@@ -133,6 +133,7 @@ export async function runCodingAgentTask({
   onWorkspace,
   onStart,
   onEvent,
+  onLive,
   onOutput,
 } = {}) {
   if (!String(task || '').trim()) throw new Error('Coding-agent task is required');
@@ -199,6 +200,9 @@ export async function runCodingAgentTask({
         onEvent?.(event);
         if (event.type === 'file') pollOutput();
       },
+      // Rolling tail of the block being written right now (text / thinking
+      // tokens) — display-only, so it is never appended to the trace file.
+      onLive,
     });
     bridgeRunId = bridgeResult.runId || bridgeRunId;
     await pollOutput();

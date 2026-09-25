@@ -499,9 +499,9 @@ function formatModelName(id) {
  * Uses an inactivity timeout for streaming (resets on each chunk)
  * so long-running generations aren't cut off prematurely.
  */
-export async function streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk, appTitle, params, onStats }) {
+export async function streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk, appTitle, params, onStats, telemetry }) {
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
-  const stats = createRunStats();
+  const stats = createRunStats(undefined, telemetry);
   // Non-streaming generations (completeChat → suggestImprovements, etc.) are a
   // full model run, not a connection test, so they need the long generation
   // timeout. Reasoning models (Qwen3.6, etc.) can think for minutes before the
@@ -546,6 +546,7 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
     let body = applyParams({ model: modelId, messages, stream: !!onChunk }, params, PROVIDER_TYPE);
     if (onChunk) body = withUsageReporting(body, PROVIDER_TYPE);
 
+    telemetry?.mark('dispatched');
     res = await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -571,6 +572,7 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
     }
     throw new Error(`LM Studio ${provider.name}: ${errMsg}`);
   }
+  telemetry?.mark('sessionReady');
 
   // Streaming response
   if (onChunk) {
@@ -641,11 +643,11 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
   clearTimeout(inactivityTimer);
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content || '';
-  if (onStats) {
+  if (onStats || telemetry) {
     if (data.choices?.[0]?.message?.reasoning_content) stats.markReasoning();
     stats.setFinishReason(data.choices?.[0]?.finish_reason);
     stats.setUsage(data.usage);
-    onStats(stats.finish());
+    onStats?.(stats.finish());
   }
   return content;
 }
@@ -653,15 +655,15 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
 /**
  * Non-streaming chat completion from an LM Studio endpoint.
  */
-export async function completeChat({ provider, modelId, systemPrompt, userPrompt, appTitle }) {
-  return streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk: null, appTitle });
+export async function completeChat({ provider, modelId, systemPrompt, userPrompt, appTitle, telemetry }) {
+  return streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk: null, appTitle, telemetry });
 }
 
 /**
  * Raw chat completion from an LM Studio endpoint — supports arbitrary message
  * arrays and tool-calling. Returns the full parsed response body.
  */
-export async function chatCompletion({ provider, modelId, messages, tools, toolChoice }) {
+export async function chatCompletion({ provider, modelId, messages, tools, toolChoice, telemetry }) {
   if (!tools?.length && hasImageContent(messages)) {
     return chatCompletionNative({ provider, modelId, messages });
   }
@@ -680,6 +682,7 @@ export async function chatCompletion({ provider, modelId, messages, tools, toolC
 
   let res;
   try {
+    telemetry?.mark('dispatched');
     res = await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -704,17 +707,26 @@ export async function chatCompletion({ provider, modelId, messages, tools, toolC
     throw new Error(`LM Studio ${provider.name}: ${enrichLmStudioError(errMsg)}`);
   }
 
-  return res.json();
+  telemetry?.mark('sessionReady');
+  const data = await res.json();
+  if (telemetry) {
+    const stats = createRunStats(undefined, telemetry);
+    if (data?.choices?.[0]?.message?.reasoning_content) stats.markReasoning();
+    stats.setFinishReason(data?.choices?.[0]?.finish_reason);
+    stats.setUsage(data?.usage);
+  }
+  return data;
 }
 
 /**
  * Streaming raw chat completion from an LM Studio endpoint — supports
  * arbitrary message arrays, including multimodal image content.
  */
-export async function streamChatCompletion({ provider, modelId, messages, tools, toolChoice, onChunk, returnResponse = false, signal, params, timeouts }) {
+export async function streamChatCompletion({ provider, modelId, messages, tools, toolChoice, onChunk, returnResponse = false, signal, params, timeouts, telemetry }) {
   if (!tools?.length && hasImageContent(messages)) {
     return streamChatCompletionNative({ provider, modelId, messages, onChunk, returnResponse, signal });
   }
+  const stats = createRunStats(undefined, telemetry);
 
   const baseUrl = normalizeBaseUrl(provider.baseUrl);
   // A per-call `timeouts.streamMs` overrides the provider setting, and 0 means
@@ -756,6 +768,7 @@ export async function streamChatCompletion({ provider, modelId, messages, tools,
   resetInactivityTimer();
   let res;
   try {
+    telemetry?.mark('dispatched');
     res = await localNetworkFetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -781,6 +794,7 @@ export async function streamChatCompletion({ provider, modelId, messages, tools,
     }
     throw new Error(`LM Studio ${provider.name}: ${enrichLmStudioError(errMsg)}`);
   }
+  telemetry?.mark('sessionReady');
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
@@ -837,14 +851,17 @@ export async function streamChatCompletion({ provider, modelId, messages, tools,
           parsed = JSON.parse(data);
           choice = parsed.choices?.[0] || {};
         } catch { continue; /* skip malformed chunks */ }
-        if (parsed.usage) usage = parsed.usage;
-        if (choice.finish_reason) finishReason = choice.finish_reason;
+        if (parsed.usage) { usage = parsed.usage; stats.setUsage(parsed.usage); }
+        if (choice.finish_reason) { finishReason = choice.finish_reason; stats.setFinishReason(finishReason); }
         const delta = choice.delta || {};
         const reasoningDelta = delta.reasoning_content || delta.reasoning || '';
+        if (reasoningDelta) stats.markReasoning();
         if (delta.content) {
+          stats.markFirstToken();
           full += delta.content;
         }
         if (delta.tool_calls) {
+          telemetry?.mark('firstTool');
           delta.tool_calls.forEach(applyToolCallDelta);
         }
         if (delta.content || delta.tool_calls || reasoningDelta) {

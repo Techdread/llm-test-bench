@@ -16,6 +16,8 @@ test('buildExecutorModels keeps provider models and adds every CLI agent', () =>
   assert.ok(models.some(model => model.providerId === 'cli-agent:codex' && model.modelId === 'gpt-5.6-codex'));
   assert.ok(models.some(model => model.providerId === 'cli-agent:antigravity' && model.modelId === CLI_DEFAULT_MODEL));
   assert.ok(models.some(model => model.providerId === 'cli-agent:grok' && model.modelId === CLI_DEFAULT_MODEL));
+  assert.ok(models.some(model => model.providerId === 'cli-agent:devin' && model.modelId === CLI_DEFAULT_MODEL));
+  assert.ok(models.some(model => model.providerId === 'cli-agent:cursor' && model.modelId === CLI_DEFAULT_MODEL));
   assert.equal(models.filter(model => model.modelId === 'gpt-5.6-codex').length, 1);
 });
 

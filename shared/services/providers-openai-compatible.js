@@ -14,6 +14,7 @@
 
 import { applyParams, withUsageReporting, createRunStats } from './gen-params.js';
 import { localNetworkFetch } from './local-network.js';
+import { isPublicDistribution } from './distribution.js';
 
 export const PROVIDER_TYPE = 'openai-compatible';
 
@@ -36,8 +37,13 @@ export function encodeProxyTarget(baseUrl) {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-/** True when this provider's traffic goes through the hub proxy (the default). */
-export function usesProxy(provider) {
+/**
+ * True when this provider's traffic goes through the hub proxy (the default).
+ * The public static build has no serve.py behind it, so `/__llm` would only
+ * 404 there — always call the endpoint directly, whatever the saved flag says.
+ */
+export function usesProxy(provider, documentRef = globalThis.document) {
+  if (isPublicDistribution(documentRef)) return false;
   return provider?.useProxy !== false;
 }
 
@@ -259,7 +265,7 @@ function pickTimeout(explicit, configured, fallback) {
  *     timer only ever covering time-to-first-byte.
  * `release()` must be called once the body is finished with.
  */
-async function postChat(provider, body, { stream = false, signal, timeouts = {} } = {}) {
+async function postChat(provider, body, { stream = false, signal, timeouts = {}, telemetry = null } = {}) {
   const limitMs = stream
     ? pickTimeout(timeouts.streamMs, provider.streamTimeoutMs, DEFAULT_STREAM_INACTIVITY_TIMEOUT)
     : pickTimeout(timeouts.generationMs, provider.generationTimeoutMs, DEFAULT_GENERATION_TIMEOUT);
@@ -290,13 +296,15 @@ async function postChat(provider, body, { stream = false, signal, timeouts = {} 
 
   arm();
   try {
+    telemetry?.mark('dispatched');
     const res = await endpointFetch(provider, '/v1/chat/completions', {
       method: 'POST',
       headers: requestHeaders(provider),
       body: JSON.stringify(body),
       signal: controller.signal,
     });
-    return { res, arm, release, signal };
+    if (res.ok) telemetry?.mark('sessionReady');
+    return { res, arm, release, signal, telemetry };
   } catch (e) {
     release();
     if (e.name === 'AbortError' || e.name === 'TimeoutError') {
@@ -310,8 +318,8 @@ async function postChat(provider, body, { stream = false, signal, timeouts = {} 
 }
 
 /** Stream a standard system/user completion. */
-export async function streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk, params, onStats }) {
-  const stats = createRunStats();
+export async function streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk, params, onStats, telemetry }) {
+  const stats = createRunStats(undefined, telemetry);
   let body = applyParams({
     model: modelId,
     messages: messagesForPrompt(systemPrompt, userPrompt),
@@ -319,7 +327,7 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
   }, params, PROVIDER_TYPE);
   if (onChunk) body = withUsageReporting(body, PROVIDER_TYPE);
 
-  const call = await postChat(provider, body, { stream: !!onChunk });
+  const call = await postChat(provider, body, { stream: !!onChunk, telemetry });
   const { res } = call;
   if (!res.ok) {
     call.release();
@@ -367,9 +375,12 @@ async function readStreamingResponse(call, provider, onChunk, onStats, stats, { 
         if (event.done) break;
         const choice = event.parsed?.choices?.[0] || {};
         const delta = choice.delta || {};
-        if (choice.finish_reason) finishReason = choice.finish_reason;
+        if (choice.finish_reason) { finishReason = choice.finish_reason; stats.setFinishReason(finishReason); }
         if (delta.reasoning_content) stats.markReasoning();
-        if (delta.tool_calls) delta.tool_calls.forEach(part => addToolCallDelta(toolCallParts, part));
+        if (delta.tool_calls) {
+          call.telemetry?.mark('firstTool');
+          delta.tool_calls.forEach(part => addToolCallDelta(toolCallParts, part));
+        }
         if (event.parsed?.usage) stats.setUsage(event.parsed.usage);
         if (delta.content) {
           stats.markFirstToken();
@@ -408,17 +419,19 @@ function openAiResponse(content, toolCallParts, finishReason) {
 }
 
 /** Raw non-streaming completion, including tools. */
-export async function chatCompletion({ provider, modelId, messages, tools, toolChoice, params, timeouts }) {
+export async function chatCompletion({ provider, modelId, messages, tools, toolChoice, params, timeouts, telemetry }) {
   const body = applyParams({ model: modelId, messages, stream: false }, params, PROVIDER_TYPE);
   if (tools?.length) {
     body.tools = tools;
     if (toolChoice) body.tool_choice = toolChoice;
   }
-  const call = await postChat(provider, body, { timeouts });
+  const call = await postChat(provider, body, { timeouts, telemetry });
   const { res } = call;
   try {
     if (!res.ok) throw providerError(provider, `${await readError(res)}${proxyUnavailableHint(provider, res)}`);
-    return await res.json();
+    const data = await res.json();
+    if (telemetry) createRunStats(undefined, telemetry).setUsage(data?.usage);
+    return data;
   } finally {
     call.release();
   }
@@ -426,7 +439,7 @@ export async function chatCompletion({ provider, modelId, messages, tools, toolC
 
 /** Raw streaming completion, including tools. */
 export async function streamChatCompletion({
-  provider, modelId, messages, tools, toolChoice, onChunk, returnResponse = false, signal, params, timeouts,
+  provider, modelId, messages, tools, toolChoice, onChunk, returnResponse = false, signal, params, timeouts, telemetry,
 }) {
   let body = applyParams({ model: modelId, messages, stream: true }, params, PROVIDER_TYPE);
   body = withUsageReporting(body, PROVIDER_TYPE);
@@ -434,16 +447,16 @@ export async function streamChatCompletion({
     body.tools = tools;
     if (toolChoice) body.tool_choice = toolChoice;
   }
-  const call = await postChat(provider, body, { stream: true, signal, timeouts });
+  const call = await postChat(provider, body, { stream: true, signal, timeouts, telemetry });
   if (!call.res.ok) {
     call.release();
     throw providerError(provider, `${await readError(call.res)}${proxyUnavailableHint(provider, call.res)}`);
   }
-  return readStreamingResponse(call, provider, onChunk, null, createRunStats(), { returnResponse });
+  return readStreamingResponse(call, provider, onChunk, null, createRunStats(undefined, telemetry), { returnResponse });
 }
 
-export async function completeChat({ provider, modelId, systemPrompt, userPrompt, appTitle }) {
-  return streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk: null, appTitle });
+export async function completeChat({ provider, modelId, systemPrompt, userPrompt, appTitle, telemetry }) {
+  return streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk: null, appTitle, telemetry });
 }
 
 /** Create an OpenAI-compatible provider entry for the Settings registry. */

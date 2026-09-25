@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Lava Planet — Molten World</title>
+<style>
+  :root {
+    --bg: #05030a;
+    --fg: #ffe9d6;
+    --muted: #8a7b85;
+    --accent: #ff5a1f;
+    --accent2: #ffb347;
+    --panel: rgba(15, 8, 20, 0.55);
+    --border: rgba(255, 120, 60, 0.25);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  canvas { display: block; }
+
+  /* Title */
+  .title {
+    position: fixed; top: 28px; left: 36px; z-index: 10;
+    pointer-events: none; user-select: none;
+  }
+  .title h1 {
+    margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 4px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff8a3d, #ffd86b);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 30px rgba(255,90,30,0.4);
+  }
+  .title p { margin: 6px 0 0; font-size: 12px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+
+  /* Control panel */
+  .panel {
+    position: fixed; top: 24px; right: 24px; z-index: 10;
+    width: 300px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    padding: 22px 22px 18px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .panel h2 {
+    margin: 0 0 18px; font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--accent2); font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel h2::before {
+    content: ''; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 10px var(--accent);
+  }
+  .ctl { margin-bottom: 16px; }
+  .ctl label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px;
+  }
+  .ctl label span { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ctl input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 2px;
+    background: linear-gradient(90deg, #ff5a1f, #ffb347);
+    outline: none; cursor: pointer;
+  }
+  .ctl input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; cursor: grab;
+    box-shadow: 0 0 0 4px rgba(255,90,30,0.25), 0 0 12px rgba(255,180,80,0.6);
+    transition: transform 0.15s;
+  }
+  .ctl input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  .ctl input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; border: none;
+    background: #fff; cursor: grab;
+    box-shadow: 0 0 0 4px rgba(255,90,30,0.25), 0 0 12px rgba(255,180,80,0.6);
+  }
+  .btn-row { display: flex; gap: 10px; margin-top: 6px; }
+  .btn {
+    flex: 1; padding: 10px 12px; border-radius: 10px;
+    background: rgba(255,90,30,0.12); border: 1px solid var(--border);
+    color: var(--fg); font-size: 11px; letter-spacing: 2px;
+    text-transform: uppercase; font-weight: 600; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover { background: rgba(255,90,30,0.25); transform: translateY(-1px); }
+  .btn.active { background: var(--accent); color: #1a0805; border-color: var(--accent); }
+
+  /* Footer */
+  .foot {
+    position: fixed; bottom: 22px; left: 36px; z-index: 10;
+    font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase;
+    pointer-events: none;
+  }
+  .foot b { color: var(--accent2); font-weight: 600; }
+
+  /* Loading */
+  .loader {
+    position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center;
+    background: #05030a; transition: opacity 0.6s;
+  }
+  .loader.hide { opacity: 0; pointer-events: none; }
+  .loader .ring {
+    width: 48px; height: 48px; border-radius: 50%;
+    border: 2px solid rgba(255,90,30,0.2);
+    border-top-color: var(--accent);
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Vignette */
+  .vignette {
+    position: fixed; inset: 0; pointer-events: none; z-index: 5;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+  }
+</style>
+</head>
+<body>
+  <div class="loader" id="loader"><div class="ring"></div></div>
+
+  <div class="title">
+    <h1>Pyrosphere</h1>
+    <p>Molten World · Live Simulation</p>
+  </div>
+
+  <div class="panel">
+    <h2>Planetary Controls</h2>
+    <div class="ctl">
+      <label>Rotation Speed <span id="rotVal">1.00×</span></label>
+      <input type="range" id="rotSpeed" min="0" max="3" step="0.01" value="1" />
+    </div>
+    <div class="ctl">
+      <label>Glow Intensity <span id="glowVal">1.20</span></label>
+      <input type="range" id="glowIntensity" min="0" max="3" step="0.01" value="1.2" />
+    </div>
+    <div class="ctl">
+      <label>Crack Brightness <span id="crkVal">1.50</span></label>
+      <input type="range" id="crackIntensity" min="0" max="3" step="0.01" value="1.5" />
+    </div>
+    <div class="ctl">
+      <label>Atmosphere Bloom <span id="atmVal">1.00</span></label>
+      <input type="range" id="atmIntensity" min="0" max="3" step="0.01" value="1" />
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="pauseBtn">Pause</button>
+      <button class="btn" id="resetBtn">Reset View</button>
+    </div>
+  </div>
+
+  <div class="foot">Drag to orbit · Scroll to zoom · <b>Auto-rotate</b> enabled</div>
+  <div class="vignette"></div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+    // ---------- Scene setup ----------
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x05030a);
+    scene.fog = new THREE.FogExp2(0x05030a, 0.012);
+
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 200);
+    camera.position.set(0, 1.2, 7);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    document.body.appendChild(renderer.domElement);
+
+    // ---------- Controls ----------
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 4;
+    controls.maxDistance = 20;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.4;
+
+    // ---------- Lighting ----------
+    const ambient = new THREE.AmbientLight(0x221018, 0.4);
+    scene.add(ambient);
+    const sun = new THREE.DirectionalLight(0xff8848, 1.4);
+    sun.position.set(-5, 3, -4);
+    scene.add(sun);
+    const rim = new THREE.DirectionalLight(0x6688ff, 0.4);
+    rim.position.set(6, -2, 5);
+    scene.add(rim);
+
+    // ---------- Planet ----------
+    const planetGroup = new THREE.Group();
+    scene.add(planetGroup);
+
+    // Procedural noise functions (in shader)
+    const planetMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uCrackIntensity: { value: 1.5 },
+        uGlowIntensity: { value: 1.2 },
+      },
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vWorldNormal;
+        varying vec3 vPos;
+        varying vec3 vViewDir;
+        void main() {
+          vNormal = normal;
+          vWorldNormal = normalize(mat3(modelMatrix) * normal);
+          vPos = position;
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          vViewDir = normalize(-mv.xyz);
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: `
+        uniform float uTime;
+        uniform float uCrackIntensity;
+        uniform float uGlowIntensity;
+        varying vec3 vNormal;
+        varying vec3 vWorldNormal;
+        varying vec3 vPos;
+        varying vec3 vViewDir;
+
+        // 3D simplex-ish noise (cheap hash based)
+        float hash(vec3 p) {
+          p = fract(p * 0.3183099 + 0.1);
+          p *= 17.0;
+          return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+        }
+        float noise(vec3 x) {
+          vec3 p = floor(x);
+          vec3 f = fract(x);
+          f = f*f*(3.0-2.0*f);
+          return mix(
+            mix(
+              mix(hash(p+vec3(0.0,0.0,0.0)), hash(p+vec3(1.0,0.0,0.0)), f.x),
+              mix(hash(p+vec3(0.0,1.0,0.0)), hash(p+vec3(1.0,1.0,0.0)), f.x),
+              f.y
+            ),
+            mix(
+              mix(hash(p+vec3(0.0,0.0,1.0)), hash(p+vec3(1.0,0.0,1.0)), f.x),
+              mix(hash(p+vec3(0.0,1.0,1.0)), hash(p+vec3(1.0,1.0,1.0)), f.x),
+              f.y
+            ),
+            f.z
+          );
+        }
+        float fbm(vec3 p) {
+          float v = 0.0; float a = 0.5;
+          for(int i=0;i<6;i++){ v += a*noise(p); p *= 2.0; a *= 0.5; }
+          return v;
+        }
+
+        void main() {
+          vec3 p = normalize(vPos) * 2.0;
+
+          // Continent / rock layer
+          float rock = fbm(p * 1.5);
+          float ridge = fbm(p * 3.0 + vec3(10.0));
+
+          // Crack pattern: ridged noise -> sharp veins
+          float crack = 1.0 - abs(fbm(p * 2.2 + vec3(uTime*0.02)) - 0.5) * 2.0;
+          crack = pow(crack, 6.0);
+          float fineCrack = 1.0 - abs(noise(p * 8.0 + uTime*0.05) - 0.5) * 2.0;
+          fineCrack = pow(fineCrack, 8.0);
+          crack = max(crack, fineCrack * 0.5);
+
+          // Pulsing lava
+          float pulse = 0.6 + 0.4 * sin(uTime * 1.2 + fbm(p*2.0)*6.0);
+          vec3 lavaHot = mix(vec3(0.35, 0.02, 0.0), vec3(1.0, 0.35, 0.05), pulse);
+          vec3 lavaBright = mix(lavaHot, vec3(1.6, 1.0, 0.4), pow(crack, 1.5) * pulse);
+
+          // Rock base color (charred)
+          float rockShade = smoothstep(0.2, 0.8, rock);
+          vec3 darkRock = mix(vec3(0.04, 0.02, 0.03), vec3(0.18, 0.08, 0.06), rockShade);
+          darkRock += vec3(0.06, 0.02, 0.0) * ridge;
+
+          // Mix rock with lava by crack intensity
+          float lavaMask = crack * uCrackIntensity;
+          lavaMask = clamp(lavaMask, 0.0, 1.0);
+          vec3 surface = mix(darkRock, lavaBright, lavaMask);
+
+          // Fresnel for darkening edges (silhouette glow handled by atmosphere)
+          float fres = pow(1.0 - max(dot(vNormal, vViewDir), 0.0), 2.0);
+          surface += lavaBright * fres * 0.3 * uGlowIntensity;
+
+          // Emissive boost on lava areas
+          vec3 emissive = lavaBright * lavaMask * (1.5 * uGlowIntensity);
+
+          vec3 col = surface + emissive * 0.4;
+
+          // Slight rim warmth
+          col += vec3(1.0, 0.3, 0.1) * fres * 0.15 * uGlowIntensity;
+
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `,
+    });
+
+    const planetGeo = new THREE.IcosahedronGeometry(1.5, 64);
+    const planet = new THREE.Mesh(planetGeo, planetMat);
+    planetGroup.add(planet);
+
+    // ---------- Atmosphere shell ----------
+    const atmMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uIntensity: { value: 1.0 },
+        uColor: { value: new THREE.Color(0xff5a1f) },
+        uColor2: { value: new THREE.Color(0xffb347) },
+      },
+      vertexShader: `
+        varying vec3 vNormal;
+        varying vec3 vViewDir;
+        void main() {
+          vNormal = normalize(normalMatrix * normal);
+          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          vViewDir = normalize(-mv.xyz);
+          gl_Position = projectionMatrix * mv;
+        }
+      `,
+      fragmentShader: `
+        uniform float uIntensity;
+        uniform vec3 uColor;
+        uniform vec3 uColor2;
+        varying vec3 vNormal;
+        varying vec3 vViewDir;
+        void main() {
+          float fres = 1.0 - max(dot(vNormal, vViewDir), 0.0);
+          float glow = pow(fres, 3.0) * uIntensity;
+          vec3 col = mix(uColor, uColor2, pow(fres, 2.0));
+          gl_FragColor = vec4(col * glow, glow);
+        }
+      `,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+      depthWrite: false,
+    });
+    const atm = new THREE.Mesh(new THREE.IcosahedronGeometry(1.72, 48), atmMat);
+    planetGroup.add(atm);
+
+    // Inner glow (front side, slight)
+    const innerGlowMat = new THREE.ShaderMaterial({
+      uniforms: { uIntensity: { value: 1.0 } },
+      vertexShader: `
+        varying vec3 vNormal; varying vec3 vViewDir;
+        void main(){
+          vNormal = normalize(normalMatrix * normal);
+          vec4 mv = modelViewMatrix * vec4(position,1.0);
+          vViewDir = normalize(-mv.xyz);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform float uIntensity;
+        varying vec3 vNormal; varying vec3 vViewDir;
+        void main(){
+          float fres = 1.0 - max(dot(vNormal, vViewDir), 0.0);
+          float g = pow(fres, 4.0) * 0.6 * uIntensity;
+          gl_FragColor = vec4(vec3(1.0,0.35,0.1)*g, g);
+        }`,
+      transparent: true, blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const innerGlow = new THREE.Mesh(new THREE.IcosahedronGeometry(1.52, 48), innerGlowMat);
+    planetGroup.add(innerGlow);
+
+    // ---------- Orbiting debris ring ----------
+    const debrisGroup = new THREE.Group();
+    scene.add(debrisGroup);
+    // Tilt the ring
+    debrisGroup.rotation.x = 0.35;
+    debrisGroup.rotation.z = 0.12;
+
+    const debrisCount = 320;
+    const debrisGeo = new THREE.IcosahedronGeometry(1, 0);
+    const debrisMat = new THREE.MeshStandardMaterial({
+      color: 0x2a1410,
+      emissive: 0xff4010,
+      emissiveIntensity: 0.6,
+      roughness: 0.85,
+      metalness: 0.1,
+      flatShading: true,
+    });
+
+    const debris = [];
+    const innerR = 2.4, outerR = 3.6;
+    for (let i = 0; i < debrisCount; i++) {
+      const t = Math.random();
+      const r = innerR + (outerR - innerR) * Math.pow(t, 0.6);
+      const angle = Math.random() * Math.PI * 2;
+      const yJitter = (Math.random() - 0.5) * 0.25 * (1 - t);
+
+      const scale = 0.015 + Math.random() * 0.06 * (1 - t * 0.5);
+      const mesh = new THREE.Mesh(debrisGeo, debrisMat);
+      mesh.scale.setScalar(scale);
+      mesh.position.set(Math.cos(angle) * r, yJitter, Math.sin(angle) * r);
+      mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+
+      mesh.userData = {
+        r, angle, yJitter,
+        speed: 0.15 + (0.25 / r) * (0.7 + Math.random()*0.6),
+        spin: (Math.random()-0.5)*2,
+        spinAxis: new THREE.Vector3(Math.random()-0.5, Math.random()-0.5, Math.random()-0.5).normalize(),
+        emissiveBoost: Math.random() < 0.25,
+      };
+      debrisGroup.add(mesh);
+      debris.push(mesh);
+    }
+
+    // Small glowing embers drifting
+    const emberCount = 80;
+    const emberGeo = new THREE.SphereGeometry(0.02, 6, 6);
+    const emberMat = new THREE.MeshBasicMaterial({ color: 0xffb060, transparent: true, opacity: 0.9 });
+    const embers = [];
+    for (let i = 0; i < emberCount; i++) {
+      const r = 1.9 + Math.random() * 2.5;
+      const a = Math.random() * Math.PI * 2;
+      const yj = (Math.random()-0.5) * 2.5;
+      const m = new THREE.Mesh(emberGeo, emberMat);
+      m.position.set(Math.cos(a)*r, yj, Math.sin(a)*r);
+      m.userData = { r, a, yj, speed: 0.1 + Math.random()*0.3, drift: Math.random()*Math.PI*2, size: 0.5 + Math.random()*1.5 };
+      m.scale.setScalar(m.userData.size);
+      scene.add(m);
+      embers.push(m);
+    }
+
+    // ---------- Starfield ----------
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 1200;
+    const starPos = new Float32Array(starCount * 3);
+    const starCol = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      const r = 40 + Math.random()*40;
+      const th = Math.random()*Math.PI*2;
+      const ph = Math.acos(2*Math.random()-1);
+      starPos[i*3]   = r*Math.sin(ph)*Math.cos(th);
+      starPos[i*3+1] = r*Math.sin(ph)*Math.sin(th);
+      starPos[i*3+2] = r*Math.cos(ph);
+      const warm = Math.random();
+      starCol[i*3]   = 0.8 + warm*0.2;
+      starCol[i*3+1] = 0.7 + warm*0.3;
+      starCol[i*3+2] = 0.6 + (1-warm)*0.4;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    starGeo.setAttribute('color', new THREE.BufferAttribute(starCol, 3));
+    const starMat = new THREE.PointsMaterial({ size: 0.12, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0.85 });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
+
+    // ---------- Post-processing ----------
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.9, 0.7, 0.2);
+    composer.addPass(bloom);
+    composer.addPass(new OutputPass());
+
+    // ---------- Controls UI ----------
+    const rotSpeedEl = document.getElementById('rotSpeed');
+    const glowEl = document.getElementById('glowIntensity');
+    const crackEl = document.getElementById('crackIntensity');
+    const atmEl = document.getElementById('atmIntensity');
+    const rotVal = document.getElementById('rotVal');
+    const glowVal = document.getElementById('glowVal');
+    const crkVal = document.getElementById('crkVal');
+    const atmVal = document.getElementById('atmVal');
+
+    let rotationSpeed = 1.0;
+    let paused = false;
+
+    rotSpeedEl.addEventListener('input', e => {
+      rotationSpeed = parseFloat(e.target.value);
+      rotVal.textContent = rotationSpeed.toFixed(2) + '×';
+      controls.autoRotate = rotationSpeed > 0.01;
+      controls.autoRotateSpeed = 0.4 * rotationSpeed;
+    });
+    glowEl.addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      glowVal.textContent = v.toFixed(2);
+      planetMat.uniforms.uGlowIntensity.value = v;
+      bloom.strength = 0.5 + v * 0.5;
+    });
+    crackEl.addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      crkVal.textContent = v.toFixed(2);
+      planetMat.uniforms.uCrackIntensity.value = v;
+    });
+    atmEl.addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      atmVal.textContent = v.toFixed(2);
+      atmMat.uniforms.uIntensity.value = v;
+      innerGlowMat.uniforms.uIntensity.value = v;
+    });
+
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    pauseBtn.addEventListener('click', () => {
+      paused = !paused;
+      pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+      pauseBtn.classList.toggle('active', paused);
+    });
+    resetBtn.addEventListener('click', () => {
+      controls.reset();
+      camera.position.set(0, 1.2, 7);
+      controls.update();
+    });
+
+    // ---------- Resize ----------
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ---------- Animation loop ----------
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = clock.getDelta();
+      const t = clock.elapsedTime;
+
+      if (!paused) {
+        planetMat.uniforms.uTime.value = t;
+        planet.rotation.y += dt * 0.05 * rotationSpeed;
+
+        // Debris orbit
+        debris.forEach(d => {
+          const u = d.userData;
+          u.angle += dt * u.speed * rotationSpeed;
+          d.position.x = Math.cos(u.angle) * u.r;
+          d.position.z = Math.sin(u.angle) * u.r;
+          d.position.y = u.yJitter + Math.sin(t * u.speed * 2 + u.r) * 0.03;
+          d.rotateOnAxis(u.spinAxis, dt * u.spin * rotationSpeed);
+          if (u.emissiveBoost) {
+            d.material.emissiveIntensity = 0.4 + 0.5 * Math.sin(t * 2 + u.r * 10);
+          }
+        });
+
+        // Embers drift
+        embers.forEach(m => {
+          m.userData.a += dt * m.userData.speed * rotationSpeed;
+          const r = m.userData.r;
+          m.position.x = Math.cos(m.userData.a) * r;
+          m.position.z = Math.sin(m.userData.a) * r;
+          m.position.y = m.userData.yj + Math.sin(t * 0.5 + m.userData.drift) * 0.4;
+          const flick = 0.6 + 0.4 * Math.sin(t * 4 + m.userData.drift * 3);
+          m.material.opacity = 0.5 + flick * 0.5;
+          m.scale.setScalar(m.userData.size * (0.7 + flick * 0.5));
+        });
+
+        stars.rotation.y += dt * 0.005;
+      }
+
+      controls.update();
+      composer.render();
+    }
+
+    // Hide loader and start
+    setTimeout(() => {
+      document.getElementById('loader').classList.add('hide');
+      animate();
+    }, 300);
+  </script>
+</body>
+</html>

@@ -299,6 +299,41 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 28px
 @media (max-width: 430px) {
   .showcase-grid { grid-template-columns: 1fr; }
 }
+
+.showcase-more {
+  display: inline-flex; gap: 7px; margin-top: 14px;
+  color: var(--muted); font-size: .86rem; font-weight: 650; text-decoration: none;
+}
+.showcase-more:hover { color: var(--text); }
+nav a[aria-current="page"] { color: var(--text); }
+
+/* ── Full showcase page ─────────────────────────────────────────────────── */
+
+.showcase-page { padding: 70px 0 30px; }
+.showcase-page-head h1 { margin-bottom: 18px; }
+.showcase-page-intro { max-width: 68ch; color: var(--muted); font-size: 1.08rem; line-height: 1.7; }
+.showcase-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;
+  margin: 34px 0 10px; padding-top: 26px; border-top: 1px solid var(--line);
+}
+.filter-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.filter-chip {
+  min-height: 36px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px;
+  background: rgba(255,255,255,.03); color: var(--muted); font: inherit; font-size: .86rem; font-weight: 650; cursor: pointer;
+}
+.filter-chip span { margin-left: 4px; opacity: .7; font-variant-numeric: tabular-nums; }
+.filter-chip:hover { color: var(--text); border-color: var(--line-strong); }
+.filter-chip[aria-pressed="true"] { background: var(--text); border-color: transparent; color: #0a0d15; }
+.filter-chip:focus-visible, .sort-select select:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.sort-select { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); font-size: .84rem; font-weight: 650; }
+.sort-select select {
+  min-height: 36px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9px;
+  background: var(--surface-2); color: var(--text); font: inherit;
+}
+.showcase-count { margin: 0 0 16px; color: var(--muted); font-size: .8rem; }
+.showcase-grid-full { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-bottom: 50px; }
+.showcase-empty { grid-column: 1 / -1; color: var(--muted); }
+.showcase-tile.is-target { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(112,167,255,.25); }
 @media (prefers-reduced-motion: reduce) {
   .showcase-tile { animation: none; }
 }

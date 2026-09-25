@@ -16,7 +16,9 @@ import * as lemonadeAdapter from './providers-lemonade.js';
 import * as unslothStudioAdapter from './providers-unsloth-studio.js';
 import * as openAiCompatibleAdapter from './providers-openai-compatible.js';
 import * as cliAgentAdapter from './providers-cli-agent.js';
+import * as ensembleAdapter from './providers-ensemble.js';
 import { isAgentBridgeReachable } from './agent-backend.js';
+import { withTelemetry, messagesText } from './generation-telemetry.js';
 import {
   suite,
   hydrateSuite,
@@ -50,6 +52,7 @@ const adapters = {
   'unsloth-studio': unslothStudioAdapter,
   [openAiCompatibleAdapter.PROVIDER_TYPE]: openAiCompatibleAdapter,
   [cliAgentAdapter.PROVIDER_TYPE]: cliAgentAdapter,
+  [ensembleAdapter.PROVIDER_TYPE]: ensembleAdapter,
 };
 
 /**
@@ -141,6 +144,15 @@ export function getCliAgentProviders() {
   return cliBridgeReachable ? cliAgentAdapter.listProviders() : [];
 }
 
+/**
+ * The Ensembles provider (spec 341), offered once at least one ensemble exists.
+ * Like the CLI agents it is synthetic: owned by its own store, never saved to
+ * providers.json.
+ */
+export function getEnsembleProviders() {
+  return ensembleAdapter.hasEnsembles() ? [ensembleAdapter.createProvider()] : [];
+}
+
 function isSyntheticProvider(provider) {
   return provider?.synthetic === true || cliAgentAdapter.isCliAgentProviderId(provider?.id);
 }
@@ -182,6 +194,11 @@ export function saveProviders(providers) {
 export function getProvider(providerId) {
   if (cliAgentAdapter.isCliAgentProviderId(providerId)) {
     return cliAgentAdapter.providerFromId(providerId);
+  }
+  // Resolves even with no ensembles defined, so a restored selection of a
+  // deleted ensemble fails with "was deleted — pick another", not "not found".
+  if (ensembleAdapter.isEnsembleProviderId(providerId)) {
+    return ensembleAdapter.createProvider();
   }
   return getProviders().find(p => p.id === providerId) || null;
 }
@@ -227,7 +244,7 @@ export function removeProvider(providerId) {
  * Get only enabled providers.
  */
 export function getEnabledProviders() {
-  return [...getProviders().filter(p => p.enabled !== false), ...getCliAgentProviders()];
+  return [...getProviders().filter(p => p.enabled !== false), ...getCliAgentProviders(), ...getEnsembleProviders()];
 }
 
 /**
@@ -385,7 +402,7 @@ export async function fetchAllModels(options = {}) {
   // Settle the bridge probe first so the CLI agent rows are either all there or
   // all absent, rather than appearing a moment after the picker renders.
   await probeCliBridge();
-  const providers = [...getProviders(), ...getCliAgentProviders()];
+  const providers = [...getProviders(), ...getCliAgentProviders(), ...getEnsembleProviders()];
   const results = await Promise.allSettled(
     providers.map(p => fetchProviderModels(p.id, options))
   );
@@ -492,15 +509,56 @@ export function setDefaultModel(providerId, modelId) {
  * @param {Function} [onStats] - Called once with per-generation telemetry:
  *   { durationMs, ttftMs, tokensPerSecond, thought, reasoningTokens, ... }
  */
-export async function streamChat({ providerId, modelId, systemPrompt, userPrompt, onChunk, appTitle, params, onStats }) {
+/**
+ * `onAgentEvent` / `onAgentLive` are only called for local CLI agent providers
+ * (every other adapter ignores them): they carry the run's tool calls, shell
+ * commands and thinking, for an app that renders an `AgentTrace`.
+ */
+export async function streamChat({
+  providerId, modelId, systemPrompt, userPrompt, onChunk, appTitle, params, onStats, telemetryMeta,
+  onAgentEvent, onAgentLive,
+}) {
   const provider = getProvider(providerId);
   if (!provider) throw new Error(`Provider "${providerId}" not found`);
   if (provider.enabled === false) throw new Error(`Provider "${provider.name}" is disabled`);
 
   const adapter = getAdapter(provider.type);
-  return adapter.streamChat({
-    provider, modelId, systemPrompt, userPrompt, onChunk, appTitle, params, onStats,
-  });
+  return withTelemetry(telemetryFields({
+    entry: 'streamChat', provider, modelId, appTitle, params, streamed: !!onChunk,
+    promptText: joinPrompt(systemPrompt, userPrompt), telemetryMeta,
+  }), (telemetry) => adapter.streamChat({
+    provider, modelId, systemPrompt, userPrompt, appTitle, params, onStats,
+    onChunk: telemetry ? telemetry.wrapOnChunk(onChunk) : onChunk,
+    telemetry, onAgentEvent, onAgentLive,
+  }));
+}
+
+// ── Generation telemetry (spec 340) ──
+//
+// Every entry point below runs inside withTelemetry, so each call becomes one
+// record in <data-root>/_telemetry/ without the calling app knowing. The
+// tracker rides into the adapter as `telemetry`; adapters that understand it
+// report finer phases (dispatched, sessionReady, firstThought, usage), and the
+// rest are still timed from the outside. `telemetryMeta` lets a caller relabel
+// the record (the Observatory's probes use `{ app: 'observatory-probe' }`).
+
+function joinPrompt(systemPrompt, userPrompt) {
+  return [systemPrompt, userPrompt].filter(Boolean).join('\n\n');
+}
+
+function telemetryFields({ entry, provider, modelId, appTitle, params, streamed, promptText, telemetryMeta, signal }) {
+  return {
+    entry,
+    provider: { id: provider.id, type: provider.type, name: provider.name },
+    agentId: provider.agentId || null,
+    modelId,
+    appTitle,
+    params,
+    streamed,
+    promptText,
+    signal,
+    ...(telemetryMeta || {}),
+  };
 }
 
 /**
@@ -524,15 +582,18 @@ export function getEffectiveSelection(appProviderKey, appModelKey) {
 /**
  * Non-streaming chat completion through a specific provider.
  */
-export async function completeChat({ providerId, modelId, systemPrompt, userPrompt, appTitle }) {
+export async function completeChat({ providerId, modelId, systemPrompt, userPrompt, appTitle, telemetryMeta }) {
   const provider = getProvider(providerId);
   if (!provider) throw new Error(`Provider "${providerId}" not found`);
   if (provider.enabled === false) throw new Error(`Provider "${provider.name}" is disabled`);
 
   const adapter = getAdapter(provider.type);
-  return adapter.completeChat({
-    provider, modelId, systemPrompt, userPrompt, appTitle,
-  });
+  return withTelemetry(telemetryFields({
+    entry: 'completeChat', provider, modelId, appTitle, streamed: false,
+    promptText: joinPrompt(systemPrompt, userPrompt), telemetryMeta,
+  }), (telemetry) => adapter.completeChat({
+    provider, modelId, systemPrompt, userPrompt, appTitle, telemetry,
+  }));
 }
 
 /**
@@ -540,17 +601,24 @@ export async function completeChat({ providerId, modelId, systemPrompt, userProm
  * message arrays and tool-calling. Returns the full parsed response body
  * (OpenAI-style: `{ choices: [{ message: { content, tool_calls } }], ... }`).
  */
-export async function chatCompletion({ providerId, modelId, messages, tools, appTitle }) {
+export async function chatCompletion({ providerId, modelId, messages, tools, appTitle, telemetryMeta }) {
   const provider = getProvider(providerId);
   if (!provider) throw new Error(`Provider "${providerId}" not found`);
   if (provider.enabled === false) throw new Error(`Provider "${provider.name}" is disabled`);
 
+  return withTelemetry(telemetryFields({
+    entry: 'chatCompletion', provider, modelId, appTitle, streamed: false,
+    promptText: messagesText(messages), telemetryMeta,
+  }), (telemetry) => rawChatCompletion(provider, { modelId, messages, tools, appTitle, telemetry }));
+}
+
+function rawChatCompletion(provider, { modelId, messages, tools, appTitle, telemetry }) {
   const adapter = getAdapter(provider.type);
   if (!adapter.chatCompletion) {
     throw new Error(`Provider "${provider.name}" (${provider.type}) does not support tool-calling chat completion`);
   }
   return adapter.chatCompletion({
-    provider, modelId, messages, tools, appTitle,
+    provider, modelId, messages, tools, appTitle, telemetry,
   });
 }
 
@@ -566,23 +634,30 @@ export async function chatCompletion({ providerId, modelId, messages, tools, app
  * @returns {Promise<string|Object>} Full accumulated assistant text by default,
  * or an OpenAI-style response object when `returnResponse` is true.
  */
-export async function streamChatCompletion({ providerId, modelId, messages, tools, toolChoice, appTitle, onChunk, returnResponse = false, signal, params, timeouts }) {
+export async function streamChatCompletion({ providerId, modelId, messages, tools, toolChoice, appTitle, onChunk, returnResponse = false, signal, params, timeouts, telemetryMeta }) {
   const provider = getProvider(providerId);
   if (!provider) throw new Error(`Provider "${providerId}" not found`);
   if (provider.enabled === false) throw new Error(`Provider "${provider.name}" is disabled`);
 
   const adapter = getAdapter(provider.type);
-  if (adapter.streamChatCompletion) {
-    return adapter.streamChatCompletion({
-      provider, modelId, messages, tools, toolChoice, appTitle, onChunk, returnResponse, signal,
-      params, timeouts,
-    });
-  }
+  return withTelemetry(telemetryFields({
+    entry: 'streamChatCompletion', provider, modelId, appTitle, params, streamed: !!onChunk,
+    promptText: messagesText(messages), telemetryMeta, signal,
+  }), async (telemetry) => {
+    const chunk = telemetry ? telemetry.wrapOnChunk(onChunk) : onChunk;
+    if (adapter.streamChatCompletion) {
+      return adapter.streamChatCompletion({
+        provider, modelId, messages, tools, toolChoice, appTitle, onChunk: chunk, returnResponse, signal,
+        params, timeouts, telemetry,
+      });
+    }
 
-  const response = await chatCompletion({ providerId, modelId, messages, tools, appTitle });
-  const content = response?.choices?.[0]?.message?.content || '';
-  onChunk?.(content, { content, toolCalls: response?.choices?.[0]?.message?.tool_calls || [] });
-  return returnResponse ? response : content;
+    // Recorded once, as this entry: the raw call, not the telemetry-wrapped one.
+    const response = await rawChatCompletion(provider, { modelId, messages, tools, appTitle, telemetry });
+    const content = response?.choices?.[0]?.message?.content || '';
+    chunk?.(content, { content, toolCalls: response?.choices?.[0]?.message?.tool_calls || [] });
+    return returnResponse ? response : content;
+  });
 }
 
 // ── Parallel Generation ──
@@ -738,3 +813,7 @@ export async function parallelCompleteChat({ targets, systemPrompt, userPrompt, 
 
   return Promise.all(promises);
 }
+
+// Ensembles call their members back through this module. Injected rather than
+// imported by providers-ensemble.js, so neither module imports the other.
+ensembleAdapter.bindProviderApi({ streamChatCompletion, fetchProviderModels });

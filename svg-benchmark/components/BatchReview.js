@@ -1,16 +1,26 @@
 import { html } from 'htm/preact';
 import { Fragment } from 'preact';
-import { useState, useEffect, useMemo, useRef, useCallback } from 'preact/hooks';
-import { sanitizeSvgMarkup } from '../../shared/services/content-sanitizer.js';
+import { useState, useEffect, useMemo, useCallback } from 'preact/hooks';
+import { SvgImage } from './SvgImage.js';
 
-// Small inline SVG renderer (mirrors SvgPreview).
+// SVG renderer for batch surfaces: an image, so animated submissions play.
 export function SvgLive({ svg }) {
-  const ref = useRef(null);
-  useEffect(() => {
-    if (!ref.current) return;
-    ref.current.innerHTML = (svg && svg.trim()) ? sanitizeSvgMarkup(svg) : '';
-  }, [svg]);
-  return html`<div class="batch-svg-live" ref=${ref}></div>`;
+  return html`<${SvgImage} svg=${svg} className="batch-svg-live" />`;
+}
+
+// Result of the motion check on an animated-set submission.
+export function MotionChip({ animation }) {
+  if (!animation) return null;
+  const issues = animation.issues || [];
+  const moving = animation.moves === true;
+  const label = moving ? 'moves'
+    : !animation.animated ? 'no animation'
+    : animation.moves === false ? 'static' : 'animated';
+  const cls = !moving && animation.moves !== null ? 'is-static' : issues.length ? 'is-warn' : 'is-moving';
+  const title = issues.length ? issues.join(' · ') : 'Motion check: visibly animates and loops';
+  return html`<span class=${`batch-motion-chip ${cls}`} title=${title}>
+    <i class=${`fa-solid ${moving ? 'fa-film' : 'fa-pause'}`}></i> ${label}
+  </span>`;
 }
 
 // Full-screen lightbox for examining a single generation up close. Sits above
@@ -49,7 +59,7 @@ export function SvgLightbox({ svg, title, subtitle, onClose }) {
 // A results list + big preview with ‹ › arrows, shared by the just-finished run
 // and the past-run browser.
 //
-// rows: [{ key, title, prompt, slug, svg, icon, cls, label, autoScore, healed, error }]
+// rows: [{ key, title, prompt, slug, svg, icon, cls, label, autoScore, healed, animation, error }]
 //       Rows without an `svg` (failed/skipped) still show in the list but are
 //       skipped by the arrows.
 // resetKey: changes when `rows` describes a different run — jumps back to the first.
@@ -133,6 +143,7 @@ export function BatchReview({ rows, resetKey, onOpenBenchmark, hideNav, onNav })
                 ${r.label}
                 ${r.autoScore != null ? html` <span class="batch-score-chip">${fmtScore(r.autoScore)}</span>` : null}
                 ${r.healed ? html` <span class="batch-healed-chip">fixed</span>` : null}
+                <${MotionChip} animation=${r.animation} />
                 ${r.error ? html`<span class="batch-run-err" title=${r.error}> — ${r.error}</span>` : null}
               </span>
             </div>
@@ -164,6 +175,7 @@ export function BatchReview({ rows, resetKey, onOpenBenchmark, hideNav, onNav })
             <span class="batch-review-title" title=${cur.prompt || cur.title}>${cur.title}</span>
             ${cur.autoScore != null ? html`<span class="batch-score-chip">${fmtScore(cur.autoScore)}</span>` : null}
             ${cur.healed ? html`<span class="batch-healed-chip">fixed</span>` : null}
+            <${MotionChip} animation=${cur.animation} />
             ${onOpenBenchmark && cur.slug && html`
               <button class="btn btn-xs" title="Open this benchmark" onClick=${() => onOpenBenchmark(cur.slug)}>
                 <i class="fa-solid fa-arrow-up-right-from-square"></i> Open

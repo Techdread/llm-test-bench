@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fractal Pulse Tunnel</title>
+<style>
+  :root {
+    --bg: #05060d;
+    --panel: rgba(12, 15, 30, .72);
+    --line: rgba(255,255,255,.12);
+    --text: #edf1ff;
+    --muted: #8991b4;
+    --accent: #78f7ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  #scene { position: fixed; inset: 0; }
+  .hud {
+    position: fixed;
+    z-index: 2;
+    top: 24px;
+    left: 24px;
+    width: min(320px, calc(100vw - 48px));
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgba(21, 25, 48, .82), rgba(8, 10, 22, .58));
+    box-shadow: 0 20px 70px rgba(0,0,0,.35), inset 0 1px rgba(255,255,255,.08);
+    backdrop-filter: blur(18px);
+  }
+  .eyebrow {
+    color: var(--accent);
+    font-size: 10px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  h1 { margin: 0; font-size: 25px; letter-spacing: -.04em; line-height: 1; }
+  .sub { margin: 9px 0 21px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+  .control { margin: 17px 0; }
+  .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px; font-size: 12px; color: #c8cde2; }
+  output { color: var(--accent); font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; height: 4px; appearance: none; border-radius: 10px; background: rgba(255,255,255,.15); outline: none; }
+  input[type="range"]::-webkit-slider-thumb { appearance: none; width: 15px; height: 15px; border-radius: 50%; background: var(--accent); border: 3px solid #162338; box-shadow: 0 0 15px var(--accent); cursor: pointer; }
+  select {
+    width: 100%; color: var(--text); background: rgba(255,255,255,.08); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 11px; outline: none; font: inherit; font-size: 12px;
+  }
+  .footer { border-top: 1px solid var(--line); padding-top: 14px; margin-top: 18px; display:flex; justify-content:space-between; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+  .hint { position: fixed; bottom: 20px; right: 24px; color: rgba(220,225,255,.55); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
+  @media (max-width: 600px) { .hud { top: 14px; left: 14px; padding: 16px; } .hint { display:none; } }
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<section class="hud">
+  <div class="eyebrow">Generative motion study</div>
+  <h1>Fractal Pulse</h1>
+  <p class="sub">A continuously folding geometric passage. Move your pointer to bend the vanishing point.</p>
+  <div class="control">
+    <div class="label-row"><span>Travel speed</span><output id="speedValue">1.00×</output></div>
+    <input id="speed" type="range" min=".15" max="2.5" step=".01" value="1">
+  </div>
+  <div class="control">
+    <div class="label-row"><span>Pulse frequency</span><output id="pulseValue">1.20 Hz</output></div>
+    <input id="pulse" type="range" min=".2" max="4" step=".01" value="1.2">
+  </div>
+  <div class="control">
+    <div class="label-row"><span>Chromatic field</span></div>
+    <select id="palette">
+      <option value="aurora">Aurora Glass</option>
+      <option value="plasma">Plasma Bloom</option>
+      <option value="deep">Deep Signal</option>
+      <option value="candy">Ultraviolet Candy</option>
+    </select>
+  </div>
+  <div class="footer"><span>Loop ∞</span><span id="fps">60 FPS</span></div>
+</section>
+<div class="hint">Pointer · steer field</div>
+
+<script type="module">
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x05060d);
+scene.fog = new THREE.FogExp2(0x05060d, 0.0085);
+
+const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .1, 260);
+camera.position.set(0, 0, 0);
+camera.rotation.order = "YXZ";
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.25;
+document.getElementById("scene").appendChild(renderer.domElement);
+
+const palettes = {
+  aurora: [0.49, 0.57, 0.78, 0.86],
+  plasma: [0.91, 0.99, 0.07, 0.78],
+  deep: [0.62, 0.70, 0.53, 0.96],
+  candy: [0.82, 0.93, 0.72, 0.03]
+};
+
+const tunnel = new THREE.Group();
+scene.add(tunnel);
+const materials = [];
+const segments = [];
+const segmentCount = 34;
+const spacing = 5.15;
+const tunnelLength = segmentCount * spacing;
+
+function material(kind, slot) {
+  const m = kind === "line"
+    ? new THREE.LineBasicMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })
+    : new THREE.MeshBasicMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+  m.userData.slot = slot;
+  m.userData.kind = kind;
+  materials.push(m);
+  return m;
+}
+
+const torusGeo = new THREE.TorusGeometry(2.55, .026, 8, 72);
+const boxGeo = new THREE.BoxGeometry(.54, .54, .54);
+const octaGeo = new THREE.OctahedronGeometry(1.08, 1);
+const icoGeo = new THREE.IcosahedronGeometry(.42, 1);
+const coreGeo = new THREE.SphereGeometry(.22, 12, 12);
+
+for (let i = 0; i < segmentCount; i++) {
+  const g = new THREE.Group();
+  g.position.z = -i * spacing - spacing * .72;
+  g.rotation.z = i * .19;
+  g.userData.index = i;
+
+  const outer = new THREE.Mesh(torusGeo, material("mesh", i % 4));
+  outer.rotation.x = Math.PI / 2;
+  g.add(outer);
+
+  const octa = new THREE.LineSegments(new THREE.EdgesGeometry(octaGeo), material("line", (i + 1) % 4));
+  octa.scale.setScalar(1.7);
+  octa.rotation.set(.3, .2, i * .13);
+  g.add(octa);
+
+  for (let j = 0; j < 8; j++) {
+    const a = j / 8 * Math.PI * 2;
+    const arm = new THREE.Group();
+    arm.position.set(Math.cos(a) * 2.12, Math.sin(a) * 2.12, 0);
+    arm.rotation.z = a + Math.PI / 4;
+    arm.rotation.x = i * .12 + j * .17;
+
+    const cube = new THREE.Mesh(boxGeo, material("mesh", (j + i) % 4));
+    cube.scale.setScalar(.72 + (j % 2) * .28);
+    arm.add(cube);
+
+    const shard = new THREE.LineSegments(new THREE.EdgesGeometry(icoGeo), material("line", (j + i + 2) % 4));
+    shard.scale.setScalar(1.15);
+    shard.rotation.y = j;
+    arm.add(shard);
+
+    const dot = new THREE.Mesh(coreGeo, material("mesh", (j + 2) % 4));
+    dot.position.z = .5;
+    dot.scale.setScalar(.8);
+    arm.add(dot);
+    g.add(arm);
+  }
+  tunnel.add(g);
+  segments.push(g);
+}
+
+const starsGeo = new THREE.BufferGeometry();
+const starPositions = [];
+for (let i = 0; i < 850; i++) {
+  const z = -Math.random() * 190;
+  const angle = Math.random() * Math.PI * 2;
+  const r = 7 + Math.random() * 28;
+  starPositions.push(Math.cos(angle) * r, Math.sin(angle) * r, z);
+}
+starsGeo.setAttribute("position", new THREE.Float32BufferAttribute(starPositions, 3));
+const stars = new THREE.Points(starsGeo, new THREE.PointsMaterial({
+  color: 0x9bb8ff, size: .035, transparent: true, opacity: .5, blending: THREE.AdditiveBlending, depthWrite: false
+}));
+scene.add(stars);
+
+const speedInput = document.getElementById("speed");
+const pulseInput = document.getElementById("pulse");
+const paletteInput = document.getElementById("palette");
+const speedValue = document.getElementById("speedValue");
+const pulseValue = document.getElementById("pulseValue");
+speedInput.oninput = () => speedValue.textContent = Number(speedInput.value).toFixed(2) + "×";
+pulseInput.oninput = () => pulseValue.textContent = Number(pulseInput.value).toFixed(2) + " Hz";
+
+let travel = 0;
+let last = performance.now();
+let frames = 0, fpsTime = last;
+const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
+addEventListener("pointermove", e => {
+  pointer.tx = (e.clientX / innerWidth - .5) * 2;
+  pointer.ty = (e.clientY / innerHeight - .5) * 2;
+});
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+function animate(now) {
+  requestAnimationFrame(animate);
+  const dt = Math.min((now - last) / 1000, .05);
+  last = now;
+  const speed = Number(speedInput.value);
+  const frequency = Number(pulseInput.value);
+  travel += dt * speed * 7.2;
+  const phase = travel % spacing;
+  const hues = palettes[paletteInput.value];
+
+  pointer.x += (pointer.tx - pointer.x) * .035;
+  pointer.y += (pointer.ty - pointer.y) * .035;
+  camera.position.x = pointer.x * .42;
+  camera.position.y = -pointer.y * .28;
+  camera.rotation.y = -pointer.x * .026;
+  camera.rotation.x = pointer.y * .018 + Math.sin(now * .00023) * .006;
+  camera.position.z = Math.sin(now * .00037) * .06;
+
+  segments.forEach((g, i) => {
+    g.position.z = -((i * spacing + phase + spacing * .72) % tunnelLength);
+    const pulse = (Math.sin(now * .001 * frequency * Math.PI * 2 - i * .48) + 1) / 2;
+    g.rotation.z += dt * (.045 + pulse * .025);
+    g.rotation.x = Math.sin(now * .0004 + i * .21) * .09;
+    g.children.forEach((child, j) => {
+      child.rotation.y += dt * (.12 + j * .012) * (i % 2 ? -1 : 1);
+      if (child.children) child.children.forEach((sub, k) => {
+        sub.rotation.x += dt * (.2 + k * .06);
+        sub.rotation.y -= dt * (.16 + k * .04);
+      });
+    });
+    g.traverse(obj => {
+      if (!obj.material || !obj.material.userData) return;
+      const slot = obj.material.userData.slot;
+      const hue = (hues[slot] + Math.sin(now * .00035 + i * .3) * .012 + 1) % 1;
+      obj.material.color.setHSL(hue, .88, .36 + pulse * .22);
+      obj.material.opacity = obj.material.userData.kind === "line" ? .34 + pulse * .5 : .12 + pulse * .28;
+    });
+  });
+
+  stars.rotation.z += dt * .002;
+  renderer.render(scene, camera);
+
+  frames++;
+  if (now - fpsTime > 700) {
+    document.getElementById("fps").textContent = Math.round(frames * 1000 / (now - fpsTime)) + " FPS";
+    fpsTime = now; frames = 0;
+  }
+}
+requestAnimationFrame(animate);
+</script>
+</body>
+</html>

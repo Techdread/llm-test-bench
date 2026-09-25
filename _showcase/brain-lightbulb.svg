@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="15" result="blur2"/>
+      <feMerge>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="bulbGlow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFD700" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8F4FD" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#D6ECFA" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#B8DCF0" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#A0A0A0"/>
+      <stop offset="30%" stop-color="#D0D0D0"/>
+      <stop offset="70%" stop-color="#B8B8B8"/>
+      <stop offset="100%" stop-color="#909090"/>
+    </linearGradient>
+    <clipPath id="bulbClip">
+      <path d="M 145,320 Q 145,260 120,200 Q 100,140 120,90 Q 140,40 200,30 Q 260,40 280,90 Q 300,140 280,200 Q 255,260 255,320 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background glow -->
+  <ellipse cx="200" cy="170" rx="140" ry="160" fill="url(#bulbGlow)"/>
+
+  <!-- Light rays -->
+  <g opacity="0.15" filter="url(#softGlow)">
+    <line x1="200" y1="30" x2="200" y2="0" stroke="#FFD700" stroke-width="3"/>
+    <line x1="160" y1="45" x2="130" y2="10" stroke="#FFD700" stroke-width="2.5"/>
+    <line x1="240" y1="45" x2="270" y2="10" stroke="#FFD700" stroke-width="2.5"/>
+    <line x1="130" y1="80" x2="90" y2="60" stroke="#FFD700" stroke-width="2"/>
+    <line x1="270" y1="80" x2="310" y2="60" stroke="#FFD700" stroke-width="2"/>
+    <line x1="115" y1="140" x2="75" y2="130" stroke="#FFD700" stroke-width="2"/>
+    <line x1="285" y1="140" x2="325" y2="130" stroke="#FFD700" stroke-width="2"/>
+  </g>
+
+  <!-- Glass bulb outline -->
+  <path d="M 145,320 Q 145,260 120,200 Q 100,140 120,90 Q 140,40 200,30 Q 260,40 280,90 Q 300,140 280,200 Q 255,260 255,320 Z" 
+        fill="url(#glassGrad)" stroke="#B0D4E8" stroke-width="2"/>
+
+  <!-- Glass highlight -->
+  <path d="M 155,280 Q 148,220 135,170 Q 125,130 140,95" 
+        fill="none" stroke="#FFFFFF" stroke-width="4" opacity="0.4" stroke-linecap="round"/>
+  <path d="M 165,260 Q 160,210 150,170 Q 143,140 155,105" 
+        fill="none" stroke="#FFFFFF" stroke-width="2" opacity="0.3" stroke-linecap="round"/>
+
+  <!-- Brain filament with glow -->
+  <g filter="url(#glow)">
+    <!-- Left hemisphere -->
+    <path d="M 200,155 
+             C 185,140 160,135 145,150 
+             C 130,165 125,190 135,210 
+             C 145,230 170,240 195,235 
+             Q 185,225 175,215
+             Q 165,205 170,190
+             Q 175,175 190,170
+             Z" 
+          fill="#FFD700" stroke="#FFA500" stroke-width="1.5"/>
+
+    <!-- Right hemisphere -->
+    <path d="M 200,155 
+             C 215,140 240,135 255,150 
+             C 270,165 275,190 265,210 
+             C 255,230 230,240 205,235 
+             Q 215,225 225,215
+             Q 235,205 230,190
+             Q 225,175 210,170
+             Z" 
+          fill="#FFD700" stroke="#FFA500" stroke-width="1.5"/>
+
+    <!-- Brain folds - left side -->
+    <path d="M 165,165 Q 175,175 185,168" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 155,185 Q 170,195 180,188" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 160,205 Q 175,215 190,208" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 170,220 Q 180,228 195,222" fill="none" stroke="#FFA500" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- Brain folds - right side -->
+    <path d="M 235,165 Q 225,175 215,168" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 245,185 Q 230,195 220,188" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 240,205 Q 225,215 210,208" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+    <path d="M 230,220 Q 220,228 205,222" fill="none" stroke="#FFA500" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- Center fissure -->
+    <path d="M 200,155 Q 198,180 200,235" fill="none" stroke="#FFA500" stroke-width="2.5" stroke-linecap="round"/>
+
+    <!-- Top folds -->
+    <path d="M 175,148 Q 185,142 195,146" fill="none" stroke="#FFA500" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M 205,146 Q 215,142 225,148" fill="none" stroke="#FFA500" stroke-width="1.5" stroke-linecap="round"/>
+
+    <!-- Bottom connection -->
+    <path d="M 195,235 Q 200,245 205,235" fill="none" stroke="#FFA500" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- Support wires -->
+  <line x1="200" y1="240" x2="200" y2="310" stroke="#C0C0C0" stroke-width="2.5"/>
+  <line x1="185" y1="230" x2="190" y2="310" stroke="#A0A0A0" stroke-width="1.5"/>
+  <line x1="215" y1="230" x2="210" y2="310" stroke="#A0A0A0" stroke-width="1.5"/>
+
+  <!-- Stem inside bulb -->
+  <rect x="192" y="280" width="16" height="40" rx="3" fill="#E8E8E8" stroke="#C0C0C0" stroke-width="1"/>
+
+  <!-- Screw base -->
+  <path d="M 155,320 L 155,370 Q 155,380 165,380 L 235,380 Q 245,380 245,370 L 245,320 Z" 
+        fill="url(#metalGrad)" stroke="#808080" stroke-width="1.5"/>
+
+  <!-- Screw threads -->
+  <line x1="155" y1="330" x2="245" y2="330" stroke="#909090" stroke-width="1.5"/>
+  <line x1="155" y1="342" x2="245" y2="342" stroke="#909090" stroke-width="1.5"/>
+  <line x1="155" y1="354" x2="245" y2="354" stroke="#909090" stroke-width="1.5"/>
+  <line x1="155" y1="366" x2="245" y2="366" stroke="#909090" stroke-width="1.5"/>
+
+  <!-- Base bottom contact -->
+  <ellipse cx="200" cy="385" rx="20" ry="6" fill="#707070" stroke="#606060" stroke-width="1"/>
+  <ellipse cx="200" cy="387" rx="12" ry="4" fill="#505050"/>
+
+  <!-- Glass reflection highlight -->
+  <path d="M 170,60 Q 190,50 210,55" fill="none" stroke="#FFFFFF" stroke-width="3" opacity="0.5" stroke-linecap="round"/>
+</svg>

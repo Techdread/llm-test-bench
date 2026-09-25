@@ -1,6 +1,6 @@
 import { html } from 'htm/preact';
 import { useState, useMemo } from 'preact/hooks';
-import { CATEGORIES, categoryLabel, categoryIcon, statsForPrompt } from '../services/library.js';
+import { CATEGORIES, PROMPT_SETS, categoryLabel, categoryIcon, promptSetOf, statsForPrompt } from '../services/library.js';
 import { RatingWidget } from './RatingWidget.js';
 
 function formatDate(dateStr) {
@@ -22,6 +22,9 @@ function PromptCard({ prompt, stats, onUse, onRun, onEdit, onRemove, isGeneratin
           ? html`<span class="library-badge library-badge-user" title="Your prompt">yours</span>`
           : html`<span class="library-badge" title="Curated starter prompt">curated</span>`
         }
+        ${promptSetOf(prompt) === 'advanced' && html`
+          <span class="library-badge library-badge-advanced" title="Advanced set: builds on a core prompt with numbered requirements">advanced</span>
+        `}
       </div>
       ${showCategory && html`
         <div class="library-card-category">
@@ -96,9 +99,12 @@ export function PromptLibraryView({
 }) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
+  const [promptSet, setPromptSet] = useState('all');
+  const hasOtherSets = useMemo(() => prompts.some(p => promptSetOf(p) !== 'core'), [prompts]);
 
   const filtered = useMemo(() => {
     let list = prompts;
+    if (promptSet !== 'all') list = list.filter(p => promptSetOf(p) === promptSet);
     if (category !== 'all') list = list.filter(p => p.category === category);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
@@ -109,7 +115,7 @@ export function PromptLibraryView({
       );
     }
     return list;
-  }, [prompts, category, search]);
+  }, [prompts, promptSet, category, search]);
 
   const statsById = useMemo(() => {
     const map = new Map();
@@ -154,6 +160,18 @@ export function PromptLibraryView({
             ><i class=${`fa-solid ${c.icon}`}></i> ${c.label}</button>
           `)}
         </div>
+        ${hasOtherSets && html`
+          <div class="library-cat-chips library-set-chips" title="Prompt set">
+            ${[{ id: 'all', label: 'All sets' }, ...PROMPT_SETS].map(s => html`
+              <button
+                key=${s.id}
+                class=${`library-cat-chip ${promptSet === s.id ? 'active' : ''}`}
+                title=${s.hint || 'Every prompt set'}
+                onClick=${() => setPromptSet(s.id)}
+              >${s.icon ? html`<i class=${`fa-solid ${s.icon}`}></i> ` : ''}${s.label}</button>
+            `)}
+          </div>
+        `}
         <span class="library-bar-spacer"></span>
         <button class="btn" onClick=${onImport} disabled=${importScanning} title="Scan saved generations and Three Prompt Lab for prompts to keep">
           <i class=${`fa-solid ${importScanning ? 'fa-spinner fa-spin' : 'fa-file-import'}`}></i>

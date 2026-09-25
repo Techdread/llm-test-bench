@@ -67,7 +67,7 @@ export async function fetchModels(provider, { freeOnly = false } = {}) {
 /**
  * Stream a chat completion through OpenRouter.
  */
-export async function streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk, appTitle, params, onStats }) {
+export async function streamChat({ provider, modelId, systemPrompt, userPrompt, onChunk, appTitle, params, onStats, telemetry }) {
   return openRouterStreamChat({
     systemPrompt,
     userPrompt,
@@ -76,19 +76,21 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
     onChunk,
     params,
     onStats,
+    telemetry,
   });
 }
 
 /**
  * Non-streaming chat completion through OpenRouter.
  */
-export async function completeChat({ provider, modelId, systemPrompt, userPrompt, appTitle }) {
+export async function completeChat({ provider, modelId, systemPrompt, userPrompt, appTitle, telemetry }) {
   return openRouterStreamChat({
     systemPrompt,
     userPrompt,
     modelId,
     appTitle,
     onChunk: null,
+    telemetry,
   });
 }
 
@@ -96,15 +98,15 @@ export async function completeChat({ provider, modelId, systemPrompt, userPrompt
  * Raw chat completion through OpenRouter — supports arbitrary message arrays
  * and tool-calling. Returns the full parsed response body.
  */
-export async function chatCompletion({ provider, modelId, messages, tools, appTitle }) {
-  return openRouterChatCompletion({ modelId, messages, tools, appTitle });
+export async function chatCompletion({ provider, modelId, messages, tools, appTitle, telemetry }) {
+  return openRouterChatCompletion({ modelId, messages, tools, appTitle, telemetry });
 }
 
 /**
  * Streaming raw chat completion through OpenRouter.
  */
-export async function streamChatCompletion({ provider, modelId, messages, tools, appTitle, onChunk, returnResponse = false, signal }) {
-  return openRouterStreamChatCompletion({ modelId, messages, tools, appTitle, onChunk, returnResponse, signal });
+export async function streamChatCompletion({ provider, modelId, messages, tools, appTitle, onChunk, returnResponse = false, signal, telemetry }) {
+  return openRouterStreamChatCompletion({ modelId, messages, tools, appTitle, onChunk, returnResponse, signal, telemetry });
 }
 
 /**

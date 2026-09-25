@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-29T22:25:29.552Z",
+  "generatedAt": "2026-09-25T15:40:39.742Z",
   "root": "shared/lib",
   "notes": [
     "Minimal vendored runtime set for the LLM Test Bench public distribution."
