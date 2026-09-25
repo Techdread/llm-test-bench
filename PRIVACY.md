@@ -3,6 +3,7 @@
 LLM Test Bench is a mostly static website with no user accounts and no analytics. Its only server-side part is a small showcase service (Cloudflare Pages Functions with a D1 database and R2 storage) that holds the published showcase examples and stores nothing about visitors.
 
 - Your working files, prompts, API keys, and generations never reach the showcase service.
+- The maintainer edits the showcase from an admin page behind Cloudflare Access (an emailed one-time code). Visitors never sign in.
 
 - Files are read from and written to a folder the user explicitly chooses through the browser's File System Access API.
 - Provider credentials are stored in the browser and may also be stored in the suite settings inside the chosen data folder.
