@@ -1,14 +1,17 @@
+# Site and app code is revalidated on every load (a cheap 304 when unchanged).
+# Pages' default for JS/CSS is a 4-hour cache, which served new HTML with old
+# scripts to returning visitors after a release. Vendored libraries are
+# versioned by path, so they alone keep a year-long immutable cache.
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(self), display-capture=(self), fullscreen=(self), microphone=(self)
   X-Frame-Options: SAMEORIGIN
+  Cache-Control: public, max-age=0, must-revalidate
 
 /shared/lib/*
+  ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-
-/*.html
-  Cache-Control: public, max-age=0, must-revalidate
 
 # Showcase generations are model-written code on this origin. Opened directly,
 # they must not reach localStorage (visitors' API keys). <img> tiles and the

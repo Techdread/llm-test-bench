@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://neuroviz.uk/</loc><lastmod>2026-09-25</lastmod></url>
-  <url><loc>https://neuroviz.uk/showcase.html</loc><lastmod>2026-09-25</lastmod></url>
-  <url><loc>https://neuroviz.uk/settings.html</loc><lastmod>2026-09-25</lastmod></url>
-  <url><loc>https://neuroviz.uk/privacy.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://neuroviz.uk/showcase</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://neuroviz.uk/settings</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://neuroviz.uk/privacy</loc><lastmod>2026-09-25</lastmod></url>
   <url><loc>https://neuroviz.uk/prompt-gallery/</loc><lastmod>2026-09-25</lastmod></url>
   <url><loc>https://neuroviz.uk/p5-sketch-gallery/</loc><lastmod>2026-09-25</lastmod></url>
   <url><loc>https://neuroviz.uk/svg-benchmark/</loc><lastmod>2026-09-25</lastmod></url>
