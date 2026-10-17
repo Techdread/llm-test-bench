@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T19:27:33.749Z",
+  "generatedAt": "2026-10-17T09:04:51.916Z",
   "root": "shared/lib",
   "notes": [
     "Minimal vendored runtime set for the LLM Test Bench public distribution."
@@ -37,6 +37,46 @@
         ]
       }
     },
+    "three": {
+      "0.185.1": {
+        "path": "three/0.185.1",
+        "sources": [
+          "npm:three@0.185.1"
+        ]
+      }
+    },
+    "sql.js": {
+      "1.10.3": {
+        "path": "sql.js/1.10.3",
+        "sources": [
+          "npm:sql.js@1.10.3"
+        ]
+      }
+    },
+    "acorn": {
+      "8.11.3": {
+        "path": "acorn/8.11.3",
+        "sources": [
+          "npm:acorn@8.11.3"
+        ]
+      }
+    },
+    "acorn-walk": {
+      "8.3.2": {
+        "path": "acorn-walk/8.3.2",
+        "sources": [
+          "npm:acorn-walk@8.3.2"
+        ]
+      }
+    },
+    "acorn-loose": {
+      "8.4.0": {
+        "path": "acorn-loose/8.4.0",
+        "sources": [
+          "npm:acorn-loose@8.4.0"
+        ]
+      }
+    },
     "highlight.js": {
       "11.9.0": {
         "path": "highlight.js/11.9.0",
@@ -55,6 +95,15 @@
           "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js",
           "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css",
           "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+        ]
+      }
+    },
+    "html2canvas": {
+      "1.4.1": {
+        "path": "html2canvas/1.4.1",
+        "sources": [
+          "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+          "https://esm.sh/html2canvas@1.4.1?bundle"
         ]
       }
     },
@@ -94,6 +143,43 @@
         "path": "gifenc/1.0.3",
         "sources": [
           "https://cdn.jsdelivr.net/npm/gifenc@1.0.3/dist/gifenc.esm.js"
+        ]
+      }
+    },
+    "JSCPP": {
+      "2.0.9": {
+        "path": "JSCPP/2.0.9",
+        "sources": [
+          "https://esm.sh/JSCPP@2.0.9?bundle"
+        ]
+      }
+    },
+    "fflate": {
+      "0.8.2": {
+        "path": "fflate/0.8.2",
+        "sources": [
+          "https://esm.sh/fflate@0.8.2?bundle"
+        ]
+      }
+    },
+    "iwer": {
+      "2.3.0": {
+        "path": "iwer/2.3.0",
+        "sources": [
+          "npm:iwer@2.3.0"
+        ]
+      }
+    },
+    "mesh2motion": {
+      "1.0.0": {
+        "path": "mesh2motion/1.0.0",
+        "sources": [
+          "github:Mesh2Motion/mesh2motion-app@2d3d1ff03247d9e7e830d1ae375653da4e2146e2"
+        ],
+        "notes": [
+          "Solver code MIT (c) Scott Petrovic; core assets CC0. Notices in the version folder.",
+          "TypeScript solvers transpiled upstream-side to ES2022; bare 'three' specifiers rewritten to the vendored three path because module Workers ignore import maps.",
+          "assets/human-base-animations.glb carries all 87 base clips with the upstream example mesh removed."
         ]
       }
     }

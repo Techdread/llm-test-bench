@@ -395,43 +395,100 @@ export async function fetchProviderModels(providerId, options = {}) {
   }
 }
 
+// How long a model listing keeps waiting for the remaining providers once at
+// least one has returned models. A live server answers `/v1/models` in well
+// under a second; a LAN host that is switched off does not refuse, it hangs
+// until the adapter timeout (30s by default), and every picker in the hub sat
+// on "Loading…" for that long.
+const DEFAULT_SETTLE_GRACE_MS = 3000;
+
 /**
- * Fetch models from all registered providers.
+ * List models from `providers`, without letting one unreachable provider hold
+ * up the rest.
+ *
+ * Resolves when every provider has answered, or — once something has returned
+ * models — when the grace period runs out, whichever comes first. Providers
+ * still outstanding at that point contribute their last cached list (possibly
+ * stale, possibly empty) and keep going in the background, so a slow-but-alive
+ * one still refreshes the cache for the next call.
+ *
+ * @param {Array} providers
+ * @param {Object} [options] - Client-side filters (e.g. { freeOnly: true }), plus:
+ * @param {(models: Array, progress: {pending: number, total: number}) => void} [options.onPartial]
+ *   Handed the list so far each time a provider answers while others are still
+ *   outstanding, and again for any provider that answers after the call has
+ *   resolved. Lets a picker fill in at once and pick up late arrivals.
+ * @param {boolean} [options.waitForAll] - Ignore the grace period.
+ * @param {number} [options.settleGraceMs]
+ */
+async function collectModels(providers, options = {}) {
+  const { onPartial, waitForAll = false, settleGraceMs = DEFAULT_SETTLE_GRACE_MS, ...filters } = options;
+  // Fall back to ANY cached models (including stale) — stale-but-useful model
+  // lists are better than nothing, especially for LAN providers that may be
+  // temporarily offline.
+  const staleFor = (provider) => {
+    const cached = getCachedModelsAny(provider.id);
+    return cached ? applyModelFilters(cached, filters) : [];
+  };
+  // One slot per provider keeps the list in provider order whichever answers
+  // first.
+  const slots = providers.map(() => null);
+  const snapshot = () => slots.flatMap((slot, i) => slot || staleFor(providers[i]));
+  let pending = providers.length;
+  let resolved = false;
+  let graceOver = false;
+  let finishEarly;
+  const early = new Promise((resolve) => { finishEarly = resolve; });
+  const maybeFinishEarly = () => {
+    if (graceOver && slots.some(slot => slot && slot.length > 0)) finishEarly();
+  };
+
+  const all = Promise.all(providers.map(async (provider, i) => {
+    try {
+      slots[i] = await fetchProviderModels(provider.id, filters);
+    } catch (e) {
+      console.warn(`Failed to fetch models from ${provider.name}:`, e?.message);
+      slots[i] = staleFor(provider);
+    }
+    pending -= 1;
+    // The complete list is the return value, so the last answer only needs
+    // announcing when the caller has already been handed a shorter one.
+    if (onPartial && (pending > 0 || resolved)) {
+      try { onPartial(snapshot(), { pending, total: providers.length }); } catch (e) {
+        console.error('[model-providers] onPartial threw:', e);
+      }
+    }
+    maybeFinishEarly();
+  }));
+
+  let timer = null;
+  if (!waitForAll && providers.length > 1 && Number.isFinite(settleGraceMs)) {
+    timer = setTimeout(() => { graceOver = true; maybeFinishEarly(); }, Math.max(0, settleGraceMs));
+  }
+  await Promise.race([all, early]);
+  resolved = true;
+  if (timer !== null) clearTimeout(timer);
+  return snapshot();
+}
+
+/**
+ * Fetch models from all registered providers. Options as for collectModels().
  */
 export async function fetchAllModels(options = {}) {
   // Settle the bridge probe first so the CLI agent rows are either all there or
   // all absent, rather than appearing a moment after the picker renders.
   await probeCliBridge();
-  const providers = [...getProviders(), ...getCliAgentProviders(), ...getEnsembleProviders()];
-  const results = await Promise.allSettled(
-    providers.map(p => fetchProviderModels(p.id, options))
-  );
-  return results.flatMap((r, i) => {
-    if (r.status === 'fulfilled') return r.value;
-    console.warn(`Failed to fetch models from ${providers[i].name}:`, r.reason?.message);
-    // Fall back to ANY cached models (including stale) on failure —
-    // stale-but-useful model lists are better than nothing
-    const cached = getCachedModelsAny(providers[i].id);
-    return cached ? applyModelFilters(cached, options) : [];
-  });
+  return collectModels([...getProviders(), ...getCliAgentProviders(), ...getEnsembleProviders()], options);
 }
 
 /**
- * Fetch models from enabled providers only.
+ * Fetch models from enabled providers only. Options as for collectModels():
+ * an unreachable provider delays the result by a few seconds at most, and
+ * `onPartial` removes even that for a picker that can fill in as it goes.
  */
 export async function fetchEnabledModels(options = {}) {
   await probeCliBridge();
-  const providers = getEnabledProviders();
-  const results = await Promise.allSettled(
-    providers.map(p => fetchProviderModels(p.id, options))
-  );
-  return results.flatMap((r, i) => {
-    if (r.status === 'fulfilled') return r.value;
-    console.warn(`Failed to fetch models from ${providers[i].name}:`, r.reason?.message);
-    // Fall back to ANY cached models (including stale) on failure
-    const cached = getCachedModelsAny(providers[i].id);
-    return cached ? applyModelFilters(cached, options) : [];
-  });
+  return collectModels(getEnabledProviders(), options);
 }
 
 /**
@@ -451,7 +508,8 @@ export async function refreshAllModels(options = {}) {
   for (const p of providers) {
     clearModelCache(p.id);
   }
-  return fetchAllModels(options);
+  // An explicit refresh is asking about every provider, slow ones included.
+  return fetchAllModels({ waitForAll: true, ...options });
 }
 
 // ── Selection Helpers ──

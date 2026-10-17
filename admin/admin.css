@@ -26,6 +26,8 @@
 .adm-chip.pg { color: var(--purple); background: color-mix(in srgb, var(--purple) 18%, transparent); }
 .adm-chip.p5 { color: var(--blue); background: color-mix(in srgb, var(--blue) 18%, transparent); }
 .adm-chip.svg { color: var(--pink); background: color-mix(in srgb, var(--pink) 18%, transparent); }
+.adm-chip.gf { color: var(--green); background: color-mix(in srgb, var(--green) 18%, transparent); }
+.adm-chip.vr { color: var(--amber); background: color-mix(in srgb, var(--amber) 18%, transparent); }
 .adm-publish { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.025); }
 .adm-empty { display: grid; place-items: center; min-height: 300px; }
 .adm-publish-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 12px; }
@@ -35,6 +37,9 @@
 .adm-preview iframe, .adm-preview img { width: 100%; height: 100%; border: 0; object-fit: contain; background: #fff0; }
 .adm-prompt { margin: 10px 0; color: var(--muted); font-size: .86rem; }
 .adm-prompt p { white-space: pre-wrap; }
+.adm-prompt summary .button { margin-left: 8px; }
+.adm-files { max-height: 220px; overflow: auto; margin: 8px 0 0; padding-left: 18px; font-size: .8rem; }
+.adm-files .is-skipped code { text-decoration: line-through; opacity: .7; }
 .adm-report { margin: 10px 0; padding: 0; list-style: none; font-size: .84rem; }
 .adm-report li::before { margin-right: 7px; font-weight: 800; }
 .adm-report .is-pass::before { content: "✓"; color: #76e0ad; }

@@ -1,0 +1,110 @@
+{
+  "version": "hub-help-deck-v1",
+  "title": "VR Forge — Help",
+  "generatedFrom": "HELP.md",
+  "generatedBy": "help-decks",
+  "generatedAt": "2026-10-05T13:37:47.377Z",
+  "slides": [
+    {
+      "kind": "title",
+      "title": "VR Forge — Help",
+      "html": "<p>VR Forge asks a model or a local CLI agent to build a <strong>complete, multi-file\nWebXR project for the Meta Quest 3</strong> — a game, a simulation, or a tool — and then\ndoes the thing that makes it worth having: it <strong>runs the project in an immersive\nsession</strong> and measures what happened.</p>\n<p>That is the whole point. &quot;It works in VR&quot; is otherwise the least verifiable\nclaim in this hub: the artefact runs on a device the browser cannot see, in a\nsession that cannot start without a user gesture, at a frame rate no desktop\nreproduces. VR Forge converts the biggest part of that — <em>did it actually enter\nVR and render two eyes?</em> — from a claim into a measurement, and is explicit\nabout the part it cannot answer.</p>"
+    },
+    {
+      "kind": "shot",
+      "title": "The app",
+      "image": "shot-app.webp",
+      "html": "<p>This is the app as it opens. Every screenshot in this deck is captured from the running app, not drawn by hand.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Setup",
+      "html": "<ol>\n<li><p>Pick a provider/model, or a CLI agent (Claude Code, Codex, Antigravity) from\nthe executor dropdown. The gear opens provider settings.</p>\n</li>\n<li><p>Connect a <strong>data root</strong> (folder icon). Every build is written to disk under\n<code>&lt;root&gt;/vr-forge/projects/&lt;brief&gt;/&lt;runId&gt;/</code> — nothing is ever overwritten.\nNew run folders begin with the local start date and time (<code>YYYY-MM-DD_HH-mm-ss</code>),\nkeep their unique run ID, and end with a short model name (or the CLI agent\nplus <code>default</code> when no model was selected). Existing folders still open normally.</p>\n</li>\n<li><p>Optional but recommended: run the hub with <code>python3 serve.py 8084</code>. That adds\nthe CLI-agent bridge <strong>and</strong> the Quest bridge (headset status, one-click open\non the headset). Without it, everything else still works.</p>\n</li>\n<li><p>For the headset itself there are two routes, and you can use either:</p>\n<ul>\n<li><strong>Over Wi-Fi (no cable, no adb).</strong> Start the hub with\n<code>python3 serve.py 8084 --host 0.0.0.0 --https-port 8443</code> and open the\n<code>https://…:8443/</code> link it prints in Quest Browser. Accept the certificate\nwarning once (Advanced → Proceed). You can then use VR Forge <em>on the\nheadset</em>: build a brief and open the result in VR from the same browser.</li>\n<li><strong>adb reverse.</strong> Follow <code>prompt-gallery/QUEST-VR-ACCESS.md</code>: developer\nmode, adb over Wi-Fi, and <code>adb reverse tcp:8084 tcp:8084</code>. The Quest then\nreaches this hub at <code>http://localhost:8084/</code>, which Quest Browser treats as\na trusted origin — so WebXR works without HTTPS.</li>\n</ul>\n<p>Why two: a browser only offers <strong>Enter VR</strong> on a secure address. <code>localhost</code>\ncounts and so does HTTPS; plain <code>http://192.168.x.x</code> does not, so over that\naddress a project opens flat (its desktop fallback) and never enters VR.</p>\n</li>\n</ol>"
+    },
+    {
+      "kind": "text",
+      "title": "Briefs",
+      "html": "<p>The Library holds 31 seed briefs across three kinds — <strong>games</strong>, <strong>simulations</strong>\nand <strong>apps</strong> — including one deliberate control cell (<em>Raw WebXR, No Libraries</em>)\nand one passthrough/mixed-reality brief.</p>\n<p>Sixteen of them are <strong>large simulations</strong>, grouped by subcategory: economics\n(macroeconomy sandbox, order-book floor), urban planning (planning table,\ntransit network lab), logistics (single-SKU pallets, mixed-SKU 3D packing,\ncylindrical loads, warehouse pick-paths), traffic (junction lab, evacuation and\ncrowd flow), defence (command sand table, sustainment planner) and the universe\n(atlas of scale, N-body cluster, curved spacetime, galaxy formation). Each one\nnames the actual model it must implement — IDM and MOBIL, social forces,\nextreme-point packing, Barnes-Hut, Schwarzschild geodesics — and its acceptance\nlist is written so a reviewer can check the model, not the graphics.</p>\n<p>Your own briefs live beside them in the data root and are versioned; seeds can be\nhidden but never lose their history.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Briefs (cont.)",
+      "html": "<p>A VR brief says more than a sentence of prose, because the checks that follow\nhave to be checkable:</p>\n<table>\n<thead>\n<tr>\n<th>Field</th>\n<th>What it decides</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><code>kind</code></td>\n<td>game / simulation / app — the taxonomy and the coach&#39;s framing</td>\n</tr>\n<tr>\n<td><code>xrMode</code></td>\n<td><code>immersive-vr</code>, <code>immersive-ar</code> (passthrough), or both</td>\n</tr>\n<tr>\n<td><code>interaction</code></td>\n<td>controllers, hands, locomotion, haptics</td>\n</tr>\n<tr>\n<td><code>xrFeatures</code></td>\n<td>the WebXR features the session may require or request</td>\n</tr>\n<tr>\n<td><code>comfort</code></td>\n<td>target fps, vignette on motion, snap turn, seated support</td>\n</tr>\n<tr>\n<td><code>desktopFallback</code></td>\n<td><strong>required</strong>: how the project is reviewed without a headset</td>\n</tr>\n<tr>\n<td><code>scene</code></td>\n<td>what must actually be in the scene</td>\n</tr>\n<tr>\n<td><code>acceptance</code></td>\n<td>the statements a reviewer checks it against</td>\n</tr>\n<tr>\n<td><code>hubServices</code></td>\n<td>opt-in runtime access to the hub: <code>ask</code>, <code>image</code>, <code>agent</code></td>\n</tr>\n</tbody></table>\n<p><code>desktopFallback</code> is required, not optional. A VR project with no review path\noutside a headset cannot be looked at, diffed, screenshotted or compared — and\nthe validator needs it too.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Hub services — a simulation that can ask",
+      "html": "<p>A generated project is served by the hub, and on the Quest it reaches the hub\nthrough the adb reverse. So a brief can opt into three things a static page\ncannot do for itself, through the provisioned <code>lib/hub-bridge.js</code>:</p>\n<table>\n<thead>\n<tr>\n<th>Call</th>\n<th>What it does</th>\n<th>Needs</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><code>HubBridge.ask({ prompt })</code></td>\n<td>one model answer — an in-sim economist, an intel summary, a planning review</td>\n<td><code>OPENROUTER_API_KEY</code> or <code>HUB_ASK_BASE_URL</code> in serve.py&#39;s environment, or a local OpenAI-compatible server on <code>127.0.0.1:1234</code></td>\n</tr>\n<tr>\n<td><code>HubBridge.askJson({ prompt })</code></td>\n<td>the same, parsed — a generated scenario, policy weights, dialogue</td>\n<td>as above</td>\n</tr>\n<tr>\n<td><code>HubBridge.image({ prompt })</code></td>\n<td>a generated texture as a data URL</td>\n<td>a reachable Wan2GP node</td>\n</tr>\n<tr>\n<td><code>HubBridge.agent({ prompt })</code></td>\n<td>a local CLI coding agent for heavier work</td>\n<td>the agent bridge (no API key: it uses your CLI login)</td>\n</tr>\n</tbody></table>\n<p>Four rules hold this together, and the validator or the system prompt enforces\neach one:</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Hub services — a simulation that can ask (cont.)",
+      "html": "<ol>\n<li><strong>The project never sees a key.</strong> Whatever provider is configured lives in\nthe server&#39;s environment. <code>/__ask</code> resolves it, caps the prompt and token\ncount, and rate-limits (20 calls a minute, 500 a run, all tunable).</li>\n<li><strong>The simulation must work without any of it.</strong> Hub-backed features are\nenrichment on a scene that already runs: procedural textures when no image\ncomes back, built-in scenario data when no model answers, a visible\n&quot;unavailable&quot; line rather than a dead control. <code>HubBridge.status()</code> says what\nis actually available; the brief&#39;s acceptance list should require the\ndegraded path.</li>\n<li><strong>Never call from the animation loop.</strong> A model call takes seconds and the\nhub rate-limits — a per-frame call stalls the headset and burns the budget.\nAsk on a deliberate action and show the previous answer meanwhile.</li>\n<li><strong>A project that calls the hub is not portable, and says so.</strong> The run is\nmarked <strong>hub-bound</strong> with the endpoints it used; exported on its own it keeps\nthe simulation and loses those features. A project that calls a hub endpoint\nits brief never asked for <strong>fails</strong> validation.</li>\n</ol>"
+    },
+    {
+      "kind": "text",
+      "title": "Hub services — a simulation that can ask (cont.)",
+      "html": "<p>Turn it on for your own briefs with <code>hubServices: { ask: &#39;optional&#39; }</code> and the\n<code>hub-bridge</code> library. Nine seed briefs already use it.</p>\n<p>Configure the model service before starting the hub, for example:</p>\n<pre><code class=\"language-bash\">OPENROUTER_API_KEY=sk-or-... python3 serve.py 8084\n# or any OpenAI-compatible server, local or remote:\nHUB_ASK_BASE_URL=http://127.0.0.1:1234/v1 HUB_ASK_MODEL=my-model python3 serve.py 8084\n</code></pre>\n<p><code>GET /__ask/status</code> reports what is configured — and never the key.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "The XR contract",
+      "html": "<p>Five rules are in the system prompt <em>and</em> enforced by the validator, so the app\nnever fails a build for a requirement it did not state:</p>\n<ol>\n<li><strong>The session entry control carries <code>data-forge-id=&quot;enter-xr&quot;</code></strong>, and\n<code>forge-project.json</code> names it in <code>xr.entryControl</code>. Nothing outside the\nproject can start an immersive session; without this the build cannot be\nverified at all.</li>\n<li><strong>The project renders without a session.</strong> No <code>navigator.xr</code>, or an\nunsupported mode, must produce the declared desktop fallback and a visible\nexplanation — never an exception, never a blank page.</li>\n<li><strong>Everything is project-local.</strong> No CDN, no <code>https://</code> reference. The headset\nreaches the project through a loopback tunnel with no internet. The one\nexception is the hub&#39;s own same-origin endpoints, and only for a brief that\nasked for hub services (above).</li>\n<li><strong>What it requests is what it declared.</strong> The mode and features passed to\n<code>requestSession</code> must match the manifest.</li>\n<li><strong>An import map maps only to project-local files.</strong></li>\n</ol>"
+    },
+    {
+      "kind": "text",
+      "title": "Build",
+      "html": "<p>The Build view is the trace on the left and three ways to look at one project on\nthe right.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Build (cont.)",
+      "html": "<ul>\n<li><p><strong>Desktop</strong> — the project&#39;s non-XR path in a blob-URL iframe, live as files\nland. This is the fallback, not the product.</p>\n</li>\n<li><p><strong>XR session</strong> — an emulated Quest 3. Start the emulator, press <strong>Enter XR</strong>,\nand the project&#39;s own entry control is clicked. Live readouts show frames\npresented, per-frame callback cost and the number of eye views; the controls\npress the emulated trigger, push the thumbstick, recentre the headset, and\nswitch the primary input between controllers and hands. This is the same\nharness the validator drives, so what you poke at is what the report measures.</p>\n</li>\n<li><p><strong>On the Quest</strong> — the two ways to put this run on the headset. Nothing is\ncopied to the Quest either way: it opens the run straight from the data root.</p>\n<ul>\n<li><strong>Over Wi-Fi</strong> shows the run&#39;s address on the hub&#39;s network address. When\nVR Forge is open in the headset&#39;s own browser you get <strong>Open here</strong>, and the\npane says plainly whether that browser can enter VR on this address. If it\ncannot, <strong>Open in VR (HTTPS)</strong> moves to the hub&#39;s HTTPS port (when the hub\nwas started with <code>--https-port</code>); the note underneath also gives the\none-time Quest Browser setting that makes the plain address trusted\n(<code>chrome://flags</code> → <em>Insecure origins treated as secure</em>). On the hub\nmachine the same block gives you the address to open on the headset.</li>\n<li><strong>adb reverse</strong> is headset status from the bridge, the exact\n<code>http://localhost:8084/_data/…</code> URL, <strong>Open on Quest</strong>, and <strong>Restore\nreverse</strong> for when the headset has slept.</li>\n</ul>\n<p>Older runs have the same pane: in <strong>Runs</strong>, pick a brief, select one run and\npress <strong>On the Quest</strong>.</p>\n</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Build (cont.)",
+      "html": "<p><strong>Pause / Resume</strong> and <strong>Hard stop</strong> work as they do in Game Forge V2: pause\nparks an in-app build at a safe boundary, or suspends a CLI agent&#39;s process, and\nresume carries on from exactly there.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "What a run proves — and what it does not",
+      "html": "<p>Validation runs in four lanes.</p>\n<p><strong>A — Structure.</strong> Manifest present and valid, entry exists, every reference\nresolves, nothing external, provisioned libraries byte-identical to their pins,\nand the <code>xr</code> block well-formed with an entry control.</p>\n<p><strong>B — Desktop.</strong> The project boots in a diagnostic frame. Console errors,\nuncaught exceptions, rejected promises and failed resource loads are errors. A\nproject that throws before its fallback appears fails here whatever it would do\nin VR.</p>\n<p><strong>C — Emulated XR session.</strong> The project is loaded again with an emulated Quest 3\n(Meta&#39;s IWER) installed over <code>navigator.xr</code> and a probe wrapped around the WebXR\nentry points. Then:</p>"
+    },
+    {
+      "kind": "text",
+      "title": "What a run proves — and what it does not (cont.)",
+      "html": "<table>\n<thead>\n<tr>\n<th>Check</th>\n<th>Verdict if it fails</th>\n</tr>\n</thead>\n<tbody><tr>\n<td>An immersive session was granted</td>\n<td>error</td>\n</tr>\n<tr>\n<td>≥120 frames through <code>XRSession.requestAnimationFrame</code></td>\n<td>error</td>\n</tr>\n<tr>\n<td>The viewer pose had two views, with different transforms</td>\n<td>error</td>\n</tr>\n<tr>\n<td>The project set <strong>one viewport per eye</strong></td>\n<td>error</td>\n</tr>\n<tr>\n<td>The eye framebuffer is not one flat colour</td>\n<td>error</td>\n</tr>\n<tr>\n<td>Requested mode/features match the manifest</td>\n<td>error</td>\n</tr>\n<tr>\n<td>Controllers, select events, haptics the brief asked for</td>\n<td>warning</td>\n</tr>\n<tr>\n<td>95th-percentile frame callback within budget</td>\n<td>warning</td>\n</tr>\n<tr>\n<td>The session ended cleanly</td>\n<td>warning</td>\n</tr>\n</tbody></table>\n<p>The viewport check is the one that catches the classic bug. The runtime hands\n<em>every</em> project two views, so a project that renders the scene once and lets both\neyes see it still gets a healthy-looking pose — but it sets a single\nfull-framebuffer viewport, and that is measurable. (A renderer using\n<code>OVR_multiview</code> looks the same; say so in the README if that is deliberate.)</p>"
+    },
+    {
+      "kind": "text",
+      "title": "What a run proves — and what it does not (cont.)",
+      "html": "<p>The left eye is read back out of the framebuffer and saved as the run&#39;s evidence\nimage — <code>preview.png</code> for a VR run is what the headset would have shown, not a\nscreenshot of a web page.</p>\n<p><strong>D — Device.</strong> Whether the run was opened on the real headset, and when. This is\n<strong>provenance, never evidence</strong>: the hub cannot see what happened after Quest\nBrowser loaded the page.</p>\n<h3>Honesty limits</h3>"
+    },
+    {
+      "kind": "text",
+      "title": "What a run proves — and what it does not (cont.)",
+      "html": "<ul>\n<li>The emulator is not a Quest. It proves a project <strong>enters an immersive session\nand renders stereo frames</strong>. It proves nothing about device performance,\nthermals, comfort, tracking quality, or how the scale feels.</li>\n<li>Emulated frame <em>rate</em> is this browser&#39;s rAF rate. Frame <em>cost</em> — time inside\nthe project&#39;s own callback — is measured and meaningful; frame rate is not, and\nis never reported as fps achieved on device.</li>\n<li>Passthrough (<code>immersive-ar</code>) renders a synthetic environment. Plane detection\nand hit test return the emulator&#39;s synthetic geometry, so a room-planner brief\nis verified as <em>plumbing that works</em>, not as <em>a room that was understood</em>.</li>\n<li>A run that only passed the emulated lane says <strong>emulator-verified</strong>, not\n<em>verified on Quest 3</em>. Put it on the headset before you believe it.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Project libraries and lanes",
+      "html": "<p>Generated projects never load anything from this repository. Selected libraries\nare <strong>copied into the project&#39;s own <code>lib/</code></strong>, checked against pinned hashes\nbefore and after generation, and included in the export.</p>\n<ul>\n<li><strong><code>three-xr</code></strong> — Three.js 0.185.1 (ES modules) with the WebXR add-ons:\n<code>VRButton</code>, <code>ARButton</code>, <code>XRButton</code>, <code>XRControllerModelFactory</code>,\n<code>XRHandModelFactory</code>, <code>XRPlanes</code>, <code>XREstimatedLight</code>, plus <code>GLTFLoader</code> and the\ngeometry/skeleton utilities they need. The briefing hands the model the exact\nimport map. <strong><code>OrbitControls</code> and the post-processing stack are not\ninstalled</strong> — a few lines of your own beat a 404 in the headset.</li>\n<li><strong><code>rapier3d</code></strong> — WASM rigid-body physics, for grabbing, throwing and stacking.</li>\n<li><strong><code>tone</code> / <code>howler</code></strong> — synthesis and sound effects.</li>\n<li><strong>No library</strong> — raw WebXR against WebGL2. The control cell.</li>\n</ul>\n<p>Lanes pin a brief to a library set so the same brief can be built several ways\nand compared cell by cell in the <strong>Matrix</strong>.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Runs, Matrix, Batch",
+      "html": "<p>Every attempt is an append-only run: prompt snapshot, trace, manifest, capability\naudit, validation report, XR report and eye capture, all on disk. <strong>Runs</strong>\ncompares them, <strong>Matrix</strong> lays out (brief × lane), and <strong>Batch</strong> runs a model or\na CLI agent across many briefs. Iteration — fork, improve, repair, continue,\nmerge — always copies into a <strong>new</strong> run; a heal that makes things worse costs\nnothing.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Project manifest",
+      "html": "<pre><code class=\"language-jsonc\">{\n  &quot;schemaVersion&quot;: 1, &quot;kind&quot;: &quot;vr&quot;, &quot;entry&quot;: &quot;index.html&quot;, &quot;runtime&quot;: &quot;webxr&quot;,\n  &quot;xr&quot;: {\n    &quot;modes&quot;: [&quot;immersive-vr&quot;],\n    &quot;requiredFeatures&quot;: [&quot;local-floor&quot;], &quot;optionalFeatures&quot;: [&quot;hand-tracking&quot;],\n    &quot;inputs&quot;: { &quot;controllers&quot;: true, &quot;hands&quot;: false, &quot;haptics&quot;: true },\n    &quot;locomotion&quot;: &quot;teleport&quot;, &quot;targetFps&quot;: 72,\n    &quot;entryControl&quot;: &quot;[data-forge-id=\\&quot;enter-xr\\&quot;]&quot;\n  },\n  &quot;fallback&quot;: { &quot;kind&quot;: &quot;desktop&quot;, &quot;description&quot;: &quot;orbit camera + mouse grab&quot; },\n  &quot;assets&quot;: [], &quot;declaredControls&quot;: [&quot;Trigger: grab&quot;, &quot;Thumbstick: teleport&quot;]\n}\n</code></pre>\n<p><code>runtime: &quot;webxr&quot;</code> previews like a module-web project. The runtime name\n<code>quest-native</code> is reserved for a future APK lane; nothing implements it today.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Notes & limits",
+      "html": "<ul>\n<li><strong>The Quest bridge is loopback-only.</strong> It will open a URL on the headset only\nwhen that URL is served by this very server, under the data root. It runs\n<code>adb</code>; if <code>adb</code> is missing or the headset is asleep, the pane says so and the\nbuttons stay disabled rather than failing silently.</li>\n<li><strong>A hub without <code>serve.py</code> has no bridge at all.</strong> The Quest pane then shows\nthe URL to open by hand, and the CLI-agent rows disappear from the executor\nlist (as everywhere else in the hub).</li>\n<li><strong>The emulated session runs in this page&#39;s process.</strong> A generated project with\na runaway loop can make the app sluggish; stop the emulator, or use the desktop\npane, while a heavy build is still writing files.</li>\n<li><strong><code>immersive-ar</code> briefs need a Quest 3 to mean anything.</strong> The emulator will run\nthem, and the checks about declaration, frames and input still apply, but the\npassthrough imagery is synthetic.</li>\n<li><strong>Tests.</strong> <code>node --test vr-forge/tests/*.test.mjs</code> covers the probe&#39;s analysis,\nthe manifest contract, the seed catalogue and the bridge client;\n<code>node tools/vr-xr-lane-check.mjs</code> drives the real validator, in a real browser,\nagainst two fixture projects that differ by one line — one renders a viewport\nper eye, the other fills the framebuffer once. The lane is only worth anything\nif it passes the first and fails the second.</li>\n</ul>"
+    }
+  ]
+}

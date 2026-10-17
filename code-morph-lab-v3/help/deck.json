@@ -1,0 +1,60 @@
+{
+  "version": "hub-help-deck-v1",
+  "title": "Code Morph Lab v3",
+  "generatedFrom": "HELP.md",
+  "generatedBy": "help-decks",
+  "generatedAt": "2026-07-18T22:26:04.366Z",
+  "slides": [
+    {
+      "kind": "title",
+      "title": "Code Morph Lab v3",
+      "html": "<p>A reimagined iterative code-generation loop — describe what you want, pick a model, and watch the LLM write, run, and self-correct code across multiple iterations. Sessions are persisted to disk for review, forking, and export.</p>"
+    },
+    {
+      "kind": "shot",
+      "title": "The app",
+      "image": "shot-app.webp",
+      "html": "<p>This is the app as it opens. Every screenshot in this deck is captured from the running app, not drawn by hand.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Getting started",
+      "html": "<ol>\n<li>Connect a data root when prompted (folder picker on first launch).</li>\n<li>Configure a model provider via the key / server buttons in the toolbar.</li>\n<li>On the <strong>Start</strong> screen, type a prompt describing what the code should do.</li>\n<li>Choose the language (HTML or Python) and max iterations.</li>\n<li>Press <strong>Generate</strong> to kick off the morph loop.</li>\n</ol>"
+    },
+    {
+      "kind": "text",
+      "title": "Start view",
+      "html": "<ul>\n<li><strong>Prompt</strong> — describe the desired behaviour in natural language. Be specific.</li>\n<li><strong>Language</strong> — HTML (rendered in an iframe) or Python (executed via Pyodide).</li>\n<li><strong>Max iterations</strong> — how many edit → run → fix cycles the LLM may attempt.</li>\n<li><strong>Import context</strong> — if code was handed off from another app, the original prompt is shown separately from your requested changes, and the imported files are visible in the left-side code editor before you start.</li>\n<li><strong>Recent sessions</strong> — a list of previously saved sessions; click one to review it.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Morph view",
+      "html": "<p>Once the loop starts you see:</p>\n<ul>\n<li><strong>Iteration timeline</strong> — each iteration card shows tool calls, files changed, diffs, and run results.</li>\n<li><strong>Workspace panel</strong> — the current state of all files. During model calls, a <code>model-stream.md</code> tab shows streamed assistant text and tool-call arguments while the model is still responding.</li>\n<li><strong>Output inspector</strong> — console output, error details, and a live HTML preview (HTML mode).</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Sessions",
+      "html": "<p>Every morph run is automatically saved to your data root as a session.</p>\n<ul>\n<li><strong>Review</strong> — open any past session from the Start view to inspect its iterations and final workspace.</li>\n<li><strong>Fork</strong> — create a new session that starts where a previous one left off, optionally with a refined prompt.</li>\n<li><strong>Send back</strong> — when a session started from another hub app, return the final files to the source app. Prompt Gallery appends the returned HTML as a new variant in the original prompt folder.</li>\n<li><strong>Export</strong> — download the full session (goal, iterations, snapshots) as a <code>.json</code> file.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Handoff",
+      "html": "<p>Code Morph Lab v3 can receive code or prompts from other apps in the hub via a handoff mechanism. When a handoff is detected on launch, the imported files and prompt are pre-filled on the Start view. Completed imported sessions expose <strong>Send back</strong> so the final result can return to the originating app.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Tips",
+      "html": "<ul>\n<li>Start simple — a clear, testable goal converges faster than a vague one.</li>\n<li>Use <strong>Fork</strong> to iterate on a partially successful session without starting from scratch.</li>\n<li>Lower max iterations for quick experiments; raise them for complex multi-step goals.</li>\n<li>If the model gets stuck, try a different model or rephrase the prompt.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Keyboard shortcuts",
+      "html": "<table>\n<thead>\n<tr>\n<th>Shortcut</th>\n<th>Action</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><strong>Escape</strong></td>\n<td>Close any dialog</td>\n</tr>\n</tbody></table>"
+    },
+    {
+      "kind": "text",
+      "title": "Troubleshooting",
+      "html": "<ul>\n<li><em>Welcome gate won&#39;t dismiss</em> — you must connect a data root folder (Chrome / Edge only — File System Access API).</li>\n<li><em>Generation produces empty output</em> — try a more capable model; some free models struggle with tool-call prompts.</li>\n<li><em>Python mode errors on first run</em> — Pyodide loads on demand and may take a few seconds; check the browser console.</li>\n<li><em>Fork button missing</em> — fork is only available on completed (success / failed) sessions, not while running.</li>\n</ul>"
+    }
+  ]
+}

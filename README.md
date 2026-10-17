@@ -5,9 +5,10 @@
 **Generate it. Compare it. Keep the evidence.**
 
 A browser-based workbench for testing how language models turn the same idea into
-interactive HTML, p5.js sketches, and SVG artwork.
+interactive HTML, p5.js sketches, and SVG artwork — plus agentic builders that write
+whole games, WebXR projects and 3D assets, and a set of developer tools.
 
-[**Open the live site**](https://neuroviz.uk) · [Prompt Gallery](#prompt-gallery) · [p5 Sketch Gallery](#p5-sketch-gallery) · [SVG Generation Gallery](#svg-generation-gallery) · [Quick start](#quick-start)
+[**Open the live site**](https://neuroviz.uk) · [The benches](#the-three-benches) · [Agentic builders](#agentic-builders) · [Developer tools](#developer-tools) · [Quick start](#quick-start)
 
 ![Licence](https://img.shields.io/badge/licence-MIT-blue) ![No build step](https://img.shields.io/badge/build-none-brightgreen) ![Browsers](https://img.shields.io/badge/browsers-Chrome%20%7C%20Edge-informational)
 
@@ -66,6 +67,27 @@ Ask a model for vector artwork, then measure how close it got.
 
 <!-- VIDEO: SVG Generation Gallery walkthrough -->
 
+## Agentic builders
+
+A model is given tools and a budget, writes a multi-file project, and the app checks
+the result instead of trusting it.
+
+| App | What it does |
+|---|---|
+| **Game Forge** (`game-forge-v2/`) | Builds a complete multi-file game through an agentic file-writing loop, from a library of 339 briefs. Engines are copied into each project from a hash-pinned set. |
+| **VR Forge** (`vr-forge/`) | Builds WebXR projects for the Meta Quest 3, then runs each in an emulated immersive session to measure whether it really entered VR and rendered both eyes. |
+| **Understory Studio** (`understory-studio/`) | Turns one to three reference pictures into an editable 3D asset at five levels of detail; the model reviews renders of its own result against the reference. |
+| **Code Morph Lab** (`code-morph-lab-v3/`) | Iterative write → run → fix loop in HTML or in-browser Python (Pyodide). Prompt Gallery and SVG bench results can be sent to it with **Morph**. |
+
+## Developer tools
+
+| App | What it does |
+|---|---|
+| **C Machine Lab** | Steps a subset of C through a teaching machine with source, assembly, registers, stack, heap and memory side by side. |
+| **Algorithm Visualizer** | Instruments JavaScript or Python and replays variable changes as an animated array, graph, tree or grid. |
+| **SQL Playground** | SQLite in WebAssembly with a schema viewer, ER diagram, query plans and an SQL assistant. |
+| **AST Explorer & Refactor Lab** | Syntax trees for JavaScript, TypeScript and Python, with model-proposed refactors reviewed as diffs. |
+
 ## Quick start
 
 Nothing to install and nothing to build.
@@ -84,8 +106,8 @@ Open <http://localhost:8080> in Chrome or Edge.
 Then:
 
 1. **Settings → Choose folder.** Pick a folder you are happy for the apps to
-   organise. They create `prompt-gallery/`, `p5-sketch-gallery/`, and
-   `svg-benchmark/` inside it as you go.
+   organise. Each app creates its own subfolder inside it (`prompt-gallery/`,
+   `game-forge-v2/`, …) as you go.
 2. **Settings → connect a model.** Either add your OpenRouter key inside an app, or
    point the Settings page at a local server (below).
 3. **Open a bench and generate.**
@@ -116,10 +138,18 @@ vendored under `shared/lib/` and served from the same origin — the site makes 
 third-party requests at all.
 
 ```text
-prompt-gallery/     HTML generation and comparison
-p5-sketch-gallery/  p5.js generation and gallery
-svg-benchmark/      SVG generation and scoring
-shared/             components, services, styles, and vendored runtimes
+prompt-gallery/             HTML generation and comparison
+p5-sketch-gallery/          p5.js generation and gallery
+svg-benchmark/              SVG generation and scoring
+game-forge-v2/              agentic multi-file game builder
+vr-forge/                   agentic WebXR builder with emulated-session checks
+understory-studio/          reference pictures → editable 3D asset
+code-morph-lab-v3/          iterative code generation (HTML / Python)
+c-machine-lab/              C on a visible teaching machine
+algorithm-visualizer/       traced algorithm playback
+sql-playground/             SQLite in the browser
+ast-explorer-refactor-lab/  syntax trees and model-driven refactors
+shared/                     components, services, styles, and vendored runtimes
 ```
 
 Tests use Node's built-in runner:
@@ -140,9 +170,11 @@ secure-context features.
 ## Hosted edition versus the local hub
 
 This repository is the static, hosted-safe edition. It supports local **model
-servers** but not local **CLI coding agents** or cross-app handoffs, which depend on
-a Python bridge and apps outside this release. Local models and local CLI agents are
-different connection types; only the latter is absent here.
+servers** but not local **CLI coding agents**, the Wan2GP image/video nodes or the
+Blender bridge, which depend on a Python bridge outside this release. Cross-app
+handoffs work between apps in this release (for example Prompt Gallery → Code Morph
+Lab) and are hidden where the target app is not included. Local models and local CLI
+agents are different connection types; only the latter is absent here.
 
 ## Adding the videos
 

@@ -430,7 +430,7 @@ function CompareRuns({ compareRuns, onBack, onOpen, onRate }) {
                       ${it?.healed ? html`<span class="batch-healed-chip">fixed</span>` : null}
                       ${it?.paramsLabel && it.paramsLabel !== 'defaults' ? html`<span class="batch-params-chip"><i class="fa-solid fa-sliders"></i> ${it.paramsLabel}</span>` : null}
                       ${statsBits(it?.stats) ? html`<span class="batch-stats-line">${statsBits(it.stats)}</span>` : null}
-                      ${onOpen && it?.id ? html`<button class="btn btn-xs" title="Open this generation" onClick=${(e) => { e.stopPropagation(); onOpen(it.id); }}><i class="fa-solid fa-arrow-up-right-from-square"></i></button>` : null}
+                      ${onOpen && it?.id ? html`<button class="btn btn-xs" title="Open this generation in a new tab" onClick=${(e) => { e.stopPropagation(); onOpen(it.id); }}><i class="fa-solid fa-arrow-up-right-from-square"></i></button>` : null}
                     </div>
                   </div>
                 `;

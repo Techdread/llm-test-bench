@@ -8,9 +8,11 @@ const MAX_BYTES = 950_000;
 /**
  * Injected at the top of the preview document: forces WebGL contexts to keep
  * their drawing buffer (otherwise toDataURL reads back blank) and answers a
- * capture request with the largest canvas as a data URL.
+ * capture request with the largest canvas as a data URL. CAPTURE_SHIM_JS is the
+ * bare script, for previews that inject scripts themselves (forge projects).
  */
-export const CAPTURE_SHIM = `<script>(()=>{const g=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t,o){if(/webgl/i.test(String(t)))o=Object.assign({},o,{preserveDrawingBuffer:true});return g.call(this,t,o)};addEventListener('message',e=>{if(e.data!=='showcase-capture')return;const all=[...document.querySelectorAll('canvas')];const cs=all.filter(c=>c.width*c.height>0).sort((a,b)=>b.width*b.height-a.width*a.height);let url='',error='';try{url=cs[0]?cs[0].toDataURL('image/png'):''}catch(err){error=err.name||'Error'}parent.postMessage({type:'showcase-capture',url,error,canvases:all.length,sizes:all.map(c=>c.width+'x'+c.height)},'*')})})();<\/script>`;
+export const CAPTURE_SHIM_JS = `(()=>{const g=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t,o){if(/webgl/i.test(String(t)))o=Object.assign({},o,{preserveDrawingBuffer:true});return g.call(this,t,o)};addEventListener('message',e=>{if(e.data!=='showcase-capture')return;const all=[...document.querySelectorAll('canvas')];const cs=all.filter(c=>c.width*c.height>0).sort((a,b)=>b.width*b.height-a.width*a.height);let url='',error='';try{url=cs[0]?cs[0].toDataURL('image/png'):''}catch(err){error=err.name||'Error'}parent.postMessage({type:'showcase-capture',url,error,canvases:all.length,sizes:all.map(c=>c.width+'x'+c.height)},'*')})})();`;
+export const CAPTURE_SHIM = `<script>${CAPTURE_SHIM_JS}<\/script>`;
 
 export function withCaptureShim(html) {
   const text = String(html || '');

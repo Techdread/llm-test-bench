@@ -1,0 +1,282 @@
+/* Understory Studio — spec 336. Uses shared base.css variables. */
+
+/* The hub's theme variable is --border-color; this sheet was written against a
+   bare --border, which resolved to nothing and silently dropped every border it
+   was used in. Alias it rather than rewriting 30 declarations. */
+:root { --border: var(--border-color); }
+
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  display: flex; flex-direction: column;
+}
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ── Toolbar ──
+   The shell is the hub-standard .toolbar / .toolbar-left|center|right from
+   shared/styles/base.css — same bands, same button classes as Prompt Gallery.
+   Only the island wrapper that pairs the OpenRouter group with Generate/Stop
+   is local. */
+.us-island { display: flex; align-items: center; gap: 8px; }
+
+/* ── Buttons ── */
+.us-btn {
+  background: var(--bg-secondary); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 6px; padding: 7px 14px;
+  cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;
+  white-space: nowrap;
+}
+.us-btn:hover:not(:disabled) { background: var(--bg-hover); }
+.us-btn:disabled { opacity: .5; cursor: not-allowed; }
+.us-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.us-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.us-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.us-btn-sm { padding: 4px 9px; font-size: 12px; }
+.us-text-btn {
+  background: none; border: none; color: var(--accent); cursor: pointer;
+  font-size: 13px; padding: 4px 0; text-align: left;
+}
+
+.us-body { flex: 1; overflow: hidden; min-height: 0; display: flex; }
+
+/* ── Studio layout ── */
+.us-studio { display: flex; flex: 1; min-height: 0; width: 100%; }
+.us-rail {
+  width: 320px; flex-shrink: 0; overflow-y: auto; padding: 14px;
+  border-right: 1px solid var(--border); background: var(--bg-secondary);
+  display: flex; flex-direction: column; gap: 16px;
+}
+.us-rail-right { border-right: none; border-left: 1px solid var(--border); width: 340px; }
+.us-center { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.us-section { display: flex; flex-direction: column; gap: 8px; }
+.us-section > h3 {
+  margin: 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--text-secondary); font-weight: 600;
+}
+.us-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary); }
+.us-field select, .us-field input, .us-field textarea {
+  padding: 7px 9px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: inherit; font-size: 13px; width: 100%; box-sizing: border-box;
+}
+.us-field textarea { resize: vertical; min-height: 72px; }
+.us-check {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--text-secondary); cursor: pointer;
+}
+.us-check input { margin: 0; accent-color: var(--accent); }
+.us-note { font-size: 11px; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+.us-note a { color: var(--accent); }
+
+/* ── Reference uploads ── */
+.us-drop {
+  border: 1px dashed var(--border); border-radius: 8px; padding: 16px 12px;
+  text-align: center; cursor: pointer; color: var(--text-secondary); font-size: 12px;
+  background: var(--bg-primary);
+}
+.us-drop:hover, .us-drop.over { border-color: var(--accent); color: var(--text-primary); }
+.us-drop i { display: block; font-size: 20px; margin-bottom: 6px; color: var(--accent); }
+.us-thumbs { display: flex; gap: 6px; flex-wrap: wrap; }
+.us-thumb { position: relative; width: 68px; height: 68px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border); }
+.us-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.us-thumb button {
+  position: absolute; top: 2px; right: 2px; width: 18px; height: 18px;
+  border-radius: 4px; border: none; cursor: pointer; font-size: 10px; line-height: 1;
+  background: rgba(0, 0, 0, .65); color: #fff;
+}
+
+/* ── Viewport ── */
+.us-viewport { position: relative; flex: 1; min-height: 0; background: var(--bg-primary); }
+.us-viewport canvas { width: 100%; height: 100%; display: block; outline: none; }
+/* Opaque, not translucent: the WebGL canvas clears to the lighting preset's
+   background (a warm off-white), so secondary-grey text over it is unreadable
+   in the dark theme. The empty state covers the canvas entirely instead. */
+.us-empty {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px; text-align: center;
+  color: var(--text-secondary); pointer-events: none; padding: 24px;
+  background: var(--bg-primary);
+}
+.us-empty i { font-size: 40px; color: var(--accent); opacity: .55; }
+.us-empty h3 { margin: 0; font-size: 16px; color: var(--text-primary); }
+.us-empty p { margin: 0; font-size: 13px; max-width: 340px; line-height: 1.6; }
+.us-canvas-hint {
+  position: absolute; bottom: 8px; right: 10px; font-size: 11px;
+  color: var(--text-secondary); background: var(--bg-secondary);
+  padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); opacity: .85;
+}
+
+.us-viewbar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 12px; border-top: 1px solid var(--border); background: var(--bg-secondary);
+}
+.us-levels { display: flex; gap: 3px; }
+.us-level {
+  border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-secondary);
+  border-radius: 5px; padding: 4px 9px; font-size: 12px; cursor: pointer;
+}
+.us-level.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.us-level:disabled { opacity: .4; cursor: not-allowed; }
+.us-viewbar label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-secondary); }
+.us-viewbar select {
+  padding: 4px 7px; border-radius: 5px; border: 1px solid var(--border);
+  background: var(--bg-primary); color: var(--text-primary); font-size: 12px;
+}
+.us-stats { margin-left: auto; font-size: 11px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+/* ── Status strip ── */
+.us-status {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 12px; border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-secondary); background: var(--bg-secondary);
+}
+.us-status.busy { color: var(--text-primary); }
+.us-status .us-elapsed { font-variant-numeric: tabular-nums; }
+.us-error {
+  padding: 8px 12px; background: var(--danger); color: #fff; font-size: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Review ── */
+.us-verdict {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
+  padding: 3px 9px; border-radius: 999px; font-weight: 600;
+}
+.us-verdict.ok { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+.us-verdict.no { background: color-mix(in srgb, var(--warning) 20%, transparent); color: var(--warning); }
+.us-verdict.none { background: var(--bg-hover); color: var(--text-secondary); }
+.us-issues { margin: 0; padding-left: 18px; font-size: 12px; line-height: 1.6; color: var(--text-primary); }
+.us-issues li { margin-bottom: 4px; }
+.us-views { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.us-views figure { margin: 0; }
+.us-views img {
+  width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 5px;
+  border: 1px solid var(--border); background: var(--bg-primary); cursor: zoom-in; display: block;
+}
+.us-views figcaption { font-size: 10px; color: var(--text-secondary); text-align: center; margin-top: 2px; }
+
+/* ── Exports ── */
+.us-exports { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ── Triangle clean-up ── */
+.us-seg { display: flex; gap: 3px; }
+.us-seg-btn {
+  flex: 1; border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-secondary);
+  border-radius: 5px; padding: 4px 9px; font-size: 12px; cursor: pointer;
+}
+.us-seg-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.us-seg-btn:disabled { opacity: .4; cursor: not-allowed; }
+.us-steps { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 10px; }
+.us-steps > li { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-secondary); }
+.us-steps > li::marker { color: var(--text-secondary); font-size: 11px; }
+.us-strength { display: flex; flex-direction: column; gap: 2px; }
+.us-strength input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
+.us-strength input[type="range"]:disabled { opacity: .45; }
+.us-strength-scale { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary); }
+.us-level-strength { display: grid; grid-template-columns: 44px 1fr; gap: 6px; align-items: start; font-size: 11px; }
+.us-level-strength > span { padding-top: 2px; color: var(--text-primary); }
+.us-cleanup-progress { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-primary); }
+.us-cleanup-progress span { flex: 1; min-width: 0; }
+.us-cleanup-table { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+.us-cleanup-table th { text-align: left; font-weight: 600; color: var(--text-secondary); padding: 3px 4px; border-bottom: 1px solid var(--border); }
+.us-cleanup-table td { padding: 3px 4px; color: var(--text-primary); border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent); }
+.us-cleanup-table td:nth-child(n+2), .us-cleanup-table th:nth-child(n+2) { text-align: right; }
+.us-cleanup-table td:last-child { color: var(--success); }
+.us-warn { color: var(--warning); }
+
+/* ── Projects ── */
+.us-projects { padding: 18px; overflow-y: auto; flex: 1; }
+.us-project-grid {
+  display: grid; gap: 12px; margin-top: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.us-card {
+  border: 1px solid var(--border); border-radius: 8px; padding: 12px;
+  background: var(--bg-secondary); display: flex; flex-direction: column; gap: 6px;
+}
+.us-card h4 {
+  margin: 0; font-size: 14px;
+  display: flex; align-items: center; gap: 6px; min-width: 0;
+}
+/* The name truncates rather than wrapping, so the pencil stays where the eye
+   expects it whatever the project is called. */
+.us-card-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.us-icon-link {
+  background: none; border: none; padding: 2px 4px; cursor: pointer;
+  color: var(--text-secondary); font-size: 11px; flex-shrink: 0;
+}
+.us-icon-link:hover { color: var(--accent); }
+.us-rename { display: flex; align-items: center; gap: 6px; }
+.us-rename input {
+  flex: 1; min-width: 0; padding: 5px 8px; border-radius: 6px;
+  border: 1px solid var(--accent); background: var(--bg-primary);
+  color: var(--text-primary); font-family: inherit; font-size: 13px;
+}
+.us-card-meta { font-size: 11px; color: var(--text-secondary); display: flex; gap: 8px; flex-wrap: wrap; }
+.us-card-actions { display: flex; gap: 6px; margin-top: 4px; }
+.us-chip {
+  font-size: 10px; padding: 2px 7px; border-radius: 999px;
+  background: var(--bg-hover); color: var(--text-secondary); border: 1px solid var(--border);
+}
+
+/* ── Runs ── */
+.us-runs { display: flex; flex: 1; min-height: 0; }
+.us-run-list { width: 300px; border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; }
+.us-run-row {
+  padding: 9px 12px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 12px;
+}
+.us-run-row:hover { background: var(--bg-hover); }
+.us-run-row.active { background: var(--bg-hover); border-left: 3px solid var(--accent); }
+.us-run-row .us-run-action { font-weight: 600; color: var(--text-primary); }
+.us-run-detail { flex: 1; overflow-y: auto; padding: 16px; min-width: 0; }
+.us-run-detail pre {
+  white-space: pre-wrap; word-break: break-word; font-size: 11px; line-height: 1.5;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 6px; padding: 10px; max-height: 340px; overflow: auto;
+}
+
+/* ── Rig dialog ── */
+.us-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, .55);
+  display: flex; align-items: center; justify-content: center; z-index: 60; padding: 20px;
+}
+.us-modal {
+  background: var(--bg-primary); border: 1px solid var(--border); border-radius: 10px;
+  max-width: 720px; width: 100%; max-height: 86vh; overflow: auto; padding: 18px;
+}
+.us-modal h2 { margin: 0 0 6px; font-size: 16px; }
+.us-joints { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; margin: 12px 0; }
+.us-joint { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.us-joint span { width: 82px; flex-shrink: 0; color: var(--text-secondary); }
+.us-joint input {
+  width: 100%; min-width: 0; padding: 3px 5px; font-size: 11px;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg-secondary); color: var(--text-primary);
+}
+
+/* ── Toast ── */
+.us-toast {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 16px; font-size: 13px; z-index: 80;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .28); max-width: min(560px, 90vw);
+}
+
+/* ── Narrow screens ── */
+@media (max-width: 1100px) {
+  .us-studio { flex-direction: column; overflow-y: auto; }
+  .us-rail, .us-rail-right { width: auto; border: none; border-bottom: 1px solid var(--border); }
+  .us-center { min-height: 60vh; }
+  .us-runs { flex-direction: column; }
+  .us-run-list { width: auto; border-right: none; border-bottom: 1px solid var(--border); max-height: 240px; }
+}
+
+.us-projects-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 4px;
+}
+.us-projects-head h2 { margin: 0; font-size: 18px; }
+.us-projects > h2 { margin: 0 0 6px; font-size: 18px; }

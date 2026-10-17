@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Plain-language privacy policy for LLM Test Bench: no accounts, no analytics, files stay in the folder you choose.">
-  <title>Privacy · LLM Test Bench</title>
+  <meta name="description" content="Plain-language privacy policy for this site: no accounts, no analytics, files stay in the folder you choose.">
+  <title>Privacy · Peter Edwards</title>
   <link rel="canonical" href="https://neuroviz.uk/privacy">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="theme-color" content="#080b12">
-  <link rel="stylesheet" href="site.css?v=c961087019">
+  <link rel="stylesheet" href="site.css?v=d77ee34d8d">
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="./"><span class="brand-mark">LT</span><span>LLM Test Bench</span></a>
-    <nav><a href="./">Home</a><a href="showcase.html">Showcase</a><a href="settings.html">Settings</a><a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a></nav>
+    <a class="brand" href="./" aria-label="Peter Edwards — home"><span class="brand-mark">PE</span><span>Peter Edwards</span></a>
+    <nav aria-label="Main navigation"><a href="./#projects">Projects</a><a href="showcase.html">Showcase</a><a href="./#about">About</a><a href="settings.html">Settings</a><a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a></nav>
   </header>
   <main class="legal-page">
     <p class="eyebrow">Plain-language policy</p>
@@ -23,13 +23,14 @@
     <p>The maintainer curates the showcase from a private admin page protected by Cloudflare Access, which signs them in with a one-time code sent by email. Visitors never sign in and have no accounts.</p>
 
     <h2>Files</h2>
-    <p>When you connect a working folder, supported browsers give the site a restricted handle to the folder you chose. Generated files are written directly to that folder. They are not uploaded to the LLM Test Bench maintainers.</p>
+    <p>When you connect a working folder, supported browsers give the site a restricted handle to the folder you chose. Generated files are written directly to that folder. They are not uploaded to this site or its maintainer.</p>
 
     <h2>API keys and model requests</h2>
     <p>Provider settings, including an OpenRouter API key, are stored in your browser and may also be stored in the suite settings inside your chosen data folder. When you generate content, your prompt and selected settings are sent directly from your browser to the provider you selected. That provider's own privacy policy applies.</p>
+    <p>So the model picker can list what is available, the apps also load OpenRouter's public model list when they open (at most once an hour). If you have saved an OpenRouter key, that request carries it, exactly as a generation would.</p>
 
     <h2>Generated code</h2>
-    <p>Generated HTML and p5.js code runs in sandboxed previews. It can still make network requests allowed by your browser. Review generated code before sharing it or entering sensitive information into it.</p>
+    <p>Generated HTML, p5.js sketches, games and WebXR projects run in sandboxed previews; generated Python runs in your browser through WebAssembly. Generated code can still make network requests allowed by your browser. Review it before sharing it or entering sensitive information into it.</p>
     <p>The examples on the <a href="showcase.html">showcase</a> are shown exactly as each model wrote them. Some load libraries or fonts from public CDNs such as cdnjs, jsDelivr, or Google Fonts when you open them, and those providers will see an ordinary request from your browser.</p>
 
     <h2>Screen recording</h2>
@@ -41,6 +42,6 @@
     <h2>Questions</h2>
     <p>Use the repository's security-reporting instructions for sensitive problems. Please do not post API keys, private prompts, or personal files in a public issue.</p>
   </main>
-  <footer><span>LLM Test Bench · MIT licensed</span><span><a href="./">Back to the tools</a></span></footer>
+  <footer><span>Peter Edwards · Projects MIT licensed</span><span><a href="./">Back to the projects</a></span></footer>
 </body>
 </html>

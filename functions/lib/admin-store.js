@@ -7,18 +7,23 @@
 //   - an id is never reused, whatever its status;
 //   - every change appends an audit row with before/after snapshots.
 
-import { cdnHosts, hubOnlyPath, shapeProblem } from './showcase-checks.js';
+import { cdnHosts, hubOnlyPath, shapeProblem, parseProjectBundle, projectHubPath, projectPrivateTrace, projectCdnHosts } from './showcase-checks.js';
 
 export const LIMITS = {
   codeBytes: 2_000_000,       // D1/R2 are fine with more; keep generations reasonable
   svgBytes: 1_000_000,
+  projectBytes: 12_000_000,  // a forge run's bundle; pinned libraries are not stored in it
   posterBytes: 1_000_000,
   promptBytes: 20_000,
   title: 120,
   note: 200,
 };
 
-const BENCH_KIND = { 'prompt-gallery': 'html', 'p5-sketch-gallery': 'js', 'svg-benchmark': 'svg' };
+const BENCH_KIND = { 'prompt-gallery': 'html', 'p5-sketch-gallery': 'js', 'svg-benchmark': 'svg',
+  'game-forge-v2': 'project', 'vr-forge': 'project' };
+// R2 extension per kind: a forge project is stored as its JSON bundle.
+const KIND_EXT = { project: 'json' };
+const extFor = (kind) => KIND_EXT[kind] || kind;
 const NEW_ID = /^[a-z0-9][a-z0-9-]{1,63}$/;
 const RATING = /^(\d{1,2}\/\d{1,2})?$/;
 
@@ -47,7 +52,7 @@ export function posterType(bytes) {
 }
 
 const CONTENT_TYPES = { html: 'text/html; charset=utf-8', js: 'text/javascript; charset=utf-8',
-  svg: 'image/svg+xml', md: 'text/markdown; charset=utf-8', jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+  svg: 'image/svg+xml', json: 'application/json; charset=utf-8', md: 'text/markdown; charset=utf-8', jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 
 /** Write bytes under their content hash, only if that key is absent. */
 async function putContent(bucket, prefix, bytes, ext) {
@@ -103,12 +108,16 @@ export async function publishItem(db, bucket, meta, files, { actor, now }) {
 
   const code = files.code;
   if (!code?.length) fail(422, 'code is required');
-  if (code.length > (kind === 'svg' ? LIMITS.svgBytes : LIMITS.codeBytes)) fail(413, 'code file is too large');
+  const maxBytes = kind === 'svg' ? LIMITS.svgBytes : kind === 'project' ? LIMITS.projectBytes : LIMITS.codeBytes;
+  if (code.length > maxBytes) fail(413, 'code file is too large');
   const text = new TextDecoder().decode(code);
-  const hubPath = hubOnlyPath(text);
-  if (hubPath) fail(422, `loads ${hubPath}, which the public site does not have`);
   const shape = shapeProblem(text, kind);
   if (shape) fail(422, `not a clean ${kind} file: ${shape}`);
+  const bundle = kind === 'project' ? parseProjectBundle(text).bundle : null;
+  const hubPath = bundle ? projectHubPath(bundle) : hubOnlyPath(text);
+  if (hubPath) fail(422, `loads ${hubPath}, which the public site does not have`);
+  const trace = bundle ? projectPrivateTrace(bundle) : '';
+  if (trace) fail(422, `carries a private path or address (${trace})`);
 
   const prompt = String(files.prompt || '').trim();
   if (prompt.length > LIMITS.promptBytes) fail(413, 'prompt is too long');
@@ -123,7 +132,7 @@ export async function publishItem(db, bucket, meta, files, { actor, now }) {
 
   if (await getRow(db, id)) fail(409, `id ${id} is already used; ids are permanent, choose another`);
 
-  const codeKey = await putContent(bucket, 'code', code, kind);
+  const codeKey = await putContent(bucket, 'code', code, extFor(kind));
   const promptKey = prompt ? await putContent(bucket, 'prompt', new TextEncoder().encode(prompt), 'md') : null;
   const posterKey = posterExt ? await putContent(bucket, 'posters', files.poster, posterExt) : null;
   const { top } = await db.prepare('SELECT COALESCE(MAX(position), 0) AS top FROM items').first();
@@ -132,7 +141,7 @@ export async function publishItem(db, bucket, meta, files, { actor, now }) {
     id, bench: meta.bench, title, note, rating, kind,
     code_key: codeKey, prompt_key: promptKey, poster_key: posterKey,
     status: 'published', position: top + 1, hero: 0,
-    cdn_hosts: JSON.stringify(cdnHosts(text)),
+    cdn_hosts: JSON.stringify(bundle ? projectCdnHosts(bundle) : cdnHosts(text)),
     source_meta: JSON.stringify(meta.sourceMeta && typeof meta.sourceMeta === 'object' ? meta.sourceMeta : {}),
     created_at: now, updated_at: now,
   };
@@ -219,7 +228,7 @@ export async function restoreRevision(db, bucket, id, keys, { actor, now }) {
     const key = String(keys[field] || '');
     const prefix = field === 'code_key' ? 'code/' : 'posters/';
     if (!key.startsWith(prefix) || !(await bucket.head(key))) fail(422, `${field} ${key} is not a stored object`);
-    if (field === 'code_key' && !key.endsWith(`.${before.kind}`)) fail(422, 'code revision is a different kind of file');
+    if (field === 'code_key' && !key.endsWith(`.${extFor(before.kind)}`)) fail(422, 'code revision is a different kind of file');
     next[field] = key;
   }
   const fields = Object.keys(next);

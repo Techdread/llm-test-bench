@@ -71,7 +71,7 @@ entered by each user in their own browser and are never part of the deployment.
 
 ## Check the deployment
 
-- The landing page, settings page, privacy page, and all three tools load.
+- The landing page, settings page, privacy page, and every app listed in `PUBLIC_BUILD.json` loads.
 - The site still works with the network offline after first load — every runtime
   dependency is vendored under `shared/lib/`, so nothing should be fetched from a
   CDN.

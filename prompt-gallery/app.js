@@ -39,7 +39,10 @@ import { sendToCodeMorphLab } from '../shared/services/code-morph-handoff.js';
 import * as meta from './services/metadata.js';
 import * as library from './services/library.js';
 import * as openrouter from './services/openrouter.js';
-import { buildPromptGalleryAgentTask, PROMPT_GALLERY_AGENT_OUTPUT } from './services/codingAgent.js';
+import {
+  buildPromptGalleryAgentTask, PROMPT_GALLERY_AGENT_OUTPUT, PROMPT_GALLERY_AGENT_BUDGET_OVERRIDES,
+} from './services/codingAgent.js';
+import { DEFAULT_AGENT_BUDGETS } from '../shared/services/coding-agent.js';
 import { AGENTS, getAgentModelEffort } from '../shared/services/agent-backend.js';
 import { CLI_DEFAULT_MODEL, CLI_PROVIDER_PREFIX } from '../shared/services/executor-models.js';
 import * as modelProviders from '../shared/services/model-providers.js';
@@ -195,6 +198,12 @@ function App() {
       if (snap.provider !== undefined) setSelectedProviderId(snap.provider);
       if (snap.model !== undefined) setSelectedModelId(snap.model);
       if (Array.isArray(snap.disabledProviders)) setDisabledProviders(snap.disabledProviders);
+      // The executor fields have no localStorage scratch, so the useState
+      // initialisers above only ever see the defaults — disk is the one place
+      // a saved CLI agent can come back from.
+      if (snap.backend === 'agent' || snap.backend === 'model') setBackend(snap.backend);
+      if (snap.agent) setSelectedAgentId(snap.agent);
+      if (snap.agentModels && typeof snap.agentModels === 'object') setAgentModels(snap.agentModels);
     });
   }, []);
 
@@ -239,15 +248,26 @@ function App() {
   // Load models from all enabled providers on startup. Auto-pick is handled
   // in a separate effect so it can react to async hydrates of providers /
   // app-prefs / disabledProviders without re-running the network fetch.
+  //
+  // Models are published as each provider answers: a LAN provider that is
+  // switched off only fails at its timeout (30s), and waiting for it left the
+  // picker on "Loading…" with nothing selected. Runs overlap (mount, then the
+  // providers hydrate), so only the newest one may write state.
+  const loadModelsRunRef = useRef(0);
   const loadModels = useCallback(async () => {
+    const run = ++loadModelsRunRef.current;
+    const isCurrent = () => loadModelsRunRef.current === run;
     setModelsLoading(true);
     try {
-      const models = await modelProviders.fetchEnabledModels({ freeOnly: false });
-      setAllModels(models);
+      const models = await modelProviders.fetchEnabledModels({
+        freeOnly: false,
+        onPartial: (partial) => { if (isCurrent()) setAllModels(partial); },
+      });
+      if (isCurrent()) setAllModels(models);
     } catch (e) {
       console.warn('Failed to load models:', e);
     } finally {
-      setModelsLoading(false);
+      if (isCurrent()) setModelsLoading(false);
     }
   }, []);
 
@@ -255,6 +275,9 @@ function App() {
   // changes (default provider/model field, list, etc.). Used as a dep so the
   // auto-pick effect re-runs after the suite hydrates from disk.
   const [providersTick, setProvidersTick] = useState(0);
+
+  // "Loading…" only until the first provider answers; the rest fill in behind.
+  const pickerLoading = modelsLoading && allModels.length === 0;
 
   // Auto-pick selectedProvider/Model unless the user has an explicit choice
   // saved on disk. Reads the prefs snapshot at decision time so it stays
@@ -623,6 +646,7 @@ function App() {
           modelId: agentModels[selectedAgentId] || '',
           task: buildPromptGalleryAgentTask(promptText),
           outputFile: PROMPT_GALLERY_AGENT_OUTPUT,
+          budgets: { ...DEFAULT_AGENT_BUDGETS, ...PROMPT_GALLERY_AGENT_BUDGET_OVERRIDES },
           onOutput: (content) => {
             finalHtml = stripCodeFences(content);
             setResponse(finalHtml);
@@ -630,7 +654,10 @@ function App() {
         });
         finalHtml = stripCodeFences(completed.content);
         setResponse(finalHtml);
-        const usage = completed.doneEvent?.usage;
+        // serve.py reports a finished run's tokens as `tokenUsage` (`usage` is
+        // reserved for the per-event token budget), so reading only `usage`
+        // left agent runs with no token stats at all.
+        const usage = completed.doneEvent?.tokenUsage || completed.doneEvent?.usage;
         if (usage) {
           setResponseMetrics(current => current.timing?.startedAt === responseStartedAt
             ? {
@@ -1337,7 +1364,7 @@ function App() {
           onRefresh=${refreshGenerations}
           hasDirectory=${!!rootHandle}
           onPickDirectory=${handlePickDirectory}
-          onMorph=${crossAppHandoffsEnabled() ? handleMorphGeneration : null}
+          onMorph=${crossAppHandoffsEnabled(undefined, 'code-morph-lab-v3') ? handleMorphGeneration : null}
           onDelete=${handleDelete}
           onArchive=${handleArchiveGenerations}
           onCompare=${handleCompareFromView}
@@ -1370,6 +1397,7 @@ function App() {
               onCompare=${handleCompareFromView}
               onClose=${navigateToGallery}
               allowHandoffs=${crossAppHandoffsEnabled()}
+              allowMorph=${crossAppHandoffsEnabled(undefined, 'code-morph-lab-v3')}
             />
           </div>
         `;
@@ -1389,7 +1417,7 @@ function App() {
           loadHtml=${loadHtml}
           hasDirectory=${!!rootHandle}
           onPickDirectory=${handlePickDirectory}
-          onOpen=${(id) => navigate('view/' + id)}
+          onOpen=${(id) => window.open('#/view/' + id, '_blank', 'noopener')}
           onRefresh=${refreshGenerations}
           onMerge=${handleMergeRuns}
           onRate=${handleRateGeneration}
@@ -1411,7 +1439,7 @@ function App() {
               responseTiming=${responseMetrics.timing}
               isGenerating=${isGenerating}
               theme=${theme}
-              onMorph=${crossAppHandoffsEnabled() ? handleMorphCurrent : null}
+              onMorph=${crossAppHandoffsEnabled(undefined, 'code-morph-lab-v3') ? handleMorphCurrent : null}
               onSavePromptToLibrary=${() => handleOpenPromptForm({ prompt })}
             />
             <div class="create-right">
@@ -1474,7 +1502,7 @@ function App() {
       agentRunning=${agentRun.running}
       agentCancelling=${agentRun.cancelling}
       isGenerating=${isGenerating}
-      modelsLoading=${modelsLoading}
+      modelsLoading=${pickerLoading}
       hasApiKey=${apiKeySet}
       onApiKeyClick=${() => setShowApiKeyDialog(true)}
       onProviderSettingsClick=${() => setShowProviderSettings(true)}
@@ -1527,7 +1555,7 @@ function App() {
         prompts=${libraryPrompts}
         model=${batchModel}
         allModels=${allModels.filter(m => !disabledProviders.includes(m.providerId))}
-        modelsLoading=${modelsLoading}
+        modelsLoading=${pickerLoading}
         backend=${backend}
         selectedProviderId=${selectedProviderId}
         selectedModelId=${selectedModelId}

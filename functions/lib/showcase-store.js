@@ -6,6 +6,7 @@
 //
 // R2 keys are content-addressed and never overwritten:
 //   code/<sha256>.<html|js|svg>   the generation
+//   code/<sha256>.json            a forge project bundle (Game Forge, VR Forge)
 //   prompt/<sha256>.md            its prompt
 //   posters/<sha256>.<jpg|png>    tile image (none for SVG: the file is the art)
 
@@ -64,7 +65,7 @@ export function toTile(row, base = MEDIA_ROUTE) {
     note: row.note || '',
     rating: row.rating || '',
     kind: row.kind,
-    ext: `.${row.kind}`,
+    ext: row.kind === 'project' ? '.json' : `.${row.kind}`,
     hero: Boolean(row.hero),
     posterUrl: row.poster_key ? `${base}${row.poster_key}` : '',
     artUrl: svg ? `${base}${row.code_key}` : '',

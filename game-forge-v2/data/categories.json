@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "categories": [
+    { "id": "vr", "title": "VR · Quest 3", "icon": "fa-vr-cardboard", "order": 5 },
+    { "id": "action", "title": "Action", "icon": "fa-person-running", "order": 10 },
+    { "id": "shooter", "title": "Shooters", "icon": "fa-crosshairs", "order": 20 },
+    { "id": "platformer", "title": "Platformers", "icon": "fa-stairs", "order": 30 },
+    { "id": "rpg", "title": "RPG", "icon": "fa-hat-wizard", "order": 40 },
+    { "id": "strategy", "title": "Strategy & Cards", "icon": "fa-chess-knight", "order": 50 },
+    { "id": "simulation", "title": "Simulation", "icon": "fa-city", "order": 60 },
+    { "id": "puzzle", "title": "Puzzle", "icon": "fa-puzzle-piece", "order": 70 },
+    { "id": "racing", "title": "Racing", "icon": "fa-flag-checkered", "order": 80 },
+    { "id": "fighting", "title": "Fighting", "icon": "fa-hand-fist", "order": 90 },
+    { "id": "adventure", "title": "Adventure", "icon": "fa-compass", "order": 100 },
+    { "id": "sports", "title": "Sports", "icon": "fa-futbol", "order": 110 },
+    { "id": "uncategorized", "title": "Uncategorized", "icon": "fa-box-archive", "order": 999 }
+  ],
+  "collections": [
+    { "id": "arcade-classics", "title": "Arcade Classics", "order": 10 },
+    { "id": "home-computer", "title": "Home Computer", "order": 20 },
+    { "id": "console-classics", "title": "Console Classics", "order": 30 },
+    { "id": "pc-classics", "title": "PC Classics", "order": 40 },
+    { "id": "pc-2000s", "title": "PC 2000s", "order": 42 },
+    { "id": "pc-2010s", "title": "PC 2010s", "order": 44 },
+    { "id": "pc-2020s", "title": "PC 2020s", "order": 46 },
+    { "id": "modern-indie", "title": "Modern Indie", "order": 50 },
+    { "id": "forge-originals", "title": "Forge Originals", "order": 55 },
+    { "id": "quest-vr", "title": "Quest 3 Browser VR", "order": 60 },
+    { "id": "custom", "title": "Custom", "order": 900 }
+  ]
+}

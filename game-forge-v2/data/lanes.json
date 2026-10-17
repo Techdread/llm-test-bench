@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "note": "Seed variant lanes. A lane is a named library set a prompt can be pinned to. Vanilla is a lane like any other, not 'the original' — the baseline has to be a cell in the grid to be comparable.",
+  "lanes": [
+    {
+      "id": "vanilla",
+      "label": "Vanilla Canvas",
+      "libraries": [],
+      "defaultMode": "held-constant",
+      "note": "No provisioned library. The control cell — everything is hand-written against the raw canvas and Web Audio APIs."
+    },
+    {
+      "id": "p5",
+      "label": "p5.js",
+      "libraries": ["p5"],
+      "defaultMode": "preserve",
+      "note": "Creative-coding loop. Global mode setup()/draw(); approachable 2D."
+    },
+    {
+      "id": "phaser",
+      "label": "Phaser",
+      "libraries": ["phaser"],
+      "defaultMode": "preserve",
+      "note": "Full 2D engine — scenes, input, sprites, tilemaps and Arcade physics come for free."
+    },
+    {
+      "id": "pixi",
+      "label": "PixiJS",
+      "libraries": ["pixi"],
+      "defaultMode": "preserve",
+      "note": "Renderer only. The loop, input and game rules stay project code."
+    },
+    {
+      "id": "kaplay",
+      "label": "KAPLAY",
+      "libraries": ["kaplay"],
+      "defaultMode": "preserve",
+      "note": "Terse arcade-flavoured 2D engine with a component/tag scene model."
+    },
+    {
+      "id": "kontra",
+      "label": "Kontra.js",
+      "libraries": ["kontra"],
+      "defaultMode": "preserve",
+      "note": "Tiny 2D toolkit. Little is supplied, so most of the game is written by hand."
+    },
+    {
+      "id": "melon",
+      "label": "melonJS",
+      "libraries": ["melon"],
+      "defaultMode": "preserve",
+      "note": "Classic tile-and-entity 2D engine with a built-in game loop and state stack."
+    },
+    {
+      "id": "three-3d",
+      "label": "Three.js 3D",
+      "libraries": ["three"],
+      "defaultMode": "transform",
+      "note": "r128 core only — no OrbitControls, GLTFLoader or examples/jsm add-ons."
+    },
+    {
+      "id": "babylon-3d",
+      "label": "Babylon.js 3D",
+      "libraries": ["babylon"],
+      "defaultMode": "transform",
+      "note": "Batteries-included 3D engine with its own scene graph, cameras and materials."
+    },
+    {
+      "id": "playcanvas-3d",
+      "label": "PlayCanvas 3D",
+      "libraries": ["playcanvas"],
+      "defaultMode": "transform",
+      "note": "Entity/component 3D engine driven from code rather than its editor."
+    },
+    {
+      "id": "phaser-howler",
+      "label": "Phaser + Howler",
+      "libraries": ["phaser", "howler"],
+      "defaultMode": "preserve",
+      "note": "2D engine with an explicit audio layer, so sound is a first-class requirement."
+    },
+    {
+      "id": "p5-tone",
+      "label": "p5.js + Tone",
+      "libraries": ["p5", "tone"],
+      "defaultMode": "preserve",
+      "note": "Creative coding with synthesis — for games where audio is part of the mechanic."
+    },
+    {
+      "id": "three-rapier",
+      "label": "Three.js + Rapier 3D",
+      "libraries": ["three", "rapier3d"],
+      "defaultMode": "transform",
+      "note": "3D rendering with real rigid-body physics rather than hand-rolled motion."
+    }
+  ]
+}

@@ -1,0 +1,1716 @@
+{
+  "version": 1,
+  "note": "VR Forge seed briefs (spec 334). Every brief declares its session mode, interaction, comfort contract and a required desktop fallback.",
+  "prompts": [
+    {
+      "id": "rhythm-sabers",
+      "title": "Rhythm Saber Arena",
+      "kind": "game",
+      "xrMode": "immersive-vr",
+      "category": "game",
+      "targetStack": "web",
+      "prompt": "Build a rhythm game where two glowing sabers held in the controllers slice blocks flying towards the player on a beat. Blocks carry a required slice direction shown by an arrow; slicing along the arrow scores, slicing across it or missing breaks the combo. Generate the track procedurally from a fixed seed so the same song plays every run, drive the spawn timing from an audio clock rather than frame count, and split each sliced block into two halves that fly apart. Score, combo multiplier, and an end-of-track summary panel in world space.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "none",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop view from the player position with the mouse swinging one saber, so the timing and spawn pattern can be reviewed without a headset.",
+      "scene": {
+        "description": "A dark arena with a lit floor grid, blocks approaching from ahead along three lanes at two heights.",
+        "elements": [
+          "two saber meshes attached to the controllers",
+          "approaching blocks with direction arrows",
+          "world-space score panel",
+          "floor grid"
+        ]
+      },
+      "acceptance": [
+        "Blocks spawn on the beat from a seeded pattern and reach the player in time with the audio clock.",
+        "Slicing in the arrow direction scores and increments the combo; a wrong direction breaks it.",
+        "Sliced blocks separate into two halves along the cut plane.",
+        "A haptic pulse fires on every successful slice."
+      ],
+      "watchFor": "Spawn timing driven by frame count so the track drifts; slice detection that only tests controller position and ignores swing direction; halves that fall through the floor forever; audio started before a user gesture so the Quest browser blocks it.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "rhythm",
+        "action",
+        "haptics"
+      ]
+    },
+    {
+      "id": "archery-range",
+      "title": "VR Archery Range",
+      "kind": "game",
+      "xrMode": "immersive-vr",
+      "category": "game",
+      "targetStack": "web",
+      "prompt": "Build a two-handed archery range. The player holds the bow in one hand and draws with the other: the arrow's speed comes from the real distance between the two controllers at release, and the direction from the bow's orientation. Arrows are real projectiles with gravity and a trail; they stick where they land. Targets at 10, 20 and 30 metres, one of them moving laterally, with scoring rings and a running score on a world-space board.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "none",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "An over-the-shoulder desktop camera where dragging the mouse backwards draws and releases the bow, so ballistics can be checked without a headset.",
+      "scene": {
+        "description": "An outdoor range at ground level, three target stands at increasing distance, a quiver at the player's hip.",
+        "elements": [
+          "bow attached to the off hand",
+          "drawn arrow that follows the drawing hand",
+          "three targets with scoring rings",
+          "world-space scoreboard"
+        ]
+      },
+      "acceptance": [
+        "Draw distance measured between the two controller poses sets the release speed.",
+        "Arrows follow a ballistic arc and stick to whatever they hit.",
+        "Hits score by ring, and the moving target scores correctly.",
+        "The bow hand receives a haptic pulse as the draw passes full tension."
+      ],
+      "watchFor": "Release velocity taken from a single frame delta instead of the measured draw; arrows parented to the hand so they inherit hand motion after release; targets registering a hit anywhere on their bounding box rather than on the face.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "sport",
+        "physics",
+        "two-handed"
+      ]
+    },
+    {
+      "id": "escape-room",
+      "title": "VR Escape Room",
+      "kind": "game",
+      "xrMode": "immersive-vr",
+      "category": "game",
+      "targetStack": "web",
+      "prompt": "Build a single-room escape puzzle for room-scale play. Four linked puzzles: a key hidden in a drawer that must be pulled open, a combination lock whose digits are set by grabbing and turning dials, a UV torch that reveals a code painted on the wall, and a final door that opens when the code is entered. Objects are grabbed with the trigger, keep their world transform when picked up, and can be handed from one hand to the other. Track puzzle state explicitly so a solved step cannot be undone by accident.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "optional",
+        "locomotion": "roomscale",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": [
+          "hand-tracking"
+        ]
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop first-person view with mouse-look and click-to-grab, so every puzzle can be solved without a headset.",
+      "scene": {
+        "description": "A small windowless room with a desk, drawers, a wall safe, a door, and a torch on a shelf.",
+        "elements": [
+          "openable drawer",
+          "combination lock with turnable dials",
+          "UV torch with a light cone",
+          "exit door",
+          "grabbable props"
+        ]
+      },
+      "acceptance": [
+        "An object grabbed from either hand keeps its world position and rotation at the moment of grab.",
+        "The drawer and dials move within real hinge and rotation limits rather than teleporting.",
+        "The torch reveals the hidden code only where its cone falls.",
+        "Entering the correct code opens the door once and the state machine does not regress."
+      ],
+      "watchFor": "Reparenting a grabbed object without preserving its world transform so it snaps to the hand's origin; the room scaled so the desk is at chest height; a code that can be entered before it has been revealed.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "puzzle",
+        "room-scale",
+        "grab"
+      ]
+    },
+    {
+      "id": "cockpit-flight",
+      "title": "Cockpit Space Flight",
+      "kind": "game",
+      "xrMode": "immersive-vr",
+      "category": "game",
+      "targetStack": "web",
+      "prompt": "Build a seated space-flight game. The player sits in a cockpit with physical instruments: a throttle lever and a stick that are grabbed and moved, switches that flip, and readouts that update. Flying is Newtonian with thrust and drag-free inertia. Asteroids drift past and can be shot with a trigger-fired cannon; the ship takes damage and the hull readout falls. Comfort is the point of the brief: the cockpit frame is always visible and static relative to the player, and a vignette closes in during hard acceleration.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "seated",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": true
+      },
+      "desktopFallback": "A desktop cockpit view flown with the keyboard, so flight model and instrument behaviour can be reviewed without a headset.",
+      "scene": {
+        "description": "An enclosed cockpit with a canopy, a starfield and drifting asteroids outside, instruments within arm's reach.",
+        "elements": [
+          "grabbable throttle",
+          "grabbable flight stick",
+          "hull and speed readouts",
+          "asteroid field",
+          "cockpit frame"
+        ]
+      },
+      "acceptance": [
+        "The cockpit frame stays fixed relative to the player at all times.",
+        "Throttle and stick are grabbed and moved within their real ranges, and drive the flight model.",
+        "A vignette closes during acceleration above a stated threshold.",
+        "The game is playable seated: nothing requires standing or reaching beyond arm's length."
+      ],
+      "watchFor": "Moving the camera without user input; instruments that respond to a laser pointer instead of being grabbed; a starfield that rotates with the ship and makes the world feel like it is spinning around the player.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "seated",
+        "comfort",
+        "simulation"
+      ]
+    },
+    {
+      "id": "scale-explorer",
+      "title": "Hold the Solar System",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "targetStack": "web",
+      "prompt": "Build a scale explorer for the solar system. The whole system floats in front of the player at table scale; grabbing it with both hands and moving them apart scales it smoothly across ten orders of magnitude, from a system that fits in one hand to standing inside the orbit of Mercury. Planets follow real orbital periods at an adjustable time rate. A world-space readout always states the current scale in metres per unit and the simulated date.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop orbit camera with a scroll-wheel scale control, so scaling and orbital motion can be checked without a headset.",
+      "scene": {
+        "description": "A dark space with the sun and planets on their orbits, a floor grid for reference, and a control panel within reach.",
+        "elements": [
+          "sun and eight planets on orbital paths",
+          "two-handed scale gesture",
+          "scale and date readout",
+          "time-rate slider"
+        ]
+      },
+      "acceptance": [
+        "Two-handed scaling is continuous, keeps the point between the hands fixed, and covers at least six orders of magnitude.",
+        "Orbital periods stay in the correct ratios at every time rate.",
+        "The readout always states the current scale and simulated date.",
+        "At the largest scale the player can stand inside the system without the geometry clipping."
+      ],
+      "watchFor": "Scaling around the world origin instead of the point between the hands; single-precision jitter at extreme scales; orbital speeds hard-coded per planet instead of derived from period; the sun's light disappearing when the scale changes.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "astronomy",
+        "scale",
+        "two-handed"
+      ]
+    },
+    {
+      "id": "orbital-lab",
+      "title": "Orbital Mechanics Lab",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "targetStack": "web",
+      "prompt": "Build a hands-on orbital mechanics lab. The player places a satellite by grabbing it, aims a velocity vector by pulling a handle, and releases it into orbit around a central body. The integrator is deterministic and fixed-step, and a trajectory prediction line updates live as the handle is moved. A panel shows apoapsis, periapsis, eccentricity and period, and the same seed always produces the same trajectory.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "seated",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": true
+      },
+      "desktopFallback": "A desktop view with mouse placement and drag-to-aim, so trajectories and the integrator can be checked without a headset.",
+      "scene": {
+        "description": "A central planet with a grid plane through it, satellites on visible trajectory ribbons, a control panel at waist height.",
+        "elements": [
+          "grabbable satellite",
+          "velocity handle with live prediction",
+          "orbital element readout",
+          "time-rate control"
+        ]
+      },
+      "acceptance": [
+        "The prediction line matches the trajectory the satellite actually follows.",
+        "The integrator is fixed-step and reproduces identical trajectories from the same seed.",
+        "Apoapsis, periapsis, eccentricity and period are correct for a known circular orbit.",
+        "Time rate can be changed without changing the resulting trajectory."
+      ],
+      "watchFor": "Variable-timestep integration that makes orbits decay; a prediction drawn with different maths from the simulation; the readout showing radius instead of altitude; a scene scaled so the planet is kilometres away in world units.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "physics",
+        "deterministic",
+        "education"
+      ]
+    },
+    {
+      "id": "controller-playground",
+      "title": "Controller Physics Playground",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "targetStack": "web",
+      "prompt": "Build a physics playground for controller interaction. A table holds cubes, spheres and a stack of blocks. The player points with a laser, grabs at distance or up close, and throws \u2014 release velocity comes from smoothed controller motion over several frames, not one. Objects collide, stack and topple. A world-space panel with real buttons and a gravity slider adjusts the simulation, and an FPS and frame-cost readout sits beside it.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop orbit camera with mouse-drag grabbing and throwing, so the physics and panel can be reviewed without a headset.",
+      "scene": {
+        "description": "A room with a table of props, a world-space control panel, and a floor that catches what falls.",
+        "elements": [
+          "laser pointers on both controllers",
+          "grabbable props",
+          "world-space button panel",
+          "gravity slider",
+          "performance readout"
+        ]
+      },
+      "acceptance": [
+        "Throw velocity comes from smoothed motion across at least three frames.",
+        "A grabbed object keeps its world transform at the moment of grab.",
+        "The panel is raycastable and its buttons respond to the laser.",
+        "Changing gravity affects objects already in flight consistently."
+      ],
+      "watchFor": "Throw velocity taken from a single frame delta; the UI panel not raycastable; physics stepped with a variable timestep so stacks explode; nothing rendered outside an XR session.",
+      "libraries": [
+        "three-xr",
+        "rapier3d"
+      ],
+      "tags": [
+        "physics",
+        "interaction",
+        "sandbox"
+      ]
+    },
+    {
+      "id": "fluid-table",
+      "title": "Fluid Table",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "targetStack": "web",
+      "prompt": "Build a bounded particle-fluid simulation the player can reach into. A tank of a few thousand particles sits at table height; hands (or controllers) push the fluid, and a tilt handle pours it. The solver is a simple position-based fluid with a fixed timestep and a stated particle budget, and the frame cost readout must stay inside the budget on a Quest 3. A panel controls viscosity and particle count, and the simulation degrades gracefully when the count is raised.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop orbit view with mouse-driven collider, so the solver can be watched and profiled without a headset.",
+      "scene": {
+        "description": "A glass tank on a table, coloured particles inside, a control panel beside it.",
+        "elements": [
+          "particle tank",
+          "controller collider that pushes fluid",
+          "tilt handle",
+          "viscosity and count controls",
+          "frame-cost readout"
+        ]
+      },
+      "acceptance": [
+        "The solver runs at a fixed timestep independent of the render rate.",
+        "Controllers push particles rather than passing through them.",
+        "The stated particle budget is respected and shown alongside the measured frame cost.",
+        "Raising the particle count degrades smoothly instead of freezing the session."
+      ],
+      "watchFor": "Per-frame allocation in the solver loop; particles escaping the tank; a neighbour search rebuilt from scratch every frame; a budget claimed in the README but never measured.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "particles",
+        "performance",
+        "hands"
+      ]
+    },
+    {
+      "id": "passthrough-room-planner",
+      "title": "Passthrough Room Planner",
+      "kind": "app",
+      "xrMode": "immersive-ar",
+      "category": "mixed-reality",
+      "targetStack": "web",
+      "prompt": "Build a mixed-reality room planner that runs in passthrough. Using detected planes for the floor and walls, the player places furniture proxies on real surfaces, moves and rotates them with the controllers, and reads a live measurement between any two placed points. Furniture snaps to the floor plane and cannot intersect a detected wall. If plane detection is unavailable, fall back to a manually placed floor at a stated height and say so on screen.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": [
+          "plane-detection",
+          "hit-test",
+          "anchors"
+        ]
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop view with a synthetic room stands in for passthrough, so placement and snapping can be reviewed without a headset.",
+      "scene": {
+        "description": "The user's own room seen in passthrough, with placed furniture proxies and a measuring line.",
+        "elements": [
+          "detected floor and wall planes",
+          "placeable furniture proxies",
+          "measuring tool",
+          "status line stating whether planes were detected"
+        ]
+      },
+      "acceptance": [
+        "The session is requested as immersive-ar with plane-detection as an optional feature and the blend mode is not overdrawn by a skybox.",
+        "Furniture snaps to the floor plane and refuses to intersect a wall plane.",
+        "The measuring tool reports distances in metres accurate to a centimetre.",
+        "With no planes available the app states that clearly and still works from a manual floor."
+      ],
+      "watchFor": "Rendering an opaque background that hides passthrough; assuming planes exist; requiring plane-detection instead of requesting it as optional; furniture placed in headset-relative space so it drifts when the player walks.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "mixed-reality",
+        "passthrough",
+        "planes"
+      ]
+    },
+    {
+      "id": "data-observatory",
+      "title": "VR Data Observatory",
+      "kind": "app",
+      "xrMode": "immersive-vr",
+      "category": "app",
+      "targetStack": "web",
+      "prompt": "Build a world-space data observatory. Bundle a small JSON dataset in the project and render it as three linked views the player can walk between: a 3D scatter plot, a bar wall, and a time series ribbon. Pointing at a data point in one view highlights the same record in the others and shows a label panel that always faces the player. Axis labels stay legible at reading distance and the whole scene can be scaled with a two-handed gesture.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "teleport",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop orbit camera with mouse hover and selection, so linking and labelling can be reviewed without a headset.",
+      "scene": {
+        "description": "A dark room with three data displays arranged around the player and a floating label panel.",
+        "elements": [
+          "3D scatter plot",
+          "bar wall",
+          "time-series ribbon",
+          "billboard label panel",
+          "axis labels with units"
+        ]
+      },
+      "acceptance": [
+        "Selecting a record in one view highlights it in the other two.",
+        "The label panel always faces the player and stays readable at 1.5 m.",
+        "Axis text remains legible after a two-handed scale change.",
+        "The bundled dataset is the only data source \u2014 nothing is fetched."
+      ],
+      "watchFor": "Text rendered so small it aliases into noise in a headset; labels that face the world origin rather than the player; linked selection implemented three separate times and drifting out of sync; a dataset fetched from the network.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "dataviz",
+        "ui",
+        "text"
+      ]
+    },
+    {
+      "id": "hand-instrument",
+      "title": "Hand-Tracking Instrument",
+      "kind": "app",
+      "xrMode": "immersive-vr",
+      "category": "app",
+      "targetStack": "web",
+      "prompt": "Build a musical instrument played with tracked hands and no controllers at all. Pinching each finger against the thumb triggers a different note; the pinch strength sets velocity and hand height sets filter cutoff. Show a clear hand skeleton, a visual for each trigger zone, and a sustain plate the player can rest a hand on. If hand tracking is unavailable, say so and fall back to controller triggers.",
+      "interaction": {
+        "controllers": "optional",
+        "hands": "required",
+        "locomotion": "none",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": [
+          "hand-tracking"
+        ]
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop view with keyboard keys standing in for pinches, so the synthesis and mapping can be checked without a headset.",
+      "scene": {
+        "description": "A dark space with glowing note zones floating in front of the player and a visible hand skeleton.",
+        "elements": [
+          "joint-accurate hand skeleton",
+          "five pinch note zones per hand",
+          "sustain plate",
+          "hand-tracking status line"
+        ]
+      },
+      "acceptance": [
+        "The session requests hand-tracking as an optional feature and works without it.",
+        "Pinch detection uses joint distances with hysteresis, not a single threshold.",
+        "Note velocity varies with pinch speed and cutoff with hand height.",
+        "Audio starts only after a user gesture, as the Quest browser requires."
+      ],
+      "watchFor": "Requiring hand-tracking so the session fails on controllers; retriggering a note every frame the pinch is held; audio context created at load and blocked; a skeleton drawn from the wrong joint set.",
+      "libraries": [
+        "three-xr",
+        "tone"
+      ],
+      "tags": [
+        "audio",
+        "hand-tracking",
+        "instrument"
+      ]
+    },
+    {
+      "id": "paint-studio",
+      "title": "VR Paint Studio",
+      "kind": "app",
+      "xrMode": "immersive-vr",
+      "category": "app",
+      "targetStack": "web",
+      "prompt": "Build a three-dimensional painting studio. Holding the trigger draws a ribbon that follows the controller, with width from trigger pressure and a colour picked from a world-space palette. Strokes are real geometry built incrementally, not a particle trail. Undo removes the last stroke, and the whole painting can be orbited by grabbing empty space with both hands. Keep the geometry budget stated and enforced.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop view where mouse drags paint on a plane at a fixed depth, so stroke geometry and undo can be reviewed without a headset.",
+      "scene": {
+        "description": "An empty studio with a palette wheel within reach and the growing painting in front of the player.",
+        "elements": [
+          "ribbon strokes with variable width",
+          "palette wheel",
+          "undo control",
+          "two-handed orbit of the whole painting",
+          "stroke and vertex counter"
+        ]
+      },
+      "acceptance": [
+        "A stroke is built incrementally without rebuilding previous geometry each frame.",
+        "Ribbon width responds to trigger pressure.",
+        "Undo removes exactly the last stroke and can be repeated.",
+        "The vertex counter is shown and the stated budget is not exceeded."
+      ],
+      "watchFor": "Rebuilding the whole stroke mesh every frame; ribbons that flip when the controller rolls; undo that clears the canvas; unbounded geometry growth that eventually stalls the session.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "creative",
+        "geometry",
+        "ui"
+      ]
+    },
+    {
+      "id": "spatial-notes",
+      "title": "Spatial Notes Board",
+      "kind": "app",
+      "xrMode": "immersive-vr",
+      "category": "app",
+      "targetStack": "web",
+      "prompt": "Build a spatial note board. Notes are world-space cards the player creates, moves, resizes and pins to a wall; text is entered with the system keyboard where available and a pointer-driven on-screen keyboard where it is not. Notes can be grouped into columns, and the whole board persists to localStorage so it survives a reload inside the headset. Text must stay crisp at reading distance.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "teleport",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop view with click-to-create and keyboard entry, so persistence and layout can be checked without a headset.",
+      "scene": {
+        "description": "A wall of pinned note cards in three columns, a creation tray at waist height.",
+        "elements": [
+          "note cards with legible text",
+          "three columns",
+          "creation tray",
+          "keyboard entry path",
+          "persistence across reload"
+        ]
+      },
+      "acceptance": [
+        "Notes persist across a reload of the page.",
+        "Text is rendered at a resolution that stays sharp at 1 m.",
+        "Cards can be moved between columns and keep their order.",
+        "Where the system keyboard is unavailable the fallback keyboard is usable with a pointer."
+      ],
+      "watchFor": "Canvas text drawn at a low resolution and stretched; a keyboard assumption that leaves the app unusable; notes stored in memory only; cards that overlap after a reload.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "productivity",
+        "text",
+        "persistence"
+      ]
+    },
+    {
+      "id": "raw-webxr",
+      "title": "Raw WebXR, No Libraries",
+      "kind": "app",
+      "xrMode": "immersive-vr",
+      "category": "app",
+      "targetStack": "web",
+      "prompt": "Build a WebXR scene with NO libraries at all \u2014 raw WebGL2 and the WebXR Device API only. Write the matrix maths, the shader, the buffer setup and the render loop yourself. The scene is a lit grid floor, a few coloured cubes, and a controller-attached pointer ray. This brief exists to prove the platform contract works without a framework, so keep the code short, commented and readable.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "none",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop canvas rendering the same scene from a fixed camera with WASD movement, so the renderer can be inspected without a headset.",
+      "scene": {
+        "description": "A grid floor with a handful of cubes and a pointer ray from each controller.",
+        "elements": [
+          "hand-written matrix maths",
+          "GLSL shader pair",
+          "grid floor",
+          "cubes",
+          "controller ray"
+        ]
+      },
+      "acceptance": [
+        "The project loads no library of any kind.",
+        "Both eye views are rendered from the session's viewer pose with correct per-view projection and viewport.",
+        "The render loop runs through XRSession.requestAnimationFrame.",
+        "The controller ray follows the emulated controller pose."
+      ],
+      "watchFor": "Using window.requestAnimationFrame inside the session; rendering one view and presenting it to both eyes; forgetting to set the viewport per view; ignoring the framebuffer from XRWebGLLayer.",
+      "libraries": [],
+      "tags": [
+        "raw",
+        "webgl2",
+        "control-cell"
+      ]
+    },
+    {
+      "id": "teleport-gallery",
+      "title": "VR Teleport Gallery",
+      "kind": "app",
+      "xrMode": "immersive-vr",
+      "category": "app",
+      "targetStack": "web",
+      "prompt": "Build a gallery the player moves through by teleporting. A parabolic arc from the controller shows the landing point with a visible marker; releasing the thumbstick teleports with a brief fade. Invalid destinations (walls, outside the floor) are shown in a distinct colour and refuse the teleport. The gallery has three rooms of procedurally generated artwork on the walls, with a plaque under each piece that becomes readable at conversational distance.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "teleport",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop view with WASD movement and mouse-look through the same gallery, so navigation and artwork can be reviewed without a headset.",
+      "scene": {
+        "description": "Three connected white-walled rooms with framed procedural artwork and readable plaques.",
+        "elements": [
+          "parabolic teleport arc",
+          "landing marker with valid/invalid states",
+          "fade on teleport",
+          "three rooms",
+          "artwork plaques"
+        ]
+      },
+      "acceptance": [
+        "The teleport arc lands where the marker shows, within a few centimetres.",
+        "Invalid destinations are visibly rejected and do not move the player.",
+        "The teleport fade is short and the player never moves without input.",
+        "Plaque text is legible at 1 m and the artwork is generated procedurally."
+      ],
+      "watchFor": "Teleporting by moving the camera instead of the player rig, so the headset offset is lost; an arc drawn with different maths from the raycast; snapping the view without a fade; artwork drawn at a resolution that shimmers.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "locomotion",
+        "gallery",
+        "comfort"
+      ]
+    },
+    {
+      "id": "economy-sandbox",
+      "title": "Macroeconomy Sandbox",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "economics",
+      "targetStack": "web",
+      "prompt": "Build an agent-based macroeconomy the player runs from inside it. Several hundred household and firm agents trade in a goods market and a labour market: firms set prices from inventory and marginal cost, households allocate income between consumption and saving by a stated rule, wages adjust to unemployment, and a bank sets the interest rate. The player stands at a control table with physical levers \u2014 interest rate, income tax, government spending, minimum wage \u2014 and world-space charts show GDP, unemployment, inflation, the Gini coefficient and firm inventories updating live. Time is a rate the player controls; the same seed replays identically. Every chart is grabbable and can be pulled off the wall to compare two runs side by side. The point is causal legibility: pulling a lever must visibly propagate through the model in a way the player can trace, not just move a line.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "teleport",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop dashboard of the same charts with slider controls, so the model can be run, profiled and compared without a headset.",
+      "scene": {
+        "description": "A dark control room with a waist-high lever table, a curved wall of live charts, and a slowly rotating 3D lattice of agents whose colour shows employment and wealth.",
+        "elements": [
+          "lever table with four grabbable levers",
+          "GDP / unemployment / inflation / Gini charts",
+          "agent lattice coloured by state",
+          "time-rate control",
+          "run comparison slot"
+        ]
+      },
+      "acceptance": [
+        "The same seed and the same lever history reproduce the same series exactly.",
+        "Every lever change propagates through the model within a stated number of simulated periods, and the chain is visible on the charts.",
+        "Inflation, unemployment and the Gini coefficient are computed from the agent population, not scripted.",
+        "Two runs can be compared side by side in world space."
+      ],
+      "watchFor": "A model whose aggregates are hand-written curves rather than emergent from agents; charts that redraw entire geometries every frame; a Gini coefficient computed on the wrong distribution; levers that change a number with no traceable effect.",
+      "libraries": [
+        "three-xr",
+        "hub-bridge"
+      ],
+      "tags": [
+        "economics",
+        "agent-based",
+        "charts",
+        "policy"
+      ],
+      "hubServices": {
+        "ask": "optional"
+      }
+    },
+    {
+      "id": "order-book-floor",
+      "title": "Order Book Trading Floor",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "economics",
+      "targetStack": "web",
+      "prompt": "Build a market-microstructure laboratory. A live limit order book for one instrument is rendered as a physical structure in front of the player: price levels stacked vertically, resting size as depth, and trades falling through as they execute. Populate it with three classes of algorithmic participant \u2014 a market maker quoting a spread around its inventory, momentum traders, and noise traders \u2014 plus the player, who can place, move and cancel their own limit orders by grabbing price levels. Show the mid price, spread, book imbalance and realised volatility as world-space instruments; a time-and-sales ribbon scrolls past at eye level. The matching engine must be a real price-time priority engine with partial fills, and the whole session must be reproducible from a seed.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "seated",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": true
+      },
+      "desktopFallback": "A desktop view of the same book as a depth chart plus a tape, so matching, fills and latency can be checked without a headset.",
+      "scene": {
+        "description": "A dark floor with the order book rising like a lit canyon in front of the player, a scrolling trade ribbon overhead, and instrument dials to the right.",
+        "elements": [
+          "price-time priority matching engine",
+          "book depth rendered by level",
+          "player order handles",
+          "time-and-sales ribbon",
+          "spread / imbalance / volatility instruments"
+        ]
+      },
+      "acceptance": [
+        "Orders match by strict price-time priority, with partial fills handled correctly.",
+        "A player order rests in the book, is visible at its level, and can be cancelled.",
+        "Book imbalance and realised volatility are computed from the actual event stream.",
+        "The same seed reproduces the same tape."
+      ],
+      "watchFor": "A 'book' that is only a picture with no matching engine behind it; trades that violate price-time priority; a tape that redraws every frame; latency modelled as nothing at all so the market maker is never picked off.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "economics",
+        "market",
+        "microstructure"
+      ]
+    },
+    {
+      "id": "city-planner-table",
+      "title": "Urban Planning Table",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "urban",
+      "targetStack": "web",
+      "prompt": "Build a table-top city the player plans by hand. A 32x32 parcel grid sits at waist height; the player picks up zoning tiles (residential, commercial, industrial, park, civic) and places them, draws roads and a transit line by dragging, and watches a simulation respond: population moves in by land value and accessibility, jobs follow demand, traffic loads the road network, tax revenue funds services, and pollution and noise fall off with distance from industry and arterials. Districts grow real buildings whose height follows density. A world-space report panel shows population, jobs-housing balance, mean commute, service coverage, tax balance and emissions, and flags what is failing. The player can lift the whole city to inspect a district at street scale.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop top-down planner with mouse zoning and the same report, so the simulation and its indicators can be checked without a headset.",
+      "scene": {
+        "description": "A lit parcel grid on a table, growing buildings, a transit line the player has drawn, and a floating report panel to one side.",
+        "elements": [
+          "zoning tile tray",
+          "road and transit drawing",
+          "buildings that grow with density",
+          "land-value and accessibility heat maps",
+          "report panel with failing indicators"
+        ]
+      },
+      "acceptance": [
+        "Land value is computed from accessibility and amenity, and visibly changes when a transit line is added.",
+        "Mean commute time responds to the road and transit network, not to a fixed table.",
+        "Buildings grow and shrink with the simulated density rather than being placed by hand.",
+        "The report names which indicator is failing and why."
+      ],
+      "watchFor": "A city builder with no simulation behind the graphics; heat maps recomputed for every parcel every frame; a transit line that changes nothing; scale so wrong that a 'street-level' view puts the player inside a building.",
+      "libraries": [
+        "three-xr",
+        "hub-bridge"
+      ],
+      "tags": [
+        "urban-planning",
+        "simulation",
+        "heatmaps"
+      ],
+      "hubServices": {
+        "ask": "optional",
+        "image": "optional"
+      }
+    },
+    {
+      "id": "transit-network-lab",
+      "title": "Transit Network Lab",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "urban",
+      "targetStack": "web",
+      "prompt": "Build a public-transport network design lab. A real city's demand is represented by an origin-destination matrix over a hex grid; the player draws bus and rail lines by dragging between stops, sets headways with a dial, and the simulation assigns passengers to the shortest generalised-cost path including walking, waiting and transfers. Show line loads as thickness, crowding as colour, and unserved demand as smoke rising from the grid. A budget meter converts vehicle-kilometres and fleet size into operating cost, so every improvement has a price. The player can walk into the network at scale to see a crowded interchange, and can save two designs and compare coverage, mean journey time and cost side by side.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "teleport",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop map view with mouse line drawing and the same assignment and metrics, so routing and cost can be checked without a headset.",
+      "scene": {
+        "description": "A hex-grid city at table scale with coloured transit lines, load-thickened corridors, and smoke where demand goes unserved.",
+        "elements": [
+          "origin-destination demand",
+          "draggable lines and stops",
+          "headway dials",
+          "passenger assignment by generalised cost",
+          "budget meter",
+          "two-design comparison"
+        ]
+      },
+      "acceptance": [
+        "Passenger assignment accounts for walking, waiting and transfer penalties, not just in-vehicle time.",
+        "Changing a headway changes waiting time and therefore the assignment.",
+        "Operating cost follows vehicle-kilometres and fleet size from the actual timetable.",
+        "Two designs can be compared on coverage, mean journey time and cost."
+      ],
+      "watchFor": "Assignment that ignores transfers so every line looks equally good; smoke particles allocated per frame; a budget that is a constant; lines that can be drawn through impossible terrain with no cost.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "urban-planning",
+        "transit",
+        "optimisation"
+      ]
+    },
+    {
+      "id": "pallet-single-sku",
+      "title": "Single-SKU Pallet Optimiser",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "logistics",
+      "targetStack": "web",
+      "prompt": "Build a single-SKU palletisation lab. The player sets a carton size and weight and a pallet standard (EUR 1200x800, or 1200x1000), plus maximum load height, maximum load weight and permitted overhang. The solver generates candidate layer patterns \u2014 block, brick, row, pinwheel and their rotations \u2014 evaluates each on footprint utilisation and interlocking between layers, and builds the full pallet layer by layer. The player watches layers assemble in the air in front of them, can page through candidate patterns with a dial, and can grab and rotate any carton to hand-modify a layer, with the utilisation figure updating live. Show area utilisation, cube utilisation, cartons per pallet, load height and load weight as world-space readouts, and mark any carton that breaks the overhang rule in red.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop view with an orthographic layer plan and the same solver and readouts, so patterns and utilisation can be checked without a headset.",
+      "scene": {
+        "description": "A pallet at floor level with cartons assembling above it layer by layer, a pattern dial within reach, and a readout board beside it.",
+        "elements": [
+          "parameterised carton and pallet",
+          "block / brick / row / pinwheel pattern generator",
+          "layer-by-layer assembly",
+          "utilisation and count readouts",
+          "overhang violation highlighting"
+        ]
+      },
+      "acceptance": [
+        "Every generated pattern is geometrically valid: no overlaps, nothing outside the pallet plus permitted overhang.",
+        "Area and cube utilisation are computed from the actual placement, and match a hand-checkable case.",
+        "Alternating layer orientation is offered and its interlocking effect is stated.",
+        "Load height and weight limits are enforced and reported, not just displayed."
+      ],
+      "watchFor": "Patterns that overlap by a millimetre and are counted as valid; utilisation computed from the nominal pattern rather than the placed cartons; ignoring the pallet's own height in the load-height limit; cartons rendered as a single instanced blob the player cannot grab.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "logistics",
+        "packing",
+        "optimisation"
+      ]
+    },
+    {
+      "id": "pallet-mixed-sku",
+      "title": "Mixed-SKU Pallet Builder",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "logistics",
+      "targetStack": "web",
+      "prompt": "Build a mixed-SKU three-dimensional packing lab for axis-aligned boxes. The player loads an order of 20-60 cartons across several SKUs with different sizes, weights, fragility classes and drop sequences, and the solver packs them onto one or more pallets with a real 3D bin-packing heuristic \u2014 extreme-point or maximal-space style placement with a first-fit-decreasing ordering \u2014 subject to constraints that matter in a warehouse: heavy under light, fragile never load-bearing, a stated maximum stack pressure, full support area under every box above a threshold, and last-in-first-out order by delivery stop. Every placement decision is inspectable: point at a carton and see which constraint drove it there and which alternatives were rejected. The player can pull a carton out and place it by hand, and the panel immediately reports which constraints that breaks.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop view with a 3D orbit camera over the same packing and the same explanations, so heuristic decisions can be reviewed without a headset.",
+      "scene": {
+        "description": "One or two pallets mid-build, a queue of remaining cartons floating to the left in load order, and a constraint panel that explains the selected carton.",
+        "elements": [
+          "multi-SKU carton set with weight and fragility",
+          "extreme-point placement heuristic",
+          "support-area and stack-pressure checks",
+          "LIFO delivery ordering",
+          "per-carton decision explanation"
+        ]
+      },
+      "acceptance": [
+        "No two placed cartons overlap, and every carton above the base has at least the stated support area beneath it.",
+        "Fragile cartons never carry load, and heavier cartons are never placed on lighter ones beyond the stated pressure limit.",
+        "Unloading in delivery order never requires moving a carton for a later stop.",
+        "Selecting any carton explains the constraint that determined its position."
+      ],
+      "watchFor": "A packer that only checks bounding boxes and lets cartons float; support area approximated by centre-point containment; LIFO ignored so the truck has to be unpacked twice; an 'explanation' that restates the heuristic name instead of the decision.",
+      "libraries": [
+        "three-xr",
+        "rapier3d",
+        "hub-bridge"
+      ],
+      "tags": [
+        "logistics",
+        "packing",
+        "constraints",
+        "heuristics"
+      ],
+      "hubServices": {
+        "ask": "optional",
+        "agent": "optional"
+      }
+    },
+    {
+      "id": "pallet-cylinders",
+      "title": "Cylindrical Load Planner",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "logistics",
+      "targetStack": "web",
+      "prompt": "Build a palletisation lab for cylindrical goods \u2014 drums, reels, coils and cans. The player sets a cylinder diameter, height and weight, and the solver packs each layer with a real circle-packing pass: square (grid) versus hexagonal (staggered) arrangements, plus an edge-fill step that tries rotated rows against the pallet boundary. It then decides between upright and recumbent (on-side, nested in the valleys of the layer below) stacking, showing the cube utilisation of each. Stability matters here: compute and display the centre of mass of the whole load, its horizontal offset from the pallet centre, and the tilt angle at which the load would topple, plus the contact count under each cylinder. Let the player switch arrangement, add a dunnage layer, and watch the stability figures change.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop view with a plan view of each layer and the same stability figures, so packing and centre of mass can be checked without a headset.",
+      "scene": {
+        "description": "A pallet with cylinders assembling in layers, a translucent centre-of-mass marker with a plumb line, and a tilt gauge to the side.",
+        "elements": [
+          "square vs hexagonal circle packing",
+          "upright and recumbent nesting",
+          "centre-of-mass and plumb line",
+          "topple-angle gauge",
+          "dunnage layer option"
+        ]
+      },
+      "acceptance": [
+        "Hexagonal packing fits at least as many cylinders per layer as square packing for the same diameter, and neither overlaps.",
+        "Recumbent cylinders nest in the valleys of the layer below rather than floating on their tangents.",
+        "The centre of mass is computed from the actual placed cylinders and their weights.",
+        "The stated topple angle follows from the centre of mass and the support polygon."
+      ],
+      "watchFor": "Circle packing that allows overlap at the boundary; nesting that ignores the valley offset so the load is a millimetre too tall; a centre of mass that is just the geometric centre; a topple angle quoted as a constant.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "logistics",
+        "packing",
+        "stability",
+        "cylinders"
+      ]
+    },
+    {
+      "id": "warehouse-orderpick",
+      "title": "Warehouse Pick-Path Lab",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "logistics",
+      "targetStack": "web",
+      "prompt": "Build a warehouse order-picking simulation. A rack layout with aisles and cross-aisles holds several hundred SKUs; orders arrive with a demand profile, and pickers (or an AGV fleet) route through the aisles to fill them. Implement two routing policies \u2014 S-shape traversal and largest-gap return \u2014 plus a batching step that groups orders into a cart, and show travel distance, pick rate and congestion at aisle heads. The player stands above the warehouse at table scale and can watch pickers move, then teleport down to aisle level to see a pick face. Slotting is the lever that matters: the player can move a SKU to a different location and watch the travel distance for the same order stream change, with an ABC-by-velocity slotting available as a one-press comparison.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "teleport",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop plan view with the same routing and metrics, so policies can be compared without a headset.",
+      "scene": {
+        "description": "A warehouse at table scale with racks, moving pickers, and heat on the aisles where congestion builds.",
+        "elements": [
+          "rack layout with slots",
+          "order stream with a demand profile",
+          "S-shape and largest-gap routing",
+          "order batching",
+          "slotting editor with ABC comparison",
+          "travel and congestion metrics"
+        ]
+      },
+      "acceptance": [
+        "Both routing policies are implemented and produce different, correct paths for the same order.",
+        "Travel distance is measured along the actual path taken, including cross-aisle choices.",
+        "Moving a SKU changes travel distance for the same seeded order stream.",
+        "Congestion is derived from picker occupancy, not painted on."
+      ],
+      "watchFor": "Routing that teleports pickers down the shortest straight line through racking; batching that ignores cart capacity; a slotting change that does not affect the metric; per-frame rebuilds of the whole rack geometry.",
+      "libraries": [
+        "three-xr",
+        "hub-bridge"
+      ],
+      "tags": [
+        "logistics",
+        "warehouse",
+        "routing"
+      ],
+      "hubServices": {
+        "agent": "optional"
+      }
+    },
+    {
+      "id": "traffic-junction-lab",
+      "title": "Traffic Junction Lab",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "traffic",
+      "targetStack": "web",
+      "prompt": "Build a microscopic traffic simulation of one urban junction the player can redesign. Vehicles follow the Intelligent Driver Model for car-following and MOBIL for lane changes, with a stated reaction time and comfortable deceleration; pedestrians cross on demand. The player stands above the junction at table scale and switches between designs \u2014 signalised crossroads, roundabout, and a signalised junction with a dedicated right-turn phase \u2014 and edits the signal plan by grabbing phase blocks on a physical timing ring. Show queue length per approach, mean delay, throughput and the 85th-percentile speed as world-space instruments, and draw a live time-space diagram of one corridor. The player can teleport to the kerb to watch a single cycle at eye level, and can replay the last two minutes at a controlled rate.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "teleport",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop top-down view with the same model, instruments and phase editor, so the traffic model can be calibrated without a headset.",
+      "scene": {
+        "description": "A junction at table scale with flowing traffic, a phase-timing ring within reach, instruments on one side and a time-space diagram on the other.",
+        "elements": [
+          "IDM car-following and MOBIL lane changes",
+          "three junction designs",
+          "editable signal phase ring",
+          "queue / delay / throughput instruments",
+          "time-space diagram",
+          "kerb-level view"
+        ]
+      },
+      "acceptance": [
+        "Car-following uses IDM with stated parameters, and vehicles never overlap or pass through each other.",
+        "Changing green split changes queue lengths and delay in the direction the theory predicts.",
+        "Throughput is counted at a stop line over a stated interval, not estimated.",
+        "The time-space diagram is drawn from recorded vehicle trajectories."
+      ],
+      "watchFor": "Vehicles that follow a spline at constant speed with collision 'handled' by transparency; a signal plan whose phases can overlap into conflicting greens; per-frame allocation of one mesh per vehicle; a delay figure that never changes.",
+      "libraries": [
+        "three-xr",
+        "hub-bridge"
+      ],
+      "tags": [
+        "traffic",
+        "simulation",
+        "signals"
+      ],
+      "hubServices": {
+        "ask": "optional"
+      }
+    },
+    {
+      "id": "evacuation-crowd-lab",
+      "title": "Evacuation and Crowd Flow",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "traffic",
+      "targetStack": "web",
+      "prompt": "Build a pedestrian crowd and evacuation simulation. Several hundred agents move by a social-force model with a stated desired speed distribution, personal space and wall repulsion; doors have finite width and produce real queueing and arching. The player designs the space by moving walls, doors and barriers by hand, then triggers an evacuation and watches egress. Show the evacuation curve (people out over time), density per zone against a Fruin level-of-service scale, and the location of the worst jam. Density colouring must come from a measured local density, not a painted heat map. The player can slow time and step into the crowd to see why a jam forms at a particular corner, then place a barrier and re-run the same seed to compare curves.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop plan view with the same model and curves, so egress times and densities can be checked without a headset.",
+      "scene": {
+        "description": "A floor plan at table scale with a crowd flowing towards exits, density shading on the floor, and an evacuation curve on a panel.",
+        "elements": [
+          "social-force pedestrian model",
+          "movable walls, doors and barriers",
+          "measured local density with LOS colouring",
+          "evacuation curve",
+          "same-seed re-run comparison"
+        ]
+      },
+      "acceptance": [
+        "Agents never pass through walls or each other beyond a stated overlap tolerance.",
+        "Narrowing a door increases egress time and produces visible arching at the door.",
+        "Density is measured per zone from agent positions and mapped to a stated LOS scale.",
+        "The same seed and layout reproduce the same evacuation curve."
+      ],
+      "watchFor": "Agents steered by simple waypoint following so no jam ever forms; density painted rather than measured; a barrier that changes nothing; an evacuation curve that is a fitted line rather than counted exits.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "crowds",
+        "safety",
+        "simulation"
+      ]
+    },
+    {
+      "id": "military-sand-table",
+      "title": "Command Sand Table",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "defence",
+      "targetStack": "web",
+      "prompt": "Build a wargaming sand table for analysing a manoeuvre problem. A terrain block with elevation, cover and roads sits at table scale; two forces of company-sized units are represented by physical tokens the player can pick up and place. Implement the rules that make it a simulation rather than a diorama: line of sight and hull-down positions computed from the elevation grid, movement rates by terrain and unit type, detection probability that falls with range and cover, indirect fire with a spotting requirement, and a turn resolution with stated combat odds. Fog of war is per side: unspotted units are absent, last-known positions persist as ghosts with a timestamp. The player issues orders by dragging a unit to a destination and selecting a posture, then advances the clock and watches resolution play out with a written after-action log of every decisive roll.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop map view with the same rules, orders and log, so line of sight and resolution can be reviewed without a headset.",
+      "scene": {
+        "description": "A terrain block on a table with unit tokens, line-of-sight fans drawn from the selected unit, ghost markers for stale contacts, and an after-action log panel.",
+        "elements": [
+          "elevation and cover terrain grid",
+          "line-of-sight and hull-down calculation",
+          "per-side fog of war with stale ghosts",
+          "order issuing by drag",
+          "turn resolution with an after-action log"
+        ]
+      },
+      "acceptance": [
+        "Line of sight is computed from the elevation grid and blocks correctly behind ridges.",
+        "A unit that has not been spotted is not drawn for the other side, and a stale contact is shown as a timestamped ghost.",
+        "Movement rates and detection probabilities follow the stated tables, and the log cites the numbers used.",
+        "The same seed and the same orders reproduce the same resolution."
+      ],
+      "watchFor": "Line of sight drawn as a straight line without sampling the terrain; fog of war implemented by transparency so the enemy is still visible; a combat resolution with invisible dice and no log; tokens that snap to a grid so hull-down positions cannot be expressed.",
+      "libraries": [
+        "three-xr",
+        "hub-bridge"
+      ],
+      "tags": [
+        "wargame",
+        "simulation",
+        "terrain",
+        "fog-of-war"
+      ],
+      "hubServices": {
+        "ask": "optional"
+      }
+    },
+    {
+      "id": "sustainment-planner",
+      "title": "Sustainment and Convoy Planner",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "defence",
+      "targetStack": "web",
+      "prompt": "Build a logistics-sustainment simulation for a distributed operation. A road and rail network connects depots, forward bases and units with daily demand for fuel, ammunition, water and rations. The player plans convoys \u2014 routing, load composition, escort and departure time \u2014 and the simulation runs the network forward: throughput is limited by road class and chokepoint capacity, vehicles have turnaround times, and units draw stock down at their stated consumption rate. Show days-of-supply per unit as a bar that drains, network flow as animated throughput on each arc, and a chokepoint list ranked by criticality with the effect of losing each one. The player can cut an arc to test resilience, and the simulation reports which units go below their reserve and when.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "teleport",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop network view with the same planner and metrics, so flows and shortfalls can be checked without a headset.",
+      "scene": {
+        "description": "A terrain map at table scale with depots, bases and animated convoy flows, days-of-supply bars floating above each unit, and a chokepoint panel.",
+        "elements": [
+          "network of depots, bases and units",
+          "convoy planning with load composition and departure times",
+          "capacity-limited arcs with turnaround",
+          "days-of-supply drawdown",
+          "chokepoint criticality analysis"
+        ]
+      },
+      "acceptance": [
+        "Throughput on every arc respects its stated capacity, and queues form where it does not.",
+        "Days of supply are computed from stock and the unit's consumption rate.",
+        "Cutting an arc changes the flow and produces a named list of units that fall below reserve, with dates.",
+        "The same plan and seed reproduce the same result."
+      ],
+      "watchFor": "Flows that ignore arc capacity so nothing ever queues; consumption modelled as a constant regardless of activity; a criticality ranking that is just arc length; convoys that arrive instantly.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "logistics",
+        "planning",
+        "networks"
+      ]
+    },
+    {
+      "id": "universe-scale-atlas",
+      "title": "Atlas of Scale",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "universe",
+      "targetStack": "web",
+      "prompt": "Build a logarithmic atlas of the universe the player climbs by hand. Grabbing space with both hands and pulling them apart moves the view up a scale ladder that spans about 30 orders of magnitude, from a one-metre reference object to the observable universe: person, room, city, Earth, Earth-Moon, inner system, Oort cloud, nearest stars, the local arm, the Milky Way, the Local Group, the cosmic web. Each rung is a real, sourced distance and is rendered with a representation appropriate to that scale, cross-fading as the player passes through it. A permanent readout states the current scale in metres per world unit, the size of the visible region, and the light-travel time across it. The point is that the ladder must be continuous and never jump: passing from one representation to the next has to be legible as the same space, not a slideshow.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop view with a scroll-wheel scale control through the same ladder, so continuity and the numbers can be checked without a headset.",
+      "scene": {
+        "description": "A dark volume with the current scale's representation floating around the player, the previous and next rungs ghosted, and a scale readout always in view.",
+        "elements": [
+          "two-handed logarithmic scale gesture",
+          "twelve or more sourced scale rungs",
+          "cross-fading representations",
+          "metres-per-unit and light-travel readout",
+          "reference object at 1 m"
+        ]
+      },
+      "acceptance": [
+        "Scaling is continuous across at least 20 orders of magnitude with no visible jump between rungs.",
+        "Every stated distance is sourced in the README, and the readout matches the actual transform.",
+        "Floating-point precision is managed so geometry does not jitter at extreme scale.",
+        "The light-travel-time readout is consistent with the visible region size."
+      ],
+      "watchFor": "Single-precision jitter at large scales; a 'ladder' that teleports between fixed views; a scale readout that drifts from the real transform; representations that all use the same billboard so nothing feels different.",
+      "libraries": [
+        "three-xr",
+        "hub-bridge"
+      ],
+      "tags": [
+        "astronomy",
+        "scale",
+        "education"
+      ],
+      "hubServices": {
+        "ask": "optional"
+      }
+    },
+    {
+      "id": "nbody-cluster",
+      "title": "N-Body Star Cluster",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "universe",
+      "targetStack": "web",
+      "prompt": "Build a gravitational N-body laboratory the player can reach into. Two to five thousand stars evolve under Newtonian gravity with a Barnes-Hut tree (stated opening angle), Plummer softening and a symplectic leapfrog integrator at a fixed timestep. Total energy and angular momentum are computed every step and displayed as drift from their initial values \u2014 the honesty instrument of the whole simulation. The player can grab the cluster to rotate and scale it, inject a passing perturber with a throw, and switch between Plummer and King initial conditions. Show the density profile as a live radial histogram, mark the half-mass radius, and let the player slow time to watch core collapse begin. A stated particle budget must be respected and shown next to the measured frame cost.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": true
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop orbit view of the same simulation with the same instruments, so integration accuracy can be profiled without a headset.",
+      "scene": {
+        "description": "A luminous star cluster floating at arm's length in a dark volume, with an energy-drift instrument and a radial density histogram beside it.",
+        "elements": [
+          "Barnes-Hut tree with stated opening angle",
+          "leapfrog integrator at fixed timestep",
+          "energy and angular-momentum drift readout",
+          "Plummer and King initial conditions",
+          "throwable perturber",
+          "radial density histogram with half-mass radius"
+        ]
+      },
+      "acceptance": [
+        "Energy drift over a stated number of steps stays within a stated bound, and the drift is displayed rather than hidden.",
+        "The Barnes-Hut approximation is used and its opening angle is adjustable, with the effect on cost shown.",
+        "The integrator is symplectic and fixed-step, independent of the render rate.",
+        "The particle budget is stated, respected, and shown next to the measured frame cost."
+      ],
+      "watchFor": "An Euler integrator that heats the cluster and calls it 'core collapse'; softening omitted so close pairs explode; energy computed once and never again; per-frame tree rebuild allocations that stall the headset.",
+      "libraries": [
+        "three-xr"
+      ],
+      "tags": [
+        "astronomy",
+        "physics",
+        "n-body",
+        "performance"
+      ]
+    },
+    {
+      "id": "spacetime-lab",
+      "title": "Curved Spacetime Lab",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "universe",
+      "targetStack": "web",
+      "prompt": "Build an interactive laboratory for orbits in curved spacetime. Around a central mass the player can place test particles and photons and watch them follow geodesics of the Schwarzschild metric, integrated properly rather than with a Newtonian approximation plus a fudge. Three effects must be demonstrable and measurable: perihelion precession of a bound orbit (with the precession per orbit read out and compared to the analytic value), light bending past the mass at a stated impact parameter, and gravitational time dilation shown by two clocks at different radii drifting apart. The player sets the central mass and the initial conditions with physical dials, and can switch a comparison overlay that draws the Newtonian orbit for the same initial conditions alongside the relativistic one.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "seated",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": true
+      },
+      "desktopFallback": "A desktop view of the same integration with the same readouts and overlay, so the numbers can be checked against theory without a headset.",
+      "scene": {
+        "description": "A dark space with a central mass, glowing geodesic trails, two drifting clocks at different radii, and a dial console within reach.",
+        "elements": [
+          "Schwarzschild geodesic integration",
+          "measured perihelion precession with analytic comparison",
+          "photon path with stated impact parameter",
+          "two clocks showing time dilation",
+          "Newtonian comparison overlay"
+        ]
+      },
+      "acceptance": [
+        "Measured precession per orbit matches the analytic Schwarzschild value within a stated tolerance.",
+        "Photon deflection at a stated impact parameter matches the analytic value within a stated tolerance.",
+        "The clock ratio between two radii matches the metric's prediction.",
+        "The Newtonian overlay uses the same initial conditions and visibly does not precess."
+      ],
+      "watchFor": "A 'relativistic' orbit that is a Newtonian ellipse rotated by hand; an integrator whose error is mistaken for precession; time dilation shown as a label rather than two running clocks; units so muddled that the tolerance cannot be checked.",
+      "libraries": [
+        "three-xr",
+        "hub-bridge"
+      ],
+      "tags": [
+        "physics",
+        "relativity",
+        "education"
+      ],
+      "hubServices": {
+        "ask": "optional"
+      }
+    },
+    {
+      "id": "galaxy-forge",
+      "title": "Galaxy Formation Sandbox",
+      "kind": "simulation",
+      "xrMode": "immersive-vr",
+      "category": "simulation",
+      "subcategory": "universe",
+      "targetStack": "web",
+      "prompt": "Build a galaxy-scale sandbox where structure forms from initial conditions the player sets. A disc of gas and stars evolves under a stated dynamical model \u2014 rotation curve with a dark-matter halo term, spiral structure from density-wave or swing-amplification rules, star formation triggered above a gas-density threshold, and feedback that suppresses it locally. The player sets halo mass, gas fraction and spin with physical dials, then launches a merger by throwing a second galaxy in and watching tidal tails form. Colour must carry information: stellar population age, not decoration. Show the rotation curve as a live plot against radius, the star-formation rate over time, and the gas fraction remaining, and let the player scrub the last two minutes of history back and forth.",
+      "interaction": {
+        "controllers": "required",
+        "hands": "none",
+        "locomotion": "roomscale",
+        "haptics": false
+      },
+      "xrFeatures": {
+        "required": [
+          "local-floor"
+        ],
+        "optional": []
+      },
+      "comfort": {
+        "targetFps": 72,
+        "vignetteOnMove": true,
+        "snapTurn": true,
+        "seatedSupported": false
+      },
+      "desktopFallback": "A desktop orbit view of the same model with the same plots, so the dynamics and star formation can be checked without a headset.",
+      "scene": {
+        "description": "A rotating galaxy at arm's length with visible spiral structure, a rotation-curve plot and a star-formation-rate plot floating beside it.",
+        "elements": [
+          "rotation curve with halo term",
+          "spiral structure from a stated rule",
+          "threshold star formation with feedback",
+          "throwable second galaxy for a merger",
+          "age-coloured stellar populations",
+          "history scrubbing"
+        ]
+      },
+      "acceptance": [
+        "The rotation curve is computed from the mass model and is flat where the halo dominates.",
+        "Star formation only occurs above the stated gas-density threshold and consumes gas.",
+        "A merger produces tidal tails from the dynamics rather than from a scripted animation.",
+        "History scrubbing replays recorded state rather than re-running the simulation."
+      ],
+      "watchFor": "Spiral arms drawn as fixed geometry that rotates rigidly; star formation that never consumes gas; a rotation curve plotted from a formula unrelated to the particles on screen; colour used decoratively so age cannot be read.",
+      "libraries": [
+        "three-xr",
+        "hub-bridge"
+      ],
+      "tags": [
+        "astronomy",
+        "simulation",
+        "star-formation"
+      ],
+      "hubServices": {
+        "image": "optional"
+      }
+    }
+  ]
+}

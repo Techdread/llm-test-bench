@@ -907,6 +907,15 @@ body::before {
   cursor: pointer;
 }
 
+/* A transparent <select> leaves the native option popup on the browser's
+   default (white) surface while the options inherit the theme's text colour —
+   unreadable in dark mode. Give every option list the theme's own surface. */
+select option,
+select optgroup {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
 .executor-effort select:disabled {
   cursor: default;
   opacity: .7;

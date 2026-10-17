@@ -3,48 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Free, open-source browser tools for comparing how LLMs write interactive HTML, p5.js sketches, and SVG art. Run local or hosted models; your files stay on your computer.">
-  <title>LLM Test Bench — compare LLM-generated HTML, p5.js and SVG</title>
+  <meta name="description" content="Peter Edwards — browser-based tools that put language models to work: agentic game and WebXR builders, a 3D asset studio, LLM evaluation benches and developer tools. Open source, local-first, runs in your browser.">
+  <title>Peter Edwards — AI tooling &amp; browser apps</title>
   <link rel="canonical" href="https://neuroviz.uk/">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="theme-color" content="#080b12">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="LLM Test Bench">
+  <meta property="og:site_name" content="Peter Edwards">
   <meta property="og:url" content="https://neuroviz.uk/">
-  <meta property="og:title" content="LLM Test Bench — Generate it. Compare it. Keep the evidence.">
-  <meta property="og:description" content="Open-source browser tools for comparing how language models turn the same idea into interactive HTML, p5.js sketches, and SVG artwork.">
+  <meta property="og:title" content="Peter Edwards — AI tooling &amp; browser apps">
+  <meta property="og:description" content="Agentic game and WebXR builders, a 3D asset studio, LLM evaluation benches and developer tools — all running in the browser.">
   <meta property="og:image" content="https://neuroviz.uk/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="LLM Test Bench: a grid of model-generated games, 3D scenes, sketches and SVG illustrations.">
+  <meta property="og:image:alt" content="A grid of model-generated games, 3D scenes, sketches and SVG illustrations.">
   <meta name="twitter:card" content="summary_large_image">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "LLM Test Bench",
+    "@type": "ProfilePage",
     "url": "https://neuroviz.uk/",
-    "description": "Open-source browser tools for comparing how language models turn the same idea into interactive HTML, p5.js sketches, and SVG artwork.",
-    "applicationCategory": "DeveloperApplication",
-    "operatingSystem": "Any (Chrome or Edge recommended)",
-    "browserRequirements": "Requires the File System Access API for saving results",
-    "isAccessibleForFree": true,
-    "license": "https://opensource.org/licenses/MIT",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" }
+    "mainEntity": {
+      "@type": "Person",
+      "name": "Peter Edwards",
+      "url": "https://neuroviz.uk/",
+      "knowsAbout": ["LLM application engineering", "Agentic coding workflows", "WebXR", "Three.js", "WebAssembly", "JavaScript"]
+    }
   }
   </script>
-  <link rel="stylesheet" href="site.css?v=c961087019">
+  <link rel="stylesheet" href="site.css?v=d77ee34d8d">
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="./" aria-label="LLM Test Bench home">
-      <span class="brand-mark">LT</span>
-      <span>LLM Test Bench</span>
+    <a class="brand" href="./" aria-label="Peter Edwards — home">
+      <span class="brand-mark">PE</span>
+      <span>Peter Edwards</span>
     </a>
     <nav aria-label="Main navigation">
-      <a href="#tools">Tools</a>
+      <a href="#projects">Projects</a>
       <a href="showcase.html">Showcase</a>
+      <a href="#about">About</a>
       <a href="settings.html">Settings</a>
       <a href="privacy.html">Privacy</a>
       <a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a>
@@ -54,18 +53,18 @@
   <main>
     <section class="hero">
       <div class="hero-copy-col">
-        <p class="eyebrow">Open-source creative model evaluation</p>
-        <h1><span class="l">Generate it.</span><span class="l">Compare it.</span><span class="l l3">Keep the evidence.</span></h1>
-        <p class="hero-copy">A browser-based workbench for testing how language models turn the same idea into interactive HTML, p5.js sketches, and SVG artwork.</p>
+        <p class="eyebrow">Portfolio &middot; AI tooling &amp; browser apps</p>
+        <h1><span class="l">I build tools that</span><span class="l">put language models</span><span class="l l3">to real work.</span></h1>
+        <p class="hero-copy">Agentic builders that write whole games and VR worlds, a studio that turns photos into rigged 3D assets, and benches that measure what models actually produce. Every project here is live &mdash; open one and try it with your own model.</p>
         <div class="hero-actions">
-          <a class="button primary" href="prompt-gallery/">Open Prompt Gallery</a>
-          <a class="button" href="settings.html">Connect folder + local models</a>
-          <a class="text-link" href="#how-it-works">How it works <span aria-hidden="true">&rarr;</span></a>
+          <a class="button primary" href="#projects">Explore the projects</a>
+          <a class="button" href="#about">About me</a>
+          <a class="text-link" href="settings.html">Connect a model <span aria-hidden="true">&rarr;</span></a>
         </div>
-        <div class="trust-row" aria-label="Privacy and platform notes">
-          <span>Run your own local models</span>
-          <span>Files stay in your chosen folder</span>
-          <span>No account required</span>
+        <div class="trust-row" aria-label="Project notes">
+          <span>Runs entirely in the browser</span>
+          <span>Bring your own local or hosted model</span>
+          <span>Open source, no account</span>
         </div>
       </div>
 
@@ -73,86 +72,223 @@
            stays hidden if the build carries no showcase. -->
       <div class="showcase" id="showcase" data-showcase-panel hidden>
         <div class="showcase-head">
-          <span class="showcase-label">Real output &middot; click to open</span>
+          <span class="showcase-label">Real model output &middot; click to open</span>
           <span class="showcase-badge" data-showcase-count></span>
         </div>
-        <p class="showcase-intro">Generations from all three benches &mdash; each tile opens its prompt and code in the bench that made it.</p>
+        <p class="showcase-intro">Generations from the benches and the forges &mdash; each tile opens its prompt and code, or plays the build, in the app that made it.</p>
         <div class="showcase-grid" data-showcase-grid data-hero data-limit="6"></div>
         <a class="showcase-more" href="showcase.html">See the full showcase <span aria-hidden="true">&rarr;</span></a>
       </div>
     </section>
 
-    <section class="tools-section" id="tools" aria-labelledby="tools-title">
+    <section class="facts" aria-label="At a glance">
+      <div><strong>11</strong><span>live projects on this site</span></div>
+      <div><strong>220+</strong><span>apps in the private workbench they come from</span></div>
+      <div><strong>0</strong><span>build steps &mdash; native ES modules, no bundler</span></div>
+      <div><strong>0</strong><span>third-party CDN requests &mdash; every library is vendored</span></div>
+    </section>
+
+    <section class="tools-section" id="projects" aria-labelledby="projects-title">
       <div class="section-heading">
         <div>
-          <p class="eyebrow">First public release</p>
-          <h2 id="tools-title">Three focused test benches</h2>
+          <p class="eyebrow">Selected work</p>
+          <h2 id="projects-title">Projects</h2>
         </div>
-        <p>Start with 149 bundled prompt ideas, then save your own results append-only to a folder you control.</p>
+        <p>Eleven projects from DevTools Hub, a workbench of 220+ browser apps I design, build and use daily. Each one below is the real app, running from this site.</p>
       </div>
 
-      <div class="tool-grid">
-        <article class="tool-card prompt-card">
-          <div class="card-kicker"><span class="dot"></span> HTML + JavaScript</div>
-          <h3>Prompt Gallery</h3>
-          <p>Run one prompt through different models, preview the generated page safely, compare variants, refine failures, and record a walkthrough.</p>
-          <ul>
-            <li>62 starter prompts</li>
-            <li>Streaming generation and batch runs</li>
-            <li>Gallery, comparison, ratings, and metadata</li>
-          </ul>
-          <a class="card-link" href="prompt-gallery/">Launch Prompt Gallery <span aria-hidden="true">→</span></a>
-        </article>
+      <div class="project-group" aria-labelledby="group-agentic">
+        <div class="group-heading">
+          <h3 id="group-agentic">Agentic builders</h3>
+          <p>A model is handed tools and a budget, writes a multi-file project, and the app checks the result instead of trusting it.</p>
+        </div>
+        <div class="project-grid featured">
+          <article class="project-card accent-amber">
+            <div class="card-kicker"><span class="dot"></span> Agentic game builder</div>
+            <h4>Game Forge</h4>
+            <p>The model builds a complete, multi-file game through an agentic file-writing loop, against a curated library of 339 briefs from 1980 arcade classics to modern indies. Every run is kept, rated and comparable side by side.</p>
+            <ul class="skills">
+              <li>Tool-calling loop with hard budgets</li>
+              <li>Loop &amp; stall detection</li>
+              <li>Hash-pinned engine provisioning</li>
+            </ul>
+            <a class="card-link" href="game-forge-v2/">Open Game Forge <span aria-hidden="true">&rarr;</span></a>
+          </article>
 
-        <article class="tool-card p5-card">
-          <div class="card-kicker"><span class="dot"></span> Creative coding</div>
-          <h3>p5 Sketch Gallery</h3>
-          <p>Generate instance-mode p5.js sketches, tune their parameters and seeds, inspect lineages, compare runs, and capture video.</p>
-          <ul>
-            <li>24 ambitious starter prompts</li>
-            <li>Sandboxed live canvas preview</li>
-            <li>Remix, explain, compare, and record</li>
-          </ul>
-          <a class="card-link" href="p5-sketch-gallery/">Launch p5 Sketch Gallery <span aria-hidden="true">→</span></a>
-        </article>
+          <article class="project-card accent-blue">
+            <div class="card-kicker"><span class="dot"></span> WebXR &middot; Meta Quest 3</div>
+            <h4>VR Forge</h4>
+            <p>Builds complete WebXR projects for the Quest 3, then runs each one in an emulated immersive session and measures it: did it actually enter VR and render two eyes? It turns &ldquo;works in VR&rdquo; from a claim into a measurement.</p>
+            <ul class="skills">
+              <li>WebXR emulation for verification</li>
+              <li>Three.js + Rapier physics</li>
+              <li>31 VR game &amp; simulation briefs</li>
+            </ul>
+            <a class="card-link" href="vr-forge/">Open VR Forge <span aria-hidden="true">&rarr;</span></a>
+          </article>
 
-        <article class="tool-card svg-card">
-          <div class="card-kicker"><span class="dot"></span> Vector evaluation</div>
-          <h3>SVG Generation Gallery</h3>
-          <p>Generate SVG submissions, compare them with reference images, inspect structure, score visual similarity, and export results.</p>
-          <ul>
-            <li>63 starter prompts</li>
-            <li>Pixel-diff and manual scoring</li>
-            <li>SVG, GIF, comparison, and recording</li>
-          </ul>
-          <a class="card-link" href="svg-benchmark/">Launch SVG bench <span aria-hidden="true">→</span></a>
-        </article>
+          <article class="project-card accent-green">
+            <div class="card-kicker"><span class="dot"></span> Image &rarr; 3D asset</div>
+            <h4>Understory Studio</h4>
+            <p>One to three reference pictures in; an editable 3D asset out at five levels of detail, with procedural materials and &mdash; for characters &mdash; a working skeleton and 87 animations. The model reviews renders of what it built beside your reference, then corrects it.</p>
+            <ul class="skills">
+              <li>Vision-model self-review loop</li>
+              <li>Declarative design &rarr; geometry</li>
+              <li>Five LODs, rigging, GLB export</li>
+            </ul>
+            <a class="card-link" href="understory-studio/">Open Understory Studio <span aria-hidden="true">&rarr;</span></a>
+          </article>
+
+          <article class="project-card accent-purple">
+            <div class="card-kicker"><span class="dot"></span> Iterative code generation</div>
+            <h4>Code Morph Lab</h4>
+            <p>Describe what you want and watch a model write, run and self-correct code over several iterations, in HTML or in Python via Pyodide. Generations from the Prompt Gallery and SVG bench can be sent here to be morphed.</p>
+            <ul class="skills">
+              <li>Edit &rarr; run &rarr; observe &rarr; retry</li>
+              <li>Streaming tool-call timeline</li>
+              <li>In-browser Python (WebAssembly)</li>
+            </ul>
+            <a class="card-link" href="code-morph-lab-v3/">Open Code Morph Lab <span aria-hidden="true">&rarr;</span></a>
+          </article>
+        </div>
+      </div>
+
+      <div class="project-group" aria-labelledby="group-benches">
+        <div class="group-heading">
+          <h3 id="group-benches">LLM evaluation benches</h3>
+          <p>One prompt, many models: generate, preview safely, compare and keep the evidence. Released together as the open-source <em>LLM Test Bench</em>.</p>
+        </div>
+        <div class="project-grid">
+          <article class="project-card accent-purple">
+            <div class="card-kicker"><span class="dot"></span> HTML + JavaScript</div>
+            <h4>Prompt Gallery</h4>
+            <p>Run one prompt through different models, preview each generated page in a sandbox, compare variants, refine failures and record a walkthrough. 62 starter prompts.</p>
+            <a class="card-link" href="prompt-gallery/">Open Prompt Gallery <span aria-hidden="true">&rarr;</span></a>
+          </article>
+          <article class="project-card accent-blue">
+            <div class="card-kicker"><span class="dot"></span> Creative coding</div>
+            <h4>p5 Sketch Gallery</h4>
+            <p>Generate instance-mode p5.js sketches, tune parameters and seeds, follow a sketch&rsquo;s lineage, compare runs and capture video. 24 starter prompts.</p>
+            <a class="card-link" href="p5-sketch-gallery/">Open p5 Sketch Gallery <span aria-hidden="true">&rarr;</span></a>
+          </article>
+          <article class="project-card accent-pink">
+            <div class="card-kicker"><span class="dot"></span> Vector evaluation</div>
+            <h4>SVG Generation Bench</h4>
+            <p>Generate SVG submissions, compare them with reference images, inspect structure, score pixel similarity and batch-run a model over the whole catalogue. 63 starter prompts.</p>
+            <a class="card-link" href="svg-benchmark/">Open SVG bench <span aria-hidden="true">&rarr;</span></a>
+          </article>
+        </div>
+      </div>
+
+      <div class="project-group" aria-labelledby="group-dev">
+        <div class="group-heading">
+          <h3 id="group-dev">Developer tools &amp; computer science</h3>
+          <p>Tools for seeing how code actually behaves, with a model on hand to explain or assist.</p>
+        </div>
+        <div class="project-grid four">
+          <article class="project-card accent-green">
+            <div class="card-kicker"><span class="dot"></span> Systems</div>
+            <h4>C Machine Lab</h4>
+            <p>Compile a subset of C to a teaching machine and step through it: source, assembly, registers, ALU flags, stack frames, heap and raw memory side by side. Traps double frees and use-after-free.</p>
+            <a class="card-link" href="c-machine-lab/">Open C Machine Lab <span aria-hidden="true">&rarr;</span></a>
+          </article>
+          <article class="project-card accent-amber">
+            <div class="card-kicker"><span class="dot"></span> Algorithms</div>
+            <h4>Algorithm Visualizer</h4>
+            <p>Instruments a JavaScript or Python algorithm, records every variable change and replays it as an animated array, graph, tree or grid you can scrub forwards and back.</p>
+            <a class="card-link" href="algorithm-visualizer/">Open Algorithm Visualizer <span aria-hidden="true">&rarr;</span></a>
+          </article>
+          <article class="project-card accent-blue">
+            <div class="card-kicker"><span class="dot"></span> Databases</div>
+            <h4>SQL Playground</h4>
+            <p>SQLite compiled to WebAssembly, with a schema viewer, ER diagram, query plans and an assistant that writes SQL against your actual schema.</p>
+            <a class="card-link" href="sql-playground/">Open SQL Playground <span aria-hidden="true">&rarr;</span></a>
+          </article>
+          <article class="project-card accent-pink">
+            <div class="card-kicker"><span class="dot"></span> Compilers</div>
+            <h4>AST Explorer &amp; Refactor Lab</h4>
+            <p>Parse JavaScript, TypeScript or Python, walk the syntax tree linked to the source, and apply model-driven refactors as a diff you review before accepting.</p>
+            <a class="card-link" href="ast-explorer-refactor-lab/">Open AST Explorer <span aria-hidden="true">&rarr;</span></a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="engineering" id="engineering" aria-labelledby="engineering-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Under the hood</p>
+          <h2 id="engineering-title">How it&rsquo;s built</h2>
+        </div>
+        <p>The same conventions run through every app, which is what lets one person keep 220+ of them working.</p>
+      </div>
+      <div class="eng-grid">
+        <div class="eng-item">
+          <h3>No build step</h3>
+          <p>Native ES modules with Preact and HTM through import maps. No bundler, no transpiler: the source you read is the code that runs.</p>
+        </div>
+        <div class="eng-item">
+          <h3>Provider-agnostic models</h3>
+          <p>One streaming layer over OpenRouter, LM Studio and other OpenAI-compatible servers, with local coding agents (Claude Code, Codex and others) exposed as ordinary model choices in the private hub.</p>
+        </div>
+        <div class="eng-item">
+          <h3>Local-first storage</h3>
+          <p>Work is saved to a folder you choose, through the File System Access API. Saves are append-only, so nothing a model generated is ever overwritten.</p>
+        </div>
+        <div class="eng-item">
+          <h3>Verify, don&rsquo;t trust</h3>
+          <p>Generated code runs in sandboxed frames and is measured: rendered, screenshotted, re-read by the model, or entered into an emulated XR session.</p>
+        </div>
+        <div class="eng-item">
+          <h3>Vendored, pinned dependencies</h3>
+          <p>Every library is served from this site and recorded in a manifest. Engines copied into generated projects are checked against pinned hashes.</p>
+        </div>
+        <div class="eng-item">
+          <h3>Zero-npm testing</h3>
+          <p>Unit tests on <code>node:test</code>, plus recorded user-flow replay and visual-regression screenshots driven by a small Chrome DevTools Protocol client.</p>
+        </div>
       </div>
     </section>
 
     <section class="workflow" id="how-it-works" aria-labelledby="workflow-title">
       <div>
-        <p class="eyebrow">Your data, your models</p>
-        <h2 id="workflow-title">A local-first website</h2>
-        <p>The site is hosted, but your working files are not uploaded to us. In Chrome or Edge, choose a folder on your own computer. The apps read and write inside that folder with your permission.</p>
+        <p class="eyebrow">Trying the projects</p>
+        <h2 id="workflow-title">Your data, your models</h2>
+        <p>The site is hosted, but your work is not uploaded to it. In Chrome or Edge, choose a folder on your own computer and the apps read and write inside it with your permission.</p>
       </div>
       <ol>
-        <li><strong><a href="settings.html">Choose a folder</a></strong><span>The browser remembers the handle and asks before restoring access.</span></li>
-        <li><strong><a href="settings.html">Connect a model</a></strong><span>Use your local LM Studio/OpenAI-compatible server or your own OpenRouter key.</span></li>
-        <li><strong>Generate and compare</strong><span>Prompts go only to the provider you select; saved outputs remain in your folder.</span></li>
+        <li><strong><a href="settings.html">Choose a folder</a></strong><span>The browser remembers it and asks before restoring access.</span></li>
+        <li><strong><a href="settings.html">Connect a model</a></strong><span>Your local LM Studio or OpenAI-compatible server, or your own OpenRouter key.</span></li>
+        <li><strong>Open a project</strong><span>Prompts go only to the provider you pick; outputs stay in your folder.</span></li>
       </ol>
+    </section>
+
+    <section class="about" id="about" aria-labelledby="about-title">
+      <div>
+        <p class="eyebrow">About</p>
+        <h2 id="about-title">Peter Edwards</h2>
+      </div>
+      <div class="about-body">
+        <p>I am a software engineer with 20+ years of experience developing commercial software. My background is in C++, Java, C#, JavaScript, Fortran and VB6. More recently, I have been exploring how to use AI agents throughout the software development cycle and have built this site using Claude Code and Codex. I am currently looking for a new role in software development that will allow me to expand my software skills particularly working with AI   tools. If that sounds like a good fit for your team, I'd be happy to talk.</p>
+        <p>I&rsquo;m currently looking for my next role. If you&rsquo;re hiring for AI application engineering, developer tooling or creative technology, I&rsquo;d like to hear from you.</p>
+        <div class="contact-links">
+          <a class="button primary" href="mailto:Techdread@gmail.com">Email me</a>
+          <a class="button" href="https://www.linkedin.com/in/peter-edwards-57081483/" rel="me noopener">LinkedIn</a>
+          <a class="button" href="https://github.com/Techdread" rel="me noopener">GitHub profile</a>
+        </div>
+      </div>
     </section>
 
     <aside class="browser-note">
       <strong>Best in Chrome or Edge.</strong>
-      Folder access, local-network permission, and screen recording depend on browser APIs that are not equally available everywhere. Local model servers work directly from the hosted site; CLI coding agents and cross-app handoffs belong to the full local DevTools Hub.
+      Folder access, local-network permission and screen recording depend on browser APIs that are not equally available everywhere. Local model servers work directly from this site; local coding agents and the image and video generation nodes belong to the full private hub.
     </aside>
   </main>
 
   <footer>
-    <span>LLM Test Bench · MIT licensed</span>
-    <span>Experimental software — review generated code before sharing it.</span>
+    <span>Peter Edwards &middot; Projects MIT licensed</span>
+    <span>Experimental software &mdash; review generated code before sharing it.</span>
   </footer>
-  <script src="showcase.js?v=ef10b83797"></script>
+  <script src="showcase.js?v=1e5f3ac35a"></script>
 </body>
 </html>

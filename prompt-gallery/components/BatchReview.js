@@ -1,5 +1,4 @@
 import { html } from 'htm/preact';
-import { Fragment } from 'preact';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'preact/hooks';
 import { VerificationBadge, VerificationDetails } from './VerificationBadge.js';
 import { RatingWidget } from './RatingWidget.js';
@@ -68,7 +67,6 @@ export function HtmlLightbox({ html: content, title, subtitle, emptyMessage = ''
 //       the stars or the number keys (1–9, 0 = 10).
 export function BatchReview({ rows, resetKey, onOpen, onRate }) {
   const [pos, setPos] = useState(0);
-  const [zoom, setZoom] = useState(null);
 
   const reviewable = useMemo(
     () => rows.map((_, i) => i).filter(i => (rows[i].html || '').trim()),
@@ -131,7 +129,6 @@ export function BatchReview({ rows, resetKey, onOpen, onRate }) {
   };
 
   return html`
-    <${Fragment}>
     <div class="batch-run-body">
       <div class="batch-run-left">
       <div class="batch-run-list batch-run-list-done">
@@ -188,7 +185,7 @@ export function BatchReview({ rows, resetKey, onOpen, onRate }) {
             ${cur.healed ? html`<span class="batch-healed-chip">fixed</span>` : null}
             ${cur.verification ? html`<${VerificationBadge} verification=${cur.verification} />` : null}
             ${onOpen && cur.id && html`
-              <button class="btn btn-xs" title="Open this generation" onClick=${() => onOpen(cur.id)}>
+              <button class="btn btn-xs" title="Open this generation in a new tab" onClick=${() => onOpen(cur.id)}>
                 <i class="fa-solid fa-arrow-up-right-from-square"></i> Open
               </button>
             `}
@@ -211,20 +208,11 @@ export function BatchReview({ rows, resetKey, onOpen, onRate }) {
             parentId=${cur.parentId}
             onOpenParent=${onOpen}
           />`}
-          <div class="batch-preview is-zoomable" title="Click to enlarge" onClick=${() => setZoom(cur)}>
+          <div class="batch-preview">
             <${HtmlLive} html=${cur.html} />
-            <div class="preview-hitbox"></div>
-            <span class="zoom-hint"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
           </div>
         `}
       </div>
     </div>
-    ${zoom && html`<${HtmlLightbox}
-      html=${zoom.html}
-      title=${zoom.title}
-      subtitle=${zoom.prompt || ''}
-      onClose=${() => setZoom(null)}
-    />`}
-    <//>
   `;
 }

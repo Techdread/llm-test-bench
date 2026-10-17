@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "note": "Variant lanes for VR Forge. A lane is a named library set a brief can be pinned to. Raw WebXR is a lane like any other, not 'the original' — the control cell has to be in the grid to be comparable.",
+  "lanes": [
+    {
+      "id": "three-xr",
+      "label": "Three.js + WebXR add-ons",
+      "libraries": ["three-xr"],
+      "defaultMode": "preserve",
+      "note": "The Quest 3 default: modern ES-module Three.js with VRButton, controller/hand model factories and XRPlanes, copied into the project."
+    },
+    {
+      "id": "three-xr-physics",
+      "label": "Three.js + Rapier",
+      "libraries": ["three-xr", "rapier3d"],
+      "defaultMode": "preserve",
+      "note": "Adds WASM rigid-body physics for grabbing, throwing and stacking."
+    },
+    {
+      "id": "three-xr-audio",
+      "label": "Three.js + Tone.js",
+      "libraries": ["three-xr", "tone"],
+      "defaultMode": "preserve",
+      "note": "Adds synthesis and musical scheduling for instruments and rhythm work."
+    },
+    {
+      "id": "raw-webxr",
+      "label": "Raw WebXR",
+      "libraries": [],
+      "defaultMode": "transform",
+      "note": "No library at all: hand-written WebGL2 and the WebXR Device API. The control cell — everything a framework normally hides has to be written out."
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "version": "hub-help-deck-v1",
+  "title": "C Machine Lab",
+  "generatedFrom": "HELP.md",
+  "generatedBy": "help-decks",
+  "generatedAt": "2026-07-18T22:25:46.973Z",
+  "slides": [
+    {
+      "kind": "title",
+      "title": "C Machine Lab",
+      "html": "<p>C Machine Lab is a teaching workbench for seeing how small C programs execute on a deliberately simple educational machine. It is not x86, ARM, WebAssembly, or a production C runtime. The point is visibility: source, lowered assembly, registers, ALU flags, stack frames, heap blocks, virtual files, interrupts, and memory are shown together.</p>"
+    },
+    {
+      "kind": "shot",
+      "title": "The app",
+      "image": "shot-app.webp",
+      "html": "<p>This is the app as it opens. Every screenshot in this deck is captured from the running app, not drawn by hand.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Getting Started",
+      "html": "<p>Choose a lesson from the toolbar, then use <strong>Step</strong> to execute one teaching instruction at a time. <strong>Run</strong> advances continuously and <strong>Reset</strong> rebuilds the machine from the current source and virtual files.</p>\n<p>Edit the source and press <strong>Compile</strong> or <code>Ctrl+Enter</code> in the editor. Valid programs produce teaching assembly. Unsupported C produces diagnostics in the editor and diagnostic strip.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Source And Assembly",
+      "html": "<p>The source panel uses Ace in C/C++ mode. The current source line is highlighted while the VM executes.</p>\n<p>The assembly panel shows compact teaching instructions such as <code>MOV</code>, <code>LOAD</code>, <code>STORE</code>, <code>ADD</code>, <code>CMP</code>, <code>CALL</code>, <code>RET</code>, <code>INT</code>, and <code>HALT</code>. Each instruction keeps a source-map link back to the C line that produced it.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Registers, ALU, And Flags",
+      "html": "<p>The register panel exposes the teaching CPU registers: <code>PC</code>, <code>SP</code>, <code>FP</code>, <code>R0-R7</code>, and <code>IR</code>. Changed registers are highlighted after each step.</p>\n<p>The ALU panel shows the last arithmetic or comparison operation, operands, result, and <code>Z</code>, <code>N</code>, <code>C</code>, and <code>V</code> flags.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Stack, Pointers, And Heap",
+      "html": "<p>Function calls create visible stack frames with parameters, locals, saved frame pointer, return address, and address range. Returning pops the frame and restores control flow.</p>\n<p>Pointer variables appear in the pointer inspector. Click a pointer, register, stack slot, heap block, or memory byte to inspect the address, segment, bytes, decoded integer, decoded string, and validity status.</p>\n<p><code>malloc</code> and <code>free</code> use the VM heap allocator through visible interrupts. Double frees, use-after-free writes, invalid frees, null pointer writes, and leaks at <code>HALT</code> are reported as teaching traps or warnings.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Virtual Files And Interrupts",
+      "html": "<p>File I/O uses lesson-owned virtual files only. <code>fopen</code>, <code>fclose</code>, <code>fgetc</code>, <code>fputc</code>, <code>fread</code>, <code>fwrite</code>, <code>fprintf</code>, and <code>rewind</code> update the File I/O panel and emit interrupt events.</p>\n<p>The interrupt panel shows the last runtime trap/syscall, its vector, arguments, affected registers or memory, and handler explanation.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "AI Actions",
+      "html": "<p>Configure a provider from the key/server buttons in the toolbar. <strong>Generate</strong> asks the selected model for a small C Machine Lab subset program. <strong>Explain</strong> sends structured machine facts from the current trace, not just the source text.</p>\n<p>Generated code is compiled through the same teaching compiler, so unsupported syntax appears as normal diagnostics.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Runtime Compare",
+      "html": "<p><strong>Compare</strong> runs the current source with the optional browser C runtime adapter and shows VM stdout beside runtime stdout. Differences are useful lesson material because the teaching VM defines behavior for some cases where real C may be undefined.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Config",
+      "html": "<p>The <strong>Config</strong> button opens a JSON editor for memory layout, run speed, trace limits, heap settings, timer interrupt settings, and pointer safety behavior. Saving rebuilds the VM.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Supported C Subset",
+      "html": "<p>The current compiler supports a practical teaching subset: <code>int</code>, <code>char</code>, <code>void</code>, <code>FILE *</code>, pointers, one-dimensional arrays, string literals, local and global declarations, assignments, arithmetic, comparisons, logical operators, <code>if</code>/<code>else</code>, <code>while</code>, <code>for</code>, <code>break</code>, <code>continue</code>, functions with value parameters, returns, and the bundled runtime calls shown in the lessons.</p>\n<p>Unsupported features such as macros, structs, typedefs, casts, multi-file includes, and C++ are reported as subset diagnostics.</p>"
+    }
+  ]
+}

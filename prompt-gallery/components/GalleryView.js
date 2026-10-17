@@ -219,7 +219,7 @@ function VariantCard({ generation, projectTitle, onSelect, onMorph, onDelete, on
   `;
 }
 
-function ProjectDetail({ project, onBack, onSelect, onMorph, onDelete, onArchive, onCompare }) {
+function ProjectDetail({ project, onBack, onSelect, onMorph, onDelete, onArchive, onCompare, loadHtml }) {
   const [showArchived, setShowArchived] = useState(false);
   const visibleVariants = project.variants.filter(generation => showArchived || !generation.metadata?.archivedAt);
 
@@ -373,6 +373,7 @@ export function GalleryView({
       <div class="gallery-view">
         <${ProjectDetail}
           project=${selectedProject}
+          loadHtml=${loadHtml}
           onBack=${onBackProject}
           onSelect=${onSelect}
           onMorph=${onMorph}

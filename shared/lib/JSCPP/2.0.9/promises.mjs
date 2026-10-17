@@ -1,0 +1,1 @@
+function n(e){return new Error(`[unenv] ${e} is not implemented yet!`)}function r(e){return Object.assign(()=>{throw n(e)},{__unenv__:!0})}var t=r("stream.promises.finished"),i=r("stream.promises.pipeline"),u={finished:t,pipeline:i};export{u as default,t as finished,i as pipeline};

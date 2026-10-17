@@ -52,6 +52,41 @@ export function decodeExecutorSelection(providerId, modelId) {
   return { backend: 'model', providerId, modelId };
 }
 
+/**
+ * Keep a Forge's stored selection buildable.
+ *
+ * The in-app build loop drives a model through tool calls, which the local CLI
+ * agents refuse ("local CLI agents run their own tools"). A CLI agent therefore
+ * has to be the build *backend*, never the in-app provider — but one can end up
+ * stored as the provider: Forge toolbars used to offer the CLI rows in a plain
+ * provider picker, and the hub-wide default provider may be one.
+ *
+ * @param {object} state
+ * @param {string} state.backend 'model' | 'agent'
+ * @param {string} state.providerId In-app provider currently stored.
+ * @param {string} state.modelId
+ * @param {Array<{providerId: string, modelId: string, providerType?: string}>} state.providerModels
+ * @returns {null | {agent: null | {backend: 'agent', agentId: string, modelId: string}, providerId: string, modelId: string}}
+ *   null when nothing needs changing. Otherwise the in-app provider to store
+ *   ('' while no in-app model is known yet) and, when the stored provider was a
+ *   CLI agent the model backend was about to drive, the agent to switch to.
+ */
+export function repairExecutorSelection({
+  backend = 'model', providerId = '', modelId = '', providerModels = [],
+} = {}) {
+  const decoded = decodeExecutorSelection(providerId, modelId);
+  const stale = decoded.backend === 'agent';
+  if (!stale && providerId) return null;
+  const fallback = providerModels.find(model => model.providerType !== 'cli-agent');
+  if (!stale && !fallback) return null;
+  return {
+    // An agent the user already picked explicitly wins over the stale provider.
+    agent: stale && backend !== 'agent' ? decoded : null,
+    providerId: fallback?.providerId || '',
+    modelId: fallback?.modelId || '',
+  };
+}
+
 /** Build the durable, human-readable metadata snapshot for one selection. */
 export function buildExecutorMetadata({
   backend = 'model',

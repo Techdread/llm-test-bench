@@ -21,6 +21,8 @@ const BENCH = {
   'prompt-gallery': { cls: 'pg', label: 'Prompt Gallery' },
   'p5-sketch-gallery': { cls: 'p5', label: 'p5 Sketch' },
   'svg-benchmark': { cls: 'svg', label: 'SVG Bench' },
+  'game-forge-v2': { cls: 'gf', label: 'Game Forge' },
+  'vr-forge': { cls: 'vr', label: 'VR Forge' },
 };
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) =>

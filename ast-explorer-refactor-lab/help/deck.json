@@ -1,0 +1,65 @@
+{
+  "version": "hub-help-deck-v1",
+  "title": "AST Explorer & Refactor Lab",
+  "generatedFrom": "HELP.md",
+  "generatedBy": "help-decks",
+  "generatedAt": "2026-07-18T22:25:31.175Z",
+  "slides": [
+    {
+      "kind": "title",
+      "title": "AST Explorer & Refactor Lab",
+      "html": "<p>Paste or load some JavaScript, TypeScript, TSX, or Python — see its abstract syntax tree, jump between source and tree, and ask an LLM to apply common refactors with a diff you can review before accepting.</p>"
+    },
+    {
+      "kind": "shot",
+      "title": "The app",
+      "image": "shot-app.webp",
+      "html": "<p>This is the app as it opens. Every screenshot in this deck is captured from the running app, not drawn by hand.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Getting started",
+      "html": "<ol>\n<li>Pick a language in the toolbar (JavaScript is the default).</li>\n<li>Paste your code into the left pane — parsing is automatic.</li>\n<li>Click nodes in the AST (middle pane) to highlight them in the source, or click in the source to select the innermost enclosing node.</li>\n<li>Open the <strong>Refactor</strong> tab on the right, pick a recipe, and press <em>Run refactor</em> to get an LLM-proposed diff.</li>\n</ol>\n<p>If this is your first time using the app:</p>\n<ul>\n<li><strong>API key</strong> — click the 🔑 in the toolbar to paste an OpenRouter key (<code>sk-or-…</code>). The key lives in your browser&#39;s localStorage, shared with the rest of the hub, and is only sent to openrouter.ai.</li>\n<li><strong>Data root</strong> — click the folder icon to pick a directory where sessions can be saved. This is optional; the app works fine without it.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "The three panes",
+      "html": "<ul>\n<li><strong>Source</strong> — standard Ace editor. Supports JS/TS/TSX/Python syntax highlighting. Typing re-parses with a short debounce.</li>\n<li><strong>AST</strong> — virtualised tree of syntax nodes. Expand/collapse chevrons work, or use the ⇑/⇓ buttons in the header to expand/collapse all. Selected nodes stay in view.</li>\n<li><strong>Node details / Refactor</strong> — two tabs on the right.<ul>\n<li><em>Node details</em> shows the selected node&#39;s kind, offsets, source snippet, and a JSON dump of its scalar properties.</li>\n<li><em>Refactor</em> lists the recipes applicable to the current language.</li>\n</ul>\n</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Language notes",
+      "html": "<ul>\n<li><strong>JavaScript</strong> is parsed with Acorn in module mode.</li>\n<li><strong>TypeScript / TSX</strong> uses a syntactic-only pass: types, generics, <code>as</code> casts, decorators, and <code>interface</code> / <code>type</code> declarations are stripped to whitespace, then the remaining JS is parsed. Offsets line up with the original source. There is <strong>no type checking</strong> — the tree you see won&#39;t contain type nodes.</li>\n<li><strong>Python</strong> uses <a href=\"https://pyodide.org/\">Pyodide</a>&#39;s stdlib <code>ast</code> module. The runtime is ~10 MB and loads lazily the first time you select Python. Later parses are fast.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Refactor recipes",
+      "html": "<p>Each recipe is <em>data</em>: a label, description, supported languages, a system prompt, and a user-prompt template with placeholders (<code>{{source}}</code>, <code>{{selection}}</code>, <code>{{extra}}</code>, etc.). The shipped set is:</p>\n<ul>\n<li><strong>Extract function</strong> — name the new function in the <em>New function name</em> field, and the LLM moves the selected block out.</li>\n<li><strong>Inline variable</strong> — inline the declaration at the cursor.</li>\n<li><strong>Convert callbacks to async/await</strong> — for JS/TS only.</li>\n<li><strong>Introduce early returns</strong> — flatten nested conditionals.</li>\n<li><strong>Rename symbol</strong> — scope-aware rename (the LLM respects binding scope; not a pure text replace).</li>\n<li><strong>Add TypeScript types</strong> — TS/TSX only. Infers parameter/return types where it&#39;s safe; won&#39;t use <code>any</code>.</li>\n</ul>\n<p>The recipe panel shows each recipe&#39;s guardrails — rules baked into its prompt (no new imports, preserve behaviour, etc.).</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Diff review",
+      "html": "<p>After the model responds, the new source is re-parsed:</p>\n<ul>\n<li>If parsing <strong>succeeds</strong>, all hunks are accepted by default. Use the checkboxes in each hunk header to reject individual changes.</li>\n<li>If parsing <strong>fails</strong>, every hunk is rejected by default and a warning is shown. You can still accept hunks if you understand the risk.</li>\n</ul>\n<p>Click <em>Apply</em> to merge accepted hunks into the editor. The source re-parses immediately so you can verify the result.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Tips",
+      "html": "<ul>\n<li>Refactors work on the <strong>current selection</strong> if one is active (a tree node is selected), otherwise on the <strong>whole file</strong>.</li>\n<li>Set a good selection before running Extract Function — the LLM is better at picking names when the block is clearly delimited.</li>\n<li>If a model returns <code>source unchanged</code>, the recipe probably didn&#39;t apply cleanly. Try giving it a narrower selection, or switch recipes.</li>\n<li>TS warnings in the refactor panel are informational — the LLM still sees the full TypeScript source, only the <em>AST viewer</em> is working from the stripped version.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Keyboard",
+      "html": "<ul>\n<li>Any Ace editor shortcut works in the source pane (Ctrl+F, Ctrl+G, etc.).</li>\n<li>Escape closes the diff overlay, sessions list, API key dialog, and help.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Sessions",
+      "html": "<ul>\n<li><strong>Save</strong> — writes <code>&lt;data-root&gt;/ast-explorer-refactor-lab/projects/sessions/&lt;id&gt;.json</code> with the name, language, and source. Your name input in the toolbar becomes the session title.</li>\n<li><strong>Sessions</strong> — lists saved sessions. Click to open; the trash icon deletes.</li>\n<li>Session persistence requires a data root. Use the folder icon in the toolbar to pick one the first time.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Troubleshooting",
+      "html": "<ul>\n<li><strong>&quot;OpenRouter API key not set&quot;</strong> — click the 🔑 and paste a key from <a href=\"https://openrouter.ai/keys\">https://openrouter.ai/keys</a>.</li>\n<li><strong>Python parse stuck on &quot;Loading Pyodide…&quot;</strong> — first load is ~10 MB and a few seconds. Subsequent parses are instant.</li>\n<li><strong>Diff shows identical old/new</strong> — the model returned an unchanged file; try a narrower selection or a different recipe.</li>\n<li><strong>New source fails to parse</strong> — the overlay warns you. Reject the bad hunks, or accept only the parts that look right and re-run from the merged result.</li>\n</ul>"
+    }
+  ]
+}

@@ -7,7 +7,7 @@
     "suggestedPreviewHost": "neuroviz.uk",
     "repositoryUrl": "https://github.com/Techdread/llm-test-bench"
   },
-  "generatedAt": "2026-09-25T19:27:33.765Z",
+  "generatedAt": "2026-10-17T09:04:51.967Z",
   "apps": [
     {
       "source": "prompt-gallery",
@@ -23,11 +23,52 @@
       "source": "svg-benchmark",
       "publicPath": "svg-benchmark",
       "title": "SVG Generation Gallery / Benchmark"
+    },
+    {
+      "source": "code-morph-lab-v3",
+      "publicPath": "code-morph-lab-v3",
+      "title": "Code Morph Lab"
+    },
+    {
+      "source": "game-forge-v2",
+      "publicPath": "game-forge-v2",
+      "title": "Game Forge"
+    },
+    {
+      "source": "vr-forge",
+      "publicPath": "vr-forge",
+      "title": "VR Forge"
+    },
+    {
+      "source": "understory-studio",
+      "publicPath": "understory-studio",
+      "title": "Understory Studio"
+    },
+    {
+      "source": "algorithm-visualizer",
+      "publicPath": "algorithm-visualizer",
+      "title": "Algorithm Visualizer"
+    },
+    {
+      "source": "sql-playground",
+      "publicPath": "sql-playground",
+      "title": "SQL Playground"
+    },
+    {
+      "source": "c-machine-lab",
+      "publicPath": "c-machine-lab",
+      "title": "C Machine Lab"
+    },
+    {
+      "source": "ast-explorer-refactor-lab",
+      "publicPath": "ast-explorer-refactor-lab",
+      "title": "AST Explorer & Refactor Lab"
     }
   ],
-  "sharedModuleCount": 57,
+  "sharedModuleCount": 110,
   "hostedLimitations": [
     "Local CLI agents require the private/local serve.py bridge and are not part of this static distribution.",
-    "Cross-app Code Morph and Bugfix handoffs are disabled because their target apps are not included."
+    "Cross-app handoffs run only to apps published in this build (e.g. Prompt Gallery → Code Morph Lab); Bugfix handoffs are disabled.",
+    "Wan2GP image/video nodes and the Blender bridge are not part of this distribution; those features need the private hub."
   ]
 }

@@ -34,15 +34,56 @@ export function folderPickerSupported() {
   return typeof window !== 'undefined' && typeof window.showDirectoryPicker === 'function';
 }
 
-/** 'server' | 'folder' — what this browser is set to use. */
-export function getDataRootMode() {
+function storedMode() {
   try {
     const stored = localStorage.getItem(MODE_KEY);
     if (stored === 'server' || stored === 'folder') return stored;
   } catch { /* private mode */ }
-  // A browser that cannot pick a folder has one option, so it is the default
-  // there and nothing has to be configured on the headset.
-  return folderPickerSupported() ? 'folder' : 'server';
+  return null;
+}
+
+/**
+ * Which root applies, given what is known about this browser. Pure, so the
+ * rule can be tested without a browser.
+ *
+ * An explicit choice always wins. Without one, a folder picked here is used;
+ * a browser with nothing picked takes the server's root when there is one.
+ * "Has a folder picker" is NOT the test: the picker only exists in a secure
+ * context, so the same headset has none over plain http (and landed on the
+ * server root) but grows one over https or `adb reverse` localhost — where it
+ * then sat on "no folder picked" with the shared data one request away.
+ */
+export function chooseDataRootMode({ stored = null, pickerSupported = false, hasPickedFolder = false, serverAvailable = false } = {}) {
+  if (stored === 'server' || stored === 'folder') return stored;
+  if (!pickerSupported) return 'server';
+  if (hasPickedFolder) return 'folder';
+  return serverAvailable ? 'server' : 'folder';
+}
+
+/**
+ * 'server' | 'folder' — the stored choice, or a synchronous guess when there
+ * is none. The guess cannot see a picked folder or the server, so anything
+ * that acts on the mode should await resolveDataRootMode() instead.
+ */
+export function getDataRootMode() {
+  return storedMode() || (folderPickerSupported() ? 'folder' : 'server');
+}
+
+/** 'server' | 'folder' — the root this browser is actually using. */
+export async function resolveDataRootMode() {
+  const stored = storedMode();
+  const pickerSupported = folderPickerSupported();
+  if (stored || !pickerSupported) return chooseDataRootMode({ stored, pickerSupported });
+  let hasPickedFolder;
+  try {
+    hasPickedFolder = !!(await loadHandle());
+  } catch {
+    // Unknown is treated as "picked": never move a browser onto another root
+    // because its own could not be read this once.
+    hasPickedFolder = true;
+  }
+  const serverAvailable = !hasPickedFolder && !!(await getServerRoot());
+  return chooseDataRootMode({ stored, pickerSupported, hasPickedFolder, serverAvailable });
 }
 
 export function setDataRootMode(mode) {
@@ -80,7 +121,7 @@ function nowIso() {
 
 /** @returns {Promise<FileSystemDirectoryHandle|null>} */
 export async function getRoot() {
-  if (getDataRootMode() === 'server') {
+  if ((await resolveDataRootMode()) === 'server') {
     const root = await getServerRoot();
     if (root) return root;
     // Fall through: a hub served by a plain static server has no data root of
@@ -117,7 +158,7 @@ export async function getRoot() {
  */
 export async function getRootStatus() {
   const currentOrigin = getCurrentOrigin();
-  if (getDataRootMode() === 'server') {
+  if ((await resolveDataRootMode()) === 'server') {
     const root = await getServerRoot();
     if (root) {
       return { status: 'ready', handle: root, name: root.name, server: true,
@@ -179,7 +220,7 @@ export async function setRoot() {
  * @returns {Promise<FileSystemDirectoryHandle|null>}
  */
 export async function connectRoot() {
-  if (getDataRootMode() === 'server') {
+  if ((await resolveDataRootMode()) === 'server') {
     const root = await getServerRoot();
     if (root) {
       await ensureRegistry(root);

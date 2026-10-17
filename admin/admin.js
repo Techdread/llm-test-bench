@@ -9,10 +9,15 @@ import * as checks from './services/showcase-checks.js';
 import * as api from './services/api.js';
 import { handleReader } from './services/fs-reader.js';
 import { scanCandidates, filterCandidates, suggestId, publishReport } from './services/candidates.js';
-import { withCaptureShim, captureFromPreview, captureScreen, imageFromBytes, normalizePoster } from './services/poster.js';
+import { withCaptureShim, CAPTURE_SHIM_JS, captureFromPreview, captureScreen, imageFromBytes, normalizePoster } from './services/poster.js';
+import { bundleRun } from './services/project-bundle.js';
+import { ShowcaseProjectFrame } from '../shared/forge/components/ShowcasePlayer.js';
 
-const BENCH_LABEL = { 'prompt-gallery': 'Prompt Gallery', 'p5-sketch-gallery': 'p5 Sketch', 'svg-benchmark': 'SVG Bench' };
-const BENCH_CLS = { 'prompt-gallery': 'pg', 'p5-sketch-gallery': 'p5', 'svg-benchmark': 'svg' };
+const BENCH_LABEL = { 'prompt-gallery': 'Prompt Gallery', 'p5-sketch-gallery': 'p5 Sketch', 'svg-benchmark': 'SVG Bench',
+  'game-forge-v2': 'Game Forge', 'vr-forge': 'VR Forge' };
+const BENCH_CLS = { 'prompt-gallery': 'pg', 'p5-sketch-gallery': 'p5', 'svg-benchmark': 'svg', 'game-forge-v2': 'gf', 'vr-forge': 'vr' };
+const CAPTURE_BOOTSTRAP = [CAPTURE_SHIM_JS];
+const mb = (n) => `${(n / 1048576).toFixed(n < 1048576 ? 2 : 1)} MB`;
 
 function useToast() {
   const [toast, setToast] = useState(null);
@@ -52,8 +57,8 @@ function CandidateList({ list, selected, onSelect, filters, setFilters, total })
   return html`
     <div class="adm-cands">
       <div class="adm-filters">
-        <select value=${filters.bench} onChange=${set('bench')} aria-label="Bench">
-          <option value="all">All benches</option>
+        <select value=${filters.bench} onChange=${set('bench')} aria-label="App">
+          <option value="all">All apps</option>
           ${Object.entries(BENCH_LABEL).map(([k, v]) => html`<option value=${k}>${v}</option>`)}
         </select>
         <select value=${filters.minScore} onChange=${set('minScore')} aria-label="Minimum rating">
@@ -72,7 +77,7 @@ function CandidateList({ list, selected, onSelect, filters, setFilters, total })
             <span class=${`adm-chip ${BENCH_CLS[c.bench]}`}>${BENCH_LABEL[c.bench]}</span>
             <span class="adm-row-title">${c.title}</span>
             <span class="adm-row-score">${c.rated ? `${c.rating}/${c.scoreMax}` : '—'}</span>
-            <span class="adm-row-sub">${c.model}${c.created ? ` · ${c.created.slice(0, 10)}` : ''}</span>
+            <span class="adm-row-sub">${c.model}${c.created ? ` · ${c.created.slice(0, 10)}` : ''}${c.status ? ` · ${c.status}` : ''}</span>
           </li>`)}
       </ul>
       ${list.length > 300 && html`<p class="adm-muted">Showing the first 300. Narrow the filters to see more.</p>`}
@@ -84,6 +89,8 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
   const [prompt, setPrompt] = useState('');
   const [form, setForm] = useState({});
   const [poster, setPoster] = useState(null);   // { bytes, url, blank }
+  const [project, setProject] = useState(null); // forge runs: { bundle, skipped, vendoredCount, bytes }
+  const [runKey, setRunKey] = useState(0);
   const [busy, setBusy] = useState('');
   const frame = useRef(null);
   const previewBox = useRef(null);
@@ -93,9 +100,20 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
     let live = true;
     setPoster(null);
     setCode('');
+    setProject(null);
     (async () => {
-      const text = await reader.text(candidate.source);
-      const promptText = candidate.prompt ? await reader.text(candidate.prompt).catch(() => '') : '';
+      let text;
+      if (candidate.kind === 'project') {
+        setBusy('Reading the project…');
+        const built = await bundleRun(reader, candidate);
+        if (!live) return;
+        setProject(built);
+        setBusy('');
+        text = built.text;
+      } else {
+        text = await reader.text(candidate.source);
+      }
+      const promptText = candidate.prompt ? await reader.text(candidate.prompt).catch(() => '') : (candidate.promptText || '');
       if (!live) return;
       setCode(text);
       setPrompt(promptText.trim());
@@ -109,7 +127,7 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
         const img = await imageFromBytes(await reader.bytes(candidate.thumb));
         if (live) setPoster(await normalizePoster(img));
       }
-    })().catch(e => toast(`Could not read ${candidate.source}: ${e.message}`, 'error'));
+    })().catch(e => { setBusy(''); toast(`Could not read ${candidate.source}: ${e.message}`, 'error'); });
     return () => { live = false; };
   }, [candidate.source]);
 
@@ -134,6 +152,7 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
       const item = await api.publish({
         id: form.id.trim(), bench: candidate.bench, title: form.title, note: form.note, rating: form.rating,
         sourceMeta: { source: candidate.source, prompt: candidate.prompt, model: candidate.model, run: candidate.run,
+          ...(candidate.runId ? { runId: candidate.runId, status: candidate.status } : {}),
           rating: candidate.rating, scoreMax: candidate.scoreMax, created: candidate.created, publishedFrom: 'admin' },
       }, { code: new TextEncoder().encode(code), prompt, poster: poster?.bytes });
       toast(`Published ${item.id}. It is live on the showcase now.`);
@@ -161,7 +180,19 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
         ${candidate.kind === 'svg' && svgUrl && html`<img src=${svgUrl} alt="SVG preview" />`}
         ${candidate.kind === 'js' && (poster ? html`<img src=${poster.url} alt="Project thumbnail" />`
           : html`<p class="adm-muted">p5 sketches are previewed by their project thumbnail. Upload a poster if there is none.</p>`)}
+        ${candidate.kind === 'project' && project && html`<${ShowcaseProjectFrame} bundle=${project.bundle} runKey=${runKey}
+          bootstrap=${CAPTURE_BOOTSTRAP} frameRef=${frame} title="Preview" />`}
+        ${candidate.kind === 'project' && !project && html`<p class="adm-muted">${busy || 'Reading the project…'}</p>`}
       </div>
+      ${project && html`
+        <details class="adm-prompt">
+          <summary>${project.bundle.files.length} files, ${mb(project.bytes)} to store${project.vendoredCount ? `, ${project.vendoredCount} pinned librar${project.vendoredCount === 1 ? 'y' : 'ies'} served by the site` : ''}${project.skipped.length ? `, ${project.skipped.length} left out` : ''} · opens ${project.bundle.entry || '(no page)'}
+            <button class="button compact" onClick=${(e) => { e.preventDefault(); setRunKey(k => k + 1); }}>Restart preview</button></summary>
+          <ul class="adm-files">
+            ${project.bundle.files.map(f => html`<li key=${f.path}><code>${f.path}</code>${f.vendored ? html` <span class="adm-muted">from the site's library copy</span>` : ''}</li>`)}
+            ${project.skipped.map(f => html`<li key=${`skip:${f.path}`} class="is-skipped"><code>${f.path}</code> <span class="adm-muted">left out: ${f.reason}</span></li>`)}
+          </ul>
+        </details>`}
       ${prompt && html`<details class="adm-prompt"><summary>Prompt</summary><p>${prompt}</p></details>`}
       <ul class="adm-report">${report.map(r => html`<li class=${`is-${r.level}`}>${r.text}</li>`)}</ul>
       <div class="adm-form">
@@ -174,7 +205,7 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
         <div class="adm-poster">
           <div class="adm-poster-img">${poster ? html`<img src=${poster.url} alt="Poster" />` : html`<span class="adm-muted">No poster yet</span>`}</div>
           <div class="adm-poster-actions">
-            ${candidate.kind === 'html' && html`
+            ${(candidate.kind === 'html' || candidate.kind === 'project') && html`
               <button class="button compact" onClick=${() => captureFromPreview(frame.current).then(img => usePoster(img, 'Canvas capture'), e => toast(e.message, 'warn'))}>Capture canvas</button>
               <button class="button compact" onClick=${() => captureScreen(previewBox.current).then(c => usePoster(c, 'Screen capture'), e => toast(`Screen capture cancelled: ${e.message}`, 'warn'))}>Capture screen</button>`}
             <button class="button compact" onClick=${() => fileInput.current.click()}>Upload image</button>

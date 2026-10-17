@@ -24,6 +24,14 @@ test('public distributions disable cross-app handoffs by default', () => {
   assert.equal(crossAppHandoffsEnabled(doc), false);
 });
 
+test('handoffs stay on to targets the distribution published', () => {
+  const doc = documentWith({ distribution: 'public', crossAppHandoffs: 'off', handoffTargets: 'prompt-gallery code-morph-lab-v3' });
+  assert.equal(crossAppHandoffsEnabled(doc), false);
+  assert.equal(crossAppHandoffsEnabled(doc, 'code-morph-lab-v3'), true);
+  assert.equal(crossAppHandoffsEnabled(doc, 'bugfix-bench-v2'), false);
+  assert.equal(crossAppHandoffsEnabled(documentWith({ distribution: 'public' }), 'code-morph-lab-v3'), false);
+});
+
 test('an explicit handoff setting wins over the distribution default', () => {
   assert.equal(crossAppHandoffsEnabled(documentWith({ distribution: 'public', crossAppHandoffs: 'on' })), true);
   assert.equal(crossAppHandoffsEnabled(documentWith({ distribution: 'private-hub', crossAppHandoffs: 'off' })), false);

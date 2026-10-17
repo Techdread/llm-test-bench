@@ -195,6 +195,12 @@ function App() {
       if (snap.theme !== undefined) setTheme(snap.theme);
       if (snap.provider !== undefined) setSelectedProviderId(snap.provider);
       if (snap.model !== undefined) setSelectedModelId(snap.model);
+      // The executor fields have no localStorage scratch, so the useState
+      // initialisers above only ever see the defaults — disk is the one place
+      // a saved CLI agent can come back from.
+      if (snap.backend === 'agent' || snap.backend === 'model') setBackend(snap.backend);
+      if (snap.agent) setSelectedAgentId(snap.agent);
+      if (snap.agentModels && typeof snap.agentModels === 'object') setAgentModels(snap.agentModels);
     });
   }, []);
 
@@ -990,7 +996,7 @@ function App() {
           }}
           onDeleteSubmission=${handleDeleteSubmission}
           onDeleteBenchmark=${handleDeleteBenchmark}
-          allowHandoffs=${crossAppHandoffsEnabled()}
+          allowHandoffs=${crossAppHandoffsEnabled(undefined, 'code-morph-lab-v3')}
         />`;
 
       case 'create':

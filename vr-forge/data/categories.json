@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "categories": [
+    { "id": "game", "title": "Games", "icon": "fa-gamepad", "order": 10 },
+    { "id": "simulation", "title": "Simulations", "icon": "fa-atom", "order": 20 },
+    { "id": "app", "title": "Apps & tools", "icon": "fa-screwdriver-wrench", "order": 30 },
+    { "id": "mixed-reality", "title": "Mixed reality", "icon": "fa-cube", "order": 40 },
+    { "id": "uncategorized", "title": "Uncategorised", "icon": "fa-folder", "order": 900 }
+  ]
+}

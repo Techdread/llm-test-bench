@@ -1,0 +1,70 @@
+{
+  "version": "hub-help-deck-v1",
+  "title": "SQL Playground — Help",
+  "generatedFrom": "HELP.md",
+  "generatedBy": "help-decks",
+  "generatedAt": "2026-07-18T22:29:39.872Z",
+  "slides": [
+    {
+      "kind": "title",
+      "title": "SQL Playground — Help",
+      "html": "<p>An in-browser SQLite environment. Databases live entirely in your browser —\neither in your data-root folder (via the File System Access API) or in\nIndexedDB as a fallback.</p>"
+    },
+    {
+      "kind": "shot",
+      "title": "The app",
+      "image": "shot-app.webp",
+      "html": "<p>This is the app as it opens. Every screenshot in this deck is captured from the running app, not drawn by hand.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Getting started",
+      "html": "<ol>\n<li>The app opens with a scratchpad database and a small demo schema.</li>\n<li>Press <strong>Ctrl+Enter</strong> (or click <strong>Run</strong>) to execute the SQL in the editor.\nIf you have text selected, only the selection runs.</li>\n<li>Use the <strong>left panel</strong> to manage saved databases and snippets.</li>\n<li>Use the <strong>right panel</strong> to inspect the schema, view the ER diagram, or ask\nthe LLM assistant to write SQL for you.</li>\n</ol>"
+    },
+    {
+      "kind": "text",
+      "title": "Databases",
+      "html": "<ul>\n<li>Click <strong>+</strong> in the <em>Databases</em> side panel to create a new empty DB.</li>\n<li>Click a database name to load it (unsaved work is prompted before switching).</li>\n<li>Click the <strong>📥 import</strong> icon to open a <code>.sqlite</code> / <code>.db</code> / <code>.sqlite3</code> file.</li>\n<li>Click the <strong>⬇ export</strong> icon next to a DB to download it as a <code>.sqlite</code> file.</li>\n<li><strong>Save</strong> persists the current DB to your data root (or IndexedDB).</li>\n<li><strong>Save As…</strong> clones it under a new name.</li>\n<li>The name pill in the toolbar is clickable — use it to rename the current DB.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Editor & results",
+      "html": "<ul>\n<li>Ace-powered SQL editor with syntax highlighting.</li>\n<li><strong>Run</strong> executes the whole script, or the current selection. All statements\nrun; the last result set is shown.</li>\n<li><strong>Plan</strong> runs <code>EXPLAIN QUERY PLAN</code> for the selected statement and renders it\nas a tree.</li>\n<li>The results grid is <strong>virtualised</strong> — 100k-row result sets scroll smoothly.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Schema & diagram",
+      "html": "<ul>\n<li><strong>Schema</strong> tab: expandable table tree. Click a column to insert its name\ninto the editor; click the 👁 icon to <code>SELECT * FROM …</code> that table.</li>\n<li><strong>Diagram</strong> tab: auto-laid-out ER diagram using foreign-key constraints as\nedges. Based on the shared force-directed graph layout.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "LLM Assistant",
+      "html": "<p>The assistant uses the same provider / model selection as the rest of the hub.\nSet an API key from the toolbar key icon, and pick a model from the dropdown.</p>\n<p>Modes:</p>\n<ul>\n<li><strong>Suggest query</strong> — natural-language → SQL against the current schema.</li>\n<li><strong>Draft schema</strong> — a description → a set of <code>CREATE TABLE</code> statements.</li>\n<li><strong>Seed data</strong> — generate <code>INSERT</code> statements for the current schema.</li>\n<li><strong>Explain</strong> — plain-language explanation of the SQL currently in the editor.</li>\n</ul>\n<p>Each generated SQL block has <strong>To editor</strong> (replaces the editor contents) and\n<strong>Run</strong> (executes against the current DB) buttons.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "CSV import / export",
+      "html": "<ul>\n<li>Toolbar <strong>📄 import CSV</strong> opens a dialog to name a new table. The importer\ninfers INTEGER / REAL / TEXT from the sample values. Existing tables with\nthe same name are dropped.</li>\n<li>Toolbar <strong>📤 export CSV</strong> downloads the current result set.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Snippets",
+      "html": "<ul>\n<li>Type a name in the <em>Snippets</em> side panel and click 💾 to save the editor\ncontents as a reusable snippet under the current DB.</li>\n<li>Click a snippet to load it back into the editor.</li>\n<li>Snippets follow the DB: loading a different DB swaps its snippet list.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Keyboard",
+      "html": "<table>\n<thead>\n<tr>\n<th>Action</th>\n<th>Binding</th>\n</tr>\n</thead>\n<tbody><tr>\n<td>Run query</td>\n<td><code>Ctrl+Enter</code> / <code>Cmd+Enter</code></td>\n</tr>\n</tbody></table>"
+    },
+    {
+      "kind": "text",
+      "title": "Tips",
+      "html": "<ul>\n<li>You can quote reserved words (like <code>&quot;order&quot;</code>) to use them as table names.</li>\n<li>The first time you run a query, sql.js (≈1 MB WASM) is downloaded and cached\nby the browser.</li>\n<li>The demo schema is preloaded into the scratchpad DB so <code>SELECT</code> statements\nwork immediately.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Troubleshooting",
+      "html": "<ul>\n<li><strong>&quot;Failed to load sql.js&quot;</strong> — check your internet connection; the WASM is\nloaded from <code>cdnjs.cloudflare.com</code> on first use.</li>\n<li><strong>&quot;DB not found&quot;</strong> — the database was deleted externally. Create a new DB\nfrom the toolbar.</li>\n<li><strong>&quot;Pick a model first&quot;</strong> — open <strong>Settings</strong> (cog), add an OpenRouter API\nkey, and pick a model from the dropdown.</li>\n</ul>"
+    }
+  ]
+}

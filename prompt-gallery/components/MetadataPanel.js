@@ -7,7 +7,7 @@ import { sendToBugfixBench } from '../../shared/services/bugfix-bench-handoff.js
 import { VerificationDetails } from './VerificationBadge.js';
 import { sanitizeRichHtml } from '../../shared/services/content-sanitizer.js';
 
-export function MetadataPanel({ generation, response, onUpdateMetadata, onSavePromptToLibrary, onRefine, onEdit, onDelete, onCompare, onClose, allowHandoffs = true }) {
+export function MetadataPanel({ generation, response, onUpdateMetadata, onSavePromptToLibrary, onRefine, onEdit, onDelete, onCompare, onClose, allowHandoffs = true, allowMorph = allowHandoffs }) {
   const [tagInput, setTagInput] = useState('');
 
   if (!generation) return null;
@@ -175,7 +175,7 @@ export function MetadataPanel({ generation, response, onUpdateMetadata, onSavePr
             <i class="fa-solid fa-bookmark"></i> Keep Prompt
           </button>
         `}
-        ${allowHandoffs && html`<button class="btn" onClick=${() => {
+        ${allowMorph && html`<button class="btn" onClick=${() => {
           try {
             sendToCodeMorphLab({
               source: 'prompt-gallery',
