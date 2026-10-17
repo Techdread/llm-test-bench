@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-distribution="public">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="How Understory Studio works: reference pictures in, an editable 3D asset out at five levels of detail. The model writes a declarative design, reviews renders of its own work and corrects it.">
+  <title>Understory Studio · How it's built · Peter Edwards</title>
+  <link rel="canonical" href="https://neuroviz.uk/work-understory">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#080b12">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Peter Edwards">
+  <meta property="og:url" content="https://neuroviz.uk/work-understory">
+  <meta property="og:title" content="Understory Studio: how it's built">
+  <meta property="og:description" content="Reference pictures in, an editable 3D asset out: the model writes a design, not geometry, then reviews renders of its own work.">
+  <meta property="og:image" content="https://neuroviz.uk/og-image.jpg">
+  <link rel="stylesheet" href="site.css?v=d1b1767ad7">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Peter Edwards — home"><span class="brand-mark">PE</span><span>Peter Edwards</span></a>
+    <nav aria-label="Main navigation"><a href="./#projects">Projects</a><a href="showcase.html">Showcase</a><a href="./#about">About</a><a href="settings.html">Settings</a><a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a></nav>
+  </header>
+  <main class="case-page accent-green">
+    <p class="eyebrow">How it&rsquo;s built &middot; Image to 3D asset</p>
+    <h1>Understory Studio</h1>
+    <p class="case-lead">Language models are poor at writing raw 3D geometry: ask for vertices and you get a melted shape. Understory never asks. The model writes a short <em>design</em> made of named, parametric parts, and trusted code builds the mesh. Then the model sees renders of what it built beside your reference pictures and corrects itself.</p>
+    <div class="hero-actions">
+      <a class="button primary" href="understory-studio/">Open Understory Studio</a>
+    </div>
+
+    <ul class="case-facts" aria-label="Key numbers">
+      <li><strong>1&ndash;3</strong>reference pictures in</li>
+      <li><strong>5</strong>levels of detail from one design</li>
+      <li><strong>87</strong>animation clips for rigged characters</li>
+      <li><strong>96</strong>unit tests on the app&rsquo;s services</li>
+    </ul>
+
+    <h2>From pictures to an asset</h2>
+    <ol class="pipeline">
+      <li><strong>References</strong>One to three pictures of the object or character, from any angles you have.</li>
+      <li><strong>Design</strong>The model writes a seeded function that returns materials and named parts: boxes, ellipsoids, tubes, lathes and extrusions.</li>
+      <li><strong>Build</strong>A trusted builder validates the design and constructs the mesh and procedural textures.</li>
+      <li><strong>Self-review</strong>Front, side and back renders go back to a vision model beside the references, and it revises the design.</li>
+      <li><strong>Rig and export</strong>Characters get a skeleton, skin weights and animations; everything exports as GLB.</li>
+    </ol>
+
+    <h2>Design decisions</h2>
+    <div class="case-grid">
+      <div><h3>The contract is the product</h3><p>Because the model writes a declarative design rather than three.js code, its output can be validated, re-seeded and edited by hand. The design function runs in a disposable worker inside an opaque-origin frame with no network, and only plain JSON comes back.</p></div>
+      <div><h3>Five LODs, identical placement</h3><p>All five levels of detail are derived from the same description by scaling each part&rsquo;s resolution, with an optional last level per part. Parts never drift between levels, because there is only one source.</p></div>
+      <div><h3>Originals are never replaced</h3><p>An optional triangle clean-up (weld, remove hidden faces, then simplify with meshoptimizer) is built beside the original master and LODs, never over them, and export can include both.</p></div>
+      <div><h3>Ported, then made smaller</h3><p>It started as a standalone Vite project with excellent output and a weak UI. The port kept the modelling core verbatim and deleted about 900 lines of provider and settings code that the hub already supplies to every app.</p></div>
+    </div>
+
+    <h2>Problems worth solving</h2>
+    <ul class="case-lessons">
+      <li><strong>Bounds that ignore skinning.</strong> <code>Box3.setFromObject</code> on a skinned mesh reads the bind-pose geometry, so a pose test written against bounds passes whether or not the fix works. The tests measure bone world positions instead.</li>
+      <li><strong>Bent limbs defeat rigid fits.</strong> The clean-up removes triangles hidden inside other parts. Fitting a posed arm rigidly across its elbow left a residual larger than the arm, so nothing was removed. Bent parts are now tested by winding number against their posed triangles.</li>
+      <li><strong>Test fixtures can lie.</strong> An eight-vertex box can only shear under skinning, never bend, so it &ldquo;proved&rdquo; bugs that were not there. Fixtures use subdivided geometry.</li>
+      <li><strong>Workers and import maps.</strong> Module workers do not inherit the page&rsquo;s import map. The vendored rigging solver&rsquo;s bare <code>three</code> imports had to be rewritten to relative paths, and the only symptom of a wrong path was an error event with an empty message.</li>
+    </ul>
+
+    <h2>More write-ups</h2>
+    <div class="case-next">
+      <a class="button" href="work-game-forge.html">Game Forge</a>
+      <a class="button" href="work-vr-forge.html">VR Forge</a>
+      <a class="button" href="work-code-morph.html">Code Morph Lab</a>
+    </div>
+  </main>
+  <footer><span>Peter Edwards · Projects MIT licensed</span><span><a href="./">Back to the projects</a></span></footer>
+</body>
+</html>

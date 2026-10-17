@@ -11,7 +11,8 @@
 //     <div data-showcase-grid data-hero data-limit="6">
 //                                             tiles; data-hero shows only items
 //                                             flagged `hero` (the first N when
-//                                             none are), data-limit caps them
+//                                             none are), data-limit caps them,
+//                                             data-bench="<app>" shows one app only
 //     <div data-showcase-filters>             optional bench filter chips
 //
 // Every item keeps a stable `id` (also the tile's DOM id), so showcase.html#<id>
@@ -115,7 +116,11 @@ async function render() {
     const limit = Number(grid.dataset.limit) || Infinity;
     const heroOnly = 'hero' in grid.dataset;
     const sortSelect = panel.querySelector('[data-showcase-sort]');
-    let bench = 'all';
+    // data-bench pins a panel to one app (the write-up pages); it stays hidden
+    // until that app has something published.
+    const fixed = grid.dataset.bench || '';
+    if (fixed && !items.some((it) => it.bench === fixed)) continue;
+    let bench = fixed || 'all';
 
     const draw = () => {
       const pool = bench === 'all' ? items.slice() : items.filter((it) => it.bench === bench);

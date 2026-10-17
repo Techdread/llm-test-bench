@@ -91,7 +91,11 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
   const [poster, setPoster] = useState(null);   // { bytes, url, blank }
   const [project, setProject] = useState(null); // forge runs: { bundle, skipped, vendoredCount, bytes }
   const [runKey, setRunKey] = useState(0);
+  const [frameStatus, setFrameStatus] = useState(null);
+  const [savedThumb, setSavedThumb] = useState(false);
   const [busy, setBusy] = useState('');
+  const posterRef = useRef(null);
+  posterRef.current = poster;
   const frame = useRef(null);
   const previewBox = useRef(null);
   const fileInput = useRef(null);
@@ -101,6 +105,9 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
     setPoster(null);
     setCode('');
     setProject(null);
+    setFrameStatus(null);
+    setSavedThumb(false);
+    setAutoCapture('');
     (async () => {
       let text;
       if (candidate.kind === 'project') {
@@ -136,10 +143,52 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
   const needsPoster = candidate.kind !== 'svg';
   const svgUrl = useMemo(() => (candidate.kind === 'svg' && code ? URL.createObjectURL(new Blob([code], { type: 'image/svg+xml' })) : ''), [code]);
 
+  // Runs without a preview.png (every VR Forge run so far): once the preview
+  // is running, take the poster from its canvas. A scene can need a moment to
+  // draw, so a blank first read is retried. Any capture the user makes wins.
+  const runThumbless = candidate.kind === 'project' && !candidate.thumb;
+  const [autoCapture, setAutoCapture] = useState('');   // '' | 'trying' | 'gave-up'
+  useEffect(() => {
+    if (!runThumbless || frameStatus?.state !== 'running') return undefined;
+    let live = true;
+    setAutoCapture('trying');
+    const delays = [2500, 5000, 8000, 12000];
+    const timers = delays.map((ms, i) => setTimeout(async () => {
+      if (!live || posterRef.current) return;
+      try {
+        const img = await captureFromPreview(frame.current);
+        const result = await normalizePoster(img);
+        if (!live || posterRef.current) return;
+        // A blank read is never kept: a black poster is worse than none.
+        if (!result.blank) { setPoster({ ...result, source: img, auto: true }); setAutoCapture(''); return; }
+      } catch { /* no canvas yet */ }
+      if (live && i === delays.length - 1 && !posterRef.current) setAutoCapture('gave-up');
+    }, ms));
+    return () => { live = false; timers.forEach(clearTimeout); };
+  }, [frameStatus?.state, runKey, runThumbless]);
+
+  /** Keep the poster with the run, so the forge's own gallery shows it too. Never replaces a file. */
+  async function saveToRun() {
+    const runDir = candidate.source.replace(/\/project$/, '');
+    try {
+      const src = poster.source;
+      const canvas = document.createElement('canvas');
+      canvas.width = src.naturalWidth || src.width;
+      canvas.height = src.naturalHeight || src.height;
+      canvas.getContext('2d').drawImage(src, 0, 0);
+      const png = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      await reader.writeNew(`${runDir}/preview.png`, png);
+      setSavedThumb(true);
+      toast(`Saved ${runDir}/preview.png.`);
+    } catch (e) {
+      toast(`Could not save preview.png: ${e.message}`, 'warn');
+    }
+  }
+
   async function usePoster(source, label) {
     try {
       const result = await normalizePoster(source);
-      setPoster(result);
+      setPoster({ ...result, source });
       toast(result.blank ? `${label}: the image looks blank. Try another capture method.` : `${label}: poster ready.`, result.blank ? 'warn' : 'ok');
     } catch (e) {
       toast(`${label} failed: ${e.message}`, 'error');
@@ -181,7 +230,7 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
         ${candidate.kind === 'js' && (poster ? html`<img src=${poster.url} alt="Project thumbnail" />`
           : html`<p class="adm-muted">p5 sketches are previewed by their project thumbnail. Upload a poster if there is none.</p>`)}
         ${candidate.kind === 'project' && project && html`<${ShowcaseProjectFrame} bundle=${project.bundle} runKey=${runKey}
-          bootstrap=${CAPTURE_BOOTSTRAP} frameRef=${frame} title="Preview" />`}
+          bootstrap=${CAPTURE_BOOTSTRAP} frameRef=${frame} onStatus=${setFrameStatus} title="Preview" />`}
         ${candidate.kind === 'project' && !project && html`<p class="adm-muted">${busy || 'Reading the project…'}</p>`}
       </div>
       ${project && html`
@@ -212,6 +261,13 @@ function PublishPanel({ candidate, reader, items, onPublished, toast }) {
             <input ref=${fileInput} type="file" accept="image/png,image/jpeg,image/webp" hidden
               onChange=${async e => { const f = e.target.files[0]; e.target.value = ''; if (f) usePoster(await imageFromBytes(new Uint8Array(await f.arrayBuffer()), f.type), 'Upload'); }} />
             ${poster?.blank && html`<p class="adm-warn">This poster looks blank.</p>`}
+            ${poster?.auto && html`<p class="adm-muted">Taken from the preview automatically. Capture again once the scene looks right if you want a better one.</p>`}
+            ${runThumbless && !poster && autoCapture === 'trying' && html`<p class="adm-muted">This run has no preview.png. A poster is taken from the preview once it has drawn.</p>`}
+            ${runThumbless && !poster && autoCapture === 'gave-up' && html`<p class="adm-muted">The preview's canvas stayed blank. Start the scene (click into it) and use Capture canvas, or Capture screen.</p>`}
+            ${runThumbless && poster?.source && !poster.blank && html`
+              <button class="button compact" disabled=${savedThumb} onClick=${saveToRun}
+                title="Writes preview.png into the run folder. Never replaces an existing file.">
+                ${savedThumb ? 'Saved to the run folder' : 'Save as the run\'s preview.png'}</button>`}
           </div>
         </div>`}
       <div class="adm-publish-go">

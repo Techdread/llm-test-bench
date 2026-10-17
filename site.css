@@ -245,6 +245,10 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 28px
 .project-card .skills { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 7px; margin: 0 0 22px; padding: 0; list-style: none; }
 .project-card .skills li { padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: rgba(0,0,0,.18); color: #cdd3df; font-size: .78rem; }
 .project-card .card-link { position: relative; left: auto; bottom: auto; z-index: 1; margin-top: auto; color: var(--text); }
+.project-card .card-links { position: relative; z-index: 1; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; margin-top: auto; }
+.project-card .card-links .card-link { margin-top: 0; }
+.project-card .card-link.secondary { color: var(--muted); font-weight: 650; }
+.project-card .card-link.secondary:hover { color: var(--text); }
 .project-card:hover { border-color: var(--line-strong); }
 .accent-blue { --accent: var(--blue); }
 .accent-purple { --accent: var(--purple); }
@@ -405,4 +409,36 @@ nav a[aria-current="page"] { color: var(--text); }
 .showcase-tile.is-target { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(112,167,255,.25); }
 @media (prefers-reduced-motion: reduce) {
   .showcase-tile { animation: none; }
+}
+
+/* ── Write-up pages (work-*.html): how a project was built ─────────────── */
+.case-page { max-width: 880px; padding: 64px 0 96px; }
+.case-page h1 { margin: 0 0 18px; font-size: clamp(2.4rem, 6vw, 4.2rem); line-height: 1.02; letter-spacing: -.03em; }
+.case-page h2 { margin: 56px 0 14px; font-size: 1.45rem; }
+.case-page h3 { margin: 0 0 6px; font-size: 1rem; }
+.case-page p, .case-page li { color: var(--muted); line-height: 1.7; }
+.case-page code { font-size: .88em; color: #cdd3df; }
+.case-lead { font-size: 1.15rem; color: #cdd3df !important; max-width: 720px; }
+.case-page .hero-actions { margin-top: 24px; }
+.case-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 36px 0 0; padding: 0; list-style: none; }
+.case-facts li { padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); line-height: 1.35; font-size: .82rem; }
+.case-facts strong { display: block; color: var(--text); font-size: 1.35rem; margin-bottom: 2px; }
+.case-figure { margin: 40px 0 0; }
+.case-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 14px; }
+.case-figure figcaption { margin-top: 10px; color: var(--muted); font-size: .84rem; }
+.pipeline { counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 18px 0 0; padding: 0; list-style: none; }
+.pipeline li { counter-increment: step; position: relative; padding: 14px 16px 16px; border: 1px solid var(--line); border-top: 3px solid var(--accent, var(--blue)); border-radius: 12px; background: var(--surface); font-size: .86rem; line-height: 1.5; }
+.pipeline li::before { content: counter(step, decimal-leading-zero); display: block; margin-bottom: 6px; color: var(--accent, var(--blue)); font-size: .72rem; font-weight: 800; letter-spacing: .12em; }
+.pipeline li strong { display: block; color: var(--text); margin-bottom: 2px; }
+.case-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+.case-grid > div { padding: 18px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.case-grid > div p { margin: 0; font-size: .92rem; }
+.case-lessons { padding-left: 1.2em; }
+.case-lessons li { margin-bottom: 10px; }
+.case-lessons strong { color: var(--text); }
+.case-page .showcase { margin-top: 18px; }
+.case-next { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+@media (max-width: 760px) {
+  .case-facts { grid-template-columns: 1fr 1fr; }
+  .case-grid { grid-template-columns: 1fr; }
 }

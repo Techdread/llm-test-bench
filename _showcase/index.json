@@ -260,6 +260,24 @@
    "rating": "9/10",
    "poster": "",
    "ext": ".svg"
+  },
+  {
+   "id": "dune-2",
+   "bench": "game-forge-v2",
+   "title": "Dune II: The Battle for Arrakis",
+   "note": "claude-opus-5 · Claude Code",
+   "rating": "5/5",
+   "poster": "dune-2.jpg",
+   "ext": ".json"
+  },
+  {
+   "id": "age-of-empires",
+   "bench": "game-forge-v2",
+   "title": "Age of Empires",
+   "note": "claude-opus-5-5 · Claude Code",
+   "rating": "5/5",
+   "poster": "age-of-empires.jpg",
+   "ext": ".json"
   }
  ]
 }

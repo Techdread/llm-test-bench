@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-distribution="public">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="How Game Forge works: a language model builds a complete multi-file game through an agentic tool loop, and the app runs, checks and keeps every build.">
+  <title>Game Forge · How it's built · Peter Edwards</title>
+  <link rel="canonical" href="https://neuroviz.uk/work-game-forge">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#080b12">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Peter Edwards">
+  <meta property="og:url" content="https://neuroviz.uk/work-game-forge">
+  <meta property="og:title" content="Game Forge: how it's built">
+  <meta property="og:description" content="A model builds a whole multi-file game through an agentic tool loop; the app runs it, checks it and keeps every build.">
+  <meta property="og:image" content="https://neuroviz.uk/og-image.jpg">
+  <link rel="stylesheet" href="site.css?v=d1b1767ad7">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Peter Edwards — home"><span class="brand-mark">PE</span><span>Peter Edwards</span></a>
+    <nav aria-label="Main navigation"><a href="./#projects">Projects</a><a href="showcase.html">Showcase</a><a href="./#about">About</a><a href="settings.html">Settings</a><a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a></nav>
+  </header>
+  <main class="case-page accent-amber">
+    <p class="eyebrow">How it&rsquo;s built &middot; Agentic game builder</p>
+    <h1>Game Forge</h1>
+    <p class="case-lead">Ask a model for &ldquo;a game in one file&rdquo; and you learn very little about whether it can manage a real project. Game Forge gives the model file tools and a budget and lets it build a complete multi-file game. Then the app runs what was built, checks it and keeps it, so builds can be compared rather than taken on trust.</p>
+    <div class="hero-actions">
+      <a class="button primary" href="game-forge-v2/">Open Game Forge</a>
+      <a class="button" href="showcase.html">Play builds on the showcase</a>
+    </div>
+
+    <ul class="case-facts" aria-label="Key numbers">
+      <li><strong>339</strong>game briefs, 1980 arcade to modern indie</li>
+      <li><strong>1,000+</strong>builds kept and comparable</li>
+      <li><strong>7</strong>coding agents usable as builders</li>
+      <li><strong>128</strong>unit tests on the app&rsquo;s services</li>
+    </ul>
+
+    <figure class="case-figure">
+      <img src="game-forge-v2/help/shot-app.webp" width="1440" height="810" loading="lazy" alt="The Game Forge library: game briefs as cards, each with a Watch for list of the ways a build usually goes wrong, and a Build button.">
+      <figcaption>The brief library. Each brief carries a &ldquo;Watch for&rdquo; list: the specific ways models tend to get that game wrong.</figcaption>
+    </figure>
+
+    <h2>How a build runs</h2>
+    <ol class="pipeline">
+      <li><strong>Brief</strong>A curated prompt plus its target stack and pinned libraries.</li>
+      <li><strong>Agentic loop</strong>The model lists, reads, writes and edits files, then calls <code>report_done</code>.</li>
+      <li><strong>Live preview</strong>Each turn&rsquo;s files are assembled and the game boots in a sandbox while it is still being built.</li>
+      <li><strong>Checks</strong>Diagnostics capture errors, failed loads and a screenshot from the running game.</li>
+      <li><strong>Compare</strong>Every run is kept with its trace, rated, and laid side by side with other models&rsquo; runs.</li>
+    </ol>
+
+    <h2>Design decisions</h2>
+    <div class="case-grid">
+      <div><h3>A previewer that runs real projects</h3><p>Generated games are folders, not single files. The previewer turns every file into a blob URL, rewrites script, stylesheet, image and CSS <code>url()</code> references and import maps to match, and boots the entry page in a sandboxed frame.</p></div>
+      <div><h3>Nothing is overwritten</h3><p>Runs are append-only: the project, a <code>forge.json</code> record and the full tool-call trace are saved per run. Re-running a brief adds a contender instead of replacing one.</p></div>
+      <div><h3>Pinned, hash-checked libraries</h3><p>When a brief allows an engine such as Phaser, Babylon or three.js, the exact file is copied into the project and checked by SHA-256, so a build plays the same way months later.</p></div>
+      <div><h3>One kernel, several forges</h3><p>The build loop, tools, budgets, run store and previewer live in a shared kernel. VR Forge and Application Forge reuse it, and the Game Forge services are thin adapters over it.</p></div>
+    </div>
+
+    <h2>Problems worth solving</h2>
+    <ul class="case-lessons">
+      <li><strong>Models that loop.</strong> One model spent 40 turns rewriting the same 40 files and never finished. Turn limits are a poor guard, so a progress tracker hashes file contents each turn. Two turns with no progress get a nudge; four end the run as &ldquo;stuck&rdquo;; a file rewritten six times is flagged even when its content keeps changing.</li>
+      <li><strong>External coding agents.</strong> Claude Code, Codex, Antigravity and others run as builders through a small local bridge. Each runs in a jailed project folder, and its output is normalised into one event stream for the trace. The first version deadlocked because the agent&rsquo;s stderr pipe filled up; the bridge now drains it on its own thread.</li>
+      <li><strong>Agents outliving the tab.</strong> The bridge owns the process, so reloading the page used to leave a build running unseen. The bridge now keeps a registry of runs, and the toolbar shows any live agent with a Stop button.</li>
+      <li><strong>Playing builds safely on this site.</strong> Model-written code must not run with access to this site&rsquo;s storage. Showcase builds run in an opaque-origin sandbox. Such a frame cannot load its parent&rsquo;s blob URLs, so the frame receives the files and builds the preview itself.</li>
+    </ul>
+    <p>An early bake-off on the same Pac-Man brief showed how differently agents work: one took 19 minutes over 18 turns, another finished in four and a half minutes in a single turn, and a third in under a minute. All three games ran.</p>
+
+    <div class="showcase" data-showcase-panel hidden>
+      <div class="showcase-head">
+        <span class="showcase-label">Builds from Game Forge &middot; click to play</span>
+        <span class="showcase-badge" data-showcase-count></span>
+      </div>
+      <div class="showcase-grid" data-showcase-grid data-bench="game-forge-v2" data-limit="6"></div>
+    </div>
+
+    <h2>More write-ups</h2>
+    <div class="case-next">
+      <a class="button" href="work-vr-forge.html">VR Forge</a>
+      <a class="button" href="work-understory.html">Understory Studio</a>
+      <a class="button" href="work-code-morph.html">Code Morph Lab</a>
+    </div>
+  </main>
+  <footer><span>Peter Edwards · Projects MIT licensed</span><span><a href="./">Back to the projects</a></span></footer>
+  <script src="showcase.js?v=a8122ff596"></script>
+</body>
+</html>

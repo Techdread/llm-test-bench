@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-distribution="public">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="How VR Forge works: a model builds a WebXR project for the Meta Quest 3, and the app runs it in an emulated headset to measure whether it really enters VR and renders both eyes.">
+  <title>VR Forge · How it's built · Peter Edwards</title>
+  <link rel="canonical" href="https://neuroviz.uk/work-vr-forge">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#080b12">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Peter Edwards">
+  <meta property="og:url" content="https://neuroviz.uk/work-vr-forge">
+  <meta property="og:title" content="VR Forge: how it's built">
+  <meta property="og:description" content="Model-built WebXR projects for the Quest 3, run in an emulated headset and measured: did it enter VR, and did it render two eyes?">
+  <meta property="og:image" content="https://neuroviz.uk/og-image.jpg">
+  <link rel="stylesheet" href="site.css?v=d1b1767ad7">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Peter Edwards — home"><span class="brand-mark">PE</span><span>Peter Edwards</span></a>
+    <nav aria-label="Main navigation"><a href="./#projects">Projects</a><a href="showcase.html">Showcase</a><a href="./#about">About</a><a href="settings.html">Settings</a><a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a></nav>
+  </header>
+  <main class="case-page accent-blue">
+    <p class="eyebrow">How it&rsquo;s built &middot; WebXR for Meta Quest 3</p>
+    <h1>VR Forge</h1>
+    <p class="case-lead">&ldquo;It works in VR&rdquo; is the hardest claim a generated project makes, and the easiest to fake: a scene that renders on a monitor can still fail the moment a headset asks for two eyes. VR Forge builds WebXR projects with the same agentic loop as Game Forge, then runs each one in an emulated Quest 3 and measures what happened.</p>
+    <div class="hero-actions">
+      <a class="button primary" href="vr-forge/">Open VR Forge</a>
+      <a class="button" href="work-game-forge.html">The shared build loop</a>
+    </div>
+
+    <ul class="case-facts" aria-label="Key numbers">
+      <li><strong>31</strong>VR briefs: games, simulations and tools</li>
+      <li><strong>16</strong>domain simulations, each naming its model</li>
+      <li><strong>2</strong>eyes measured, not assumed</li>
+      <li><strong>148</strong>unit tests on the app&rsquo;s services</li>
+    </ul>
+
+    <figure class="case-figure">
+      <img src="vr-forge/help/shot-app.webp" width="1440" height="810" loading="lazy" alt="The VR Forge library: VR briefs such as Rhythm Saber Arena, VR Archery Range and Cockpit Space Flight, each with its pinned three.js version and a Watch for list.">
+      <figcaption>Briefs name their pinned libraries and the mistakes to watch for, such as release velocity taken from a single frame or a scene scaled so the planet is kilometres away.</figcaption>
+    </figure>
+
+    <h2>How a project is checked</h2>
+    <ol class="pipeline">
+      <li><strong>Brief</strong>A VR game or simulation, with three.js and WebXR add-ons, Rapier physics or Tone audio pinned.</li>
+      <li><strong>Build</strong>The shared forge kernel runs the agentic file loop.</li>
+      <li><strong>Emulated headset</strong>An emulated Quest 3 (IWER) is installed over <code>navigator.xr</code> in the preview, and the project&rsquo;s own Enter VR control is clicked.</li>
+      <li><strong>Measure</strong>Did a session start? How many viewports were drawn in one XR frame?</li>
+      <li><strong>Evidence</strong>An eye capture is saved, and the result reads &ldquo;emulator-verified&rdquo;, never &ldquo;verified on Quest 3&rdquo;.</li>
+    </ol>
+
+    <h2>Design decisions</h2>
+    <div class="case-grid">
+      <div><h3>Simulations with a named model</h3><p>The sim briefs name the model they must implement, such as IDM and MOBIL for traffic, social forces for crowds, extreme-point packing for pallets, Barnes&ndash;Hut for galaxies or Schwarzschild geodesics for a black hole. A vague &ldquo;make it realistic&rdquo; cannot be checked; a named model can.</p></div>
+      <div><h3>A desktop fallback, checked</h3><p>Each project declares a non-XR fallback, and the validator checks that it boots and renders. That keeps builds reviewable without a headset, and it is how the showcase plays them in an ordinary browser.</p></div>
+      <div><h3>Honest labels</h3><p>The emulator proves the code path, not the comfort or frame rate on a real device. The app says so, and opening a build on a connected headset is recorded as provenance, not as evidence.</p></div>
+      <div><h3>Same kernel as Game Forge</h3><p>Runs, traces, budgets, pinned libraries and the previewer come from the shared forge kernel. VR adds its own domain and a verification lane.</p></div>
+    </div>
+
+    <h2>Problems worth solving</h2>
+    <ul class="case-lessons">
+      <li><strong>Pose checks pass for broken renderers.</strong> The emulator hands every project two correct eye poses, so a monoscopic renderer still looks healthy. The check that works is to record every <code>gl.viewport</code> rectangle set inside one XR frame: two views with one viewport is an error. Two test fixtures that differ only in that block keep the check honest.</li>
+      <li><strong>Screenshots that hang the page.</strong> Rasterising the DOM of a page whose render loop resizes a full-window WebGL canvas every frame blocked the main thread for minutes. VR runs skip it and keep the eye capture as their image.</li>
+      <li><strong>A regex that froze everything.</strong> The module rewriter used a pattern that backtracked exponentially on any exported function with no quote characters. A 1.2 KB matrix helper hung the preview. The pattern is now bounded, with a regression test.</li>
+      <li><strong>Import maps in a blob preview.</strong> Prefix mappings such as <code>three/addons/</code> are expanded against the project&rsquo;s files. Otherwise a project works on the headset and fails in the app.</li>
+    </ul>
+
+    <div class="showcase" data-showcase-panel hidden>
+      <div class="showcase-head">
+        <span class="showcase-label">Builds from VR Forge &middot; click to play</span>
+        <span class="showcase-badge" data-showcase-count></span>
+      </div>
+      <div class="showcase-grid" data-showcase-grid data-bench="vr-forge" data-limit="6"></div>
+    </div>
+
+    <h2>More write-ups</h2>
+    <div class="case-next">
+      <a class="button" href="work-game-forge.html">Game Forge</a>
+      <a class="button" href="work-understory.html">Understory Studio</a>
+      <a class="button" href="work-code-morph.html">Code Morph Lab</a>
+    </div>
+  </main>
+  <footer><span>Peter Edwards · Projects MIT licensed</span><span><a href="./">Back to the projects</a></span></footer>
+  <script src="showcase.js?v=a8122ff596"></script>
+</body>
+</html>

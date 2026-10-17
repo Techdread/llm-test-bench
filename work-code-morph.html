@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-distribution="public">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="How Code Morph Lab works: a model writes code, runs it, reads a classified error report and fixes it, over several iterations, in HTML or in Python through WebAssembly.">
+  <title>Code Morph Lab · How it's built · Peter Edwards</title>
+  <link rel="canonical" href="https://neuroviz.uk/work-code-morph">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#080b12">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Peter Edwards">
+  <meta property="og:url" content="https://neuroviz.uk/work-code-morph">
+  <meta property="og:title" content="Code Morph Lab: how it's built">
+  <meta property="og:description" content="Write, run, read the error, fix: an iterative code-generation loop in the browser, in HTML or Python.">
+  <meta property="og:image" content="https://neuroviz.uk/og-image.jpg">
+  <link rel="stylesheet" href="site.css?v=d1b1767ad7">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Peter Edwards — home"><span class="brand-mark">PE</span><span>Peter Edwards</span></a>
+    <nav aria-label="Main navigation"><a href="./#projects">Projects</a><a href="showcase.html">Showcase</a><a href="./#about">About</a><a href="settings.html">Settings</a><a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a></nav>
+  </header>
+  <main class="case-page accent-purple">
+    <p class="eyebrow">How it&rsquo;s built &middot; Iterative code generation</p>
+    <h1>Code Morph Lab</h1>
+    <p class="case-lead">A model that writes code once and stops is guessing. Code Morph Lab makes it run what it wrote, read what went wrong and try again, and it shows every step: each tool call, each diff, each run. The loop works in HTML, rendered in a sandbox, and in Python, run in the browser through WebAssembly.</p>
+    <div class="hero-actions">
+      <a class="button primary" href="code-morph-lab-v3/">Open Code Morph Lab</a>
+    </div>
+
+    <ul class="case-facts" aria-label="Key numbers">
+      <li><strong>6</strong>workspace tools the model can call</li>
+      <li><strong>2</strong>runtimes: HTML and Python (Pyodide)</li>
+      <li><strong>4</strong>error kinds, classified before retrying</li>
+      <li><strong>0</strong>backend of its own: it runs in the browser</li>
+    </ul>
+
+    <h2>One iteration</h2>
+    <ol class="pipeline">
+      <li><strong>Goal</strong>A plain-language description, or code handed over from another app.</li>
+      <li><strong>Edit</strong>The model lists, reads, writes, edits and deletes files in its workspace.</li>
+      <li><strong>Run</strong><code>run_program</code> renders the page or runs the Python, capturing console output and uncaught errors.</li>
+      <li><strong>Classify</strong>The failure is sorted into syntax, runtime, timeout or missing file, with a file and line where one can be found.</li>
+      <li><strong>Retry</strong>A compact report goes back to the model, until the run is clean or the iteration cap is reached.</li>
+    </ol>
+
+    <h2>Design decisions</h2>
+    <div class="case-grid">
+      <div><h3>The loop knows nothing about the UI</h3><p>The morph loop is pure orchestration: the model call and the runner are passed in. The same loop drives a real model in the app and a scripted stub in the tests.</p></div>
+      <div><h3>Feedback the model can use</h3><p>Raw stderr is noisy. The report leads with the error kind and location, then the tail of stderr and stdout, trimmed to a budget, so a long traceback does not crowd out the code.</p></div>
+      <div><h3>Watch it think</h3><p>Assistant text and tool-call arguments stream into the workspace while the model is still responding, so a stalled or confused generation is visible straight away.</p></div>
+      <div><h3>Sessions are kept and can be forked</h3><p>Every run is saved with its iterations and file snapshots. A session that nearly worked can be forked with a refined goal instead of starting again, or exported as JSON.</p></div>
+    </div>
+
+    <h2>Working with the other apps</h2>
+    <p>Code Morph Lab is where generations go to be improved. A page from the Prompt Gallery or an image from the SVG bench can be sent here with its original prompt kept separate from the requested change. When the session finishes, <strong>Send back</strong> returns the result, and the Prompt Gallery files it as a new variant beside the original. Nothing is overwritten.</p>
+
+    <h2>Problems worth solving</h2>
+    <ul class="case-lessons">
+      <li><strong>Specific before general.</strong> A missing import can report both &ldquo;file not found&rdquo; and a syntax error. The classifier checks for missing files first, so the model is told the actually useful fact.</li>
+      <li><strong>Telling the model when to stop.</strong> Models will happily loop on an error they cannot fix. The instructions require the model to explain and stop instead, and the iteration cap backs that up.</li>
+      <li><strong>Slow first runs.</strong> Pyodide takes a few seconds to start from cold, so Python runs get a longer timeout than HTML runs, and a cold start is not mistaken for a hang.</li>
+    </ul>
+
+    <h2>More write-ups</h2>
+    <div class="case-next">
+      <a class="button" href="work-game-forge.html">Game Forge</a>
+      <a class="button" href="work-vr-forge.html">VR Forge</a>
+      <a class="button" href="work-understory.html">Understory Studio</a>
+    </div>
+  </main>
+  <footer><span>Peter Edwards · Projects MIT licensed</span><span><a href="./">Back to the projects</a></span></footer>
+</body>
+</html>
