@@ -40,11 +40,11 @@ function MappingEditor({ mapping, kind, vars, onRemap }) {
         <div class="map-row">
           <label class="map-label">${f.label}</label>
           ${f.multi
-            ? html`<input class="map-input" type="text"
+            ? html`<input class="map-input" type="text" aria-label=${f.label}
                           value=${Array.isArray(mapping[f.key]) ? mapping[f.key].join(', ') : ''}
                           onChange=${(e) => onRemap({ ...mapping, [f.key]: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
                           placeholder="i, j" />`
-            : html`<select class="map-input" value=${mapping[f.key] || ''}
+            : html`<select class="map-input" aria-label=${f.label} value=${mapping[f.key] || ''}
                           onChange=${(e) => onRemap({ ...mapping, [f.key]: e.target.value })}>
                     <option value="">—</option>
                     ${vars.map(v => html`<option value=${v}>${v}</option>`)}

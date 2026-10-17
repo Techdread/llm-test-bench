@@ -4,7 +4,7 @@ export function LessonsPanel({ lesson }) {
   return html`
     <section class="panel lesson-panel">
       <div class="panel-header"><span><i class="fa-solid fa-graduation-cap"></i> Lesson</span><span>${lesson.difficulty}</span></div>
-      <div class="lesson-body">
+      <div class="lesson-body" tabindex="0" role="region" aria-label="Lesson">
         <h2>${lesson.title}</h2>
         <p>${lesson.topic}</p>
         <div class="goal-list">

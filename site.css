@@ -291,8 +291,11 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 28px
   /* Drop the nav onto its own row rather than hiding links: on a phone the
      header is the only route to Settings, Examples, and Privacy. */
   .site-header { min-height: 0; padding: 14px 0; }
-  nav { flex: 1 0 100%; gap: 8px 18px; }
+  nav { flex: 1 0 100%; gap: 0 18px; }
   nav a { font-size: 0.86rem; }
+  /* Touch targets: at least 24px tall (WCAG 2.5.8), most a comfortable 32+. */
+  nav a, footer a { display: inline-flex; align-items: center; min-height: 32px; }
+  .card-link, .text-link, .showcase-more { display: inline-flex; align-items: center; min-height: 32px; }
   .hero { padding: 78px 0 62px; }
   h1 { font-size: clamp(2.8rem, 16vw, 4.4rem); }
   .tools-section { padding-top: 45px; }
@@ -441,4 +444,16 @@ nav a[aria-current="page"] { color: var(--text); }
 @media (max-width: 760px) {
   .case-facts { grid-template-columns: 1fr 1fr; }
   .case-grid { grid-template-columns: 1fr; }
+}
+
+/* Last so it wins over the tile rules above. Tile labels were sized for a
+   two-column grid; on a phone each tile has the full width. */
+@media (max-width: 600px) {
+  .showcase-label, .showcase-badge, .showcase-chip, .showcase-score, .showcase-sub { font-size: .75rem; }
+}
+
+@media (max-width: 600px) {
+  li > strong > a { display: inline-flex; align-items: center; min-height: 32px; }
+  .pipeline code { font-size: 1em; }
+  .case-page code { font-size: .95em; }
 }

@@ -67,6 +67,7 @@ export function ParameterPanel({
           <input
             class="form-input mono"
             type="number"
+            aria-label="Seed"
             value=${seed}
             onInput=${(e) => onSeedChange(parseInt(e.target.value, 10) || 1)}
             style=${{ width: '120px' }}
@@ -101,6 +102,7 @@ export function ParameterPanel({
                 <label>${k}</label>
                 <input
                   type="range"
+                  aria-label=${k}
                   min=${Math.min(0, v) - Math.abs(v)}
                   max=${Math.max(1, Math.abs(v) * 3)}
                   step=${Math.abs(v) < 1 ? 0.01 : 1}
@@ -114,6 +116,7 @@ export function ParameterPanel({
         `}
         <textarea
           class="param-json"
+          aria-label="Parameters as JSON"
           value=${jsonText}
           onInput=${(e) => applyJson(e.target.value)}
         ></textarea>
@@ -127,6 +130,7 @@ export function ParameterPanel({
         <input
           class="form-input"
           type="text"
+          aria-label="Tags"
           value=${(tags || []).join(', ')}
           placeholder="comma, separated, tags"
           onInput=${(e) => onTagsChange(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}

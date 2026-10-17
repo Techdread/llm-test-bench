@@ -49,6 +49,7 @@ export function Timeline({
         <input
           type="range"
           class="timeline-scrub"
+          aria-label="Trace step"
           min="0"
           max=${Math.max(total - 1, 0)}
           step="1"

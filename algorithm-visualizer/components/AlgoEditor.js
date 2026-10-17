@@ -26,6 +26,8 @@ export function AlgoEditor({ value, language, theme, onChange, currentLine }) {
       wrap: false,
       scrollPastEnd: 0.3,
     });
+    // Ace's hidden textarea is what screen readers and axe see.
+    editor.textInput.getElement().setAttribute('aria-label', 'Algorithm code editor');
     editor.setValue(value, -1);
     editor.session.setMode(MODES[language] || MODES.js);
 

@@ -1062,7 +1062,7 @@ function App() {
                 <i class="fa-solid fa-file-image"></i>
                 <span class="btn-label">GIF</span>
               </button>
-              <button class="btn" onClick=${handleClear}>
+              <button class="btn" onClick=${handleClear} title="Clear" aria-label="Clear">
                 <i class="fa-solid fa-eraser"></i>
                 <span class="btn-label">Clear</span>
               </button>

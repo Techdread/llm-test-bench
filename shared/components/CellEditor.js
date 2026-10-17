@@ -94,6 +94,8 @@ export function CellEditor({
   useEffect(() => {
     if (!hostRef.current || aceRef.current) return;
     const editor = window.ace.edit(hostRef.current);
+    // Ace's hidden textarea is what screen readers and axe see.
+    editor.textInput.getElement().setAttribute('aria-label', 'Code editor');
     editor.setOptions({
       fontSize,
       fontFamily: "'Cascadia Code', 'Fira Code', Consolas, monospace",

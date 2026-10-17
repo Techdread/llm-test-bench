@@ -17,7 +17,8 @@ export function TableTree({ schema, onInsertRef, onBrowse }) {
         ${tables.map(t => html`
           <div class="tree-table" key=${t.name}>
             <div class="tree-table-row">
-              <button class="tree-toggle" onClick=${() => toggle(t.name)}>
+              <button class="tree-toggle" onClick=${() => toggle(t.name)}
+                      aria-expanded=${!!open[t.name]} aria-label=${`${open[t.name] ? 'Collapse' : 'Expand'} ${t.name}`}>
                 <i class=${`fa-solid ${open[t.name] ? 'fa-chevron-down' : 'fa-chevron-right'}`}></i>
               </button>
               <span class="tree-name" onClick=${() => onInsertRef?.(t.name)} title="Click to insert name">

@@ -17,10 +17,10 @@ export function SnippetsList({ snippets, onLoad, onDelete, onSaveCurrent }) {
         <span><i class="fa-solid fa-bookmark"></i> Snippets</span>
       </div>
       <div class="snippet-save">
-        <input placeholder="Save current as…" value=${name}
+        <input placeholder="Save current as…" aria-label="Snippet name" value=${name}
                onInput=${(e) => setName(e.target.value)}
                onKeyDown=${(e) => e.key === 'Enter' && submit()} />
-        <button class="btn-icon btn-sm" onClick=${submit} disabled=${!name.trim()}>
+        <button class="btn-icon btn-sm" onClick=${submit} disabled=${!name.trim()} title="Save snippet" aria-label="Save snippet">
           <i class="fa-solid fa-floppy-disk"></i>
         </button>
       </div>

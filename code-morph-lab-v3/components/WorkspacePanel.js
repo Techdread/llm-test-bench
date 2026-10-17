@@ -38,6 +38,8 @@ export function WorkspacePanel({ files, selectedFile, onSelectFile, readOnly = t
       highlightGutterLine: !readOnly,
       scrollPastEnd: 0.5,
     });
+    // Ace's hidden textarea is what screen readers and axe see.
+    editor.textInput.getElement().setAttribute('aria-label', 'Workspace file editor');
     editor.setTheme(document.documentElement.getAttribute('data-theme') === 'dark'
       ? 'ace/theme/monokai'
       : 'ace/theme/chrome');

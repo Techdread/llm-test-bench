@@ -1704,3 +1704,8 @@ html, body {
 .batch-motion-chip.is-moving { color: var(--success); }
 .batch-motion-chip.is-warn { color: #f59e0b; }
 .batch-motion-chip.is-static { color: var(--danger); }
+
+/* Phone width: stars and other small controls big enough to tap. */
+@media (max-width: 768px) {
+  .rating-star { min-width: 28px; min-height: 28px; }
+}

@@ -29,6 +29,8 @@ export function SourcePane({ value, language, theme, onChange, onCursorChange, h
       wrap: false,
       scrollPastEnd: 0.3,
     });
+    // Ace's hidden textarea is what screen readers and axe see.
+    editor.textInput.getElement().setAttribute('aria-label', 'Source code editor');
     editor.setValue(value, -1);
     editor.session.setMode(MODES[language] || MODES.js);
 

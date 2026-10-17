@@ -14,6 +14,8 @@ export function SourceEditor({ source, onSourceChange, theme, currentLine, diagn
   useEffect(() => {
     if (!nodeRef.current || editorRef.current || !window.ace) return;
     const editor = window.ace.edit(nodeRef.current);
+    // Ace's hidden textarea is what screen readers and axe see.
+    editor.textInput.getElement().setAttribute('aria-label', 'C source editor');
     editor.setOptions({
       fontSize: 13,
       fontFamily: 'var(--font-mono)',

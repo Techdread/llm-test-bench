@@ -23,6 +23,8 @@ export function SqlEditor({ value, theme, onChange, onRun, apiRef }) {
       wrap: false,
       scrollPastEnd: 0.25,
     });
+    // Ace's hidden textarea is what screen readers and axe see.
+    editor.textInput.getElement().setAttribute('aria-label', 'SQL editor');
     editor.session.setMode('ace/mode/sql');
     editor.setValue(value || '', -1);
     editor.session.on('change', () => {

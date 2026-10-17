@@ -1003,3 +1003,9 @@ html, body { overflow: hidden; }
   .runs-compare-grid { grid-template-columns: 1fr !important; grid-template-rows: none !important; }
   .runs-row-when { display: none; }
 }
+
+/* Phone width: sliders and the panel's icon action big enough to tap. */
+@media (max-width: 768px) {
+  .slider-row input[type="range"] { min-height: 28px; }
+  .panel-title-action { min-width: 28px; min-height: 28px; }
+}

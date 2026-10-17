@@ -53,6 +53,8 @@ export function PromptEditor({
       useSoftTabs: true,
       scrollPastEnd: 0.5,
     });
+    // Ace's hidden textarea is what screen readers and axe see.
+    editor.textInput.getElement().setAttribute('aria-label', 'HTML code editor');
 
     editor.setValue(response, -1);
 

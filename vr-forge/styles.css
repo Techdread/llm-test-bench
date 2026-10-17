@@ -847,3 +847,13 @@ body {
 .gf-budget-field .forge-limit-none { display: inline-flex; flex-direction: row; align-items: center; gap: 4px; white-space: nowrap; }
 /* A switched-off budget is "no limit" — mark it so it never reads as a zero. */
 .gf-budget-field.gf-budget-unlimited > span, .gf-budget-field.gf-budget-unlimited .forge-limit-none { color: var(--accent); }
+
+/* Phone width: the toolbar wraps instead of widening the page to ~1000px.
+   Last in the file so it wins over the toolbar rules above. */
+@media (max-width: 760px) {
+  .gf-toolbar { flex-wrap: wrap; gap: 8px; padding: 8px 10px; }
+  .gf-toolbar-left, .gf-toolbar-right { flex-wrap: wrap; min-width: 0; max-width: 100%; gap: 8px; }
+  .gf-tabs { flex-wrap: wrap; }
+  .gf-hub-link { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; }
+  .gf-toolbar .btn-icon { min-width: 32px; min-height: 32px; }
+}

@@ -2464,3 +2464,18 @@ body[data-wallpaper="grid"]::before {
 .cli-agent-row-info { flex: 1; min-width: 0; }
 .cli-agent-row-name { font-weight: 600; color: var(--text-primary); }
 .cli-agent-row-meta { font-size: 0.78rem; color: var(--text-muted); }
+
+/* ── Phone width: the toolbar wraps instead of running off the screen ──
+   (.toolbar itself already wraps at 768px; its groups did not, so the model
+   picker and Generate button were cut off on a phone.) Last in the file so
+   it wins over the component rules above. */
+@media (max-width: 768px) {
+  .toolbar-left, .toolbar-right { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+  .openrouter-group { min-width: 0; max-width: 100%; }
+  .model-selector { min-width: 0; flex: 1 1 auto; }
+  .model-selector-trigger { min-width: 0; width: 100%; max-width: none; min-height: 32px; }
+  .toolbar .btn-icon, .openrouter-group .btn-key { min-width: 32px; min-height: 32px; }
+  /* A centred row wider than the screen spills off the left edge, where it
+     cannot be scrolled to; "safe" falls back to start-aligned. */
+  .toolbar-center { justify-content: safe center; overflow-x: auto; max-width: 100%; }
+}

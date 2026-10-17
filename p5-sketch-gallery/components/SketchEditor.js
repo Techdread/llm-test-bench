@@ -18,6 +18,8 @@ export function SketchEditor({ code, onChange, theme }) {
       wrap: true,
       scrollPastEnd: 0.5,
     });
+    // Ace's hidden textarea is what screen readers and axe see.
+    editor.textInput.getElement().setAttribute('aria-label', 'Sketch code editor');
     editor.setValue(code || '', -1);
     editor.session.on('change', () => {
       if (silentUpdate.current) return;

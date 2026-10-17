@@ -46,13 +46,13 @@ export function AstTree({ tree, selectedId, onSelect, expandedIds, onToggleExpan
   }, []);
 
   if (!tree?.root) {
-    return html`<div class="ast-scroll"><div class="muted" style=${{ padding: '20px' }}>No AST yet.</div></div>`;
+    return html`<div class="ast-scroll" tabindex="0" role="region" aria-label="Syntax tree"><div class="muted" style=${{ padding: '20px' }}>No AST yet.</div></div>`;
   }
 
   const totalH = rows.length * ROW_HEIGHT;
 
   return html`
-    <div class="ast-scroll" ref=${scrollRef} onScroll=${handleScroll}>
+    <div class="ast-scroll" tabindex="0" role="region" aria-label="Syntax tree" ref=${scrollRef} onScroll=${handleScroll}>
       <div style=${{ height: totalH + 'px', position: 'relative' }}>
         ${visible.map((row, i) => html`
           <div
