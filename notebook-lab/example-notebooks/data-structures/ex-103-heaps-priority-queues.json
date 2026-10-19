@@ -1,0 +1,42 @@
+{
+  "title": "Heaps & Priority Queues",
+  "cells": [
+    {
+      "id": "c-ex103-md01",
+      "kind": "md",
+      "source": "# Heaps & Priority Queues\n\nA **binary heap** is a complete binary tree stored flat in a list: the children of index `i` live at `2i+1` and `2i+2`, and every parent is ≤ its children (**min-heap**). That single invariant buys you O(log n) insert and O(log n) extract-min — the engine behind priority queues, heapsort, Dijkstra, and every task scheduler.\n\nPython cells run on Pyodide, so the first run may take a few seconds while it loads."
+    },
+    {
+      "id": "c-ex103-py01",
+      "kind": "py",
+      "source": "import random\n\nclass MinHeap:\n    def __init__(self):\n        self.a = []\n        self.comparisons = 0\n\n    def push(self, x):\n        a = self.a\n        a.append(x)\n        i = len(a) - 1\n        while i > 0:                      # sift up\n            parent = (i - 1) // 2\n            self.comparisons += 1\n            if a[i] < a[parent]:\n                a[i], a[parent] = a[parent], a[i]\n                i = parent\n            else:\n                break\n\n    def pop(self):\n        a = self.a\n        top = a[0]\n        last = a.pop()\n        if a:\n            a[0] = last\n            i, n = 0, len(a)\n            while True:                   # sift down\n                l, r, smallest = 2*i + 1, 2*i + 2, i\n                if l < n:\n                    self.comparisons += 1\n                    if a[l] < a[smallest]: smallest = l\n                if r < n:\n                    self.comparisons += 1\n                    if a[r] < a[smallest]: smallest = r\n                if smallest == i: break\n                a[i], a[smallest] = a[smallest], a[i]\n                i = smallest\n        return top\n\nrandom.seed(7)\nvalues = [random.randrange(1000) for _ in range(200)]\n\nh = MinHeap()\nfor v in values:\n    h.push(v)\ndrained = [h.pop() for _ in range(len(values))]\n\nassert drained == sorted(values), \"heap order broken!\"\nprint(\"pushed + popped 200 values in sorted order\")\nprint(\"total comparisons:\", h.comparisons)\nnb[\"heap_comparisons\"] = h.comparisons"
+    },
+    {
+      "id": "c-ex103-md02",
+      "kind": "md",
+      "source": "## How close to n·log n?\n\nPush n items then pop them all — that is **heapsort**. Theory says the comparison count grows like `2·n·log2(n)`. Let's measure real counts across sizes and plot both curves."
+    },
+    {
+      "id": "c-ex103-py02",
+      "kind": "py",
+      "source": "import math\nimport random\nimport matplotlib.pyplot as plt\n\ndef heapsort_comparisons(n, seed):\n    random.seed(seed)\n    h = MinHeap()\n    for _ in range(n):\n        h.push(random.random())\n    for _ in range(n):\n        h.pop()\n    return h.comparisons\n\nsizes = [2**k for k in range(4, 13)]      # 16 .. 4096\nmeasured = [heapsort_comparisons(n, seed=n) for n in sizes]\nbound = [2 * n * math.log2(n) for n in sizes]\n\nfor n, m, b in zip(sizes, measured, bound):\n    print(f\"n={n:5d}  measured={m:7d}  2·n·log2(n)={b:9.0f}\")\n\nfig, ax = plt.subplots(figsize=(8, 4.5))\nax.plot(sizes, measured, \"o-\", label=\"measured comparisons\")\nax.plot(sizes, bound, \"--\", label=\"2·n·log2(n)\")\nax.set_xscale(\"log\", base=2)\nax.set_yscale(\"log\")\nax.set_xlabel(\"n items\")\nax.set_ylabel(\"comparisons\")\nax.set_title(\"Heapsort comparisons vs the n·log n bound\")\nax.legend()\nax.grid(True, alpha=0.3)\nfig.tight_layout()"
+    },
+    {
+      "id": "c-ex103-md03",
+      "kind": "md",
+      "source": "## A priority queue doing real work\n\nThe same heap, but ordering `(priority, arrival, name)` tuples — a tiny hospital triage queue. Lower number = more urgent; arrival order breaks ties so equal priorities stay fair (a *stable* priority queue)."
+    },
+    {
+      "id": "c-ex103-py03",
+      "kind": "py",
+      "source": "arrivals = [\n    (\"sprained ankle\", 3),\n    (\"chest pain\", 1),\n    (\"broken finger\", 3),\n    (\"head injury\", 1),\n    (\"deep cut\", 2),\n    (\"flu symptoms\", 4),\n    (\"allergic reaction\", 2),\n]\n\nq = MinHeap()\nfor order, (name, priority) in enumerate(arrivals):\n    q.push((priority, order, name))\n    print(f\"arrived: {name} (priority {priority})\")\n\nprint(\"\\ntreatment order:\")\nposition = 1\nwhile q.a:\n    priority, order, name = q.pop()\n    print(f\"  {position}. {name}  (priority {priority}, arrived #{order + 1})\")\n    position += 1"
+    },
+    {
+      "id": "c-ex103-md04",
+      "kind": "md",
+      "source": "## Try this\n\n- Remove `order` from the tuple and push two priority-1 cases — treatment order between them is now arbitrary. That's why stable priority queues carry a sequence number.\n- Turn the min-heap into a **max-heap** by pushing `-priority` and see the queue invert.\n- Add a `peek()` method (return `self.a[0]` without popping) and print who is next while patients are still arriving."
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

@@ -1,0 +1,37 @@
+{
+  "title": "11 Lua Cells",
+  "cells": [
+    {
+      "id": "c-t11-md01",
+      "kind": "md",
+      "source": "# 11 Lua Cells\n\nLua cells run small single-file **Lua 5.4** programs via **Wasmoon** (WebAssembly) — fully offline, no network needed. Use `print` for output.\n\nStandard Lua only: no LuaJIT, no external rocks. The Roblox engine APIs (`game`, `workspace`, `Instance`) are **not** available here — this is the language, not Roblox."
+    },
+    {
+      "id": "c-t11-lua01",
+      "kind": "lua",
+      "source": "print(\"Hello from Lua!\")\n\n-- numbers and a loop\nlocal total = 0\nfor i = 1, 5 do\n  total = total + i\nend\nprint(\"1 + 2 + ... + 5 = \" .. total)\n\n-- tables are Lua's arrays/maps (1-indexed)\nlocal fruits = { \"apple\", \"banana\", \"cherry\" }\nfor i, name in ipairs(fruits) do\n  print(i .. \": \" .. name)\nend"
+    },
+    {
+      "id": "c-t11-md02",
+      "kind": "md",
+      "source": "## Sending values to other cells\n\nLike the C and Rust cells, Lua talks to the rest of the notebook through its **stdout**: print a line in the exact form\n\n```\n__NB_SET__ {\"key\":\"name\",\"value\":123}\n```\n\nand the value lands in the shared `nb` state, where **JS** and **Python** cells can read it with `nb.get(\"name\")`. (Lua is emit-only — it can publish values but can't read `nb` back.)"
+    },
+    {
+      "id": "c-t11-lua02",
+      "kind": "lua",
+      "source": "-- Build the first 8 Fibonacci numbers\nlocal fib = { 1, 1 }\nfor i = 3, 8 do\n  fib[i] = fib[i - 1] + fib[i - 2]\nend\n\nlocal sum = 0\nfor _, v in ipairs(fib) do sum = sum + v end\n\nprint(\"fib = \" .. table.concat(fib, \", \"))\nprint(\"sum = \" .. sum)\n\n-- publish values for other cells to read:\nprint('__NB_SET__ {\"key\":\"fib\",\"value\":[' .. table.concat(fib, \",\") .. ']}')\nprint('__NB_SET__ {\"key\":\"fib_sum\",\"value\":' .. sum .. '}')"
+    },
+    {
+      "id": "c-t11-js01",
+      "kind": "js",
+      "source": "// Read the values Lua published into the shared `nb` state\nconst fib = nb.get('fib');\nconst sum = nb.get('fib_sum');\nconsole.log('Lua sent fib =', fib);\nconsole.log('Lua sent fib_sum =', sum);\n\n// Use them like any JS data\nconst doubled = fib.map(x => x * 2);\nreturn { fib, sum, doubled, average: sum / fib.length };"
+    },
+    {
+      "id": "c-t11-md03",
+      "kind": "md",
+      "source": "## Try this\n\n- Change `for i = 3, 8` to compute more Fibonacci numbers, then re-run both cells.\n- Add your own `__NB_SET__` line in the Lua cell and read it from the JS cell.\n- Break the Lua on purpose (e.g. `for i = 1 5 do`) to see the error appear in the cell output."
+    }
+  ],
+  "createdAt": "2026-06-07T00:00:00.000Z",
+  "updatedAt": "2026-06-07T00:00:00.000Z"
+}

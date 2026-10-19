@@ -1,0 +1,34 @@
+{
+  "title": "Snake, Complete",
+  "cells": [
+    {
+      "id": "c-ex501-md01",
+      "kind": "md",
+      "source": "# Snake, Complete\n\nEverything a game needs, in one HTML cell:\n\n- a **fixed-timestep loop** (the snake moves on a tick, not per frame),\n- **input handling** with the one classic subtlety — you may not reverse into yourself,\n- **collision** against walls and body, **scoring**, and a restart.\n\n**Click the game once to give it keyboard focus**, then steer with arrow keys or WASD. When a run ends, the game pushes `snake_last_run` and `snake_high_score` into the notebook with `nb.set` — the JS cell below reads them, proving data flows *out* of games too."
+    },
+    {
+      "id": "c-ex501-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif;\n         display: flex; flex-direction: column; align-items: center; }\n  #hud { font: 14px monospace; padding: 8px; }\n  canvas { border: 2px solid #334155; border-radius: 6px; }\n  #msg { color: #94a3b8; font-size: 13px; padding: 6px; }\n</style>\n<div id=\"hud\">score 0 &nbsp;·&nbsp; best 0</div>\n<canvas id=\"game\" width=\"480\" height=\"480\" tabindex=\"0\"></canvas>\n<div id=\"msg\">Click the board, then use arrow keys / WASD. Space restarts.</div>\n<script>\n  var canvas = document.getElementById('game');\n  var ctx = canvas.getContext('2d');\n  var hud = document.getElementById('hud');\n  var msg = document.getElementById('msg');\n\n  var CELLS = 24, PX = canvas.width / CELLS;\n  var snake, dir, nextDir, food, score, ticks, dead, timer;\n\n  function reset() {\n    snake = [{ x: 12, y: 12 }, { x: 11, y: 12 }, { x: 10, y: 12 }];\n    dir = { x: 1, y: 0 };\n    nextDir = dir;\n    score = 0; ticks = 0; dead = false;\n    placeFood();\n    clearInterval(timer);\n    timer = setInterval(tick, 110);\n    draw();\n  }\n\n  function placeFood() {\n    do {\n      food = { x: (Math.random() * CELLS) | 0, y: (Math.random() * CELLS) | 0 };\n    } while (snake.some(function (s) { return s.x === food.x && s.y === food.y; }));\n  }\n\n  function tick() {\n    if (dead) return;\n    ticks++;\n    dir = nextDir;\n    var head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };\n\n    var hitWall = head.x < 0 || head.y < 0 || head.x >= CELLS || head.y >= CELLS;\n    var hitSelf = snake.some(function (s) { return s.x === head.x && s.y === head.y; });\n    if (hitWall || hitSelf) return gameOver(hitWall ? 'wall' : 'self');\n\n    snake.unshift(head);\n    if (head.x === food.x && head.y === food.y) {\n      score += 10;\n      placeFood();\n      if (score % 50 === 0) {              // speed up every 5 apples\n        clearInterval(timer);\n        timer = setInterval(tick, Math.max(50, 110 - score / 2));\n      }\n    } else {\n      snake.pop();                          // no apple: tail follows head\n    }\n    draw();\n  }\n\n  function gameOver(cause) {\n    dead = true;\n    clearInterval(timer);\n    var best = Math.max(score, nb.get('snake_high_score', 0));\n    nb.set('snake_high_score', best);\n    nb.set('snake_last_run', { score: score, length: snake.length, ticks: ticks, diedOn: cause });\n    msg.textContent = 'Game over (' + cause + ') - score ' + score + '. Space to restart.';\n    draw();\n  }\n\n  function draw() {\n    ctx.fillStyle = '#0b1220';\n    ctx.fillRect(0, 0, canvas.width, canvas.height);\n\n    ctx.fillStyle = '#f472b6';\n    ctx.beginPath();\n    ctx.arc(food.x * PX + PX / 2, food.y * PX + PX / 2, PX * 0.35, 0, Math.PI * 2);\n    ctx.fill();\n\n    for (var i = snake.length - 1; i >= 0; i--) {\n      ctx.fillStyle = i === 0 ? '#c4b5fd' : (dead ? '#475569' : '#7c3aed');\n      ctx.fillRect(snake[i].x * PX + 1, snake[i].y * PX + 1, PX - 2, PX - 2);\n    }\n\n    hud.innerHTML = 'score ' + score + ' &nbsp;·&nbsp; best ' +\n      Math.max(score, nb.get('snake_high_score', 0));\n  }\n\n  var KEYS = {\n    ArrowUp: { x: 0, y: -1 }, w: { x: 0, y: -1 },\n    ArrowDown: { x: 0, y: 1 }, s: { x: 0, y: 1 },\n    ArrowLeft: { x: -1, y: 0 }, a: { x: -1, y: 0 },\n    ArrowRight: { x: 1, y: 0 }, d: { x: 1, y: 0 },\n  };\n\n  canvas.addEventListener('keydown', function (e) {\n    if (e.key === ' ') { e.preventDefault(); if (dead) reset(); return; }\n    var d = KEYS[e.key];\n    if (!d) return;\n    e.preventDefault();\n    // The one classic rule: no 180-degree turns into your own neck.\n    if (d.x === -dir.x && d.y === -dir.y) return;\n    nextDir = d;\n  });\n  canvas.addEventListener('click', function () { canvas.focus(); });\n\n  reset();\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 720,
+          "height": 560,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex501-js01",
+      "kind": "js",
+      "source": "// The game reports each finished run through the bridge - read it here.\nconst run = nb.get('snake_last_run');\nconst best = nb.get('snake_high_score');\nif (!run) return 'Play a game first (click the board, arrows/WASD), then re-run this cell.';\n\nconsole.log('last run:', JSON.stringify(run));\nconsole.log('high score:', best);\n\nconst applesEaten = run.score / 10;\nreturn {\n  ...run,\n  applesEaten,\n  applesPerHundredTicks: +(100 * applesEaten / Math.max(1, run.ticks)).toFixed(2),\n  verdict: run.diedOn === 'wall' ? 'watch the walls!' : 'stop chasing your own tail!',\n};"
+    },
+    {
+      "id": "c-ex501-md02",
+      "kind": "md",
+      "source": "## Where the game design lives\n\n- **Tick rate is difficulty**: the interval drops 5 ms per apple-batch — that one line is the entire difficulty curve.\n- **`nextDir` vs `dir`**: input only *requests* a turn; the tick applies it. Without this buffer, pressing two keys between ticks lets you reverse into yourself.\n- **The tail trick**: moving is \"add a head, drop the tail\" — eating just skips the drop. Growth for free.\n\n## Try this\n\n- Wrap-around walls: replace the wall check with modular arithmetic (`(head.x + CELLS) % CELLS`) — score balance changes completely.\n- Two foods at once, or a golden food worth 50 that expires after 30 ticks.\n- Read `nb.get('snake_high_score')` in a **Python** cell — the bridge is language-neutral."
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

@@ -1,0 +1,38 @@
+{
+  "title": "Breakout in p5.js",
+  "state": {
+    "breakout_paddle": 110,
+    "breakout_speed": 5
+  },
+  "cells": [
+    {
+      "id": "c-ex505-md01",
+      "kind": "md",
+      "source": "# Breakout in p5.js\n\nSteve Wozniak built the original in four days; this one is ~90 lines of [p5.js](https://p5js.org) (vendored — no CDN) inside a single HTML cell. The interesting engineering is all collision response:\n\n- **Walls** flip one velocity component — pure reflection.\n- **The paddle** is not a wall: where the ball lands sets its outgoing *angle*, which is the entire skill element of the game.\n- **Bricks** need to know which face was struck — we compare penetration depths and flip the shallow axis.\n\nThe sliders are live: `nb.onChange` feeds the sketch every change, mid-rally. Physics tuning with zero restarts is exactly what the nb bridge is for."
+    },
+    {
+      "id": "c-ex505-ui01",
+      "kind": "ui",
+      "source": "{\n  \"width\": 900,\n  \"height\": 130,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"Paddle width\",\n      \"bind\": \"breakout_paddle\",\n      \"default\": 110,\n      \"min\": 50,\n      \"max\": 220,\n      \"step\": 10,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 400,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Ball speed\",\n      \"bind\": \"breakout_speed\",\n      \"default\": 5,\n      \"min\": 2,\n      \"max\": 10,\n      \"step\": 0.5,\n      \"x\": 440,\n      \"y\": 0,\n      \"width\": 400,\n      \"height\": 76\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex505-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0f172a; display: flex; justify-content: center; }\n</style>\n<script src=\"/shared/lib/p5.js/1.9.4/p5.min.js\"></script>\n<script>\n  var W = 860, H = 580;\n  var paddleW = 110, speed = 5;         // live-tuned via nb\n  var ball, bricks, lives, score, state; // state: 'serve' | 'play' | 'over' | 'won'\n\n  function resetBricks() {\n    bricks = [];\n    var colors = ['#f87171', '#fb923c', '#facc15', '#4ade80', '#38bdf8'];\n    for (var r = 0; r < 5; r++) {\n      for (var c = 0; c < 10; c++) {\n        bricks.push({ x: 20 + c * 82, y: 60 + r * 30, w: 74, h: 22,\n                      color: colors[r], points: (5 - r) * 10 });\n      }\n    }\n  }\n\n  function serve() {\n    ball = { x: W / 2, y: H - 80, vx: 0, vy: 0 };\n    state = 'serve';\n  }\n\n  function setup() {\n    createCanvas(W, H);\n    lives = 3; score = 0;\n    resetBricks();\n    serve();\n  }\n\n  function launch() {\n    var a = -Math.PI / 2 + (Math.random() - 0.5) * 0.6;\n    ball.vx = Math.cos(a) * speed;\n    ball.vy = Math.sin(a) * speed;\n    state = 'play';\n  }\n\n  function draw() {\n    background('#0f172a');\n    var px = constrain(mouseX, paddleW / 2, W - paddleW / 2);\n\n    // bricks\n    bricks.forEach(function (b) {\n      fill(b.color); noStroke(); rect(b.x, b.y, b.w, b.h, 4);\n    });\n    // paddle\n    fill('#e2e8f0'); rect(px - paddleW / 2, H - 30, paddleW, 12, 6);\n    // ball\n    fill('#f8fafc'); circle(ball.x, ball.y, 14);\n    // hud\n    fill('#94a3b8'); textSize(14); textAlign(LEFT);\n    text('score ' + score + '   lives ' + lives +\n         '   paddle ' + paddleW + '   speed ' + speed, 16, 24);\n\n    if (state === 'serve') {\n      ball.x = px; ball.y = H - 44;\n      fill('#cbd5e1'); textAlign(CENTER); textSize(18);\n      text('click to launch', W / 2, H / 2 + 60);\n      return;\n    }\n    if (state === 'over' || state === 'won') {\n      fill(state === 'won' ? '#4ade80' : '#f87171');\n      textAlign(CENTER); textSize(28);\n      text(state === 'won' ? 'CLEARED! click to play again' : 'game over - click to retry',\n           W / 2, H / 2 + 60);\n      return;\n    }\n\n    // keep the current speed setting without changing direction\n    var mag = Math.hypot(ball.vx, ball.vy) || 1;\n    ball.vx = ball.vx / mag * speed;\n    ball.vy = ball.vy / mag * speed;\n    ball.x += ball.vx;\n    ball.y += ball.vy;\n\n    // walls reflect\n    if (ball.x < 7 || ball.x > W - 7) ball.vx *= -1;\n    if (ball.y < 7) ball.vy *= -1;\n\n    // paddle sets the angle by WHERE you catch it\n    if (ball.vy > 0 && ball.y > H - 37 && ball.y < H - 18 &&\n        Math.abs(ball.x - px) < paddleW / 2 + 7) {\n      var offset = (ball.x - px) / (paddleW / 2);   // -1 .. 1\n      var angle = -Math.PI / 2 + offset * 1.05;      // up to ~60 degrees\n      ball.vx = Math.cos(angle) * speed;\n      ball.vy = Math.sin(angle) * speed;\n    }\n\n    // bricks: flip the axis of shallowest penetration\n    for (var i = bricks.length - 1; i >= 0; i--) {\n      var b = bricks[i];\n      if (ball.x + 7 < b.x || ball.x - 7 > b.x + b.w ||\n          ball.y + 7 < b.y || ball.y - 7 > b.y + b.h) continue;\n      var overlapX = Math.min(ball.x + 7 - b.x, b.x + b.w - (ball.x - 7));\n      var overlapY = Math.min(ball.y + 7 - b.y, b.y + b.h - (ball.y - 7));\n      if (overlapX < overlapY) ball.vx *= -1; else ball.vy *= -1;\n      score += b.points;\n      bricks.splice(i, 1);\n      break;\n    }\n    if (bricks.length === 0) state = 'won';\n\n    // floor\n    if (ball.y > H + 10) {\n      lives--;\n      if (lives <= 0) state = 'over'; else serve();\n    }\n  }\n\n  function mousePressed() {\n    if (state === 'serve') launch();\n    else if (state === 'over' || state === 'won') setup();\n  }\n\n  function applyState(s) {\n    if (typeof s.breakout_paddle === 'number') paddleW = s.breakout_paddle;\n    if (typeof s.breakout_speed === 'number') speed = s.breakout_speed;\n  }\n  nb.onChange(applyState);\n  applyState(nb.all());\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 620,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex505-md02",
+      "kind": "md",
+      "source": "## The dissection\n\n- **Serve → play → over** is a tiny state machine; every game you've ever played has one, usually much bigger and usually undocumented.\n- The paddle-angle rule (`offset * 1.05`) is the whole game design. Set the multiplier to 0 and the ball reflects like a wall — suddenly you have no aim control and the game is boring. Game feel lives in constants like this.\n- The brick collision compares penetration depths — the cheap, robust way to answer \"which side did I hit?\" without ray casting.\n\n## Try this\n\n- Slide paddle width to 50 and speed to 9 **mid-rally** — the bridge applies it instantly. Find your personal impossible threshold.\n- Score multiplier: make the ball speed up 2% per brick (`speed *= 1.02` — note it'll fight the slider's setting; decide who wins, and you've just designed a difficulty system).\n- Add a second ball after 20 bricks: push another ball object into an array and loop the physics over it.\n- The classic exploit: tunnel up a side channel and let the ball rattle across the top row. Widen the side gap (bricks start at x=20) to make the strategy easier — Woz left that in on purpose."
+    }
+  ],
+  "createdAt": "2026-07-10T00:00:00.000Z",
+  "updatedAt": "2026-07-10T00:00:00.000Z"
+}

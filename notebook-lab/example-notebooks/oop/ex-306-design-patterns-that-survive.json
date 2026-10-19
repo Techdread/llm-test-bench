@@ -1,0 +1,51 @@
+{
+  "title": "Design Patterns That Survive",
+  "state": {
+    "pricing_strategy": "tiered",
+    "order_size": 120
+  },
+  "cells": [
+    {
+      "id": "c-ex306-md01",
+      "kind": "md",
+      "source": "# Design Patterns That Survive\n\nMost of the 1994 pattern catalogue dissolved into language features (iterator became `for`, command became closures). Three earned permanent residence because they name **decisions**, not code shapes:\n\n- **Strategy** — the algorithm is a value you can swap.\n- **Builder** — construct a complex thing step by step, validating at the end.\n- **Observer** — decouple \"something changed\" from \"who cares\".\n\nNo UML in this notebook; every pattern runs, and the first one is wired to the controls below."
+    },
+    {
+      "id": "c-ex306-ui01",
+      "kind": "ui",
+      "source": "{\n  \"width\": 900,\n  \"height\": 130,\n  \"controls\": [\n    {\n      \"type\": \"select\",\n      \"label\": \"Pricing strategy\",\n      \"bind\": \"pricing_strategy\",\n      \"default\": \"tiered\",\n      \"options\": [\n        {\n          \"value\": \"flat\",\n          \"label\": \"flat — 2.40 each\"\n        },\n        {\n          \"value\": \"tiered\",\n          \"label\": \"tiered — bulk discounts\"\n        },\n        {\n          \"value\": \"member\",\n          \"label\": \"member — 15% off, min 1.99\"\n        }\n      ],\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 340,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Order size\",\n      \"bind\": \"order_size\",\n      \"default\": 120,\n      \"min\": 1,\n      \"max\": 500,\n      \"step\": 1,\n      \"x\": 380,\n      \"y\": 0,\n      \"width\": 460,\n      \"height\": 76\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex306-py01",
+      "kind": "py",
+      "source": "# STRATEGY - in a language with first-class functions, the pattern\n# is a dictionary. The dropdown above writes nb[\"pricing_strategy\"];\n# Python (two-way nb) reads it. Change the controls, re-run this cell.\n\ndef flat(n):\n    return n * 2.40\n\ndef tiered(n):\n    price, remaining = 0.0, n\n    for band, rate in [(50, 2.40), (150, 1.90), (10**9, 1.45)]:\n        take = min(remaining, band)\n        price += take * rate\n        remaining -= take\n        if remaining == 0:\n            break\n    return price\n\ndef member(n):\n    return max(n * 2.40 * 0.85, 1.99)\n\nSTRATEGIES = {\"flat\": flat, \"tiered\": tiered, \"member\": member}\n\nchosen = nb.get(\"pricing_strategy\") or \"tiered\"\nn = int(nb.get(\"order_size\") or 120)\n\nprint(f\"order of {n} units, all three strategies:\")\nfor name, fn in STRATEGIES.items():\n    marker = \"  <-- selected\" if name == chosen else \"\"\n    print(f\"  {name:7s} {fn(n):9.2f}{marker}\")\n\ntotal = STRATEGIES[chosen](n)\nprint(f\"\\ncharged with '{chosen}': {total:.2f}\")\nprint(\"the calling code never branched on the strategy name - that's the pattern\")\nnb[\"order_total\"] = round(total, 2)"
+    },
+    {
+      "id": "c-ex306-md02",
+      "kind": "md",
+      "source": "## Builder\n\nBuilders survive because half-constructed objects are where bugs live. The trick that keeps the pattern honest: **intermediate steps can be invalid, but `build()` refuses to hand over a broken result.**"
+    },
+    {
+      "id": "c-ex306-py02",
+      "kind": "py",
+      "source": "# BUILDER - assemble a query step by step; validation happens once, at the end.\nclass QueryBuilder:\n    def __init__(self, table):\n        self._table = table\n        self._wheres = []\n        self._order = None\n        self._limit = None\n\n    def where(self, cond):\n        self._wheres.append(cond)\n        return self          # returning self is what makes it fluent\n\n    def order_by(self, col, desc=False):\n        self._order = (col, desc)\n        return self\n\n    def limit(self, n):\n        self._limit = n\n        return self\n\n    def build(self):\n        if self._limit is not None and self._limit <= 0:\n            raise ValueError(\"limit must be positive\")\n        sql = f\"SELECT * FROM {self._table}\"\n        if self._wheres:\n            sql += \" WHERE \" + \" AND \".join(self._wheres)\n        if self._order:\n            sql += f\" ORDER BY {self._order[0]}\" + (\" DESC\" if self._order[1] else \"\")\n        if self._limit:\n            sql += f\" LIMIT {self._limit}\"\n        return sql\n\nq = (QueryBuilder(\"orders\")\n     .where(\"total > 100\")\n     .where(\"status = 'paid'\")\n     .order_by(\"created_at\", desc=True)\n     .limit(20)\n     .build())\nprint(q)\n\ntry:\n    QueryBuilder(\"orders\").limit(0).build()\nexcept ValueError as e:\n    print(\"builder refused a broken query:\", e)\n\nprint(\"\\nwhy not a 6-argument constructor? because 4 of them are usually\")\nprint(\"defaults, and named steps read like the sentence you meant.\")"
+    },
+    {
+      "id": "c-ex306-md03",
+      "kind": "md",
+      "source": "## Observer — you have been using it this whole time\n\nEvery time a slider writes `nb[\"order_size\"]` and an HTML cell's `nb.onChange` fires, that **is** the observer pattern: publishers don't know their subscribers. Here is the whole machinery, small enough to fit in a pocket:"
+    },
+    {
+      "id": "c-ex306-js01",
+      "kind": "js",
+      "source": "// OBSERVER - the entire pattern is ~15 lines.\nclass EventBus {\n  constructor() { this.subscribers = {}; }\n  on(topic, fn) {\n    (this.subscribers[topic] = this.subscribers[topic] || []).push(fn);\n    return () => {   // unsubscribe is part of the pattern people forget\n      this.subscribers[topic] = this.subscribers[topic].filter(f => f !== fn);\n    };\n  }\n  emit(topic, data) {\n    (this.subscribers[topic] || []).forEach(fn => fn(data));\n  }\n}\n\nconst bus = new EventBus();\nconst log = [];\n\nconst offAudit = bus.on('order', o => log.push('audit:   recorded ' + o.total));\nbus.on('order', o => log.push('email:   receipt for ' + o.total));\nbus.on('refund', o => log.push('finance: refund of ' + o.total));\n\nbus.emit('order', { total: nb.get('order_total') || 288.0 });\nbus.emit('refund', { total: 12.5 });\n\noffAudit();                 // audit unsubscribes...\nbus.emit('order', { total: 99 });   // ...and misses this one\n\nlog.forEach(l => console.log(l));\nconsole.log();\nconsole.log('emitters never name their listeners - same contract as nb.onChange.');\nconsole.log('the notebook bridge is an EventBus whose topics are variable names.');\nreturn { deliveries: log.length, pattern: 'observer' };"
+    },
+    {
+      "id": "c-ex306-md04",
+      "kind": "md",
+      "source": "## Try this\n\n- Add a `\"bulk50\"` strategy (flat 50% off above 400 units) to the dictionary — the printing loop and the charging line need **zero** changes. That's the open/closed principle without the lecture.\n- Move the dropdown: change the strategy and *don't* re-run Python — nothing happens. That's the honest boundary between the observer (live UI → `nb`) and code cells (run on demand). Which parts of your real systems are which?\n- Give the builder a `.join()` step and make `build()` reject `order_by` on a column from an unjoined table — validation *at the end* is what lets steps arrive in any order.\n- Classic bug: subscribe the same listener twice in the EventBus, then unsubscribe once. How many deliveries? Fix `on()` to deduplicate."
+    }
+  ],
+  "createdAt": "2026-07-10T00:00:00.000Z",
+  "updatedAt": "2026-07-10T00:00:00.000Z"
+}

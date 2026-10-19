@@ -1,0 +1,57 @@
+[
+  {
+    "file": "tutorial-01-notebook-basics.json",
+    "title": "01 Notebook Basics",
+    "description": "Core cell types (md, js, py, html, chart) and how outputs behave."
+  },
+  {
+    "file": "tutorial-02-sharing-data-between-cells.json",
+    "title": "02 Sharing Data Between Cells",
+    "description": "Use the shared `nb` state to pass values between JS, Python, and HTML cells."
+  },
+  {
+    "file": "tutorial-03-python-to-javascript-to-html.json",
+    "title": "03 Python to JavaScript to HTML",
+    "description": "End-to-end: compute in Python, post-process in JS, render in HTML."
+  },
+  {
+    "file": "tutorial-04-matplotlib-data-science.json",
+    "title": "04 Matplotlib & Data Science",
+    "description": "NumPy data generation, matplotlib charts auto-captured as PNGs, and styled stats cards."
+  },
+  {
+    "file": "tutorial-05-live-api-visualization.json",
+    "title": "05 Live API → Analysis → Visualization",
+    "description": "Fetch live earthquake data from USGS, analyse in Python, visualise with Vega-Lite and HTML."
+  },
+  {
+    "file": "tutorial-06-interactive-html-apps.json",
+    "title": "06 Interactive HTML Mini-Apps",
+    "description": "Three self-contained apps in HTML cells: color palette generator, pomodoro timer, pixel art editor."
+  },
+  {
+    "file": "tutorial-07-building-a-report.json",
+    "title": "07 Building a Report (End-to-End)",
+    "description": "All cell types combined into an exportable employee data report with charts, tables, and executive summary."
+  },
+  {
+    "file": "tutorial-08-c-cells.json",
+    "title": "08 C Cells",
+    "description": "Run small C programs, capture stdout, and pass values back to the notebook with stdout markers."
+  },
+  {
+    "file": "tutorial-10-ui-controls.json",
+    "title": "10 UI Controls",
+    "description": "Demonstrates every UI control type, two-way nb bindings, and saved notebook state."
+  },
+  {
+    "file": "tutorial-11-lua-cells.json",
+    "title": "11 Lua Cells",
+    "description": "Run small Lua 5.4 programs offline via Wasmoon, and publish values to other cells with stdout markers."
+  },
+  {
+    "file": "tutorial-12-lua-to-javascript.json",
+    "title": "12 Lua ↔ JavaScript",
+    "description": "Crunch data in Lua, then read and transform it in JavaScript and Python through the shared nb state."
+  }
+]

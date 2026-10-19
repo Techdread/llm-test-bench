@@ -1,0 +1,32 @@
+{
+  "title": "Labels, Layout & the Designer",
+  "cells": [
+    {
+      "id": "c-ex805-md01",
+      "kind": "md",
+      "source": "# Labels, Layout & the Designer\n\n**Controls on show:** `label`, plus a small mix (`slider`, `color`, `select`, `checkbox`).\n\n**The one idea:** *there are two kinds of text, and they come from different places.*\n\n- The **header band** — the bold title and grey description at the top of the UI cell — comes from the cell's top-level `title` and `description`. It renders *above* the control canvas, so it never overlaps a control.\n- A **`label` control** lives *inside* the canvas at an `x/y`, like any other control. Use it as a section caption or a one-line note. It binds nothing — the Live-values cell below won't see it.\n\n**Layout is absolute.** Every control needs `x`, `y`, `width`, `height` (in px). There's no flow/grid layout — you place things exactly. That sounds tedious, which is why the *designer* exists."
+    },
+    {
+      "id": "c-ex805-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Labels, layout & the designer\",\n  \"description\": \"This band (title + description) is the header. The bordered text blocks inside the canvas are `label` controls — static captions that bind nothing.\",\n  \"width\": 900,\n  \"height\": 320,\n  \"controls\": [\n    {\n      \"type\": \"label\",\n      \"label\": \"Appearance\",\n      \"text\": \"A label control is pure decoration — a caption or section divider. It has no `bind`, so it never writes to nb.\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 420,\n      \"height\": 96\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Size\",\n      \"bind\": \"size\",\n      \"default\": 24,\n      \"min\": 8,\n      \"max\": 96,\n      \"step\": 1,\n      \"suffix\": \" px\",\n      \"x\": 0,\n      \"y\": 108,\n      \"width\": 420,\n      \"height\": 76\n    },\n    {\n      \"type\": \"color\",\n      \"label\": \"Colour\",\n      \"bind\": \"colour\",\n      \"default\": \"#22c55e\",\n      \"x\": 0,\n      \"y\": 196,\n      \"width\": 420,\n      \"height\": 64\n    },\n    {\n      \"type\": \"label\",\n      \"label\": \"Behaviour\",\n      \"text\": \"Everything on the right binds a value. The header above the whole canvas comes from the cell’s `title`/`description`, not from a label control.\",\n      \"x\": 460,\n      \"y\": 0,\n      \"width\": 420,\n      \"height\": 96\n    },\n    {\n      \"type\": \"select\",\n      \"label\": \"Easing\",\n      \"bind\": \"easing\",\n      \"options\": [\n        \"linear\",\n        \"ease-in\",\n        \"ease-out\",\n        \"ease-in-out\"\n      ],\n      \"default\": \"ease-out\",\n      \"x\": 460,\n      \"y\": 108,\n      \"width\": 420,\n      \"height\": 64\n    },\n    {\n      \"type\": \"checkbox\",\n      \"label\": \"Loop\",\n      \"bind\": \"loop\",\n      \"default\": true,\n      \"x\": 460,\n      \"y\": 196,\n      \"width\": 420,\n      \"height\": 48\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex805-js01",
+      "kind": "js",
+      "source": "// Live values — the two label controls are absent: labels bind nothing.\nconst val = (k) => ({ value: nb.get(k), type: typeof nb.get(k) });\nreturn {\n  size:   val('size'),\n  colour: val('colour'),\n  easing: val('easing'),\n  loop:   val('loop'),\n  // note: no 'Appearance' / 'Behaviour' here — label controls don't write to nb\n};"
+    },
+    {
+      "id": "c-ex805-md02",
+      "kind": "md",
+      "source": "## The authoring surface (open the UI cell's editor to follow along)\n\nClick the UI cell's **pencil** to enter *designer* mode. The canvas gains a grid and every control becomes draggable. Three tools make absolute layout bearable:\n\n- **Tidy** (the ✨ wand button, bottom-left of the canvas) — *grid-packs* the controls left-to-right, top-to-bottom on the 20 px grid and *grows the surface to fit*. Drag things into a mess, hit Tidy, and it snaps back into clean rows. It never overlaps controls and never clips the surface.\n- **Duplicate** (in the form editor) — copies the selected control, offset slightly, with the same type and settings. The fastest way to build a row of R/G/B sliders is: make one, Duplicate twice, rename the binds.\n- **Keyboard nudging** — select a control and press the **arrow keys** to move it by one grid step (20 px); hold **Shift + arrows** to resize it. Pointer-free, pixel-honest alignment.\n\nEverything you do in the designer just edits the same JSON you see in the `ui` cell — there's no hidden state. Switch back to the JSON view any time."
+    },
+    {
+      "id": "c-ex805-md03",
+      "kind": "md",
+      "source": "## Try this\n\n- Enter the designer and drag the **Size** slider so it overlaps the **Colour** picker. Now press **Tidy** — watch them grid-pack into tidy rows and the surface resize to fit.\n- Select the **Colour** control and tap **→** four times: it steps right 80 px (4 × 20). Hold **Shift** and press **↓** to make it taller. Read the JSON — the `x`/`height` numbers changed by multiples of 20.\n- **Duplicate** the *Loop* checkbox, then change the copy's `bind` to `autoplay` and its `label` to *Autoplay*. Run the Live-values cell — a new boolean appears.\n- Replace the header: clear the cell's `title`/`description` in the JSON. The band vanishes and the canvas moves up — proof the header is separate from the label controls, which stay put."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

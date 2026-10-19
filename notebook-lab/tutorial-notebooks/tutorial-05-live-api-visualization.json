@@ -1,0 +1,48 @@
+{
+  "id": "tutorial-05-live-api-visualization",
+  "title": "05 Live API → Analysis → Visualization",
+  "cells": [
+    {
+      "id": "c-t05-md01",
+      "kind": "md",
+      "source": "# 05 Live API → Analysis → Visualization\n\nThis notebook fetches **live earthquake data** from the USGS, analyses it in Python, and visualises the results with Vega-Lite charts and styled HTML.\n\nThe data is real and updates every few minutes.\n\nRun cells top-to-bottom with **Shift+Enter**."
+    },
+    {
+      "id": "c-t05-js01",
+      "kind": "js",
+      "source": "// Fetch the last 7 days of earthquakes from USGS (no API key needed)\nconst url = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson';\nconst res = await fetch(url);\nconst data = await res.json();\n\nconst quakes = data.features.map(f => ({\n  mag: f.properties.mag,\n  place: f.properties.place,\n  time: new Date(f.properties.time).toISOString(),\n  depth: f.geometry.coordinates[2],\n  lon: f.geometry.coordinates[0],\n  lat: f.geometry.coordinates[1],\n})).filter(q => q.mag !== null && q.mag >= 0);\n\nnb.set('quakes', quakes);\nconsole.log(`Fetched ${quakes.length} earthquakes from the past 7 days`);\nconsole.log(`Magnitude range: ${Math.min(...quakes.map(q => q.mag)).toFixed(1)} – ${Math.max(...quakes.map(q => q.mag)).toFixed(1)}`);\n({ total: quakes.length, sample: quakes.slice(0, 3) });"
+    },
+    {
+      "id": "c-t05-py01",
+      "kind": "py",
+      "source": "quakes = nb['quakes']\n\n# Magnitude buckets\nbuckets = {'0–1': 0, '1–2': 0, '2–3': 0, '3–4': 0, '4–5': 0, '5+': 0}\nfor q in quakes:\n    m = q['mag']\n    if m < 1: buckets['0–1'] += 1\n    elif m < 2: buckets['1–2'] += 1\n    elif m < 3: buckets['2–3'] += 1\n    elif m < 4: buckets['3–4'] += 1\n    elif m < 5: buckets['4–5'] += 1\n    else: buckets['5+'] += 1\n\nbucket_data = [{'range': k, 'count': v} for k, v in buckets.items()]\n\n# Top 5 strongest\nsorted_q = sorted(quakes, key=lambda q: q['mag'], reverse=True)\ntop5 = [{'mag': q['mag'], 'place': q['place'], 'depth': round(q['depth'], 1)} for q in sorted_q[:5]]\n\n# Averages\navg_mag = round(sum(q['mag'] for q in quakes) / len(quakes), 2)\navg_depth = round(sum(q['depth'] for q in quakes) / len(quakes), 1)\n\nanalysis = {\n    'total': len(quakes),\n    'avg_mag': avg_mag,\n    'avg_depth': avg_depth,\n    'max_mag': sorted_q[0]['mag'],\n    'bucket_data': bucket_data,\n    'top5': top5\n}\nnb['analysis'] = analysis\n\nprint(f'Total quakes: {len(quakes)}')\nprint(f'Avg magnitude: {avg_mag}')\nprint(f'Avg depth: {avg_depth} km')\nanalysis"
+    },
+    {
+      "id": "c-t05-js02",
+      "kind": "js",
+      "source": "const a = nb.get('analysis');\n\nconst row = (q, i) =>\n  `<tr>\n    <td style=\"padding:8px 12px;font-weight:600\">#${i + 1}</td>\n    <td style=\"padding:8px 12px\">\n      <span style=\"display:inline-block;background:${q.mag >= 5 ? '#dc2626' : q.mag >= 4 ? '#f59e0b' : '#3b82f6'};color:white;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600\">${q.mag.toFixed(1)}</span>\n    </td>\n    <td style=\"padding:8px 12px\">${q.place}</td>\n    <td style=\"padding:8px 12px;color:#6b7280\">${q.depth} km</td>\n  </tr>`;\n\nconst stat = (label, value, color) =>\n  `<div style=\"text-align:center;padding:12px 16px;background:white;border-radius:12px;border:1px solid #e5e7eb\">\n    <div style=\"font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px\">${label}</div>\n    <div style=\"font-size:1.5rem;font-weight:700;color:${color};margin-top:4px\">${value}</div>\n  </div>`;\n\nreturn `\n<div style=\"font-family:system-ui;padding:20px;background:#f8fafc;border-radius:16px;\">\n  <h3 style=\"margin:0 0 4px\">Earthquake Summary — Past 7 Days</h3>\n  <p style=\"color:#64748b;margin:0 0 16px\">Live data from USGS</p>\n  <div style=\"display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px\">\n    ${stat('Total Quakes', a.total, '#3b82f6')}\n    ${stat('Avg Magnitude', a.avg_mag, '#8b5cf6')}\n    ${stat('Avg Depth', a.avg_depth + ' km', '#06b6d4')}\n    ${stat('Strongest', a.max_mag.toFixed(1), '#dc2626')}\n  </div>\n  <h4 style=\"margin:0 0 8px\">Top 5 Strongest</h4>\n  <table style=\"width:100%;border-collapse:collapse;background:white;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb\">\n    <thead><tr style=\"background:#f1f5f9;font-size:12px;color:#475569\">\n      <th style=\"padding:8px 12px;text-align:left\">#</th>\n      <th style=\"padding:8px 12px;text-align:left\">Mag</th>\n      <th style=\"padding:8px 12px;text-align:left\">Location</th>\n      <th style=\"padding:8px 12px;text-align:left\">Depth</th>\n    </tr></thead>\n    <tbody>${a.top5.map(row).join('')}</tbody>\n  </table>\n</div>`;"
+    },
+    {
+      "id": "c-t05-chart01",
+      "kind": "chart",
+      "source": "{\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v5.json\",\n  \"title\": \"Earthquakes by Magnitude Range\",\n  \"data\": {\n    \"values\": [\n      {\"range\": \"0–1\", \"count\": 0},\n      {\"range\": \"1–2\", \"count\": 0},\n      {\"range\": \"2–3\", \"count\": 0},\n      {\"range\": \"3–4\", \"count\": 0},\n      {\"range\": \"4–5\", \"count\": 0},\n      {\"range\": \"5+\", \"count\": 0}\n    ]\n  },\n  \"mark\": {\"type\": \"bar\", \"cornerRadiusTopLeft\": 6, \"cornerRadiusTopRight\": 6},\n  \"encoding\": {\n    \"x\": {\"field\": \"range\", \"type\": \"ordinal\", \"sort\": null, \"title\": \"Magnitude Range\"},\n    \"y\": {\"field\": \"count\", \"type\": \"quantitative\", \"title\": \"Number of Earthquakes\"},\n    \"color\": {\n      \"field\": \"range\",\n      \"type\": \"nominal\",\n      \"scale\": {\"range\": [\"#93c5fd\", \"#60a5fa\", \"#3b82f6\", \"#f59e0b\", \"#f97316\", \"#dc2626\"]},\n      \"legend\": null\n    }\n  },\n  \"width\": 500,\n  \"height\": 250\n}"
+    },
+    {
+      "id": "c-t05-md02",
+      "kind": "md",
+      "source": "**Note:** The Vega-Lite chart above uses placeholder zeroes. To make it dynamic, you could build the spec JSON in a JS cell using `nb.get('analysis').bucket_data` and return it. For now it demonstrates the chart cell type.\n\nBelow is a scatter plot spec showing magnitude vs depth — edit the values after running the Python analysis cell."
+    },
+    {
+      "id": "c-t05-chart02",
+      "kind": "chart",
+      "source": "{\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v5.json\",\n  \"title\": \"Magnitude vs Depth\",\n  \"data\": {\n    \"values\": [\n      {\"mag\": 2.1, \"depth\": 8.5},\n      {\"mag\": 4.3, \"depth\": 35.2},\n      {\"mag\": 1.5, \"depth\": 5.0},\n      {\"mag\": 3.7, \"depth\": 22.1},\n      {\"mag\": 5.1, \"depth\": 10.0},\n      {\"mag\": 2.8, \"depth\": 12.6},\n      {\"mag\": 1.2, \"depth\": 3.4},\n      {\"mag\": 3.0, \"depth\": 18.9},\n      {\"mag\": 4.6, \"depth\": 45.0},\n      {\"mag\": 2.5, \"depth\": 7.8}\n    ]\n  },\n  \"mark\": {\"type\": \"circle\", \"opacity\": 0.7},\n  \"encoding\": {\n    \"x\": {\"field\": \"mag\", \"type\": \"quantitative\", \"title\": \"Magnitude\", \"scale\": {\"zero\": false}},\n    \"y\": {\"field\": \"depth\", \"type\": \"quantitative\", \"title\": \"Depth (km)\"},\n    \"size\": {\"field\": \"mag\", \"type\": \"quantitative\", \"legend\": null},\n    \"color\": {\n      \"field\": \"mag\",\n      \"type\": \"quantitative\",\n      \"scale\": {\"scheme\": \"reds\"},\n      \"title\": \"Magnitude\"\n    }\n  },\n  \"width\": 500,\n  \"height\": 280\n}"
+    },
+    {
+      "id": "c-t05-md03",
+      "kind": "md",
+      "source": "## What you learned\n\n- **`fetch()`** works in JS cells — pull data from any CORS-friendly API\n- Store fetched data in `nb` so **Python** can analyse it\n- Python results flow back to **JS** for HTML rendering and **Vega-Lite** for charts\n- The entire pipeline updates when you re-run: **live data → analysis → visualisation**\n\n## Try this next\n\n- Change the USGS URL to `all_day.geojson` for just the last 24 hours\n- Add a Python cell that groups quakes by country (parse the `place` field)\n- Build a Vega-Lite chart dynamically from a JS cell using `nb.get('analysis')`"
+    }
+  ],
+  "createdAt": "2026-04-18T21:00:00.000Z",
+  "updatedAt": "2026-04-18T21:00:00.000Z"
+}

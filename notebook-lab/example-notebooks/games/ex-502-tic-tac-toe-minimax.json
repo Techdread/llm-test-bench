@@ -1,0 +1,41 @@
+{
+  "title": "Tic-Tac-Toe vs Minimax",
+  "state": {
+    "ttt": {
+      "board": ".........",
+      "turn": "human",
+      "status": "your move"
+    }
+  },
+  "cells": [
+    {
+      "id": "c-ex502-md01",
+      "kind": "md",
+      "source": "# Tic-Tac-Toe vs Minimax\n\n**Minimax** answers \"what's my best move if my opponent also plays perfectly?\" by searching the whole game tree: my turns maximise the score, yours minimise it. **Alpha-beta pruning** skips branches that can't change the answer. Tic-tac-toe is small enough (~5,478 reachable positions) to search *perfectly* — the engine cannot lose, only win or draw.\n\n**The turn protocol, honestly:** the HTML board writes your move into notebook state (`nb.set`), but a Python cell only runs when *you* run it. So the loop is:\n\n1. Click a square below (you are **X**).\n2. **Re-run the Python cell** — it reads the board, thinks, plays **O**.\n3. The board updates itself (it listens via `nb.onChange`). Repeat.\n\nClick \"new game\" on the board any time."
+    },
+    {
+      "id": "c-ex502-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0f172a; color: #cbd5e1; font-family: system-ui, sans-serif; }\n  #status { padding: 12px 16px; font-size: 15px; }\n  #status b { color: #f8fafc; }\n  #grid { display: grid; grid-template-columns: repeat(3, 110px); gap: 8px; padding: 0 16px; }\n  .sq { height: 110px; background: #1e293b; border-radius: 10px; display: flex;\n        align-items: center; justify-content: center; font-size: 56px; font-weight: 700;\n        cursor: pointer; user-select: none; }\n  .sq.x { color: #38bdf8; } .sq.o { color: #f472b6; }\n  .sq:hover { background: #27354d; }\n  #new { margin: 14px 16px; padding: 8px 18px; font-size: 14px; background: #334155;\n         color: #e2e8f0; border: 0; border-radius: 8px; cursor: pointer; }\n</style>\n<div id=\"status\">Loading…</div>\n<div id=\"grid\"></div>\n<button id=\"new\">new game</button>\n<script>\n  var grid = document.getElementById('grid');\n  var status = document.getElementById('status');\n  var squares = [];\n  for (var i = 0; i < 9; i++) {\n    (function (idx) {\n      var d = document.createElement('div');\n      d.className = 'sq';\n      d.addEventListener('click', function () { play(idx); });\n      grid.appendChild(d);\n      squares.push(d);\n    })(i);\n  }\n\n  var state = null;\n\n  function draw(s) {\n    state = s || { board: '.........', turn: 'human', status: 'your move' };\n    for (var i = 0; i < 9; i++) {\n      var ch = state.board[i];\n      squares[i].textContent = ch === '.' ? '' : ch.toUpperCase();\n      squares[i].className = 'sq' + (ch === 'x' ? ' x' : ch === 'o' ? ' o' : '');\n    }\n    var hint = state.turn === 'engine' ? ' — now RE-RUN the Python cell' : '';\n    status.innerHTML = 'you are <b class=\"x\">X</b> · ' + state.status + '<b>' + hint + '</b>';\n  }\n\n  function play(i) {\n    if (!state || state.turn !== 'human' || state.board[i] !== '.') return;\n    var b = state.board.slice(0, i) + 'x' + state.board.slice(i + 1);\n    nb.set('ttt', { board: b, turn: 'engine', status: 'X played square ' + (i + 1) });\n  }\n\n  document.getElementById('new').addEventListener('click', function () {\n    nb.set('ttt', { board: '.........', turn: 'human', status: 'your move' });\n  });\n\n  nb.onChange(function (s) { draw(s.ttt); });\n  draw(nb.get('ttt'));\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 560,
+          "height": 520,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex502-py01",
+      "kind": "py",
+      "source": "# The engine. Run me after each of your moves.\nLINES = [(0,1,2),(3,4,5),(6,7,8),(0,3,6),(1,4,7),(2,5,8),(0,4,8),(2,4,6)]\n\ndef winner(b):\n    for a, c, d in LINES:\n        if b[a] != \".\" and b[a] == b[c] == b[d]:\n            return b[a]\n    return None\n\nnodes = 0\n\ndef minimax(b, player, alpha, beta):\n    \"\"\"Score from O's viewpoint: +1 win, 0 draw, -1 loss. Prefer fast wins.\"\"\"\n    global nodes\n    nodes += 1\n    w = winner(b)\n    if w == \"o\": return 1\n    if w == \"x\": return -1\n    if \".\" not in b: return 0\n    best = -2 if player == \"o\" else 2\n    for i, ch in enumerate(b):\n        if ch != \".\":\n            continue\n        score = minimax(b[:i] + player + b[i+1:], \"x\" if player == \"o\" else \"o\", alpha, beta)\n        if player == \"o\":\n            best = max(best, score)\n            alpha = max(alpha, best)\n        else:\n            best = min(best, score)\n            beta = min(beta, best)\n        if beta <= alpha:\n            break          # alpha-beta cut: this branch can't matter\n    return best\n\nstate = nb.get(\"ttt\") or {\"board\": \".........\", \"turn\": \"human\", \"status\": \"your move\"}\nb = state[\"board\"]\n\nw = winner(b)\nif w or \".\" not in b:\n    verdict = {\"x\": \"X wins!\", \"o\": \"O wins.\"}.get(w, \"Draw.\")\n    print(\"game over:\", verdict)\n    nb[\"ttt\"] = {\"board\": b, \"turn\": \"human\", \"status\": verdict + \" Click 'new game'.\"}\nelif state[\"turn\"] != \"engine\":\n    print(\"it's your move - click a square on the board above, then re-run me\")\nelse:\n    best_score, best_move = -2, None\n    for i, ch in enumerate(b):\n        if ch != \".\":\n            continue\n        nodes = 0\n        score = minimax(b[:i] + \"o\" + b[i+1:], \"x\", -2, 2)\n        print(f\"square {i+1}: score {score:+d}  ({nodes} nodes searched)\")\n        if score > best_score:\n            best_score, best_move = score, i\n\n    b = b[:best_move] + \"o\" + b[best_move+1:]\n    w = winner(b)\n    outlook = {1: \"O expects to WIN\", 0: \"best play leads to a draw\", -1: \"O is losing?!\"}[best_score]\n    if w == \"o\":\n        status = \"O wins.\"\n    elif \".\" not in b:\n        status = \"Draw. Click 'new game'.\"\n    else:\n        status = f\"O took square {best_move+1} - {outlook}. Your move.\"\n    print(f\"\\nengine plays square {best_move+1} ({outlook})\")\n    nb[\"ttt\"] = {\"board\": b, \"turn\": \"human\", \"status\": status}"
+    },
+    {
+      "id": "c-ex502-md02",
+      "kind": "md",
+      "source": "## Why the engine can't lose\n\nEvery legal position is examined before O commits — the printout shows a score for each candidate square. `+1` means \"I can force a win from here\", `0` \"best play draws\", `-1` \"this square loses\". O simply never picks a negative square, and since tic-tac-toe is a draw under perfect play, you'll never see O hand you a win.\n\nWatch the node counts: with alpha-beta, the first move searches a few thousand nodes instead of ~55,000 raw — pruning removed over 90% of the tree without changing a single answer.\n\n## Try this\n\n- Take the centre first and play the classic double-threat traps — watch the engine calmly defuse every one.\n- Handicap the engine: cap the recursion at depth 2 (pass a `depth` argument, return 0 beyond it). Now it's beatable — find the win.\n- Remove alpha-beta (delete the `break`) and compare node counts — same moves, ~10× the work.\n- Change scoring to prefer *quick* wins: return `10 - moves_made` instead of 1 and watch it finish games faster when you blunder."
+    }
+  ],
+  "createdAt": "2026-07-10T00:00:00.000Z",
+  "updatedAt": "2026-07-10T00:00:00.000Z"
+}

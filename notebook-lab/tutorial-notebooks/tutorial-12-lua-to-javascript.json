@@ -1,0 +1,32 @@
+{
+  "title": "12 Lua ↔ JavaScript",
+  "cells": [
+    {
+      "id": "c-t12-md01",
+      "kind": "md",
+      "source": "# 12 Lua ↔ JavaScript\n\nA common pattern: **crunch data in Lua, consume it in JavaScript.** Lua publishes values through `__NB_SET__` stdout markers; JS reads them from `nb` and can transform, summarise, or store them back. Python can read them too."
+    },
+    {
+      "id": "c-t12-lua01",
+      "kind": "lua",
+      "source": "-- Generate a small dataset in Lua and publish it for other cells.\nlocal out = {}\nfor i = 1, 12 do\n  local v = 20 + 10 * math.sin(i / 2)   -- a gentle wave\n  out[i] = string.format(\"%.1f\", v)\nend\n\nprint(\"readings = \" .. table.concat(out, \", \"))\nprint('__NB_SET__ {\"key\":\"readings\",\"value\":[' .. table.concat(out, \",\") .. ']}')"
+    },
+    {
+      "id": "c-t12-js01",
+      "kind": "js",
+      "source": "// Consume the Lua data and compute stats\nconst data = nb.get('readings');\nconst min = Math.min(...data);\nconst max = Math.max(...data);\nconst avg = data.reduce((a, b) => a + b, 0) / data.length;\n\nconsole.log(`Lua produced ${data.length} readings`);\nconsole.log(`min=${min}  max=${max}  avg=${avg.toFixed(2)}`);\n\n// JS can write back to nb (it's a two-way cell)\nnb.set('stats', { min, max, avg });\nreturn { count: data.length, min, max, avg: +avg.toFixed(2) };"
+    },
+    {
+      "id": "c-t12-py01",
+      "kind": "py",
+      "source": "# Python can read the same Lua-produced data\nreadings = nb[\"readings\"]\nprint(\"from Python, first 3 readings:\", readings[:3])\nprint(\"max reading:\", max(readings))"
+    },
+    {
+      "id": "c-t12-md02",
+      "kind": "md",
+      "source": "## One-way street\n\nLua (like C and Rust) is **emit-only**: it can publish values with `__NB_SET__`, but it can't read `nb` back. To feed data *into* a Lua computation, bake it into the Lua source, or prepare it in a JS/Python cell first. **JS and Python are the two-way cells** — they can both `get` and `set`."
+    }
+  ],
+  "createdAt": "2026-06-07T00:00:00.000Z",
+  "updatedAt": "2026-06-07T00:00:00.000Z"
+}

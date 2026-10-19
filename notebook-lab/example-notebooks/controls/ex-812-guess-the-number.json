@@ -1,0 +1,32 @@
+{
+  "title": "Guess the Number",
+  "cells": [
+    {
+      "id": "c-ex812-md01",
+      "kind": "md",
+      "source": "# Guess the Number\n\n**Kinds on show:** `ui` → `js` (no HTML).\n\n**The one idea:** *a control-only game runs on the \"re-run\" beat.* There's no canvas and no `nb.onChange` here — a UI cell plus a JS cell can't listen for events. So the game loop is explicit and honest:\n\n1. Type a **guess** and press **Submit** (that increments the `tries` counter).\n2. **Run the feedback cell** (or Run All) — the JS cell reads your guess, compares it to the secret, and tells you hotter/colder.\n\nThe secret is **seeded**: it's a pure function of the `seed` number, so the same seed always hides the same number (which makes the notebook deterministic for testing). Change the `seed` to start a fresh game, and press **Reset tries** to zero the counter."
+    },
+    {
+      "id": "c-ex812-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Guess the Number\",\n  \"description\": \"Type a guess (1–100), press Submit to count the try, then run the feedback cell. Change the seed for a new secret. A whole game with no HTML at all.\",\n  \"width\": 900,\n  \"height\": 200,\n  \"controls\": [\n    {\n      \"type\": \"number\",\n      \"label\": \"Your guess (1–100)\",\n      \"bind\": \"guess\",\n      \"default\": 50,\n      \"min\": 1,\n      \"max\": 100,\n      \"step\": 1,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 260,\n      \"height\": 64\n    },\n    {\n      \"type\": \"button\",\n      \"label\": \"Submit (count a try)\",\n      \"bind\": \"tries\",\n      \"action\": \"increment\",\n      \"default\": 0,\n      \"icon\": \"fa-play\",\n      \"x\": 280,\n      \"y\": 0,\n      \"width\": 240,\n      \"height\": 48\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"Tries\",\n      \"bind\": \"tries\",\n      \"precision\": 0,\n      \"default\": 0,\n      \"x\": 540,\n      \"y\": 0,\n      \"width\": 160,\n      \"height\": 56\n    },\n    {\n      \"type\": \"number\",\n      \"label\": \"Game seed (change → new secret)\",\n      \"bind\": \"seed\",\n      \"default\": 7,\n      \"min\": 1,\n      \"max\": 9999,\n      \"step\": 1,\n      \"x\": 0,\n      \"y\": 84,\n      \"width\": 260,\n      \"height\": 64\n    },\n    {\n      \"type\": \"button\",\n      \"label\": \"Reset tries\",\n      \"icon\": \"fa-rotate-left\",\n      \"set\": {\n        \"tries\": 0\n      },\n      \"x\": 280,\n      \"y\": 84,\n      \"width\": 240,\n      \"height\": 48\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex812-js01",
+      "kind": "js",
+      "source": "// The whole game. A seeded LCG turns the seed into a secret in 1..100.\nfunction secretFor(seed) {\n  let s = (Number(seed) * 2654435761) >>> 0;\n  s = (1103515245 * s + 12345) >>> 0;\n  return 1 + (s % 100);\n}\n\nconst seed = nb.get('seed') ?? 7;\nconst secret = secretFor(seed);\nconst guess = nb.get('guess');\nconst tries = nb.get('tries') ?? 0;\n\nif (guess == null) return 'Enter a guess above, press Submit, then run this cell.';\n\nconst diff = Number(guess) - secret;\nlet feedback;\nif (diff === 0) {\n  feedback = `🎉 Correct! ${secret} in ${tries} tries. Change the seed for a new game.`;\n} else {\n  const mag = Math.abs(diff);\n  const temp = mag <= 2 ? '🔥 boiling' : mag <= 5 ? 'warm' : mag <= 15 ? 'cool' : '❄️ freezing';\n  feedback = `${diff > 0 ? 'Too high' : 'Too low'} — ${temp}`;\n}\n\nconsole.log('guess', guess, '(' + typeof guess + '), tries', tries);\nreturn { guess, tries, feedback };  // note: secret is only revealed on a win"
+    },
+    {
+      "id": "c-ex812-js02",
+      "kind": "js",
+      "source": "// Live values — proof the controls bind the right types for the game logic.\nconst val = (k) => ({ value: nb.get(k), type: typeof nb.get(k) });\nreturn {\n  guess: val('guess'),  // number — number inputs never hand you a string\n  tries: val('tries'),  // number — the increment button keeps a real counter\n  seed:  val('seed'),   // number — feeds the deterministic secret\n};"
+    },
+    {
+      "id": "c-ex812-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- Play a round: guess 50, Submit, run the feedback cell; use hotter/colder to bisect toward the secret. Binary search finds any number in ≤ 7 tries — can you?\n- Press **Submit** without changing your guess and re-run — `tries` still climbs. The increment button is a real counter; the number input is unchanged.\n- Change **seed** to any new value and press **Reset tries** — a brand-new secret with a clean counter. Because the secret is seeded, the *same* seed replays the *same* game (handy for testing, and it's why this notebook sweeps deterministically).\n- **Design reflection:** contrast this with **Reaction Timer** (ex-814), where the gesture *must* live in an HTML cell. Here, discrete \"submit then evaluate\" turns fit the control-only, re-run model perfectly — pick the model that matches the interaction."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

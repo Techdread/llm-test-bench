@@ -1,0 +1,40 @@
+{
+  "title": "Boids — Emergent Flocking",
+  "state": {
+    "boids_cohesion": 1,
+    "boids_alignment": 1,
+    "boids_separation": 1,
+    "boids_count": 80
+  },
+  "cells": [
+    {
+      "id": "c-ex402-md01",
+      "kind": "md",
+      "source": "# Boids — Emergent Flocking\n\nCraig Reynolds' 1986 insight: convincing flocks need **no leader and no plan** — each bird follows three local rules about its neighbours within ~60 px:\n\n1. **Cohesion** — drift toward the neighbourhood's centre of mass.\n2. **Alignment** — turn toward the neighbourhood's average heading.\n3. **Separation** — push away from anyone too close (< 22 px).\n\nThe simulation runs live in the HTML cell below and reads the sliders **every frame** through the notebook bridge — drag while you watch. No re-running needed."
+    },
+    {
+      "id": "c-ex402-ui01",
+      "kind": "ui",
+      "source": "{\n  \"width\": 900,\n  \"height\": 200,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"Cohesion (toward flock centre)\",\n      \"bind\": \"boids_cohesion\",\n      \"default\": 1,\n      \"min\": 0,\n      \"max\": 2,\n      \"step\": 0.1,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 420,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Alignment (match headings)\",\n      \"bind\": \"boids_alignment\",\n      \"default\": 1,\n      \"min\": 0,\n      \"max\": 2,\n      \"step\": 0.1,\n      \"x\": 450,\n      \"y\": 0,\n      \"width\": 420,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Separation (avoid crowding)\",\n      \"bind\": \"boids_separation\",\n      \"default\": 1,\n      \"min\": 0,\n      \"max\": 2,\n      \"step\": 0.1,\n      \"x\": 0,\n      \"y\": 90,\n      \"width\": 420,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Flock size\",\n      \"bind\": \"boids_count\",\n      \"default\": 80,\n      \"min\": 10,\n      \"max\": 200,\n      \"step\": 10,\n      \"x\": 450,\n      \"y\": 90,\n      \"width\": 420,\n      \"height\": 76\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex402-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0f172a; overflow: hidden; }\n  #stats { position: absolute; top: 10px; left: 14px; color: #64748b; font: 12px monospace; }\n</style>\n<canvas id=\"sky\" width=\"960\" height=\"600\"></canvas>\n<div id=\"stats\"></div>\n<script>\n  var canvas = document.getElementById('sky');\n  var ctx = canvas.getContext('2d');\n  var W = canvas.width, H = canvas.height;\n\n  var NEIGHBOUR_R = 60, CROWD_R = 22, MAX_SPEED = 2.6, MIN_SPEED = 1.2;\n\n  var boids = [];\n  function spawn(n) {\n    while (boids.length < n) {\n      var a = Math.random() * Math.PI * 2;\n      boids.push({\n        x: Math.random() * W, y: Math.random() * H,\n        vx: Math.cos(a) * 2, vy: Math.sin(a) * 2,\n      });\n    }\n    boids.length = n;\n  }\n\n  function step(k) {\n    for (var i = 0; i < boids.length; i++) {\n      var b = boids[i];\n      var cx = 0, cy = 0, ax = 0, ay = 0, sx = 0, sy = 0, near = 0;\n\n      for (var j = 0; j < boids.length; j++) {\n        if (j === i) continue;\n        var o = boids[j];\n        var dx = o.x - b.x, dy = o.y - b.y;\n        var d2 = dx * dx + dy * dy;\n        if (d2 > NEIGHBOUR_R * NEIGHBOUR_R) continue;\n        near++;\n        cx += o.x; cy += o.y;              // cohesion accumulators\n        ax += o.vx; ay += o.vy;            // alignment accumulators\n        if (d2 < CROWD_R * CROWD_R && d2 > 0) {\n          var d = Math.sqrt(d2);\n          sx -= dx / d; sy -= dy / d;      // separation: push apart\n        }\n      }\n\n      if (near > 0) {\n        b.vx += ((cx / near - b.x) * 0.004) * k.cohesion;\n        b.vy += ((cy / near - b.y) * 0.004) * k.cohesion;\n        b.vx += ((ax / near - b.vx) * 0.05) * k.alignment;\n        b.vy += ((ay / near - b.vy) * 0.05) * k.alignment;\n      }\n      b.vx += sx * 0.12 * k.separation;\n      b.vy += sy * 0.12 * k.separation;\n\n      var speed = Math.hypot(b.vx, b.vy) || 0.001;\n      var clamped = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed));\n      b.vx = b.vx / speed * clamped;\n      b.vy = b.vy / speed * clamped;\n\n      b.x = (b.x + b.vx + W) % W;          // wrap around the edges\n      b.y = (b.y + b.vy + H) % H;\n    }\n  }\n\n  function drawBoid(b) {\n    var a = Math.atan2(b.vy, b.vx);\n    ctx.save();\n    ctx.translate(b.x, b.y);\n    ctx.rotate(a);\n    ctx.beginPath();\n    ctx.moveTo(7, 0); ctx.lineTo(-5, 4); ctx.lineTo(-5, -4);\n    ctx.closePath();\n    ctx.fill();\n    ctx.restore();\n  }\n\n  function frame() {\n    var k = {\n      cohesion: num(nb.get('boids_cohesion'), 1),\n      alignment: num(nb.get('boids_alignment'), 1),\n      separation: num(nb.get('boids_separation'), 1),\n    };\n    spawn(Math.round(num(nb.get('boids_count'), 80)));\n    step(k);\n\n    ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';   // motion-trail fade\n    ctx.fillRect(0, 0, W, H);\n    ctx.fillStyle = '#a78bfa';\n    boids.forEach(drawBoid);\n\n    document.getElementById('stats').textContent =\n      boids.length + ' boids   cohesion ' + k.cohesion.toFixed(1) +\n      '   alignment ' + k.alignment.toFixed(1) +\n      '   separation ' + k.separation.toFixed(1);\n    requestAnimationFrame(frame);\n  }\n\n  function num(v, fallback) { return typeof v === 'number' && isFinite(v) ? v : fallback; }\n\n  spawn(80);\n  frame();\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 960,
+          "height": 600,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex402-md02",
+      "kind": "md",
+      "source": "## Experiments that teach\n\n- **Cohesion 2, separation 0** — the flock collapses into a dense swarming ball.\n- **Alignment 0** — cohesion still clumps them, but headings never agree: an insect swarm, not a flock.\n- **Separation 2, cohesion 0** — a gas of mutually-avoiding particles, evenly spread.\n- **All defaults** — small flocks merge, split around nothing, and stream in ribbons. None of that is written anywhere: it *emerges*.\n\n## Try this\n\n- Lower `NEIGHBOUR_R` to 25 in the HTML cell — many tiny flocks instead of a few big ones (birds can only see so far).\n- Add a predator: one red boid the others get a strong separation push from.\n- Remove the `% W` wrapping and make walls repel instead — watch flocks slosh around corners."
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

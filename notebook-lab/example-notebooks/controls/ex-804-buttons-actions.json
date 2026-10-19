@@ -1,0 +1,32 @@
+{
+  "title": "Buttons & Actions",
+  "cells": [
+    {
+      "id": "c-ex804-md01",
+      "kind": "md",
+      "source": "# Buttons & Actions\n\n**Controls on show:** `button` (three `action` modes), `readout`.\n\n**The one idea:** *a button needs an `action` to be a dependable trigger.* Unlike a slider, a button has no persistent value of its own, so the overhaul gave it modes:\n\n- **`action: \"increment\"`** — treats `bind` as a counter and does `+1` each press.\n- **`action: \"toggle\"`** — flips `bind` between `true`/`false`.\n- **default (`action: \"set\"`)** — writes the button's `value`; **if there's no `value` it writes `Date.now()`**, so the value always *changes* and listeners always fire.\n- **`set: { … }`** — a batch write: one press sets several names at once (the natural \"reset\").\n\n**Why the timestamp default matters:** if a plain button just wrote a fixed `value`, pressing it twice would write the same thing the second time — and a subscriber comparing old-vs-new would see \"no change\" and skip. The fresh timestamp guarantees a change. That's the honest reason re-press behaviour needs a mode."
+    },
+    {
+      "id": "c-ex804-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Buttons & actions\",\n  \"description\": \"One button element, three behaviours: set, increment, toggle — plus a reset that writes several names at once. Readouts show the effect of each press.\",\n  \"width\": 900,\n  \"height\": 300,\n  \"controls\": [\n    {\n      \"type\": \"button\",\n      \"label\": \"Count +1\",\n      \"bind\": \"count\",\n      \"action\": \"increment\",\n      \"default\": 0,\n      \"icon\": \"fa-plus\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 200,\n      \"height\": 48\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"count (increment)\",\n      \"bind\": \"count\",\n      \"x\": 220,\n      \"y\": 0,\n      \"width\": 220,\n      \"height\": 56\n    },\n    {\n      \"type\": \"button\",\n      \"label\": \"Toggle\",\n      \"bind\": \"flag\",\n      \"action\": \"toggle\",\n      \"default\": false,\n      \"icon\": \"fa-power-off\",\n      \"x\": 0,\n      \"y\": 68,\n      \"width\": 200,\n      \"height\": 48\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"flag (toggle)\",\n      \"bind\": \"flag\",\n      \"x\": 220,\n      \"y\": 68,\n      \"width\": 220,\n      \"height\": 56\n    },\n    {\n      \"type\": \"button\",\n      \"label\": \"Pick \\\"apple\\\"\",\n      \"bind\": \"fruit\",\n      \"value\": \"apple\",\n      \"default\": \"(none)\",\n      \"icon\": \"fa-apple-whole\",\n      \"x\": 0,\n      \"y\": 136,\n      \"width\": 200,\n      \"height\": 48\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"fruit (set value)\",\n      \"bind\": \"fruit\",\n      \"x\": 220,\n      \"y\": 136,\n      \"width\": 220,\n      \"height\": 56\n    },\n    {\n      \"type\": \"button\",\n      \"label\": \"Reset all\",\n      \"icon\": \"fa-rotate-left\",\n      \"set\": {\n        \"count\": 0,\n        \"flag\": false,\n        \"fruit\": \"(none)\"\n      },\n      \"x\": 0,\n      \"y\": 204,\n      \"width\": 200,\n      \"height\": 48\n    },\n    {\n      \"type\": \"button\",\n      \"label\": \"Ping (timestamp)\",\n      \"bind\": \"last_ping\",\n      \"default\": 0,\n      \"icon\": \"fa-bell\",\n      \"x\": 460,\n      \"y\": 0,\n      \"width\": 200,\n      \"height\": 48\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"last_ping (ms epoch)\",\n      \"bind\": \"last_ping\",\n      \"precision\": 0,\n      \"x\": 460,\n      \"y\": 68,\n      \"width\": 300,\n      \"height\": 56\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex804-js01",
+      "kind": "js",
+      "source": "// Live values — press the buttons above, then re-run to see the effect.\nconst val = (k) => ({ value: nb.get(k), type: typeof nb.get(k) });\nreturn {\n  count:     val('count'),      // increment: goes up by 1 each press\n  flag:      val('flag'),       // toggle: true/false\n  fruit:     val('fruit'),      // set value: '(none)' → 'apple'\n  last_ping: val('last_ping'),  // set-with-no-value: a fresh timestamp each press\n};"
+    },
+    {
+      "id": "c-ex804-js02",
+      "kind": "js",
+      "source": "// Demonstrate the batch reset from code too: nb.set works from a JS cell\n// exactly like a button's set:{…}. (This is what \"Reset all\" does internally.)\nnb.set('count', 0);\nnb.set('flag', false);\nnb.set('fruit', '(none)');\nconsole.log('reset count/flag/fruit — the readouts above should now show 0 / false / (none)');\nreturn { count: nb.get('count'), flag: nb.get('flag'), fruit: nb.get('fruit') };"
+    },
+    {
+      "id": "c-ex804-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- Press **Count +1** a few times — the `count` readout climbs. It's a plain number in nb; nothing else is special.\n- Press **Ping** twice and watch `last_ping`: the number changes *every* press, even though you did the \"same\" action. That's the timestamp trick that makes plain buttons reliable triggers.\n- Press **Toggle** — `flag` flips `true`/`false`. Notice the readout prints `true`/`false` text: that's `formatDisplay` stringifying a boolean for display.\n- Press **Reset all** — one press clears three names via `set: {…}`. Then compare it to the JS \"reset from code\" cell: a button's batch write and `nb.set` from JS are the same operation."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

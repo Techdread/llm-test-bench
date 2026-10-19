@@ -1,0 +1,42 @@
+{
+  "title": "Binary Search & the Shape of O(log n)",
+  "cells": [
+    {
+      "id": "c-ex201-md01",
+      "kind": "md",
+      "source": "# Binary Search & the Shape of O(log n)\n\nBinary search answers \"where is x in this **sorted** list?\" by halving the search space each step: a million entries need at most 20 comparisons. Below we *measure* that, then use the same halving idea on a problem that has no array in it at all."
+    },
+    {
+      "id": "c-ex201-py01",
+      "kind": "py",
+      "source": "import random\n\ndef binary_search(a, target):\n    \"\"\"Return (index or -1, comparisons used).\"\"\"\n    lo, hi = 0, len(a) - 1\n    comparisons = 0\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        comparisons += 1\n        if a[mid] == target:\n            return mid, comparisons\n        elif a[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1, comparisons\n\na = list(range(0, 200, 2))          # even numbers 0..198, sorted\nfor target in (0, 76, 198, 77):\n    idx, used = binary_search(a, target)\n    where = f\"index {idx}\" if idx >= 0 else \"not found\"\n    print(f\"search {target:3d}: {where:>11s}  ({used} comparisons, list of {len(a)})\")"
+    },
+    {
+      "id": "c-ex201-md02",
+      "kind": "md",
+      "source": "## Measuring the curve\n\nFor each size n we run 200 random successful searches and average the comparison counts — then plot against `log2(n) + 1` and against linear scan's expected `n / 2`. The log-log plot makes the difference brutal: one curve is basically flat."
+    },
+    {
+      "id": "c-ex201-py02",
+      "kind": "py",
+      "source": "import math\nimport random\nimport matplotlib.pyplot as plt\n\nrandom.seed(11)\nsizes = [2**k for k in range(4, 17)]        # 16 .. 65536\nmeasured = []\nfor n in sizes:\n    a = list(range(n))\n    total = 0\n    for _ in range(200):\n        target = random.randrange(n)\n        _, used = binary_search(a, target)\n        total += used\n    measured.append(total / 200)\n\nfor n, m in zip(sizes, measured):\n    print(f\"n={n:6d}  avg comparisons={m:6.2f}   log2(n)+1={math.log2(n)+1:6.2f}\")\n\nfig, ax = plt.subplots(figsize=(8, 4.5))\nax.plot(sizes, measured, \"o-\", label=\"binary search (measured)\")\nax.plot(sizes, [math.log2(n) + 1 for n in sizes], \"--\", label=\"log2(n) + 1\")\nax.plot(sizes, [n / 2 for n in sizes], \":\", label=\"linear scan n/2\")\nax.set_xscale(\"log\", base=2)\nax.set_yscale(\"log\")\nax.set_xlabel(\"list size n\")\nax.set_ylabel(\"avg comparisons\")\nax.set_title(\"Binary search vs linear scan\")\nax.legend()\nax.grid(True, alpha=0.3)\nfig.tight_layout()"
+    },
+    {
+      "id": "c-ex201-md03",
+      "kind": "md",
+      "source": "## Binary search *the answer*\n\nThe deeper trick: you don't need an array, just a **monotonic yes/no question**. Classic example — ship packages within D days, minimizing daily capacity. \"Can we do it with capacity c?\" flips from no to yes exactly once as c grows, so we can binary search c itself."
+    },
+    {
+      "id": "c-ex201-py03",
+      "kind": "py",
+      "source": "weights = [21, 10, 15, 34, 8, 12, 27, 9, 18, 30, 5, 24]\ndays = 5\n\ndef days_needed(capacity):\n    \"\"\"Greedy: fill each day up to capacity, in order.\"\"\"\n    d, load = 1, 0\n    for w in weights:\n        if load + w > capacity:\n            d += 1\n            load = 0\n        load += w\n    return d\n\nlo, hi = max(weights), sum(weights)   # capacity must fit the largest item\nprint(f\"searching capacity in [{lo}, {hi}]\")\n\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    need = days_needed(mid)\n    verdict = \"enough\" if need <= days else \"too small\"\n    print(f\"  capacity {mid:3d} -> {need} days ({verdict})\")\n    if need <= days:\n        hi = mid\n    else:\n        lo = mid + 1\n\nprint(f\"\\nminimum capacity to ship in {days} days: {lo}\")\nprint(f\"check: {days_needed(lo)} days at {lo}, {days_needed(lo - 1)} days at {lo - 1}\")\nnb[\"min_capacity\"] = lo"
+    },
+    {
+      "id": "c-ex201-md04",
+      "kind": "md",
+      "source": "## Try this\n\n- Search for an **absent** value in the first cell and check the comparison count still stays ≤ log2(n) + 1.\n- In the capacity problem, change `days` to 3 and to 12 — watch the search interval and the answer move.\n- Break the greedy question's monotonicity on purpose (e.g. return `d % 3`) and see why binary search silently produces nonsense: the yes/no answers must be sorted too.\n- Classic variant: find the **first** element ≥ x (lower bound). Adapt `binary_search` to return it."
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

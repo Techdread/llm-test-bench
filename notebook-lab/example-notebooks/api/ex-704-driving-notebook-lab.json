@@ -1,0 +1,32 @@
+{
+  "title": "Driving Notebook Lab from Outside",
+  "cells": [
+    {
+      "id": "c-ex704-md01",
+      "kind": "md",
+      "source": "# Driving Notebook Lab from Outside\n\nThis app doesn't just *call* APIs — it **is** one. Two doors in:\n\n1. **`window.NotebookLabAPI`** — a browser-side object available while the app is open. Anything running on the page (a JS cell, the console, another same-origin tab via `postMessage`) can load, run and save notebooks programmatically.\n2. **The file inbox** — drop a JSON command file into `<data-root>/notebook-lab/api/inbox/` and Notebook Lab (while open, with a data root connected) picks it up, executes it, and writes results to `api/outbox/` (or `api/failed/`). This is how *native* programs — cron jobs, build scripts, other apps — drive the notebook without touching a browser API.\n\nThe cells below demo door 1 read-only, then build a valid command file for door 2."
+    },
+    {
+      "id": "c-ex704-js01",
+      "kind": "js",
+      "source": "// Door 1: the in-page API. A JS cell runs on the app page, so it can\n// introspect the very notebook it lives in. (Read-only here on purpose -\n// runAndSave would replace the notebook you are reading.)\nconst api = window.NotebookLabAPI;\nif (!api) return 'NotebookLabAPI not found - is the app fully loaded?';\n\nconst current = await api.getCurrentNotebook();\n\nconst kinds = {};\nfor (const cell of current.cells) kinds[cell.kind] = (kinds[cell.kind] || 0) + 1;\n\nconsole.log('this notebook, as seen through its own API:');\nconsole.log('  title:', current.title);\nconsole.log('  cells:', current.cells.length, JSON.stringify(kinds));\n\nreturn {\n  title: current.title,\n  cellCount: current.cells.length,\n  cellKinds: kinds,\n  apiVersion: api.version,\n};"
+    },
+    {
+      "id": "c-ex704-md02",
+      "kind": "md",
+      "source": "## Door 2: the command file\n\nA command file is plain JSON: which notebook to build, how to run it, whether to save. The full protocol lives in `services/apiProtocol.js`; a valid example:\n\n```json\n{\n  \"version\": \"notebook-lab-api-v1\",\n  \"requestId\": \"nightly-report-001\",\n  \"action\": \"runAndSave\",\n  \"notebook\": {\n    \"title\": \"Nightly Report\",\n    \"cells\": [\n      { \"kind\": \"md\", \"source\": \"# Nightly Report\" },\n      { \"kind\": \"js\", \"source\": \"nb.set('built_at', new Date().toISOString());\" },\n      { \"kind\": \"py\", \"source\": \"print('python ran too:', nb.get('built_at'))\" }\n    ]\n  },\n  \"run\": { \"mode\": \"all\", \"stopOnError\": false },\n  \"save\": { \"persistNotebook\": true, \"writeResultManifest\": true }\n}\n```\n\nDrop that into `<data-root>/notebook-lab/api/inbox/report.json` while the app is open and watch the toast messages: the notebook is created, every cell runs, the result manifest lands in `api/outbox/report.json`, and the notebook itself is saved under `notebook-lab/notebooks/`.\n\nFrom a shell, that's just:\n\n```bash\ncp report.json \"<data-root>/notebook-lab/api/inbox/\"\n# ...wait for the app to poll...\ncat \"<data-root>/notebook-lab/api/outbox/report.json\"\n```"
+    },
+    {
+      "id": "c-ex704-js02",
+      "kind": "js",
+      "source": "// Build (and sanity-check) a command object for the file inbox.\n// This cell only CONSTRUCTS it - copy the printed JSON into a file in\n// api/inbox/ to actually execute it.\nconst command = {\n  version: 'notebook-lab-api-v1',\n  requestId: 'demo-' + Date.now().toString(36),\n  action: 'runAndSave',\n  notebook: {\n    title: 'API-Built Notebook',\n    cells: [\n      { kind: 'md', source: '# Built by a command file\\n\\nEvery cell below ran headlessly.' },\n      { kind: 'js', source: \"nb.set('answer', 6 * 7); console.log('js says', nb.get('answer'));\" },\n      { kind: 'py', source: \"print('python says', nb.get('answer'))\" },\n    ],\n  },\n  run: { mode: 'all', stopOnError: false },\n  save: { persistNotebook: true, writeResultManifest: true },\n};\n\n// Light validation mirroring apiProtocol.js expectations.\nconst problems = [];\nif (!command.notebook.cells.length) problems.push('notebook has no cells');\nif (!['loadNotebook', 'runNotebook', 'saveNotebook', 'runAndSave'].includes(command.action))\n  problems.push('unknown action');\nconsole.log(problems.length ? 'INVALID: ' + problems.join('; ') : 'command looks valid');\nconsole.log(JSON.stringify(command, null, 2));\n\nreturn 'Copy the JSON above into <data-root>/notebook-lab/api/inbox/demo.json to run it.';"
+    },
+    {
+      "id": "c-ex704-md03",
+      "kind": "md",
+      "source": "## Why this matters\n\nAn app you can drive with files composes with *everything*: cron, Makefiles, other notebooks, an LLM agent writing JSON. The pattern to steal — a versioned command schema, an inbox/outbox/failed folder triple, and result manifests — is decades old (mail spools, print queues) because it works.\n\n## Try this\n\n- Actually run the printed command through the inbox and inspect `api/outbox/` — the manifest lists per-cell status and outputs.\n- Change `action` to `runNotebook` — same run, nothing saved to disk.\n- Make a command whose Python cell throws, set `\"stopOnError\": true`, and check how the manifest reports the failure.\n- From the browser devtools console (the app page, not this cell), call `await NotebookLabAPI.getCurrentNotebook()` — same door 1, no notebook needed."
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

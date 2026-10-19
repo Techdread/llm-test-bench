@@ -1,0 +1,43 @@
+{
+  "id": "tutorial-02-sharing-data-between-cells",
+  "title": "02 Sharing Data Between Cells",
+  "cells": [
+    {
+      "id": "c-ff9b01b8",
+      "kind": "md",
+      "source": "# 02 Sharing Data Between Cells\n\nThis notebook shows how Notebook Lab shares values through the `nb` object.\n\nRule of thumb: values should be JSON-serialisable, like numbers, strings, arrays, and plain objects."
+    },
+    {
+      "id": "c-2d205e9f",
+      "kind": "js",
+      "source": "const sales = [12, 18, 9, 22, 15];\nnb.set('sales', sales);\nnb.set('sales_summary', {\n  count: sales.length,\n  total: sales.reduce((a, b) => a + b, 0),\n  average: sales.reduce((a, b) => a + b, 0) / sales.length\n});\nconsole.log('Saved sales and sales_summary from JS');"
+    },
+    {
+      "id": "c-716ce9bf",
+      "kind": "py",
+      "source": "sales = nb['sales']\nsummary = nb['sales_summary']\npeak = max(sales)\nnb['sales_peak'] = peak\nprint(f\"Python read {len(sales)} values from JS\")\nprint(f\"Average was {summary['average']:.2f}\")\n{'peak': peak, 'delta_from_average': round(peak - summary['average'], 2)}"
+    },
+    {
+      "id": "c-7f27e124",
+      "kind": "js",
+      "source": "const peak = nb.get('sales_peak');\nconst summary = nb.get('sales_summary');\nconst rows = nb.get('sales').map((value, index) => ({ day: index + 1, value }));\nreturn {\n  title: 'Round-trip data flow',\n  peak,\n  average: Number(summary.average.toFixed(2)),\n  rows\n};"
+    },
+    {
+      "id": "c-6b45ddd8",
+      "kind": "md",
+      "source": "## What happened\n\n1. A **JS** cell wrote `sales` and `sales_summary`\n2. A **Python** cell read them, calculated `sales_peak`, then wrote it back\n3. A final **JS** cell read the Python result and built a combined view\n\nThis is the bridge that makes Notebook Lab unusually powerful."
+    },
+    {
+      "id": "c-7054d8d8",
+      "kind": "chart",
+      "source": "{\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v5.json\",\n  \"description\": \"Sales values shared across cells\",\n  \"data\": {\n    \"values\": [\n      {\n        \"day\": \"Day 1\",\n        \"sales\": 12\n      },\n      {\n        \"day\": \"Day 2\",\n        \"sales\": 18\n      },\n      {\n        \"day\": \"Day 3\",\n        \"sales\": 9\n      },\n      {\n        \"day\": \"Day 4\",\n        \"sales\": 22\n      },\n      {\n        \"day\": \"Day 5\",\n        \"sales\": 15\n      }\n    ]\n  },\n  \"mark\": {\n    \"type\": \"line\",\n    \"point\": true\n  },\n  \"encoding\": {\n    \"x\": {\n      \"field\": \"day\",\n      \"type\": \"ordinal\"\n    },\n    \"y\": {\n      \"field\": \"sales\",\n      \"type\": \"quantitative\"\n    }\n  }\n}"
+    },
+    {
+      "id": "c-8a4903d1",
+      "kind": "md",
+      "source": "## Try this next\n\n- Change the `sales` array in the first JS cell\n- Re-run the notebook from the top\n- Watch how Python and the later JS cell both update\n- Inspect the Variables panel to see the shared state evolve"
+    }
+  ],
+  "createdAt": "2026-04-18T19:35:37.853724Z",
+  "updatedAt": "2026-04-18T19:35:37.853724Z"
+}

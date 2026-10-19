@@ -7,7 +7,7 @@
     "suggestedPreviewHost": "neuroviz.uk",
     "repositoryUrl": "https://github.com/Techdread/llm-test-bench"
   },
-  "generatedAt": "2026-10-17T11:50:54.358Z",
+  "generatedAt": "2026-10-19T19:51:53.246Z",
   "apps": [
     {
       "source": "prompt-gallery",
@@ -45,6 +45,11 @@
       "title": "Understory Studio"
     },
     {
+      "source": "notebook-lab",
+      "publicPath": "notebook-lab",
+      "title": "Notebook Lab"
+    },
+    {
       "source": "algorithm-visualizer",
       "publicPath": "algorithm-visualizer",
       "title": "Algorithm Visualizer"
@@ -65,7 +70,7 @@
       "title": "AST Explorer & Refactor Lab"
     }
   ],
-  "sharedModuleCount": 110,
+  "sharedModuleCount": 122,
   "hostedLimitations": [
     "Local CLI agents require the private/local serve.py bridge and are not part of this static distribution.",
     "Cross-app handoffs run only to apps published in this build (e.g. Prompt Gallery → Code Morph Lab); Bugfix handoffs are disabled.",

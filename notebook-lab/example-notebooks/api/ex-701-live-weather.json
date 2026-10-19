@@ -1,0 +1,32 @@
+{
+  "title": "Live Weather Dashboard",
+  "cells": [
+    {
+      "id": "c-ex701-md01",
+      "kind": "md",
+      "source": "# Live Weather Dashboard\n\n**Needs internet.** [Open-Meteo](https://open-meteo.com) is a free forecast API — no key, no signup, CORS open — which makes it perfect for notebooks. The pipeline:\n\n1. **JS** fetches 48 h of hourly temperatures for three cities.\n2. **Python** computes per-city statistics from the shared `nb` state.\n3. **JS** returns a Vega-Lite spec comparing all three.\n\nIf the fetch fails (offline, API down), the first cell falls back to a small bundled sample so the rest of the notebook still works."
+    },
+    {
+      "id": "c-ex701-js01",
+      "kind": "js",
+      "source": "const cities = [\n  { name: 'London', lat: 51.51, lon: -0.13 },\n  { name: 'Tokyo', lat: 35.68, lon: 139.69 },\n  { name: 'Sydney', lat: -33.87, lon: 151.21 },\n];\n\n// Tiny bundled fallback so the notebook works offline too.\nconst FALLBACK = cities.map((c, ci) => ({\n  name: c.name,\n  time: Array.from({ length: 48 }, (_, h) => '2026-01-01T' + String(h % 24).padStart(2, '0') + ':00'),\n  temps: Array.from({ length: 48 }, (_, h) =>\n    +(12 + ci * 6 + 7 * Math.sin((h - 14) / 24 * 2 * Math.PI)).toFixed(1)),\n}));\n\nlet weather = [];\nlet live = true;\ntry {\n  for (const c of cities) {\n    const url = 'https://api.open-meteo.com/v1/forecast' +\n      '?latitude=' + c.lat + '&longitude=' + c.lon +\n      '&hourly=temperature_2m&forecast_days=2&timezone=UTC';\n    const res = await fetch(url);\n    if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + c.name);\n    const data = await res.json();\n    weather.push({\n      name: c.name,\n      time: data.hourly.time,\n      temps: data.hourly.temperature_2m,\n    });\n    console.log(c.name + ': ' + data.hourly.time.length + ' hourly readings');\n  }\n} catch (err) {\n  console.warn('live fetch failed (' + err.message + ') - using bundled sample data');\n  weather = FALLBACK;\n  live = false;\n}\n\nnb.set('weather', weather);\nnb.set('weather_live', live);\nconsole.log(live ? 'live data published as weather' : 'sample data published as weather');"
+    },
+    {
+      "id": "c-ex701-py01",
+      "kind": "py",
+      "source": "# Python reads what JS fetched - the nb bridge is language-neutral.\nweather = nb.get(\"weather\")\nif weather is None:\n    raise SystemExit(\"run the JS fetch cell first\")\n\nstats = []\nfor city in weather:\n    temps = city[\"temps\"]\n    mean = sum(temps) / len(temps)\n    # hour of day (0-23) when the max occurs\n    hottest_index = max(range(len(temps)), key=lambda i: temps[i])\n    stats.append({\n        \"name\": city[\"name\"],\n        \"min\": round(min(temps), 1),\n        \"max\": round(max(temps), 1),\n        \"mean\": round(mean, 1),\n        \"swing\": round(max(temps) - min(temps), 1),\n        \"hottest_hour_utc\": int(city[\"time\"][hottest_index][11:13]),\n    })\n\nlive = \"live\" if nb.get(\"weather_live\") else \"sample\"\nprint(f\"({live} data, next 48 h, UTC)\")\nprint(f\"{'city':<8} {'min':>6} {'max':>6} {'mean':>6} {'swing':>6}  hottest at\")\nfor s in stats:\n    print(f\"{s['name']:<8} {s['min']:>6} {s['max']:>6} {s['mean']:>6} {s['swing']:>6}  {s['hottest_hour_utc']:02d}:00 UTC\")\n\nnb[\"weather_stats\"] = stats"
+    },
+    {
+      "id": "c-ex701-js02",
+      "kind": "js",
+      "source": "// One chart, three cities: long-format rows + a colour encoding.\nconst weather = nb.get('weather');\nif (!weather) return 'Run the fetch cell first.';\n\nconst rows = [];\nfor (const city of weather) {\n  city.temps.forEach((t, i) => {\n    rows.push({ time: city.time[i], temp: t, city: city.name });\n  });\n}\n\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  width: 'container',\n  height: 320,\n  title: 'Hourly temperature, next 48 h (' + (nb.get('weather_live') ? 'live Open-Meteo data' : 'bundled sample') + ')',\n  data: { values: rows },\n  mark: { type: 'line', interpolate: 'monotone' },\n  encoding: {\n    x: { field: 'time', type: 'temporal', title: 'UTC time' },\n    y: { field: 'temp', type: 'quantitative', title: 'temperature C', scale: { zero: false } },\n    color: { field: 'city', type: 'nominal' },\n  },\n};"
+    },
+    {
+      "id": "c-ex701-md02",
+      "kind": "md",
+      "source": "## Notes on notebook + API etiquette\n\n- JS cells run with the page's normal `fetch`, so any API that allows browser CORS works exactly like this — no proxy needed.\n- The fallback pattern (try live, else bundled sample) keeps a notebook **re-runnable forever**, long after an API changes or you're offline.\n- Timezones: everything is requested in UTC and labelled as such — mixing local times across three continents is the classic dashboard bug.\n\n## Try this\n\n- Add your own city (any lat/lon) and re-run all three cells.\n- Request `&hourly=temperature_2m,windspeed_10m` and chart wind speed on a second axis (or a second chart).\n- In the Python cell, compute which city has the *steadiest* climate (smallest swing) and publish a verdict string for an HTML cell to display.\n- Open-Meteo also serves history: swap the endpoint for `archive-api.open-meteo.com/v1/archive` with `start_date`/`end_date` to compare this week against last year."
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

@@ -1,0 +1,27 @@
+{
+  "title": "Linked Lists in C",
+  "cells": [
+    {
+      "id": "c-ex104-md01",
+      "kind": "md",
+      "source": "# Linked Lists in C\n\nThe classic pointer workout — but instead of `malloc` we use a **node pool**: two parallel arrays, `val[]` and `nxt[]`, where a \"pointer\" is just an index and `-1` plays the role of `NULL`. This is exactly how linked lists are built in arenas, kernels and embedded code, and it runs happily in the in-browser C interpreter (JSCPP).\n\nThe C cell finishes by publishing the final list through a `__NB_SET__` stdout marker so the JS cell below can draw it."
+    },
+    {
+      "id": "c-ex104-c01",
+      "kind": "c",
+      "source": "#include <stdio.h>\n\nint val[32];\nint nxt[32];\nint used = 0;\nint head = -1;\n\nint alloc_node(int v) {\n    val[used] = v;\n    nxt[used] = -1;\n    return used++;\n}\n\nvoid push_back(int v) {\n    int n = alloc_node(v);\n    if (head == -1) { head = n; return; }\n    int cur = head;\n    while (nxt[cur] != -1) cur = nxt[cur];\n    nxt[cur] = n;\n}\n\nvoid insert_after(int target, int v) {\n    int cur = head;\n    while (cur != -1 && val[cur] != target) cur = nxt[cur];\n    if (cur == -1) return;\n    int n = alloc_node(v);\n    nxt[n] = nxt[cur];   /* new node adopts the tail... */\n    nxt[cur] = n;        /* ...then the target adopts the new node */\n}\n\nvoid remove_value(int v) {\n    if (head == -1) return;\n    if (val[head] == v) { head = nxt[head]; return; }\n    int cur = head;\n    while (nxt[cur] != -1 && val[nxt[cur]] != v) cur = nxt[cur];\n    if (nxt[cur] != -1) nxt[cur] = nxt[nxt[cur]];\n}\n\nvoid reverse_list() {\n    int prev = -1;\n    int cur = head;\n    while (cur != -1) {\n        int next = nxt[cur];   /* remember where we were going */\n        nxt[cur] = prev;       /* flip the arrow */\n        prev = cur;\n        cur = next;\n    }\n    head = prev;\n}\n\nvoid print_list() {\n    int cur = head;\n    while (cur != -1) {\n        printf(\"%d \", val[cur]);\n        cur = nxt[cur];\n    }\n    printf(\"\\n\");\n}\n\nvoid emit_list() {\n    printf(\"__NB_SET__ {\\\"key\\\":\\\"clist\\\",\\\"value\\\":[\");\n    int cur = head;\n    while (cur != -1) {\n        printf(\"%d\", val[cur]);\n        if (nxt[cur] != -1) printf(\",\");\n        cur = nxt[cur];\n    }\n    printf(\"]}\\n\");\n}\n\nint main() {\n    push_back(10); push_back(20); push_back(30); push_back(40);\n    printf(\"initial:        \"); print_list();\n\n    insert_after(20, 25);\n    printf(\"insert 25:      \"); print_list();\n\n    remove_value(30);\n    printf(\"remove 30:      \"); print_list();\n\n    reverse_list();\n    printf(\"reversed:       \"); print_list();\n\n    emit_list();\n    return 0;\n}"
+    },
+    {
+      "id": "c-ex104-js01",
+      "kind": "js",
+      "source": "// Draw the final list the C program published.\nconst list = nb.get('clist');\nif (!list) return 'Run the C cell first.';\n\nconsole.log('list from C:', list.join(' -> '));\n\nconst box = (v) =>\n  '<span style=\"display:inline-block;padding:8px 14px;border:2px solid #7c3aed;' +\n  'border-radius:8px;font:14px monospace;margin:2px\">' + v + '</span>';\nconst arrow = '<span style=\"font:16px monospace;color:#94a3b8\"> \\u2192 </span>';\n\nreturn '<div style=\"padding:8px 0\">' +\n  list.map(box).join(arrow) + arrow +\n  '<span style=\"font:14px monospace;color:#94a3b8\">NULL</span></div>';"
+    },
+    {
+      "id": "c-ex104-md02",
+      "kind": "md",
+      "source": "## The three-step reverse\n\n`reverse_list` is the interview classic. Per node it does exactly three things: remember `next`, flip the arrow to `prev`, and step forward. No extra memory, one pass, and if you get the order of those steps wrong you lose the rest of the list — try swapping two lines and watch the printout shrink.\n\n## Try this\n\n- Add a `push_front(int v)` — it is *shorter* than `push_back`. Why?\n- Write `length()` and `contains(int v)` loops.\n- Make `remove_value` remove **all** occurrences instead of the first one, then push a duplicate and test it.\n- The pool has 32 slots and freed nodes are never reused. Add a free-list: a `free_head` chain that `alloc_node` checks first — you have then written a tiny allocator."
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

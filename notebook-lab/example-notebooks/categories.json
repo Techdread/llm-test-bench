@@ -1,0 +1,50 @@
+[
+  {
+    "id": "data-structures",
+    "label": "Data Structures",
+    "icon": "fa-sitemap",
+    "order": 10
+  },
+  {
+    "id": "search",
+    "label": "Search",
+    "icon": "fa-magnifying-glass",
+    "order": 20
+  },
+  {
+    "id": "oop",
+    "label": "Object-Oriented & Paradigms",
+    "icon": "fa-cubes",
+    "order": 30
+  },
+  {
+    "id": "simulations",
+    "label": "Simulations",
+    "icon": "fa-atom",
+    "order": 40
+  },
+  {
+    "id": "games",
+    "label": "Games",
+    "icon": "fa-gamepad",
+    "order": 50
+  },
+  {
+    "id": "3d-visualisation",
+    "label": "3D Visualisation",
+    "icon": "fa-cube",
+    "order": 60
+  },
+  {
+    "id": "api",
+    "label": "APIs",
+    "icon": "fa-plug",
+    "order": 70
+  },
+  {
+    "id": "controls",
+    "label": "Interactive Controls",
+    "icon": "fa-sliders",
+    "order": 80
+  }
+]

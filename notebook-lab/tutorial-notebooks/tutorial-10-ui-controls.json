@@ -1,0 +1,45 @@
+{
+  "title": "10 UI Controls",
+  "state": {
+    "demo_name": "Ada",
+    "demo_notes": "Try changing these controls, then run the cells below.",
+    "demo_count": 12,
+    "demo_enabled": true,
+    "demo_mode": "balanced",
+    "demo_priority": "medium",
+    "demo_volume": 65,
+    "demo_color": "#7c3aed",
+    "demo_due": "2026-04-24",
+    "demo_button_clicked": false,
+    "demo_button_message": "Button has not been pressed yet."
+  },
+  "cells": [
+    {
+      "id": "c-t10-md01",
+      "kind": "md",
+      "source": "# 10 UI Controls\n\nUI cells turn a notebook into a small tool. Controls bind to shared `nb` variables, so JavaScript and Python cells can read whatever the user enters.\n\nChange the controls below, then run the following cells to see the current values."
+    },
+    {
+      "id": "c-t10-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"All UI Controls\",\n  \"description\": \"Every input below is bound to a notebook variable and saved in notebook.state.\",\n  \"controls\": [\n    {\n      \"type\": \"label\",\n      \"label\": \"Read-only label\",\n      \"text\": \"Labels add instructions or section text inside a UI cell.\"\n    },\n    {\n      \"type\": \"text\",\n      \"label\": \"Text input\",\n      \"bind\": \"demo_name\",\n      \"default\": \"Ada\",\n      \"placeholder\": \"Type a name\"\n    },\n    {\n      \"type\": \"textarea\",\n      \"label\": \"Textarea\",\n      \"bind\": \"demo_notes\",\n      \"default\": \"Try changing these controls, then run the cells below.\",\n      \"rows\": 4\n    },\n    {\n      \"type\": \"number\",\n      \"label\": \"Number input\",\n      \"bind\": \"demo_count\",\n      \"default\": 12,\n      \"min\": 0,\n      \"max\": 100,\n      \"step\": 1\n    },\n    {\n      \"type\": \"checkbox\",\n      \"label\": \"Checkbox toggle\",\n      \"bind\": \"demo_enabled\",\n      \"default\": true\n    },\n    {\n      \"type\": \"select\",\n      \"label\": \"Dropdown select\",\n      \"bind\": \"demo_mode\",\n      \"default\": \"balanced\",\n      \"options\": [\n        {\n          \"label\": \"Fast\",\n          \"value\": \"fast\"\n        },\n        {\n          \"label\": \"Balanced\",\n          \"value\": \"balanced\"\n        },\n        {\n          \"label\": \"Careful\",\n          \"value\": \"careful\"\n        }\n      ]\n    },\n    {\n      \"type\": \"radio\",\n      \"label\": \"Radio options\",\n      \"bind\": \"demo_priority\",\n      \"default\": \"medium\",\n      \"options\": [\n        \"low\",\n        \"medium\",\n        \"high\"\n      ]\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Slider\",\n      \"bind\": \"demo_volume\",\n      \"default\": 65,\n      \"min\": 0,\n      \"max\": 100,\n      \"step\": 5\n    },\n    {\n      \"type\": \"color\",\n      \"label\": \"Color picker\",\n      \"bind\": \"demo_color\",\n      \"default\": \"#7c3aed\"\n    },\n    {\n      \"type\": \"date\",\n      \"label\": \"Date input\",\n      \"bind\": \"demo_due\",\n      \"default\": \"2026-04-24\"\n    },\n    {\n      \"type\": \"button\",\n      \"label\": \"Press action button\",\n      \"icon\": \"fa-bolt\",\n      \"set\": {\n        \"demo_button_clicked\": true,\n        \"demo_button_message\": \"The UI button updated notebook state.\"\n      }\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-t10-js01",
+      "kind": "js",
+      "source": "const values = {\n  name: nb.get('demo_name'),\n  notes: nb.get('demo_notes'),\n  count: nb.get('demo_count'),\n  enabled: nb.get('demo_enabled'),\n  mode: nb.get('demo_mode'),\n  priority: nb.get('demo_priority'),\n  volume: nb.get('demo_volume'),\n  color: nb.get('demo_color'),\n  due: nb.get('demo_due'),\n  buttonClicked: nb.get('demo_button_clicked'),\n  buttonMessage: nb.get('demo_button_message'),\n};\n\nconsole.log(JSON.stringify(values, null, 2));\n\nreturn `\n  <div style=\"font-family:system-ui;padding:14px;border-radius:10px;background:${values.color};color:white;\">\n    <h3 style=\"margin:0 0 8px\">${values.name}'s control summary</h3>\n    <p style=\"margin:0 0 8px\">Mode: <strong>${values.mode}</strong> / Priority: <strong>${values.priority}</strong> / Volume: <strong>${values.volume}</strong></p>\n    <p style=\"margin:0 0 8px\">Count: <strong>${values.count}</strong> / Enabled: <strong>${values.enabled ? 'yes' : 'no'}</strong> / Due: <strong>${values.due}</strong></p>\n    <p style=\"margin:0\">${values.buttonMessage}</p>\n  </div>\n`;"
+    },
+    {
+      "id": "c-t10-py01",
+      "kind": "py",
+      "source": "name = nb.get('demo_name', 'unknown')\ncount = nb.get('demo_count', 0)\nvolume = nb.get('demo_volume', 0)\nmode = nb.get('demo_mode', 'unset')\npriority = nb.get('demo_priority', 'unset')\n\nscore = int(count) * int(volume) / 100\nprint(f\"Name: {name}\")\nprint(f\"Mode: {mode}; priority: {priority}\")\nprint(f\"Derived score: {score:.1f}\")\n\nnb['demo_score'] = round(score, 1)"
+    },
+    {
+      "id": "c-t10-md02",
+      "kind": "md",
+      "source": "## What to try\n\n- Move the slider and watch the Variables panel update immediately.\n- Run the JavaScript cell to render a styled summary using the selected color.\n- Press the action button, then run the JavaScript cell again.\n- Run the Python cell to compute `demo_score` from UI-bound values.\n- Save the notebook, reopen it, and confirm the latest control values are restored from `notebook.state`."
+    }
+  ],
+  "createdAt": "2026-04-24T00:00:00.000Z",
+  "updatedAt": "2026-04-24T00:00:00.000Z"
+}

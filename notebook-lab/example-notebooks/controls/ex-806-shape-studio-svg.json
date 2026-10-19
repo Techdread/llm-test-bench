@@ -1,0 +1,39 @@
+{
+  "title": "Shape Studio (live SVG)",
+  "cells": [
+    {
+      "id": "c-ex806-md01",
+      "kind": "md",
+      "source": "# Shape Studio (live SVG)\n\n**Kinds on show:** `ui` → `html`.\n\n**The one idea:** *`nb.onChange` turns a bag of values into a live drawing.* The HTML cell below registers a callback with `nb.onChange(render)`. Every time a control writes a new value — a slider drag, a colour pick — the bridge posts the change into the iframe and `render` runs, rebuilding the SVG `<polygon>` from the current values.\n\nYou don't wire each control to the drawing individually. The HTML cell just reads whatever it needs from `nb.all()` and redraws; the controls don't know the SVG exists. That decoupling is the whole point of the bridge.\n\n> Under the hood, a single-slider change now arrives as a lightweight *patch* message (one key), not a full re-clone of state — so dragging stays smooth even in a big notebook."
+    },
+    {
+      "id": "c-ex806-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Shape Studio\",\n  \"description\": \"These controls drive the SVG below through nb.onChange — drag a slider and the polygon redraws live. The canonical “controls drive a picture” demo.\",\n  \"width\": 900,\n  \"height\": 300,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"Sides\",\n      \"bind\": \"sides\",\n      \"default\": 5,\n      \"min\": 3,\n      \"max\": 12,\n      \"step\": 1,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Radius\",\n      \"bind\": \"radius\",\n      \"default\": 100,\n      \"min\": 20,\n      \"max\": 140,\n      \"step\": 1,\n      \"suffix\": \" px\",\n      \"x\": 300,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Rotation\",\n      \"bind\": \"rotation\",\n      \"default\": 0,\n      \"min\": 0,\n      \"max\": 360,\n      \"step\": 1,\n      \"suffix\": \"°\",\n      \"x\": 600,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Stroke width\",\n      \"bind\": \"stroke_w\",\n      \"default\": 4,\n      \"min\": 0,\n      \"max\": 24,\n      \"step\": 1,\n      \"suffix\": \" px\",\n      \"x\": 0,\n      \"y\": 96,\n      \"width\": 280,\n      \"height\": 76\n    },\n    {\n      \"type\": \"color\",\n      \"label\": \"Fill\",\n      \"bind\": \"fill\",\n      \"default\": \"#7c3aed\",\n      \"x\": 300,\n      \"y\": 96,\n      \"width\": 280,\n      \"height\": 64\n    },\n    {\n      \"type\": \"color\",\n      \"label\": \"Stroke\",\n      \"bind\": \"stroke\",\n      \"default\": \"#22d3ee\",\n      \"x\": 600,\n      \"y\": 96,\n      \"width\": 280,\n      \"height\": 64\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex806-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0b1020; display: flex; align-items: center;\n         justify-content: center; height: 100vh; font-family: system-ui, sans-serif; }\n  svg { display: block; }\n  #cap { position: fixed; left: 10px; bottom: 8px; color: #64748b; font-size: 12px; }\n</style>\n<svg id=\"stage\" width=\"440\" height=\"400\" viewBox=\"0 0 440 400\">\n  <polygon id=\"poly\" />\n</svg>\n<div id=\"cap\"></div>\n<script>\n  var poly = document.getElementById('poly');\n  var cap = document.getElementById('cap');\n  var CX = 220, CY = 200;\n\n  function points(n, r, rotDeg) {\n    var pts = [];\n    var rot = rotDeg * Math.PI / 180 - Math.PI / 2; // start at top\n    for (var i = 0; i < n; i++) {\n      var a = rot + i * 2 * Math.PI / n;\n      pts.push((CX + r * Math.cos(a)).toFixed(1) + ',' + (CY + r * Math.sin(a)).toFixed(1));\n    }\n    return pts.join(' ');\n  }\n\n  function render() {\n    var n = Number(nb.get('sides', 5));\n    var r = Number(nb.get('radius', 100));\n    var rot = Number(nb.get('rotation', 0));\n    poly.setAttribute('points', points(n, r, rot));\n    poly.setAttribute('fill', nb.get('fill', '#7c3aed'));\n    poly.setAttribute('stroke', nb.get('stroke', '#22d3ee'));\n    poly.setAttribute('stroke-width', Number(nb.get('stroke_w', 4)));\n    poly.setAttribute('stroke-linejoin', 'round');\n    cap.textContent = n + '-gon · r=' + r + ' · ' + rot + '°';\n  }\n\n  nb.onChange(render);\n  render();\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 460,
+          "height": 420,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex806-js01",
+      "kind": "js",
+      "source": "// Live values — the exact numbers the SVG is reading right now.\nconst val = (k) => ({ value: nb.get(k), type: typeof nb.get(k) });\nreturn {\n  sides:    val('sides'),     // number — indexes the polygon vertex count\n  radius:   val('radius'),\n  rotation: val('rotation'),\n  stroke_w: val('stroke_w'),\n  fill:     val('fill'),       // #rrggbb string, fed straight to SVG fill\n  stroke:   val('stroke'),\n};"
+    },
+    {
+      "id": "c-ex806-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- Drag **Sides** from 3 up to 12 — the polygon regrows vertex by vertex, live, with no re-run. That's `nb.onChange` firing on every commit.\n- Set **Stroke width** to 0 — the outline vanishes and you get a flat fill. Then pick a dark **Fill** and a bright **Stroke** and bring the width back for a neon look.\n- Spin **Rotation** to 180 with 3 sides — the triangle points down. The rotation is applied in the `points()` maths, not a CSS transform, so the geometry is real.\n- **Upgrade idea:** add a `checkbox` bound to `show_verts` and, in the HTML cell, draw a small `<circle>` at each vertex when it's true. One new control, a few lines in `render` — the pattern scales."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

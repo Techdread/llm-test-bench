@@ -1,0 +1,32 @@
+{
+  "title": "Text, Numbers & Pickers",
+  "cells": [
+    {
+      "id": "c-ex801-md01",
+      "kind": "md",
+      "source": "# Text, Numbers & Pickers\n\n**Controls on show:** `text`, `textarea`, `number`, `color`, `date`.\n\n**The one idea:** every input control is *bound* to a name via its `bind` field. When you change the control, the notebook bridge (`nb`) stores the new value under that name, and every downstream cell can read it with `nb.get('name')`. No wiring, no event handlers — just a shared bag of values.\n\nTwo things worth noticing as you play below:\n\n- **Types matter.** A `number` control stores a real JavaScript `number`; a `text`/`color`/`date` control stores a `string`. The Live-values cell prints both the value **and** `typeof` so you can see it.\n- **Live vs debounced.** The text and note fields don't write on *every* keystroke — they wait ~150 ms after you stop typing (a debounce), then commit. Colour and date commit when the picker closes. This keeps big notebooks from stuttering."
+    },
+    {
+      "id": "c-ex801-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Text, numbers & pickers\",\n  \"description\": \"Type/pick a value and watch the Live-values cell report what each control wrote to nb — and its JavaScript type.\",\n  \"width\": 900,\n  \"height\": 320,\n  \"controls\": [\n    {\n      \"type\": \"text\",\n      \"label\": \"Your name\",\n      \"bind\": \"name\",\n      \"default\": \"Ada\",\n      \"placeholder\": \"type here…\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 64\n    },\n    {\n      \"type\": \"number\",\n      \"label\": \"Age (clamped 0–120)\",\n      \"bind\": \"age\",\n      \"default\": 36,\n      \"min\": 0,\n      \"max\": 120,\n      \"step\": 1,\n      \"x\": 300,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 64\n    },\n    {\n      \"type\": \"color\",\n      \"label\": \"Favourite colour\",\n      \"bind\": \"colour\",\n      \"default\": \"#7c3aed\",\n      \"x\": 600,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 64\n    },\n    {\n      \"type\": \"date\",\n      \"label\": \"A date\",\n      \"bind\": \"day\",\n      \"default\": \"1815-12-10\",\n      \"x\": 0,\n      \"y\": 84,\n      \"width\": 280,\n      \"height\": 64\n    },\n    {\n      \"type\": \"textarea\",\n      \"label\": \"A note (debounced)\",\n      \"bind\": \"note\",\n      \"default\": \"Bindings update live.\",\n      \"rows\": 3,\n      \"x\": 300,\n      \"y\": 84,\n      \"width\": 580,\n      \"height\": 120\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex801-js01",
+      "kind": "js",
+      "source": "// Live values — what each control wrote to nb, and its JavaScript type.\n// (On a fresh Run All the controls seed their defaults, so this is populated\n//  even before you touch anything.)\nconst show = (key) => {\n  const v = nb.get(key);\n  return { value: v, type: typeof v };\n};\n\nreturn {\n  name:   show('name'),\n  age:    show('age'),     // a real number, not \"36\"\n  colour: show('colour'),\n  day:    show('day'),\n  note:   show('note'),\n};"
+    },
+    {
+      "id": "c-ex801-js02",
+      "kind": "js",
+      "source": "// Gotcha: the number control CLAMPS to [min, max] and coerces to a number.\n// Try typing 999 in the Age field above — it commits as 120, not 999.\nconst age = nb.get('age');\nconsole.log('age is a', typeof age, '=', age);\nconsole.log('in range 0..120:', age >= 0 && age <= 120);\n\n// And a string that looks numeric stays a string when it comes from a text box:\nconst name = nb.get('name');\nconsole.log('name stays a string even if you type digits:', typeof name);\n\nreturn age <= 120 && typeof name === 'string'\n  ? 'clamped + typed correctly ✓'\n  : 'unexpected — did you change the control types?';"
+    },
+    {
+      "id": "c-ex801-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- Type **999** into *Age* and click away — the Live-values cell shows `120`, because the `number` control clamps to its `max`. Now delete it entirely: it falls back to `min` (0), never a blank.\n- Change *Your name* to `42` — the Live-values cell still reports `type: \"string\"`. Text boxes never guess numbers.\n- Pick a new *Favourite colour*. Note the value is a 7-char hex string like `#00b894` — perfect for feeding an HTML cell later (see **Shape Studio**).\n- Open the UI cell's editor (the pencil) and give the *note* field a `suffix`. Nothing happens — `suffix` only formats *readouts* and *sliders*, not text inputs. A good reminder that formatting is a display concern."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

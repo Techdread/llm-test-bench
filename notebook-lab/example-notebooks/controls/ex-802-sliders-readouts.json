@@ -1,0 +1,32 @@
+{
+  "title": "Sliders & Readouts",
+  "cells": [
+    {
+      "id": "c-ex802-md01",
+      "kind": "md",
+      "source": "# Sliders & Readouts\n\n**Controls on show:** `slider`, `readout` (and a couple of computed ones).\n\n**The one idea:** *formatting is display-only.* A slider stores a raw `number` in nb. `precision` (decimal places), `prefix` and `suffix` only change how that number is **shown** — in the slider's own label and in `readout` controls. The value other cells read is always the raw number.\n\nThree patterns are wired up below:\n\n1. **A slider's inline value** — every slider shows its current value, formatted, right in its label (`20 °C`).\n2. **A mirror readout** — the top-right `readout` is `bind`-ed to the *same* name as the temperature slider (`temp_c`), with a different `precision`. Drag the slider: both update, because they read the same nb value.\n3. **Computed readouts** — the °F and area readouts are bound to names that *no control writes*. The JS cell below computes them from the sliders and `nb.set`s them."
+    },
+    {
+      "id": "c-ex802-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Sliders & readouts\",\n  \"description\": \"Sliders bind numbers; readouts display them. precision, prefix and suffix format the text without changing the stored value.\",\n  \"width\": 900,\n  \"height\": 300,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"Temperature\",\n      \"bind\": \"temp_c\",\n      \"default\": 20,\n      \"min\": -40,\n      \"max\": 120,\n      \"step\": 1,\n      \"precision\": 0,\n      \"suffix\": \" °C\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 420,\n      \"height\": 76\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"Mirror (readout on temp_c)\",\n      \"bind\": \"temp_c\",\n      \"precision\": 1,\n      \"suffix\": \" °C\",\n      \"x\": 460,\n      \"y\": 0,\n      \"width\": 420,\n      \"height\": 64\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Mixing ratio\",\n      \"bind\": \"ratio\",\n      \"default\": 0.5,\n      \"min\": 0,\n      \"max\": 1,\n      \"step\": 0.01,\n      \"precision\": 2,\n      \"x\": 0,\n      \"y\": 96,\n      \"width\": 420,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Circle radius\",\n      \"bind\": \"radius\",\n      \"default\": 5,\n      \"min\": 1,\n      \"max\": 40,\n      \"step\": 1,\n      \"precision\": 0,\n      \"suffix\": \" px\",\n      \"x\": 0,\n      \"y\": 192,\n      \"width\": 420,\n      \"height\": 76\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"Temperature in °F\",\n      \"bind\": \"temp_f\",\n      \"precision\": 1,\n      \"suffix\": \" °F\",\n      \"x\": 460,\n      \"y\": 96,\n      \"width\": 420,\n      \"height\": 64\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"Circle area\",\n      \"bind\": \"area\",\n      \"precision\": 2,\n      \"prefix\": \"≈ \",\n      \"suffix\": \" px²\",\n      \"x\": 460,\n      \"y\": 192,\n      \"width\": 420,\n      \"height\": 64\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex802-js01",
+      "kind": "js",
+      "source": "// Compute derived values and publish them for the readouts to display.\n// Re-run this cell after moving the Temperature / Radius sliders to refresh\n// the computed readouts (JS cells run once; readouts don't recompute on their\n// own — that's what the HTML bridge's nb.onChange is for, shown in band 8.2).\nconst c = nb.get('temp_c');\nconst r = nb.get('radius');\n\nconst f = c * 9 / 5 + 32;\nconst area = Math.PI * r * r;\n\nnb.set('temp_f', f);\nnb.set('area', area);\n\nconsole.log(c, '°C =', f.toFixed(1), '°F');\nconsole.log('radius', r, 'px → area', area.toFixed(2), 'px²');\nreturn 'published temp_f + area — see the two computed readouts update ↑';"
+    },
+    {
+      "id": "c-ex802-js02",
+      "kind": "js",
+      "source": "// Live values — note every one is a raw number; the °C / °F / px suffixes you\n// see in the controls are formatting, not part of the stored value.\nconst val = (k) => ({ value: nb.get(k), type: typeof nb.get(k) });\nreturn {\n  temp_c: val('temp_c'),\n  ratio:  val('ratio'),   // step 0.01, shown to 2 dp — but stored full-precision\n  radius: val('radius'),\n  temp_f: val('temp_f'),  // written by the JS cell above\n  area:   val('area'),\n};"
+    },
+    {
+      "id": "c-ex802-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- Drag **Temperature** — the slider label and the *Mirror* readout both move, but the mirror shows one decimal place (`20.0 °C`) because its `precision` is 1, not 0. Same value, two formats.\n- Set **Mixing ratio** to `0.5`, then read it in the Live-values cell: the stored value is `0.5`, a number — the `.5` you see is `precision: 2` at work.\n- Move the **Circle radius** slider, then **re-run the compute cell** — the area readout jumps. Readouts are passive; they only re-format when *someone* writes a new value. (Band 8.2 makes this automatic with `nb.onChange` in an HTML cell.)\n- Edit the temperature slider's `suffix` to ` degrees` in the UI editor. The number is untouched; only the label text changes."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

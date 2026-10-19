@@ -1,0 +1,32 @@
+{
+  "title": "Hash Map from Scratch",
+  "cells": [
+    {
+      "id": "c-ex101-md01",
+      "kind": "md",
+      "source": "# Hash Map from Scratch\n\nEvery language hands you a hash map (`Map`, `dict`, `HashMap`…), but the machine underneath is simple enough to build in ~30 lines:\n\n1. **Hash** the key to a bucket index.\n2. Keep colliding entries in a small list per bucket (**chaining**).\n3. When buckets get crowded, performance degrades — the **load factor** α = entries / buckets tells you how crowded.\n\nEverything below is plain JavaScript — run the cells top to bottom."
+    },
+    {
+      "id": "c-ex101-js01",
+      "kind": "js",
+      "source": "// A chaining hash map: djb2 string hash, one array of buckets,\n// each bucket a list of [key, value] pairs.\nclass HashMap {\n  constructor(bucketCount = 16) {\n    this.buckets = Array.from({ length: bucketCount }, () => []);\n    this.size = 0;\n  }\n  bucketIndex(key) {\n    const s = String(key);\n    let h = 5381;\n    for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;\n    return h % this.buckets.length;\n  }\n  set(key, value) {\n    const bucket = this.buckets[this.bucketIndex(key)];\n    const hit = bucket.find(e => e[0] === key);\n    if (hit) hit[1] = value;\n    else { bucket.push([key, value]); this.size++; }\n    return this;\n  }\n  get(key, fallback) {\n    const hit = this.buckets[this.bucketIndex(key)].find(e => e[0] === key);\n    return hit ? hit[1] : fallback;\n  }\n  delete(key) {\n    const bucket = this.buckets[this.bucketIndex(key)];\n    const i = bucket.findIndex(e => e[0] === key);\n    if (i === -1) return false;\n    bucket.splice(i, 1);\n    this.size--;\n    return true;\n  }\n}\n\nconst prices = new HashMap(8);\nprices.set('apple', 0.4).set('banana', 0.25).set('cherry', 3.5).set('date', 2.1);\nconsole.log('banana costs', prices.get('banana'));\nconsole.log('missing key ->', prices.get('kiwi', 'not stocked'));\n\nprices.set('banana', 0.3); // update in place\nconsole.log('banana now costs', prices.get('banana'));\n\nprices.delete('date');\nconsole.log('after delete, size =', prices.size);\n\n// Peek inside: which bucket did each key land in?\nprices.buckets.forEach((b, i) => {\n  if (b.length) console.log('bucket ' + i + ':', b.map(e => e[0]).join(', '));\n});\n\nnb.set('hashmap_size', prices.size);"
+    },
+    {
+      "id": "c-ex101-md02",
+      "kind": "md",
+      "source": "## Load factor vs probe length\n\nFor a chaining table, theory says a **successful lookup** inspects about **1 + α/2** entries on average. Let's measure it: keep the bucket count fixed at 64, insert more and more keys, and record the real average and worst-case probe lengths."
+    },
+    {
+      "id": "c-ex101-js02",
+      "kind": "js",
+      "source": "// Fixed 64 buckets, insert 256 keys, sample as the load factor climbs.\nconst map = new HashMap64();\n\nfunction HashMap64() {\n  const m = Object.create(null);\n  m.buckets = Array.from({ length: 64 }, () => []);\n  m.size = 0;\n  m.set = (key) => {\n    const s = String(key);\n    let h = 5381;\n    for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;\n    m.buckets[h % 64].push([key, true]);\n    m.size++;\n  };\n  return m;\n}\n\nconst rows = [];\nfor (let i = 1; i <= 256; i++) {\n  map.set('user:' + (i * 7919)); // spread the key space a little\n  if (i % 8 === 0) {\n    const alpha = map.size / 64;\n    // probe length for entry j in a chain is j+1; average over all entries\n    let probeSum = 0, maxChain = 0;\n    for (const b of map.buckets) {\n      maxChain = Math.max(maxChain, b.length);\n      for (let j = 0; j < b.length; j++) probeSum += j + 1;\n    }\n    rows.push({ alpha, value: probeSum / map.size, series: 'measured avg probes' });\n    rows.push({ alpha, value: 1 + alpha / 2, series: 'theory 1 + a/2' });\n    rows.push({ alpha, value: maxChain, series: 'longest chain' });\n  }\n}\nconsole.log('final load factor:', map.size / 64);\n\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  width: 'container',\n  height: 300,\n  title: 'Probe length vs load factor (64 buckets, chaining)',\n  data: { values: rows },\n  mark: { type: 'line', point: true },\n  encoding: {\n    x: { field: 'alpha', type: 'quantitative', title: 'load factor a' },\n    y: { field: 'value', type: 'quantitative', title: 'probes / chain length' },\n    color: { field: 'series', type: 'nominal', title: null },\n  },\n};"
+    },
+    {
+      "id": "c-ex101-md03",
+      "kind": "md",
+      "source": "## What the chart shows\n\n- The measured average hugs the **1 + α/2** theory line — chaining degrades *gracefully* and linearly.\n- The longest chain grows much faster than the average — that's why real implementations **resize** (usually doubling buckets around α ≈ 0.75–1) instead of letting chains stretch.\n\n## Try this\n\n- Add a `resize()` method that doubles the bucket array and re-inserts everything when α > 0.75, then re-run the experiment.\n- Sabotage the hash (e.g. `return 0`) and watch every operation collapse into one bucket — the chart becomes a straight line with slope 1/2 over α.\n- Change the key pattern from `'user:' + i * 7919` to plain `'user:' + i` and see whether djb2 still spreads them evenly."
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

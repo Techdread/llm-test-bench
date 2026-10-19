@@ -1,0 +1,39 @@
+{
+  "title": "Canvas Painter",
+  "cells": [
+    {
+      "id": "c-ex807-md01",
+      "kind": "md",
+      "source": "# Canvas Painter\n\n**Kinds on show:** `ui` → `html`.\n\n**The one idea:** *controls configure; the iframe acts.* Painting needs pointer events (`pointerdown`/`pointermove`) and those must happen **inside** the HTML cell — the UI controls fire in the parent document and can't drag a brush across a canvas. So the division of labour is:\n\n- The **controls** own the *settings*: brush colour, size, shape. The canvas reads them from `nb` at the moment it paints, so changing the brush mid-stroke just works.\n- The **HTML cell** owns the *gesture*: it listens for pointer events and draws.\n\nThe **Clear** button shows the timestamp trick from ex-804: it has no `value`, so each press writes a fresh `Date.now()` to `clear_at`. The canvas watches that name in `nb.onChange` and wipes itself whenever the number changes — even if you clear twice in a row."
+    },
+    {
+      "id": "c-ex807-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Canvas Painter\",\n  \"description\": \"The controls set the brush; the painting happens on the pointer, inside the HTML cell. A button clears via a timestamp write.\",\n  \"width\": 900,\n  \"height\": 200,\n  \"controls\": [\n    {\n      \"type\": \"color\",\n      \"label\": \"Brush colour\",\n      \"bind\": \"brush_color\",\n      \"default\": \"#ef4444\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 260,\n      \"height\": 64\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Brush size\",\n      \"bind\": \"brush_size\",\n      \"default\": 14,\n      \"min\": 1,\n      \"max\": 60,\n      \"step\": 1,\n      \"suffix\": \" px\",\n      \"x\": 280,\n      \"y\": 0,\n      \"width\": 300,\n      \"height\": 76\n    },\n    {\n      \"type\": \"select\",\n      \"label\": \"Brush shape\",\n      \"bind\": \"brush_shape\",\n      \"options\": [\n        {\n          \"value\": \"round\",\n          \"label\": \"Round\"\n        },\n        {\n          \"value\": \"square\",\n          \"label\": \"Square\"\n        }\n      ],\n      \"default\": \"round\",\n      \"x\": 600,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 64\n    },\n    {\n      \"type\": \"button\",\n      \"label\": \"Clear canvas\",\n      \"bind\": \"clear_at\",\n      \"icon\": \"fa-trash\",\n      \"default\": 0,\n      \"x\": 0,\n      \"y\": 84,\n      \"width\": 260,\n      \"height\": 48\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex807-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0f172a; font-family: system-ui, sans-serif; }\n  #wrap { padding: 10px; }\n  canvas { background: #f8fafc; border-radius: 10px; touch-action: none; cursor: crosshair; }\n  #hint { color: #94a3b8; font-size: 12px; padding: 6px 2px; }\n</style>\n<div id=\"wrap\">\n  <canvas id=\"pad\" width=\"600\" height=\"340\"></canvas>\n  <div id=\"hint\">Drag on the canvas to paint. Adjust the brush with the controls above; press Clear to wipe.</div>\n</div>\n<script>\n  var cv = document.getElementById('pad');\n  var ctx = cv.getContext('2d');\n  var drawing = false, lastX = 0, lastY = 0;\n  var lastClear = Number(nb.get('clear_at', 0));\n\n  function pos(e) {\n    var r = cv.getBoundingClientRect();\n    return { x: (e.clientX - r.left) * cv.width / r.width,\n             y: (e.clientY - r.top) * cv.height / r.height };\n  }\n\n  function stamp(x, y) {\n    var size = Number(nb.get('brush_size', 14));\n    ctx.fillStyle = nb.get('brush_color', '#ef4444');\n    if (nb.get('brush_shape', 'round') === 'square') {\n      ctx.fillRect(x - size / 2, y - size / 2, size, size);\n    } else {\n      ctx.beginPath();\n      ctx.arc(x, y, size / 2, 0, Math.PI * 2);\n      ctx.fill();\n    }\n  }\n\n  function line(x0, y0, x1, y1) {\n    var d = Math.hypot(x1 - x0, y1 - y0);\n    var steps = Math.max(1, Math.round(d / 2));\n    for (var i = 0; i <= steps; i++) stamp(x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps);\n  }\n\n  cv.addEventListener('pointerdown', function (e) {\n    drawing = true; var p = pos(e); lastX = p.x; lastY = p.y; stamp(p.x, p.y);\n    cv.setPointerCapture(e.pointerId);\n  });\n  cv.addEventListener('pointermove', function (e) {\n    if (!drawing) return; var p = pos(e); line(lastX, lastY, p.x, p.y); lastX = p.x; lastY = p.y;\n  });\n  cv.addEventListener('pointerup', function () { drawing = false; });\n\n  function clearCanvas() { ctx.clearRect(0, 0, cv.width, cv.height); }\n\n  // Watch the clear button's timestamp; wipe when it changes.\n  nb.onChange(function () {\n    var c = Number(nb.get('clear_at', 0));\n    if (c !== lastClear) { lastClear = c; clearCanvas(); }\n  });\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 640,
+          "height": 400,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex807-js01",
+      "kind": "js",
+      "source": "// Live values — the brush settings the canvas reads on every stamp.\nconst val = (k) => ({ value: nb.get(k), type: typeof nb.get(k) });\nreturn {\n  brush_color: val('brush_color'),\n  brush_size:  val('brush_size'),   // number\n  brush_shape: val('brush_shape'),  // string ('round' | 'square')\n  clear_at:    val('clear_at'),     // timestamp; changes on each Clear press\n};"
+    },
+    {
+      "id": "c-ex807-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- Paint a stroke, then **change the colour mid-air** and paint again — no re-run needed. The canvas reads `brush_color` fresh on every stamp.\n- Switch **Brush shape** to *Square* and crank **Brush size** to 60 — you get a chunky pixel-art brush. Small size + round = a fine pen.\n- Press **Clear** twice quickly. It still works the second time, because each press writes a *new* timestamp to `clear_at`; a button that wrote a fixed value would look \"unchanged\" and the canvas would skip the second wipe.\n- **Upgrade idea:** add a `checkbox` `bind: 'eraser'`; when true, paint with the canvas background colour. The gesture code doesn't change — only what `stamp` reads from `nb`."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

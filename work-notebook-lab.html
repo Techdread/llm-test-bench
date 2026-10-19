@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-distribution="public">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="How Notebook Lab works: a polyglot notebook where JavaScript, Python, C, Lua, HTML and live controls share one set of variables, and a model writes, repairs and explains cells, all in the browser.">
+  <title>Notebook Lab · How it's built · Peter Edwards</title>
+  <link rel="canonical" href="https://neuroviz.uk/work-notebook-lab">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#080b12">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Peter Edwards">
+  <meta property="og:url" content="https://neuroviz.uk/work-notebook-lab">
+  <meta property="og:title" content="Notebook Lab: how it's built">
+  <meta property="og:description" content="A polyglot notebook in the browser: six languages, live controls and charts sharing one set of variables, with a model that writes and repairs cells.">
+  <meta property="og:image" content="https://neuroviz.uk/og-image.jpg">
+  <link rel="stylesheet" href="site.css?v=25165d13e0">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Peter Edwards — home"><span class="brand-mark">PE</span><span>Peter Edwards</span></a>
+    <nav aria-label="Main navigation"><a href="./#projects">Projects</a><a href="showcase.html">Showcase</a><a href="./#about">About</a><a href="settings.html">Settings</a><a href="https://github.com/Techdread/llm-test-bench" data-repository-link>GitHub</a></nav>
+  </header>
+  <main class="case-page accent-pink">
+    <p class="eyebrow">How it&rsquo;s built &middot; Polyglot notebooks</p>
+    <h1>Notebook Lab</h1>
+    <p class="case-lead">A notebook where each cell can be a different language and they all share one set of variables. A Python cell computes, a JavaScript cell turns the result into a chart, a slider in a controls cell changes the input, and an HTML cell redraws as you drag it. A model can write any cell, build a whole notebook from one request, or repair a cell that failed. Nothing runs on a server: every language runs in your browser.</p>
+    <div class="hero-actions">
+      <a class="button primary" href="notebook-lab/">Open Notebook Lab</a>
+      <a class="button" href="notebook-lab/?example=simulations/ex-402-boids.json">Open the boids example</a>
+    </div>
+
+    <ul class="case-facts" aria-label="Key numbers">
+      <li><strong>6</strong>languages in the browser: JS, Python, C, Lua, HTML and Markdown</li>
+      <li><strong>56</strong>tutorials and worked examples bundled</li>
+      <li><strong>11</strong>control types for building live interfaces</li>
+      <li><strong>99</strong>unit tests, plus a headless run of every example</li>
+    </ul>
+
+    <figure class="case-figure">
+      <img src="notebook-lab-card.webp" width="1440" height="900" loading="lazy" alt="Notebook Lab running the boids example: four sliders in a controls cell steer a flock drawn live in an HTML cell, with the shared variables listed beside it.">
+      <figcaption>The boids example. The sliders write four notebook variables; the flock below reads them every frame, so it changes while you drag.</figcaption>
+    </figure>
+
+    <h2>One notebook, one set of variables</h2>
+    <ol class="pipeline">
+      <li><strong>Python</strong>Runs in Pyodide (CPython compiled to WebAssembly), with NumPy, pandas and matplotlib. Writes <code>nb["key"] = value</code>.</li>
+      <li><strong>JavaScript</strong>Reads <code>nb.get("key")</code>, and returning a Vega-Lite spec renders an interactive chart.</li>
+      <li><strong>C and Lua</strong>Full programs that publish results by printing a tagged line: <code>__NB_SET__ {"key":…}</code>.</li>
+      <li><strong>Controls</strong>Sliders, pickers and buttons declared as JSON and bound to variables. A visual designer edits the layout.</li>
+      <li><strong>HTML</strong>Sandboxed frames that receive every change over a message bridge, so a canvas can redraw while a slider moves.</li>
+    </ol>
+
+    <h2>Design decisions</h2>
+    <div class="case-grid">
+      <div><h3>The runtime is not the UI</h3><p>Executing a cell or a whole notebook is a plain service that returns results. The editor uses it, so does a small <code>window.NotebookLabAPI</code>, and so does a headless sweep that runs every bundled example in Chrome and reports any cell that fails.</p></div>
+      <div><h3>Untrusted frames, trusted bridge</h3><p>HTML cells run in sandboxed frames with an opaque origin, so they cannot reach the page or its storage. They get a small <code>nb</code> object instead, seeded with a snapshot and kept current with single-key patches; the parent accepts writes only from the frame it created.</p></div>
+      <div><h3>Generated notebooks are a contract</h3><p>A whole notebook comes back as strict JSON and is checked before you see it: known cell kinds, valid chart and control JSON, the languages you allowed, the visual output you asked for. It arrives as a draft, and nothing in your notebook changes until you accept it.</p></div>
+      <div><h3>Packages that can be trusted</h3><p>Python packages load the first time a cell imports them. Each file is checked against the SHA-256 in Pyodide&rsquo;s lockfile before it is installed, and this site serves its own copies, so running a notebook makes no request to anyone else.</p></div>
+    </div>
+
+    <h2>Where the model helps</h2>
+    <p><strong>Generate</strong> writes one cell from a description, with the notebook so far as context. <strong>Generate notebook</strong> plans and writes a complete teaching sequence. <strong>Fix</strong> lights up on a cell that failed: the model gets the source, the error and the recent output and returns a corrected cell. <strong>Explain</strong> turns a cell into a plain-language Markdown note. Every AI-written cell remembers its prompt and a hash of what was generated, so the editor can show when you have changed it since.</p>
+
+    <h2>Try these</h2>
+    <ul class="case-lessons">
+      <li><a href="notebook-lab/?example=simulations/ex-402-boids.json"><strong>Boids</strong></a>: flocking in an HTML canvas, tuned live from a controls cell.</li>
+      <li><a href="notebook-lab/?example=search/ex-203-a-star-playground.json"><strong>A* playground</strong></a>: steer a live search with sliders and watch Dijkstra, A* and greedy search explore differently.</li>
+      <li><a href="notebook-lab/?example=3d-visualisation/ex-601-terrain-from-numpy.json"><strong>Terrain from NumPy</strong></a>: Python generates a heightmap, three.js renders it.</li>
+      <li><a href="notebook-lab/?example=simulations/ex-403-sir-epidemic.json"><strong>SIR epidemic</strong></a>: set R&#8320; and the infectious period with sliders and watch the curves change.</li>
+    </ul>
+
+    <h2>Problems worth solving</h2>
+    <ul class="case-lessons">
+      <li><strong>Streaming can freeze the page.</strong> Writing every streamed token into the notebook re-rendered it and re-tokenised the editor each time, and a long generation could hang the tab until Chrome killed it. Stream updates are now merged to at most one every 150&nbsp;ms.</li>
+      <li><strong>Error output is data, not instructions.</strong> When a cell is repaired, its source, error and output are passed to the model inside fenced blocks marked as untrusted diagnostic data, and each block is capped in size.</li>
+      <li><strong>Charts that cannot read state.</strong> A chart cell is static Vega-Lite JSON and cannot see notebook variables, which is easy for a model to forget. The generation contract says so, and points it at a JavaScript cell that returns the spec when the data comes from an earlier cell.</li>
+    </ul>
+
+    <h2>The full version</h2>
+    <p>The private workbench version adds Java, Go, Scala and Clojure, compiled with their real toolchains inside a Debian Linux system emulated in the browser, plus Rust. That system image is close to a gigabyte, too large for a static website, so this edition leaves those languages out and shows only the notebooks that run here.</p>
+
+    <h2>More write-ups</h2>
+    <div class="case-next">
+      <a class="button" href="work-game-forge.html">Game Forge</a>
+      <a class="button" href="work-vr-forge.html">VR Forge</a>
+      <a class="button" href="work-understory.html">Understory Studio</a>
+      <a class="button" href="work-code-morph.html">Code Morph Lab</a>
+    </div>
+  </main>
+  <footer><span>Peter Edwards · Projects MIT licensed</span><span><a href="./">Back to the projects</a></span></footer>
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "087e962bcbbc4be0bc1ba8bf21be0bde"}'></script>
+</body>
+</html>

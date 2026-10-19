@@ -1,0 +1,39 @@
+{
+  "title": "Colour Match",
+  "cells": [
+    {
+      "id": "c-ex813-md01",
+      "kind": "md",
+      "source": "# Colour Match\n\n**Kinds on show:** `ui` → `html` (score written back for a readout).\n\n**The one idea:** *readouts turn a picture into a score.* Three sliders build an RGB colour; the HTML cell draws your swatch next to a **seeded target** and measures how close you are. It writes the result back into nb (`match_pct`, `dist`) so a `readout` can show your score without you re-running anything — the loop is: drag a slider → swatch redraws → score updates, all live.\n\nThe target is **seeded** off `target_seed`, so *New target* (an increment button) advances to the next deterministic colour. Same seed, same target — which is what lets this game be tested headlessly."
+    },
+    {
+      "id": "c-ex813-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Colour Match\",\n  \"description\": \"Move the R/G/B sliders to match the seeded target swatch. The readout scores your distance; New target reseeds. Sliders + readout under a goal.\",\n  \"width\": 900,\n  \"height\": 220,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"Red\",\n      \"bind\": \"r\",\n      \"default\": 128,\n      \"min\": 0,\n      \"max\": 255,\n      \"step\": 1,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Green\",\n      \"bind\": \"g\",\n      \"default\": 128,\n      \"min\": 0,\n      \"max\": 255,\n      \"step\": 1,\n      \"x\": 300,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Blue\",\n      \"bind\": \"b\",\n      \"default\": 128,\n      \"min\": 0,\n      \"max\": 255,\n      \"step\": 1,\n      \"x\": 600,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 76\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"Match\",\n      \"bind\": \"match_pct\",\n      \"precision\": 1,\n      \"suffix\": \" %\",\n      \"default\": 0,\n      \"x\": 0,\n      \"y\": 96,\n      \"width\": 240,\n      \"height\": 56\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"Distance (ΔRGB)\",\n      \"bind\": \"dist\",\n      \"precision\": 1,\n      \"default\": 0,\n      \"x\": 260,\n      \"y\": 96,\n      \"width\": 240,\n      \"height\": 56\n    },\n    {\n      \"type\": \"button\",\n      \"label\": \"New target\",\n      \"bind\": \"target_seed\",\n      \"action\": \"increment\",\n      \"default\": 1,\n      \"icon\": \"fa-dice\",\n      \"x\": 520,\n      \"y\": 96,\n      \"width\": 220,\n      \"height\": 48\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex813-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0f172a; color: #cbd5e1; font-family: system-ui, sans-serif; padding: 14px; }\n  #row { display: flex; gap: 16px; }\n  .box { flex: 1; height: 150px; border-radius: 12px; display: flex; align-items: flex-end;\n         justify-content: center; padding-bottom: 8px; font-size: 13px; font-weight: 600; }\n  #msg { margin-top: 12px; font-size: 15px; }\n  b { color: #f8fafc; }\n</style>\n<div id=\"row\">\n  <div class=\"box\" id=\"target\">target</div>\n  <div class=\"box\" id=\"you\">you</div>\n</div>\n<div id=\"msg\"></div>\n<script>\n  var target = document.getElementById('target');\n  var you = document.getElementById('you');\n  var msg = document.getElementById('msg');\n  var last = {};\n  function put(k, v) { if (last[k] !== v) { last[k] = v; nb.set(k, v); } }\n\n  // Seeded target colour from target_seed (deterministic LCG).\n  function targetRGB(seed) {\n    var s = (Number(seed) * 2654435761) >>> 0;\n    var out = [];\n    for (var i = 0; i < 3; i++) { s = (1103515245 * s + 12345) >>> 0; out.push(s % 256); }\n    return out;\n  }\n  var rgb = function (a) { return 'rgb(' + a[0] + ',' + a[1] + ',' + a[2] + ')'; };\n\n  function render() {\n    var t = targetRGB(nb.get('target_seed', 1));\n    var y = [Number(nb.get('r', 128)), Number(nb.get('g', 128)), Number(nb.get('b', 128))];\n    target.style.background = rgb(t);\n    you.style.background = rgb(y);\n\n    var dist = Math.sqrt(\n      (t[0] - y[0]) * (t[0] - y[0]) +\n      (t[1] - y[1]) * (t[1] - y[1]) +\n      (t[2] - y[2]) * (t[2] - y[2]));\n    var maxDist = Math.sqrt(3 * 255 * 255);\n    var pct = (1 - dist / maxDist) * 100;\n\n    var verdict = pct >= 99 ? '🎯 perfect!' : pct >= 95 ? '🔥 so close' :\n                  pct >= 85 ? 'getting warm' : 'keep going';\n    msg.innerHTML = 'Match: <b>' + pct.toFixed(1) + '%</b> · distance <b>' + dist.toFixed(1) +\n      '</b> · ' + verdict + '<br><small>target is seeded — press New target for the next one</small>';\n\n    put('match_pct', pct);\n    put('dist', dist);\n  }\n\n  nb.onChange(render);\n  render();\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 560,
+          "height": 260,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex813-js01",
+      "kind": "js",
+      "source": "// Live values — the three channels you control and the score the iframe wrote.\nconst val = (k) => ({ value: nb.get(k), type: typeof nb.get(k) });\nreturn {\n  r: val('r'), g: val('g'), b: val('b'),   // all numbers, 0..255\n  match_pct: nb.get('match_pct'),           // written back by the HTML cell\n  target_seed: nb.get('target_seed'),       // increments on New target\n};"
+    },
+    {
+      "id": "c-ex813-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- Eyeball the target, then drag R/G/B toward it — the *Match %* readout climbs live as you get closer. Can you break 99%?\n- Press **New target** a few times and note the target colour changes deterministically (it's seeded off the increment counter). The same `target_seed` always gives the same colour.\n- Try to hit 100% by reading the target: it's seeded, so with the LCG in the HTML cell you could *compute* the exact RGB — a reminder that \"seeded\" means reproducible, not secret.\n- **Upgrade idea:** swap the plain Euclidean RGB distance for a perceptual **ΔE** (CIE76 in Lab space). The controls and readouts don't change — only the maths inside `render` — which is exactly the separation this gallery keeps hammering."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

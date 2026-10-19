@@ -1,0 +1,43 @@
+{
+  "id": "tutorial-01-notebook-basics",
+  "title": "01 Notebook Basics",
+  "cells": [
+    {
+      "id": "c-fe229951",
+      "kind": "md",
+      "source": "# 01 Notebook Basics\n\nWelcome to **Notebook Lab**. This tutorial shows the core cell types and how outputs behave.\n\nRun cells from top to bottom with **Shift+Enter** or the run button."
+    },
+    {
+      "id": "c-0d038107",
+      "kind": "md",
+      "source": "## What this notebook demonstrates\n\n- Markdown cells for notes and documentation\n- JavaScript cells for quick code experiments\n- Python cells via Pyodide\n- HTML cells for self-contained rendered views\n- Chart cells for Vega-Lite specs\n- The Variables panel for shared notebook state"
+    },
+    {
+      "id": "c-c43b1591",
+      "kind": "js",
+      "source": "console.log('Hello from JavaScript');\nconst nums = [1, 2, 3, 4, 5];\nnb.set('js_total', nums.reduce((a, b) => a + b, 0));\n({ message: 'JS ran successfully', total: nb.get('js_total') });"
+    },
+    {
+      "id": "c-029fd1dc",
+      "kind": "py",
+      "source": "import math\nvalues = [round(math.sin(x / 3), 3) for x in range(10)]\nnb['py_values'] = values\nprint('Stored py_values in shared notebook state')\nvalues"
+    },
+    {
+      "id": "c-a06f7f42",
+      "kind": "html",
+      "source": "<div style=\"font-family: system-ui; padding: 16px; border-radius: 12px; background: linear-gradient(135deg, #1f2937, #111827); color: white;\">\n  <h3 style=\"margin-top:0\">HTML Cell</h3>\n  <p>This is rendered inside a sandboxed iframe.</p>\n  <ul>\n    <li>Great for mini mockups</li>\n    <li>Can include inline CSS</li>\n    <li>Can include inline JavaScript</li>\n  </ul>\n</div>"
+    },
+    {
+      "id": "c-3f64549e",
+      "kind": "chart",
+      "source": "{\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v5.json\",\n  \"description\": \"A simple bar chart\",\n  \"data\": {\n    \"values\": [\n      {\n        \"feature\": \"Markdown\",\n        \"score\": 5\n      },\n      {\n        \"feature\": \"JavaScript\",\n        \"score\": 4\n      },\n      {\n        \"feature\": \"Python\",\n        \"score\": 5\n      },\n      {\n        \"feature\": \"HTML\",\n        \"score\": 4\n      },\n      {\n        \"feature\": \"Charts\",\n        \"score\": 4\n      }\n    ]\n  },\n  \"mark\": {\n    \"type\": \"bar\",\n    \"cornerRadiusTopLeft\": 4,\n    \"cornerRadiusTopRight\": 4\n  },\n  \"encoding\": {\n    \"x\": {\n      \"field\": \"feature\",\n      \"type\": \"nominal\",\n      \"sort\": null\n    },\n    \"y\": {\n      \"field\": \"score\",\n      \"type\": \"quantitative\"\n    },\n    \"color\": {\n      \"field\": \"feature\",\n      \"type\": \"nominal\",\n      \"legend\": null\n    }\n  }\n}"
+    },
+    {
+      "id": "c-00cbbf64",
+      "kind": "md",
+      "source": "## Try this next\n\n- Edit the JavaScript cell and change the numbers\n- Edit the Python cell to store a different list into `nb`\n- Open the **Variables** panel and inspect `js_total` and `py_values`\n- Duplicate a cell and re-run it"
+    }
+  ],
+  "createdAt": "2026-04-18T19:35:37.853724Z",
+  "updatedAt": "2026-04-18T19:35:37.853724Z"
+}

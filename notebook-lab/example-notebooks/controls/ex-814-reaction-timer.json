@@ -1,0 +1,39 @@
+{
+  "title": "Reaction Timer",
+  "cells": [
+    {
+      "id": "c-ex814-md01",
+      "kind": "md",
+      "source": "# Reaction Timer\n\n**Kinds on show:** `ui` ↔ `html` → `js`.\n\n**The one idea:** *the gesture goes where the gesture must — and reports back.* Timing a click needs the `pointerdown`/timestamp to happen **inside** the HTML cell; a UI button fires in the parent and can't measure your reaction against a light it doesn't own. So the split is:\n\n- The **HTML cell** owns the game: it flashes the light, waits a random beat, turns green, and measures the milliseconds until you click. On each valid round it `nb.set`s `last_ms`, updates `best_ms`, and bumps `rounds`.\n- The **UI readouts** just *display* those values — and the **Reset stats** button writes them all back to 0, which the iframe notices and honours.\n\nThat's the two-way bridge again: the iframe pushes results out; the reset button pushes state in.\n\n> Reaction timing relies on real elapsed time, so this one is **screenshot-verified**, not headless — srcdoc timers don't advance under the sweep's virtual clock."
+    },
+    {
+      "id": "c-ex814-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Reaction Timer\",\n  \"description\": \"The light and the click target live in the HTML cell (the gesture must). It writes your reaction time back; these readouts show last, best and rounds.\",\n  \"width\": 900,\n  \"height\": 140,\n  \"controls\": [\n    {\n      \"type\": \"readout\",\n      \"label\": \"Last\",\n      \"bind\": \"last_ms\",\n      \"precision\": 0,\n      \"suffix\": \" ms\",\n      \"default\": 0,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 200,\n      \"height\": 56\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"Best\",\n      \"bind\": \"best_ms\",\n      \"precision\": 0,\n      \"suffix\": \" ms\",\n      \"default\": 0,\n      \"x\": 220,\n      \"y\": 0,\n      \"width\": 200,\n      \"height\": 56\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"Rounds\",\n      \"bind\": \"rounds\",\n      \"precision\": 0,\n      \"default\": 0,\n      \"x\": 440,\n      \"y\": 0,\n      \"width\": 160,\n      \"height\": 56\n    },\n    {\n      \"type\": \"button\",\n      \"label\": \"Reset stats\",\n      \"icon\": \"fa-rotate-left\",\n      \"set\": {\n        \"last_ms\": 0,\n        \"best_ms\": 0,\n        \"rounds\": 0\n      },\n      \"x\": 620,\n      \"y\": 0,\n      \"width\": 200,\n      \"height\": 48\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex814-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; font-family: system-ui, sans-serif; }\n  #light { height: 300px; display: flex; flex-direction: column; align-items: center;\n           justify-content: center; color: #fff; cursor: pointer; user-select: none;\n           font-size: 26px; font-weight: 700; text-align: center; transition: background .05s; }\n  #light small { font-size: 15px; font-weight: 400; opacity: .9; margin-top: 10px; }\n  .idle { background: #1e293b; } .wait { background: #b91c1c; } .go { background: #16a34a; }\n  .early { background: #7c2d12; } .done { background: #0f766e; }\n</style>\n<div id=\"light\" class=\"idle\">Click to start<small>then wait for green</small></div>\n<script>\n  var el = document.getElementById('light');\n  var state = 'idle', t0 = 0, timer = 0;\n  var best = Number(nb.get('best_ms', 0)) || 0;\n  var rounds = Number(nb.get('rounds', 0)) || 0;\n\n  function set(cls, big, small) {\n    el.className = cls;\n    el.innerHTML = big + (small ? '<small>' + small + '</small>' : '');\n  }\n\n  function arm() {\n    state = 'wait';\n    set('wait', 'Wait for green…', 'don\\'t click yet');\n    var delay = 900 + Math.random() * 2100;   // gameplay randomness, not a seeded puzzle\n    timer = setTimeout(function () {\n      state = 'go'; t0 = performance.now();\n      set('go', 'CLICK!', '');\n    }, delay);\n  }\n\n  el.addEventListener('pointerdown', function () {\n    if (state === 'idle' || state === 'done' || state === 'early') { arm(); return; }\n    if (state === 'wait') {                    // false start\n      clearTimeout(timer); state = 'early';\n      set('early', 'Too early!', 'click to try again');\n      return;\n    }\n    if (state === 'go') {\n      var ms = Math.round(performance.now() - t0);\n      rounds += 1;\n      nb.set('last_ms', ms);\n      nb.set('rounds', rounds);\n      if (best === 0 || ms < best) { best = ms; nb.set('best_ms', ms); }\n      state = 'done';\n      set('done', ms + ' ms', 'best ' + best + ' ms · click to go again');\n    }\n  });\n\n  // Honour the Reset stats button: when the parent zeroes best_ms, forget our best.\n  nb.onChange(function () {\n    var b = Number(nb.get('best_ms', 0)) || 0;\n    var r = Number(nb.get('rounds', 0)) || 0;\n    if (b === 0) best = 0;\n    if (r === 0) rounds = 0;\n  });\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 520,
+          "height": 320,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex814-js01",
+      "kind": "js",
+      "source": "// Live values — the stats the iframe reported (all numbers, ready for a readout).\nconst val = (k) => ({ value: nb.get(k), type: typeof nb.get(k) });\nreturn {\n  last_ms: val('last_ms'),\n  best_ms: val('best_ms'),\n  rounds:  val('rounds'),\n};"
+    },
+    {
+      "id": "c-ex814-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- Play a few rounds — the *Last* and *Best* readouts update the instant you click green, because the iframe `nb.set`s them and the readouts are bound to those names.\n- Click **during the red wait** — you get \"Too early!\" and no time is recorded. The state machine guards against false starts; only a click in the `go` state counts.\n- Hit **Reset stats** — all three readouts zero, *and* the iframe forgets its running best (it's watching `best_ms` for the reset). State pushed from parent to iframe.\n- **Design reflection:** this is the mirror of **Guess the Number** (ex-812). There, discrete turns fit a control-only, re-run game. Here, continuous real-time timing *forces* the gesture into an HTML cell. The bridge is the seam between the two worlds."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

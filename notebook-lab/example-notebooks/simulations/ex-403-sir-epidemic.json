@@ -1,0 +1,31 @@
+{
+  "title": "SIR Epidemic Curves",
+  "state": {
+    "sir_r0": 2.5,
+    "sir_days": 7
+  },
+  "cells": [
+    {
+      "id": "c-ex403-md01",
+      "kind": "md",
+      "source": "# SIR Epidemic Curves\n\nSplit a population into **S**usceptible, **I**nfected, **R**ecovered, with two flows:\n\n- infection: S → I at rate **β · S · I / N** (meetings between S and I)\n- recovery: I → R at rate **γ · I** (γ = 1 / days-infectious)\n\nThe famous number is **R₀ = β/γ** — expected infections per case in a fresh population. It decides *everything*: below 1 the outbreak fizzles, above 1 it grows until susceptibles run out at the **herd-immunity threshold 1 − 1/R₀**.\n\nDrag the sliders, then re-run the Python cell (code cells run on demand — only HTML cells update live)."
+    },
+    {
+      "id": "c-ex403-ui01",
+      "kind": "ui",
+      "source": "{\n  \"width\": 900,\n  \"height\": 130,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"R₀ (infections per case)\",\n      \"bind\": \"sir_r0\",\n      \"default\": 2.5,\n      \"min\": 0.5,\n      \"max\": 6,\n      \"step\": 0.1,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 420,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Days infectious\",\n      \"bind\": \"sir_days\",\n      \"default\": 7,\n      \"min\": 2,\n      \"max\": 20,\n      \"step\": 1,\n      \"x\": 460,\n      \"y\": 0,\n      \"width\": 380,\n      \"height\": 76\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex403-py01",
+      "kind": "py",
+      "source": "import numpy as np\nimport matplotlib.pyplot as plt\n\nR0 = float(nb.get(\"sir_r0\") or 2.5)\ndays_infectious = float(nb.get(\"sir_days\") or 7)\n\nN = 1_000_000\ngamma = 1 / days_infectious\nbeta = R0 * gamma\n\ndef deriv(state):\n    S, I, R = state\n    new_inf = beta * S * I / N\n    return np.array([-new_inf, new_inf - gamma * I, gamma * I])\n\n# RK4: deterministic, stable, no randomness anywhere.\ndt = 0.25\nT = 400\nsteps = int(T / dt)\nstate = np.array([N - 10.0, 10.0, 0.0])\nseries = [state]\nfor _ in range(steps):\n    k1 = deriv(state)\n    k2 = deriv(state + dt / 2 * k1)\n    k3 = deriv(state + dt / 2 * k2)\n    k4 = deriv(state + dt * k3)\n    state = state + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)\n    series.append(state)\n\nseries = np.array(series)\nt = np.arange(len(series)) * dt\n\npeak_i = series[:, 1].max()\npeak_day = t[series[:, 1].argmax()]\nfinal_r = series[-1, 2]\nherd = max(0.0, 1 - 1 / R0)\n\nprint(f\"R0 = {R0:.1f}, infectious {days_infectious:.0f} days  (beta={beta:.3f}, gamma={gamma:.3f})\")\nif R0 > 1:\n    print(f\"peak: {peak_i:,.0f} simultaneously infected on day {peak_day:.0f}\")\n    print(f\"final size: {final_r/N:.1%} ever infected\")\n    print(f\"herd immunity threshold: {herd:.1%} - growth stops when S/N drops below {1/R0:.1%}\")\nelse:\n    print(\"R0 <= 1: the outbreak never takes off - each case fails to replace itself\")\n\nfig, ax = plt.subplots(figsize=(9, 4.5))\nax.plot(t, series[:, 0] / N, label=\"Susceptible\", color=\"#2563eb\")\nax.plot(t, series[:, 1] / N, label=\"Infected\", color=\"#dc2626\")\nax.plot(t, series[:, 2] / N, label=\"Recovered\", color=\"#16a34a\")\nif R0 > 1:\n    ax.axhline(1 - herd, color=\"#2563eb\", ls=\":\", alpha=0.6)\n    ax.text(T * 0.99, 1 - herd + 0.02, \"S at herd immunity\", ha=\"right\", fontsize=8, color=\"#2563eb\")\nax.set_xlabel(\"day\")\nax.set_ylabel(\"fraction of population\")\nax.set_title(f\"SIR, R0={R0:.1f}, {days_infectious:.0f} days infectious\")\nax.legend()\nax.grid(alpha=0.3)\nfig.tight_layout()"
+    },
+    {
+      "id": "c-ex403-md02",
+      "kind": "md",
+      "source": "## The two counter-intuitive lessons\n\n1. **The peak passes before everyone is infected.** Infections stop growing when S/N = 1/R₀ — but momentum carries the final size well beyond the herd threshold (overshoot). Compare \"S at herd immunity\" with where S actually lands.\n2. **Flattening works on the peak, not the total.** Halving R₀ from 3 to 1.5 slashes the *simultaneous* peak far more than the final size — that's the hospital-capacity argument in one chart.\n\n## Try this\n\n- Set R₀ = 0.9 and 1.1 — the threshold behaviour is dramatic; nothing else in the model changed.\n- Long-COVID economics: same R₀, but 14 infectious days instead of 7. β falls (same R₀, slower γ) — what happens to the *timing*?\n- Add a vaccination term: move 0.5% of S to R per day and find the R₀ where the epidemic still gets through.\n- Add an **E**xposed compartment (SEIR, 3-day incubation) — the peak arrives later; does its height change?"
+    }
+  ],
+  "createdAt": "2026-07-10T00:00:00.000Z",
+  "updatedAt": "2026-07-10T00:00:00.000Z"
+}

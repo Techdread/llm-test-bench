@@ -1,0 +1,767 @@
+[
+  {
+    "file": "data-structures/ex-101-hash-map-from-scratch.json",
+    "id": "ex-101",
+    "title": "Hash Map from Scratch",
+    "description": "Build a chaining hash map in JavaScript, then measure probe lengths against theory as the load factor grows.",
+    "category": "data-structures",
+    "langs": [
+      "js"
+    ],
+    "features": [
+      "vega-from-js"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "data-structures/ex-103-heaps-priority-queues.json",
+    "id": "ex-103",
+    "title": "Heaps & Priority Queues",
+    "description": "Implement a binary min-heap in Python, count its comparisons against the n·log n bound, and run a hospital triage queue on top of it.",
+    "category": "data-structures",
+    "langs": [
+      "py"
+    ],
+    "features": [
+      "matplotlib"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "data-structures/ex-104-linked-lists-in-c.json",
+    "id": "ex-104",
+    "title": "Linked Lists in C",
+    "description": "Pointer mechanics without the segfaults: an index-based linked list in C with insert, delete and an in-place reverse, drawn by a JS cell.",
+    "category": "data-structures",
+    "langs": [
+      "c",
+      "js"
+    ],
+    "features": [
+      "nb-emit"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "data-structures/ex-106-stacks-queues-lua.json",
+    "id": "ex-106",
+    "title": "Stacks & Queues in Lua",
+    "description": "A bracket matcher on a table-stack and a print-spooler ring buffer, all in offline Lua 5.4, with results handed to JavaScript.",
+    "category": "data-structures",
+    "langs": [
+      "lua",
+      "js"
+    ],
+    "features": [
+      "nb-emit"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "search/ex-201-binary-search-log-n.json",
+    "id": "ex-201",
+    "title": "Binary Search & the Shape of O(log n)",
+    "description": "Instrument binary search in Python, race it against linear scan, then use \"binary search the answer\" on a problem with no array at all.",
+    "category": "search",
+    "langs": [
+      "py"
+    ],
+    "features": [
+      "matplotlib"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "search/ex-203-a-star-playground.json",
+    "id": "ex-203",
+    "title": "A* Pathfinding Playground",
+    "description": "Generate a weighted terrain grid in JS, then steer a live A* search with sliders — watch Dijkstra, A* and greedy explore differently.",
+    "category": "search",
+    "langs": [
+      "js",
+      "ui",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "interactive"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "search/ex-204-mini-search-engine.json",
+    "id": "ex-204",
+    "title": "Mini Full-Text Search Engine",
+    "description": "TF-IDF and cosine similarity over a tiny document collection in Python — type queries in a UI cell and watch ranked results update live.",
+    "category": "search",
+    "langs": [
+      "py",
+      "ui",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "interactive"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "search/ex-207-binary-search-the-answer.json",
+    "id": "ex-207",
+    "title": "Binary Search *on the Answer* (C)",
+    "description": "No sorted array in sight: C binary-searches the answer itself to spread 4 routers as far apart as possible, and a JS cell charts the shrinking interval.",
+    "category": "search",
+    "langs": [
+      "c",
+      "js"
+    ],
+    "features": [
+      "nb-emit"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "oop/ex-303-composition-over-inheritance.json",
+    "id": "ex-303",
+    "title": "Composition Over Inheritance",
+    "description": "Build the same little game world twice: a class tower that paints itself into a corner, then an entity-component design where new species are one line — rendered live in an HTML cell.",
+    "category": "oop",
+    "langs": [
+      "js",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "oop/ex-306-design-patterns-that-survive.json",
+    "id": "ex-306",
+    "title": "Design Patterns That Survive",
+    "description": "Strategy, builder and observer as living code instead of UML — the strategy is swapped from a dropdown, the builder assembles queries, and the notebook bridge itself turns out to be an observer.",
+    "category": "oop",
+    "langs": [
+      "py",
+      "js",
+      "ui"
+    ],
+    "features": [
+      "interactive"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "simulations/ex-401-game-of-life-compiled.json",
+    "id": "ex-401",
+    "title": "Game of Life, Compiled",
+    "description": "C advances 40 generations of Life and ships every frame as packed hex; an HTML cell plays them back with a scrub bar. Three rules, endless behaviour.",
+    "category": "simulations",
+    "langs": [
+      "c",
+      "html"
+    ],
+    "features": [
+      "nb-emit",
+      "nb-html-bridge"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "simulations/ex-402-boids.json",
+    "id": "ex-402",
+    "title": "Boids — Emergent Flocking",
+    "description": "Three local rules, zero leaders: a live canvas flock whose cohesion, alignment and separation you tune with sliders while it flies.",
+    "category": "simulations",
+    "langs": [
+      "ui",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "interactive",
+      "animation"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "simulations/ex-403-sir-epidemic.json",
+    "id": "ex-403",
+    "title": "SIR Epidemic Curves",
+    "description": "The three-compartment model behind every pandemic chart you saw in 2020 — set R₀ and the infectious period with sliders, integrate with RK4, and find herd immunity where the maths says it is.",
+    "category": "simulations",
+    "langs": [
+      "py",
+      "ui"
+    ],
+    "features": [
+      "matplotlib",
+      "interactive"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "simulations/ex-406-forest-fire-percolation.json",
+    "id": "ex-406",
+    "title": "Forest Fire & Percolation",
+    "description": "Lua burns forests at eight tree densities and finds the sharp threshold where fires suddenly cross the world — with a heat-map replay of the run at the critical density.",
+    "category": "simulations",
+    "langs": [
+      "lua",
+      "html"
+    ],
+    "features": [
+      "nb-emit",
+      "nb-html-bridge"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "simulations/ex-408-double-pendulum-chaos.json",
+    "id": "ex-408",
+    "title": "Double Pendulum & Chaos",
+    "description": "Two double pendulums start a billionth of a radian apart; Python integrates both, matplotlib shows the exponential divergence, and an HTML cell animates them drifting out of sync.",
+    "category": "simulations",
+    "langs": [
+      "py",
+      "html"
+    ],
+    "features": [
+      "matplotlib",
+      "numpy",
+      "nb-html-bridge"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "games/ex-501-snake-complete.json",
+    "id": "ex-501",
+    "title": "Snake, Complete",
+    "description": "A full playable Snake in one HTML cell — game loop, input, collision, scoring — that reports every run back to the notebook via nb.set.",
+    "category": "games",
+    "langs": [
+      "html",
+      "js"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "interactive",
+      "game"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "games/ex-502-tic-tac-toe-minimax.json",
+    "id": "ex-502",
+    "title": "Tic-Tac-Toe vs Minimax",
+    "description": "Play X on an HTML board; Python is the unbeatable O — minimax with alpha-beta pruning, re-run per turn. The honest way to wire a human, a board and an engine together.",
+    "category": "games",
+    "langs": [
+      "py",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "interactive"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "games/ex-503-sokoban-solver.json",
+    "id": "ex-503",
+    "title": "Sokoban + Solver",
+    "description": "Push boxes onto goals with the arrow keys — then let a breadth-first search over (player, boxes) states find the optimal solution and replay it as ghost moves.",
+    "category": "games",
+    "langs": [
+      "js",
+      "ui",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "interactive"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "games/ex-505-breakout-p5.json",
+    "id": "ex-505",
+    "title": "Breakout in p5.js",
+    "description": "The 1976 classic in a p5 sketch — move with the mouse, and tune paddle width and ball speed from sliders while the ball is mid-flight.",
+    "category": "games",
+    "langs": [
+      "html",
+      "ui"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "p5",
+      "interactive"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "games/ex-507-nim-game-theory.json",
+    "id": "ex-507",
+    "title": "Nim & Game Theory",
+    "description": "C derives Grundy numbers with mex and brute-force-proves the XOR theorem; then you play Nim against the perfect strategy — and lose, unless you know the secret.",
+    "category": "games",
+    "langs": [
+      "c",
+      "ui",
+      "js",
+      "html"
+    ],
+    "features": [
+      "nb-emit",
+      "nb-html-bridge",
+      "interactive"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "3d-visualisation/ex-601-terrain-from-numpy.json",
+    "id": "ex-601",
+    "title": "3D Terrain from NumPy",
+    "description": "Python generates a fractal island heightmap with NumPy; a three.js HTML cell turns it into an orbitable, height-coloured 3D landscape.",
+    "category": "3d-visualisation",
+    "langs": [
+      "py",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "three-js",
+      "matplotlib",
+      "numpy"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "3d-visualisation/ex-605-parametric-surfaces.json",
+    "id": "ex-605",
+    "title": "Parametric Surfaces",
+    "description": "Lua evaluates (u,v) grids for a torus, a Möbius strip and a Klein bottle; three.js stitches them into meshes — including the one that famously has no inside.",
+    "category": "3d-visualisation",
+    "langs": [
+      "lua",
+      "html"
+    ],
+    "features": [
+      "nb-emit",
+      "nb-html-bridge",
+      "three-js"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "3d-visualisation/ex-606-graph-in-space.json",
+    "id": "ex-606",
+    "title": "Graph in Space",
+    "description": "A JS cell runs a 3D force-directed layout on a clustered network; three.js renders it as orbiting spheres and edges you can spin.",
+    "category": "3d-visualisation",
+    "langs": [
+      "js",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "three-js"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "3d-visualisation/ex-607-point-cloud-sculptures.json",
+    "id": "ex-607",
+    "title": "Point-Cloud Sculptures",
+    "description": "NumPy turns probability distributions into three sculptures — nested shells, a gyroid carved by rejection sampling, and a spiral galaxy — rendered as 12,000 glowing points.",
+    "category": "3d-visualisation",
+    "langs": [
+      "py",
+      "html"
+    ],
+    "features": [
+      "numpy",
+      "nb-html-bridge",
+      "three-js"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "3d-visualisation/ex-608-wave-equation-membrane.json",
+    "id": "ex-608",
+    "title": "Wave Equation on a Membrane",
+    "description": "C finite-differences the 2D wave equation — a plucked drumhead with fixed edges — and three.js replays the ripples as a deforming mesh with a scrub bar.",
+    "category": "3d-visualisation",
+    "langs": [
+      "c",
+      "html"
+    ],
+    "features": [
+      "nb-emit",
+      "nb-html-bridge",
+      "three-js"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "api/ex-701-live-weather.json",
+    "id": "ex-701",
+    "title": "Live Weather Dashboard",
+    "description": "Fetch 48 h of real forecast data from the keyless Open-Meteo API in JS, crunch statistics in Python, and chart three cities side by side.",
+    "category": "api",
+    "langs": [
+      "js",
+      "py"
+    ],
+    "features": [
+      "live-api",
+      "network",
+      "vega-from-js"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "api/ex-702-where-is-the-iss.json",
+    "id": "ex-702",
+    "title": "Where Is the ISS?",
+    "description": "Poll the open-notify API for the space station's live position and watch its ground track crawl across a three.js globe — or a simulated orbit when offline.",
+    "category": "api",
+    "langs": [
+      "js",
+      "html"
+    ],
+    "features": [
+      "live-api",
+      "nb-html-bridge",
+      "three-js"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "api/ex-703-wikipedia-research.json",
+    "id": "ex-703",
+    "title": "Wikipedia Research Assistant",
+    "description": "JS pulls two article extracts from the MediaWiki API (origin=* CORS), Python does the corpus linguistics — log-odds finds each topic's fingerprint words.",
+    "category": "api",
+    "langs": [
+      "js",
+      "py",
+      "ui"
+    ],
+    "features": [
+      "live-api",
+      "matplotlib",
+      "interactive"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "api/ex-704-driving-notebook-lab.json",
+    "id": "ex-704",
+    "title": "Driving Notebook Lab from Outside",
+    "description": "Notebook Lab is itself an API: the window.NotebookLabAPI object and the file-based inbox let scripts and native programs build, run and save notebooks.",
+    "category": "api",
+    "langs": [
+      "js"
+    ],
+    "features": [
+      "notebook-lab-api"
+    ],
+    "addedAt": "2026-07-09"
+  },
+  {
+    "file": "api/ex-705-local-llm.json",
+    "id": "ex-705",
+    "title": "Local LLM in a Notebook",
+    "description": "Talk to a model running on your own machine: LM Studio's OpenAI-compatible server, streamed token by token into a chat transcript — no cloud, no key, no telemetry.",
+    "category": "api",
+    "langs": [
+      "js",
+      "ui",
+      "html"
+    ],
+    "features": [
+      "live-api",
+      "nb-html-bridge",
+      "streaming",
+      "interactive"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "controls/ex-801-text-numbers-pickers.json",
+    "id": "ex-801",
+    "title": "Text, Numbers & Pickers",
+    "description": "The starter controls — text, textarea, number, colour and date — and the one idea behind all of them: a control writes a typed value into nb, live. A JS cell prints each value and its type.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-emit",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-802-sliders-readouts.json",
+    "id": "ex-802",
+    "title": "Sliders & Readouts",
+    "description": "Sliders publish numbers; readouts render them. Shows precision/prefix/suffix formatting, a readout mirroring a slider live, and computed readouts fed by a JS cell (slider → JS → readout).",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-emit",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-803-choices-select-radio-checkbox.json",
+    "id": "ex-803",
+    "title": "Choices: Select, Radio, Checkbox",
+    "description": "The overhaul’s headline fix, demonstrated: a select or radio whose every option is numeric binds a real number, not \"3\". Shows the valueType override side by side, and booleans from checkboxes.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-emit",
+      "value-coercion",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-804-buttons-actions.json",
+    "id": "ex-804",
+    "title": "Buttons & Actions",
+    "description": "The three button action modes as living counters and toggles — set, increment, toggle — a batch-writing reset button, and an honest note on why a plain button needs an action mode to re-fire.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-emit",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-805-labels-layout-designer.json",
+    "id": "ex-805",
+    "title": "Labels, Layout & the Designer",
+    "description": "A tour of the authoring surface, not just runtime: the header band vs the label control, absolute x/y/width/height layout, and the designer tools — Tidy (grid-pack + grow-to-fit), Duplicate, and arrow-key nudging.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "designer",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-806-shape-studio-svg.json",
+    "id": "ex-806",
+    "title": "Shape Studio (live SVG)",
+    "description": "Sliders for sides/radius/rotation and stroke width plus two colour pickers redraw a regular polygon live in an SVG cell — the canonical demonstration of controls driving a picture through nb.onChange.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "html",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-html-bridge",
+      "svg",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-807-canvas-painter.json",
+    "id": "ex-807",
+    "title": "Canvas Painter",
+    "description": "A colour picker, a brush-size slider and a shape select drive a paint brush on an HTML <canvas>; a button clears the canvas via a timestamp write. Pointer events live inside the HTML cell — the controls only configure the brush.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "html",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-html-bridge",
+      "canvas",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-808-css-theme-playground.json",
+    "id": "ex-808",
+    "title": "CSS Theme Playground",
+    "description": "Colour pickers and sliders bound to CSS custom properties style a live card — radius, shadow, font-size, hue. The HTML cell writes the generated CSS back into nb so a readout can export it live.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "html",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-html-bridge",
+      "css",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-809-round-trip-html-to-controls.json",
+    "id": "ex-809",
+    "title": "Round-trip: HTML → controls",
+    "description": "The bridge runs both ways. Clickable swatches in an HTML cell call nb.set; a colour control, a readout and a JS cell all show the value that came back from the iframe — and editing the control highlights the matching swatch. Two-way, proven.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "html",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-html-bridge",
+      "two-way",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-810-graphing-calculator.json",
+    "id": "ex-810",
+    "title": "Graphing Calculator",
+    "description": "The flagship: a preset select or a safe custom-expression evaluator (no eval) plus amplitude/frequency/phase and domain sliders; a canvas plots the curve and axes live while readouts report the roots and extrema in view.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "js",
+      "html"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-html-bridge",
+      "canvas",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-811-parametric-polar-plotter.json",
+    "id": "ex-811",
+    "title": "Parametric & Polar Plotter",
+    "description": "a/b/δ sliders draw Lissajous figures and rose curves on a canvas; a select swaps between the parametric and polar formulas live. A future xy-pad would replace two of the sliders — noted, not required.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "html",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-html-bridge",
+      "canvas",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-812-guess-the-number.json",
+    "id": "ex-812",
+    "title": "Guess the Number",
+    "description": "A complete game whose entire input surface is UI controls and whose logic is one JS cell: a number input and a Submit button, a seeded secret, hotter/colder feedback, and a tries readout. No HTML.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-emit",
+      "seeded",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-813-colour-match.json",
+    "id": "ex-813",
+    "title": "Colour Match",
+    "description": "Three sliders (R/G/B) build your swatch; match a seeded target and a readout scores the distance; a button reseeds. Sliders and readouts under a goal, with the score computed in the HTML cell and written back to nb.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "html",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-html-bridge",
+      "seeded",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-814-reaction-timer.json",
+    "id": "ex-814",
+    "title": "Reaction Timer",
+    "description": "The wait/GO light and click target live inside the HTML cell — because the timing gesture must — and it writes the reaction time back to nb; UI readouts show last and best, and a reset button clears the run.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "html",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-html-bridge",
+      "two-way",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  },
+  {
+    "file": "controls/ex-815-mastermind.json",
+    "id": "ex-815",
+    "title": "Mastermind (code-breaker)",
+    "description": "Four numeric peg selects and a Guess button; a JS cell scores black/white pegs against a seeded secret code and accumulates the guess history in nb. Showcases numeric-enum selects and a discrete turn protocol.",
+    "category": "controls",
+    "langs": [
+      "ui",
+      "js"
+    ],
+    "features": [
+      "ui-controls",
+      "nb-emit",
+      "value-coercion",
+      "seeded",
+      "interactive"
+    ],
+    "addedAt": "2026-07-11"
+  }
+]

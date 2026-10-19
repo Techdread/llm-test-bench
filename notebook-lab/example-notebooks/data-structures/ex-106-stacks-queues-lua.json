@@ -1,0 +1,37 @@
+{
+  "title": "Stacks & Queues in Lua",
+  "cells": [
+    {
+      "id": "c-ex106-md01",
+      "kind": "md",
+      "source": "# Stacks & Queues in Lua\n\nLua has exactly one data structure — the **table** — and it is enough. A stack is a table plus `push`/`pop` at the end; a queue is a table plus two moving indices (a **ring buffer** if you wrap them).\n\nLua cells run fully offline via Wasmoon, and like C/Rust cells they publish values to the notebook by printing `__NB_SET__` marker lines."
+    },
+    {
+      "id": "c-ex106-lua01",
+      "kind": "lua",
+      "source": "-- A stack is just a table used from one end.\nlocal Stack = {}\nStack.__index = Stack\n\nfunction Stack.new()\n  return setmetatable({ items = {}, top = 0 }, Stack)\nend\n\nfunction Stack:push(v)\n  self.top = self.top + 1\n  self.items[self.top] = v\nend\n\nfunction Stack:pop()\n  if self.top == 0 then return nil end\n  local v = self.items[self.top]\n  self.items[self.top] = nil\n  self.top = self.top - 1\n  return v\nend\n\n-- Classic stack job: are the brackets balanced?\nlocal pairs_map = { [\")\"] = \"(\", [\"]\"] = \"[\", [\"}\"] = \"{\" }\n\nlocal function balanced(s)\n  local st = Stack.new()\n  for i = 1, #s do\n    local ch = s:sub(i, i)\n    if ch == \"(\" or ch == \"[\" or ch == \"{\" then\n      st:push(ch)\n    elseif pairs_map[ch] then\n      if st:pop() ~= pairs_map[ch] then return false end\n    end\n  end\n  return st.top == 0\nend\n\nlocal tests = {\n  \"(a[b]{c})\",\n  \"([)]\",\n  \"function f() return {1, 2} end\",\n  \"if (x[1] > 0 then\",\n  \"{{[[(())]]}}\",\n}\n\nlocal results = {}\nfor _, s in ipairs(tests) do\n  local ok = balanced(s)\n  results[#results + 1] = '{\"text\":\"' .. s:gsub('\"', '\\\\\"') .. '\",\"ok\":' .. tostring(ok) .. '}'\n  print(string.format(\"%-36s %s\", s, ok and \"balanced\" or \"NOT balanced\"))\nend\n\nprint('__NB_SET__ {\"key\":\"bracket_results\",\"value\":[' .. table.concat(results, \",\") .. ']}')"
+    },
+    {
+      "id": "c-ex106-md02",
+      "kind": "md",
+      "source": "## A queue that never shuffles\n\nNaive queues `table.remove(t, 1)` — which shifts every element, O(n) per pop. The ring buffer below keeps a `first` and `last` index instead, so both ends are O(1)."
+    },
+    {
+      "id": "c-ex106-lua02",
+      "kind": "lua",
+      "source": "local Queue = {}\nQueue.__index = Queue\n\nfunction Queue.new()\n  return setmetatable({ items = {}, first = 1, last = 0 }, Queue)\nend\n\nfunction Queue:enqueue(v)\n  self.last = self.last + 1\n  self.items[self.last] = v\nend\n\nfunction Queue:dequeue()\n  if self.first > self.last then return nil end\n  local v = self.items[self.first]\n  self.items[self.first] = nil\n  self.first = self.first + 1\n  return v\nend\n\nfunction Queue:size()\n  return self.last - self.first + 1\nend\n\n-- A print spooler: jobs arrive with page counts; the printer does\n-- 5 pages per tick, requeueing unfinished jobs (round-robin).\nlocal q = Queue.new()\nlocal jobs = {\n  { name = \"thesis.pdf\",   pages = 12 },\n  { name = \"photo.png\",    pages = 2 },\n  { name = \"report.docx\",  pages = 7 },\n  { name = \"ticket.pdf\",   pages = 1 },\n}\nfor _, j in ipairs(jobs) do q:enqueue(j) end\n\nlocal tick = 0\nlocal finished = {}\nwhile q:size() > 0 do\n  tick = tick + 1\n  local job = q:dequeue()\n  local printed = math.min(5, job.pages)\n  job.pages = job.pages - printed\n  if job.pages > 0 then\n    print(string.format(\"tick %d: %-12s printed %d, %d left -> back of queue\", tick, job.name, printed, job.pages))\n    q:enqueue(job)\n  else\n    print(string.format(\"tick %d: %-12s printed %d, DONE\", tick, job.name, printed))\n    finished[#finished + 1] = '\"' .. job.name .. '\"'\n  end\nend\n\nprint('__NB_SET__ {\"key\":\"spool_order\",\"value\":[' .. table.concat(finished, \",\") .. ']}')"
+    },
+    {
+      "id": "c-ex106-js01",
+      "kind": "js",
+      "source": "// Read what Lua published and summarise it.\nconst brackets = nb.get('bracket_results') || [];\nconst spool = nb.get('spool_order') || [];\n\nconsole.log('bracket checks:', brackets.filter(r => r.ok).length + '/' + brackets.length, 'balanced');\nconsole.log('print completion order:', spool.join(' -> '));\n\nreturn {\n  balanced: brackets.filter(r => r.ok).map(r => r.text),\n  unbalanced: brackets.filter(r => !r.ok).map(r => r.text),\n  completionOrder: spool,\n};"
+    },
+    {
+      "id": "c-ex106-md03",
+      "kind": "md",
+      "source": "## Try this\n\n- Give the spooler a **priority lane**: two queues, urgent jobs drain first. Which structure from this notebook would you reuse?\n- Make `balanced` report *where* the mismatch happened (character index).\n- Change the printer speed from 5 to 1 page per tick — does the completion order change? Why (round-robin fairness)?"
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

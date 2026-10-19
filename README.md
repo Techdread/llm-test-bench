@@ -79,6 +79,12 @@ the result instead of trusting it.
 | **Understory Studio** (`understory-studio/`) | Turns one to three reference pictures into an editable 3D asset at five levels of detail; the model reviews renders of its own result against the reference. |
 | **Code Morph Lab** (`code-morph-lab-v3/`) | Iterative write → run → fix loop in HTML or in-browser Python (Pyodide). Prompt Gallery and SVG bench results can be sent to it with **Morph**. |
 
+## Interactive computing
+
+| App | What it does |
+|---|---|
+| **Notebook Lab** (`notebook-lab/`) | Notebooks whose cells can be JavaScript, Python (Pyodide, with NumPy, pandas and matplotlib), C, Lua, HTML, live controls or Vega-Lite charts, all sharing one set of variables. A model writes cells, builds whole notebooks from one request, and repairs cells that fail. Ships 56 runnable tutorials and examples. |
+
 ## Developer tools
 
 | App | What it does |
@@ -145,6 +151,7 @@ game-forge-v2/              agentic multi-file game builder
 vr-forge/                   agentic WebXR builder with emulated-session checks
 understory-studio/          reference pictures → editable 3D asset
 code-morph-lab-v3/          iterative code generation (HTML / Python)
+notebook-lab/               polyglot notebooks with AI-written cells
 c-machine-lab/              C on a visible teaching machine
 algorithm-visualizer/       traced algorithm playback
 sql-playground/             SQLite in the browser

@@ -1,0 +1,39 @@
+{
+  "title": "Round-trip: HTML → controls",
+  "cells": [
+    {
+      "id": "c-ex809-md01",
+      "kind": "md",
+      "source": "# Round-trip: HTML → controls\n\n**Kinds on show:** `ui` ↔ `html` ↔ `js`.\n\n**The one idea:** *the bridge is two-way.* Earlier notebooks pushed values *into* the iframe (`nb.onChange`). Here the iframe pushes values *back out*: clicking a swatch calls `nb.set('picked_hex', hex)`, which posts the write up to the parent. From there it's an ordinary nb value — so the colour control, the readout, and the JS cell all see it, with no special wiring.\n\nAnd it round-trips: change the **colour control** and the iframe's `nb.onChange` highlights the swatch that matches. Value out, value in, value out again — the same channel both directions. (Values crossing the bridge must be JSON — strings, numbers, booleans, plain objects — because they're `postMessage`d across the sandbox boundary.)"
+    },
+    {
+      "id": "c-ex809-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Round-trip: HTML → controls\",\n  \"description\": \"Click a swatch in the iframe below. It calls nb.set — and the value appears here, in the colour control, the readout, and the JS cell. Two-way, proven.\",\n  \"width\": 900,\n  \"height\": 200,\n  \"controls\": [\n    {\n      \"type\": \"color\",\n      \"label\": \"Picked colour (two-way)\",\n      \"bind\": \"picked_hex\",\n      \"default\": \"#38bdf8\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 280,\n      \"height\": 64\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"picked_hex (came back from the iframe)\",\n      \"bind\": \"picked_hex\",\n      \"x\": 300,\n      \"y\": 0,\n      \"width\": 300,\n      \"height\": 64\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"Clicks in the iframe\",\n      \"bind\": \"pick_count\",\n      \"precision\": 0,\n      \"default\": 0,\n      \"x\": 620,\n      \"y\": 0,\n      \"width\": 260,\n      \"height\": 64\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex809-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0f172a; color: #cbd5e1; font-family: system-ui, sans-serif; padding: 14px; }\n  #grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }\n  .sw { height: 52px; border-radius: 8px; cursor: pointer; border: 3px solid transparent; }\n  .sw.on { border-color: #f8fafc; box-shadow: 0 0 0 2px #0f172a inset; }\n  #out { margin-top: 14px; font-size: 14px; display: flex; align-items: center; gap: 10px; }\n  #chip { width: 28px; height: 28px; border-radius: 6px; border: 1px solid #334155; }\n  b { color: #f8fafc; }\n</style>\n<div id=\"grid\"></div>\n<div id=\"out\"><span id=\"chip\"></span><span id=\"msg\">Click a swatch — the value travels up to the controls above.</span></div>\n<script>\n  var PALETTE = ['#ef4444','#f97316','#eab308','#22c55e','#14b8a6','#38bdf8',\n                 '#6366f1','#a855f7','#ec4899','#f8fafc','#94a3b8','#0f172a'];\n  var grid = document.getElementById('grid');\n  var chip = document.getElementById('chip');\n  var msg = document.getElementById('msg');\n  var cells = {};\n\n  PALETTE.forEach(function (hex) {\n    var d = document.createElement('div');\n    d.className = 'sw';\n    d.style.background = hex;\n    d.title = hex;\n    d.addEventListener('click', function () {\n      var n = Number(nb.get('pick_count', 0)) + 1;\n      nb.set('picked_hex', hex);   // ← the round-trip write\n      nb.set('pick_count', n);\n    });\n    grid.appendChild(d);\n    cells[hex.toLowerCase()] = d;\n  });\n\n  function reflect() {\n    var cur = String(nb.get('picked_hex', '#38bdf8')).toLowerCase();\n    for (var k in cells) cells[k].classList.toggle('on', k === cur);\n    chip.style.background = cur;\n    msg.innerHTML = 'picked_hex = <b>' + cur + '</b> · clicks: <b>' + Number(nb.get('pick_count', 0)) + '</b>';\n  }\n\n  nb.onChange(reflect);\n  reflect();\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 560,
+          "height": 260,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex809-js01",
+      "kind": "js",
+      "source": "// Proof from the parent side: read the value the iframe wrote.\nconst hex = nb.get('picked_hex');\nconst clicks = nb.get('pick_count');\nconsole.log('value that came back from the iframe:', hex, '(' + typeof hex + ')');\nconsole.log('iframe reported', clicks, 'click(s)');\n\n// Round-trip the other way: write from JS, and the iframe will highlight it.\n// (Uncomment to try: nb.set('picked_hex', '#a855f7');)\n\nreturn {\n  picked_hex: { value: hex, type: typeof hex },      // string, set by the iframe\n  pick_count: { value: clicks, type: typeof clicks },// number, set by the iframe\n};"
+    },
+    {
+      "id": "c-ex809-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- Click any swatch — its hex appears in the **colour control**, the **readout**, and (after a re-run) the JS cell. One click, three surfaces, zero wiring: that's the shared nb bag.\n- Now change the **colour control** to a value that's *in* the palette (e.g. `#22c55e`). The iframe's `nb.onChange` outlines that swatch — the value went parent → iframe this time.\n- Watch **Clicks in the iframe** climb: the iframe increments `pick_count` itself and writes it back, so the parent's readout counts gestures that happened *inside* the sandbox.\n- In the JS cell, uncomment the `nb.set('picked_hex', '#a855f7')` line and re-run — the iframe highlights purple. Every actor (control, HTML, JS) is a peer on the same channel."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

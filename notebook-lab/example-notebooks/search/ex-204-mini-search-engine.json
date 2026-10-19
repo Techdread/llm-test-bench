@@ -1,0 +1,42 @@
+{
+  "title": "Mini Full-Text Search Engine",
+  "state": {
+    "query": "volcano island"
+  },
+  "cells": [
+    {
+      "id": "c-ex204-md01",
+      "kind": "md",
+      "source": "# Mini Full-Text Search Engine\n\nThe heart of every text search engine in ~50 lines of Python:\n\n1. **Tokenise** each document into lowercase words.\n2. Score each word per document with **TF-IDF**: frequent *in this document*, rare *across documents*.\n3. Rank documents by **cosine similarity** between the query vector and each document vector.\n\nThe Python cell reads its query from the notebook variable `query` (bound to the text box below), so the loop is: type → re-run the Python cell → results update."
+    },
+    {
+      "id": "c-ex204-py01",
+      "kind": "py",
+      "source": "import math\nimport re\n\nDOCS = {\n    \"Krakatoa\":        \"The volcano island of Krakatoa erupted with a blast heard thousands of miles away, and the eruption reshaped the entire island.\",\n    \"Reef life\":       \"A coral reef teems with fish, anemones and slow-growing coral colonies that build limestone over centuries in warm shallow water.\",\n    \"Sahara winds\":    \"Hot desert wind lifts sand from the Sahara and carries fine dust across the ocean, feeding distant rainforest soils.\",\n    \"Iceland\":         \"Iceland is a volcanic island where glaciers sit beside active volcano systems, and eruptions can melt glacial ice into floods.\",\n    \"Alpine glaciers\": \"A glacier grinds slowly down the alpine valley, carving rock and leaving moraines as the ice retreats each summer.\",\n    \"Pacific atolls\":  \"An atoll forms when a volcanic island sinks below the sea, leaving a ring of coral reef around a calm lagoon.\",\n    \"Monsoon\":         \"The monsoon wind reverses with the seasons, bringing months of heavy rain that flood rivers and fill reservoirs.\",\n    \"Sea ice\":         \"Polar sea ice grows in winter darkness and shrinks each summer, and its bright surface reflects sunlight back into space.\",\n    \"Dune fields\":     \"Wind builds desert dunes grain by grain, and the largest dune fields sing with a low hum as sand avalanches down their faces.\",\n    \"Hotspot chains\":  \"A volcanic hotspot stays put while the plate drifts over it, stamping out a chain of islands like Hawaii, oldest at one end.\",\n    \"Rainforest\":      \"A tropical rainforest recycles its own rain: trees pump water skyward, clouds form, and the forest waters itself.\",\n    \"Tsunami\":         \"An undersea earthquake or a collapsing volcano can push a tsunami across the ocean at the speed of a jet aircraft.\",\n}\n\ndef tokenize(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n# Document frequency: in how many docs does each word appear?\ndoc_tokens = {title: tokenize(text) for title, text in DOCS.items()}\ndf = {}\nfor tokens in doc_tokens.values():\n    for w in set(tokens):\n        df[w] = df.get(w, 0) + 1\n\nN = len(DOCS)\ndef idf(w):\n    return math.log(N / df[w]) if w in df else 0.0\n\n# TF-IDF vector per document (sparse dicts), pre-normalised.\ndef vectorize(tokens):\n    tf = {}\n    for w in tokens:\n        tf[w] = tf.get(w, 0) + 1\n    vec = {w: (count / len(tokens)) * idf(w) for w, count in tf.items()}\n    norm = math.sqrt(sum(v * v for v in vec.values())) or 1.0\n    return {w: v / norm for w, v in vec.items()}\n\ndoc_vecs = {title: vectorize(tokens) for title, tokens in doc_tokens.items()}\n\ndef search(query, top=5):\n    qvec = vectorize(tokenize(query))\n    scored = []\n    for title, dvec in doc_vecs.items():\n        score = sum(qvec.get(w, 0) * dvec.get(w, 0) for w in qvec)\n        if score > 0:\n            scored.append((score, title))\n    scored.sort(reverse=True)\n    return scored[:top]\n\nquery = nb.get(\"query\") or \"volcano island\"\nresults = search(query)\n\nprint(f'query: \"{query}\"')\nif not results:\n    print(\"no matches - every query word is either absent or in every document\")\nfor score, title in results:\n    print(f\"  {score:.3f}  {title}\")\n\nnb[\"search_results\"] = [\n    {\"title\": t, \"score\": round(s, 3), \"snippet\": DOCS[t][:110] + \"...\"}\n    for s, t in results\n]\nnb[\"search_query_echo\"] = query"
+    },
+    {
+      "id": "c-ex204-ui01",
+      "kind": "ui",
+      "source": "{\n  \"width\": 900,\n  \"height\": 110,\n  \"controls\": [\n    {\n      \"type\": \"text\",\n      \"label\": \"Query\",\n      \"bind\": \"query\",\n      \"default\": \"volcano island\",\n      \"placeholder\": \"e.g. glacier, coral reef, desert wind\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 560,\n      \"height\": 80\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex204-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0f172a; color: #e2e8f0; font-family: system-ui, sans-serif; padding: 16px; }\n  .result { border: 1px solid #334155; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; }\n  .title { font-weight: 600; color: #f8fafc; }\n  .score { float: right; font: 12px monospace; color: #a78bfa; }\n  .bar { height: 4px; background: #7c3aed; border-radius: 2px; margin: 6px 0; }\n  .snippet { font-size: 13px; color: #94a3b8; }\n  #q { color: #94a3b8; font-size: 13px; margin-bottom: 12px; }\n</style>\n<div id=\"q\">Run the Python cell to search.</div>\n<div id=\"results\"></div>\n<script>\n  function esc(s) {\n    return String(s).replace(/[&<>]/g, function (c) {\n      return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c];\n    });\n  }\n\n  function draw(state) {\n    var results = state.search_results;\n    if (!results) return;\n    document.getElementById('q').textContent =\n      results.length + ' result(s) for \"' + (state.search_query_echo || '') + '\"';\n    var maxScore = results.length ? results[0].score : 1;\n    document.getElementById('results').innerHTML = results.map(function (r) {\n      var width = Math.max(4, Math.round(100 * r.score / (maxScore || 1)));\n      return '<div class=\"result\">' +\n        '<span class=\"score\">' + r.score.toFixed(3) + '</span>' +\n        '<div class=\"title\">' + esc(r.title) + '</div>' +\n        '<div class=\"bar\" style=\"width:' + width + '%\"></div>' +\n        '<div class=\"snippet\">' + esc(r.snippet) + '</div>' +\n      '</div>';\n    }).join('') || '<div class=\"snippet\">No matches.</div>';\n  }\n\n  nb.onChange(draw);\n  draw(nb.all());\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 960,
+          "height": 460,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex204-md02",
+      "kind": "md",
+      "source": "## Why IDF matters\n\nTry the query `the ocean` — \"the\" appears in almost every document, so its IDF ≈ 0 and it contributes nothing; \"ocean\" decides the ranking alone. That one `log(N/df)` factor is what separates a search engine from string matching.\n\n## Try this\n\n- Query `glacier volcano` — Iceland should win because it is the only doc scoring on *both* words. Cosine similarity rewards covering more of the query.\n- Add a document of your own to `DOCS` and find a query that ranks it first.\n- Implement a **stop-word list** (skip `the`, `a`, `and` in `tokenize`) and check which rankings change (barely any — IDF was already doing that job).\n- Stretch: add naive **stemming** (strip trailing `s`) so `islands` matches `island`."
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

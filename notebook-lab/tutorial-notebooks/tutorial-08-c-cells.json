@@ -1,0 +1,27 @@
+{
+  "title": "08 C Cells",
+  "cells": [
+    {
+      "id": "c-t08-md01",
+      "kind": "md",
+      "source": "# 08 C Cells\n\nC cells run small single-file programs through JSCPP, a browser-side C interpreter. Use `printf` or `puts` for output.\n\nRun the C cell below, then run the JavaScript cell to read the value it publishes into the notebook bridge."
+    },
+    {
+      "id": "c-t08-c01",
+      "kind": "c",
+      "source": "#include <stdio.h>\n\nint main() {\n  int total = 0;\n  for (int i = 1; i <= 10; i++) {\n    total += i;\n  }\n  printf(\"Sum 1..10 = %d\\n\", total);\n  printf(\"__NB_SET__ {\\\"key\\\":\\\"c_total\\\",\\\"value\\\":%d}\\n\", total);\n  return 0;\n}"
+    },
+    {
+      "id": "c-t08-js01",
+      "kind": "js",
+      "source": "const total = nb.get('c_total');\nconsole.log(`C stored c_total = ${total}`);\nreturn { c_total: total, doubled: total * 2 };"
+    },
+    {
+      "id": "c-t08-md02",
+      "kind": "md",
+      "source": "## Notes\n\n- C support is intentionally small and educational, not a full native compiler.\n- `__NB_SET__` marker lines are consumed by Notebook Lab and do not appear in normal output when parsed successfully."
+    }
+  ],
+  "createdAt": "2026-04-24T00:00:00.000Z",
+  "updatedAt": "2026-04-24T00:00:00.000Z"
+}

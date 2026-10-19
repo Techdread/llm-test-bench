@@ -227,6 +227,9 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 28px
 .group-heading p { margin: 0; color: var(--muted); line-height: 1.6; }
 .project-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .project-grid.featured { grid-template-columns: repeat(2, 1fr); }
+.project-grid.featured > .wide { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 28px; align-items: center; }
+.project-card.wide .card-body { display: flex; flex-direction: column; height: 100%; }
+.project-card.wide .card-shot { position: relative; z-index: 1; display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 12px; }
 .project-grid.four { grid-template-columns: repeat(4, 1fr); }
 .project-card {
   position: relative; overflow: hidden; display: flex; flex-direction: column;
@@ -456,4 +459,10 @@ nav a[aria-current="page"] { color: var(--text); }
   li > strong > a { display: inline-flex; align-items: center; min-height: 32px; }
   .pipeline code { font-size: 1em; }
   .case-page code { font-size: .95em; }
+}
+
+/* The wide featured card puts its screenshot beside the text; stack them
+   once the featured grid itself drops to one column. */
+@media (max-width: 880px) {
+  .project-grid.featured > .wide { grid-template-columns: minmax(0, 1fr); }
 }

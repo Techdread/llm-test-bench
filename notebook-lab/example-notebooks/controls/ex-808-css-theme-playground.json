@@ -1,0 +1,39 @@
+{
+  "title": "CSS Theme Playground",
+  "cells": [
+    {
+      "id": "c-ex808-md01",
+      "kind": "md",
+      "source": "# CSS Theme Playground\n\n**Kinds on show:** `ui` → `html` (and a readout for export).\n\n**The one idea:** *controls map cleanly onto CSS custom properties.* Each slider/colour picker owns one `--variable`; the HTML cell copies the nb values onto `:root` as `--bg`, `--accent`, `--radius`, and the card restyles itself with plain CSS. No per-property JavaScript — set the variables and the cascade does the work.\n\nThere's a small twist that previews the next notebook: the iframe **writes back**. On every change it composes the CSS text and calls `nb.set('css_export', css)`. The `readout` on the right is bound to `css_export`, so it shows the exact stylesheet your theme produces — a live export, generated inside the iframe and surfaced back in the parent. (The iframe guards against re-writing an identical string, so the write-back doesn't echo into a loop.)"
+    },
+    {
+      "id": "c-ex808-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"CSS Theme Playground\",\n  \"description\": \"Every control is bound to a CSS custom property on the card below. The readout shows the CSS the iframe wrote back — live.\",\n  \"width\": 920,\n  \"height\": 320,\n  \"controls\": [\n    {\n      \"type\": \"color\",\n      \"label\": \"Card background\",\n      \"bind\": \"bg\",\n      \"default\": \"#1e293b\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 260,\n      \"height\": 64\n    },\n    {\n      \"type\": \"color\",\n      \"label\": \"Accent\",\n      \"bind\": \"accent\",\n      \"default\": \"#38bdf8\",\n      \"x\": 280,\n      \"y\": 0,\n      \"width\": 260,\n      \"height\": 64\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Corner radius\",\n      \"bind\": \"radius\",\n      \"default\": 16,\n      \"min\": 0,\n      \"max\": 48,\n      \"step\": 1,\n      \"suffix\": \"px\",\n      \"x\": 0,\n      \"y\": 84,\n      \"width\": 260,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Shadow blur\",\n      \"bind\": \"shadow\",\n      \"default\": 24,\n      \"min\": 0,\n      \"max\": 80,\n      \"step\": 1,\n      \"suffix\": \"px\",\n      \"x\": 280,\n      \"y\": 84,\n      \"width\": 260,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Font size\",\n      \"bind\": \"font_size\",\n      \"default\": 18,\n      \"min\": 12,\n      \"max\": 34,\n      \"step\": 1,\n      \"suffix\": \"px\",\n      \"x\": 0,\n      \"y\": 180,\n      \"width\": 260,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Hue rotate\",\n      \"bind\": \"hue\",\n      \"default\": 0,\n      \"min\": 0,\n      \"max\": 360,\n      \"step\": 1,\n      \"suffix\": \"°\",\n      \"x\": 280,\n      \"y\": 180,\n      \"width\": 260,\n      \"height\": 76\n    },\n    {\n      \"type\": \"readout\",\n      \"label\": \"Generated CSS (written back by the iframe)\",\n      \"bind\": \"css_export\",\n      \"x\": 560,\n      \"y\": 0,\n      \"width\": 360,\n      \"height\": 236\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex808-html01",
+      "kind": "html",
+      "source": "<style>\n  :root {\n    --bg: #1e293b; --accent: #38bdf8; --radius: 16px; --shadow: 24px;\n    --font-size: 18px; --hue: 0deg;\n  }\n  body { margin: 0; background: #0b1020; display: flex; align-items: center;\n         justify-content: center; height: 100vh; font-family: system-ui, sans-serif; }\n  .card {\n    width: 320px; padding: 28px; color: #f8fafc;\n    background: var(--bg);\n    border-radius: var(--radius);\n    box-shadow: 0 8px var(--shadow) rgba(0,0,0,0.6);\n    border-top: 4px solid var(--accent);\n    font-size: var(--font-size);\n    filter: hue-rotate(var(--hue));\n  }\n  .card h2 { margin: 0 0 10px; color: var(--accent); }\n  .card button { margin-top: 16px; padding: 8px 16px; border: 0; border-radius: 8px;\n                 background: var(--accent); color: #06202b; font-weight: 600; cursor: pointer; }\n</style>\n<div class=\"card\">\n  <h2>Live Theme</h2>\n  <div>Every property here is a CSS variable driven by the controls above. Drag a slider and this card restyles instantly.</div>\n  <button>Accent button</button>\n</div>\n<script>\n  var root = document.documentElement;\n  var lastCss = null;\n\n  function apply() {\n    var s = {\n      bg: nb.get('bg', '#1e293b'),\n      accent: nb.get('accent', '#38bdf8'),\n      radius: Number(nb.get('radius', 16)),\n      shadow: Number(nb.get('shadow', 24)),\n      font: Number(nb.get('font_size', 18)),\n      hue: Number(nb.get('hue', 0))\n    };\n    root.style.setProperty('--bg', s.bg);\n    root.style.setProperty('--accent', s.accent);\n    root.style.setProperty('--radius', s.radius + 'px');\n    root.style.setProperty('--shadow', s.shadow + 'px');\n    root.style.setProperty('--font-size', s.font + 'px');\n    root.style.setProperty('--hue', s.hue + 'deg');\n\n    var css = '.card {\\n' +\n      '  background: ' + s.bg + ';\\n' +\n      '  border-top: 4px solid ' + s.accent + ';\\n' +\n      '  border-radius: ' + s.radius + 'px;\\n' +\n      '  box-shadow: 0 8px ' + s.shadow + 'px rgba(0,0,0,.6);\\n' +\n      '  font-size: ' + s.font + 'px;\\n' +\n      '  filter: hue-rotate(' + s.hue + 'deg);\\n}';\n\n    // Guard: only write when the CSS actually changed, so the echoed patch\n    // doesn't drive an infinite onChange → set → onChange loop.\n    if (css !== lastCss) { lastCss = css; nb.set('css_export', css); }\n  }\n\n  nb.onChange(apply);\n  apply();\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 560,
+          "height": 340,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex808-js01",
+      "kind": "js",
+      "source": "// Live values — the theme, plus the CSS the iframe generated for the readout.\nconst val = (k) => ({ value: nb.get(k), type: typeof nb.get(k) });\nreturn {\n  bg:         val('bg'),\n  accent:     val('accent'),\n  radius:     val('radius'),     // number → 'radiuspx' in the CSS\n  hue:        val('hue'),\n  css_export: nb.get('css_export'),  // the full stylesheet string, written back by the iframe\n};"
+    },
+    {
+      "id": "c-ex808-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- Drag **Hue rotate** to 180 — the whole card shifts colour via one `filter: hue-rotate()`, no per-element edits. CSS variables + one filter = a theme knob.\n- Pick a light **Card background** and a dark **Accent** for an inverted look; watch the *Generated CSS* readout update in step. Copy that block straight into a real stylesheet.\n- Set **Shadow blur** to 0 for a flat card, or to 80 for a floating one. The readout always reflects exactly what's on screen.\n- Notice the readout is *fed by the iframe*, not by a control — that's the write-back path (`nb.set` from HTML). The next notebook, **Round-trip**, makes that the whole point."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}

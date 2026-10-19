@@ -1,0 +1,39 @@
+{
+  "title": "Parametric & Polar Plotter",
+  "cells": [
+    {
+      "id": "c-ex811-md01",
+      "kind": "md",
+      "source": "# Parametric & Polar Plotter\n\n**Kinds on show:** `ui` → `html`.\n\n**The one idea:** *one `select` can switch an entire model.* The same three numbers — `a`, `b`, `δ` — feed two different curve families, and the `mode` control decides which formula the canvas uses:\n\n- **Parametric (Lissajous):** `x = sin(a·t + δ)`, `y = sin(b·t)`, for `t` in `[0, 2π]`. The ratio `a:b` sets the number of lobes; `δ` rotates/pinches the figure.\n- **Polar (rose):** `r = cos((a/b)·θ)`, plotted for `θ` in `[0, 2π·b]` so the petals close. The rational `a/b` decides how many petals and whether the curve ever closes.\n\nBecause `mode` binds a plain string, the HTML cell just branches on it in `nb.onChange`. No re-run, no rebuild — flip the select and the whole picture changes."
+    },
+    {
+      "id": "c-ex811-ui01",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Parametric & Polar Plotter\",\n  \"description\": \"Two families from three numbers: Lissajous figures (parametric) and rose curves (polar). The mode select swaps the maths; a/b/δ shape the curve.\",\n  \"width\": 900,\n  \"height\": 220,\n  \"controls\": [\n    {\n      \"type\": \"select\",\n      \"label\": \"Mode\",\n      \"bind\": \"mode\",\n      \"options\": [\n        {\n          \"value\": \"parametric\",\n          \"label\": \"Parametric (Lissajous)\"\n        },\n        {\n          \"value\": \"polar\",\n          \"label\": \"Polar (rose)\"\n        }\n      ],\n      \"default\": \"parametric\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 300,\n      \"height\": 64\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"a\",\n      \"bind\": \"a\",\n      \"default\": 3,\n      \"min\": 1,\n      \"max\": 9,\n      \"step\": 1,\n      \"x\": 320,\n      \"y\": 0,\n      \"width\": 260,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"b\",\n      \"bind\": \"b\",\n      \"default\": 2,\n      \"min\": 1,\n      \"max\": 9,\n      \"step\": 1,\n      \"x\": 600,\n      \"y\": 0,\n      \"width\": 260,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Phase δ (parametric only)\",\n      \"bind\": \"delta\",\n      \"default\": 1.57,\n      \"min\": 0,\n      \"max\": 3.14,\n      \"step\": 0.01,\n      \"precision\": 2,\n      \"suffix\": \" rad\",\n      \"x\": 320,\n      \"y\": 96,\n      \"width\": 260,\n      \"height\": 76\n    },\n    {\n      \"type\": \"color\",\n      \"label\": \"Stroke\",\n      \"bind\": \"stroke\",\n      \"default\": \"#f472b6\",\n      \"x\": 0,\n      \"y\": 84,\n      \"width\": 300,\n      \"height\": 64\n    },\n    {\n      \"type\": \"checkbox\",\n      \"label\": \"Fade tail\",\n      \"bind\": \"fade\",\n      \"default\": true,\n      \"x\": 600,\n      \"y\": 96,\n      \"width\": 260,\n      \"height\": 48\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-ex811-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0b1020; font-family: system-ui, sans-serif; }\n  #wrap { padding: 10px; }\n  canvas { background: #0f172a; border-radius: 12px; display: block; }\n  #cap { color: #94a3b8; font-size: 13px; padding: 6px 2px; }\n</style>\n<div id=\"wrap\">\n  <canvas id=\"c\" width=\"420\" height=\"420\"></canvas>\n  <div id=\"cap\"></div>\n</div>\n<script>\n  var cv = document.getElementById('c');\n  var ctx = cv.getContext('2d');\n  var cap = document.getElementById('cap');\n  var W = cv.width, H = cv.height, CX = W / 2, CY = H / 2, R = W / 2 - 24;\n\n  function draw() {\n    var mode = nb.get('mode', 'parametric');\n    var a = Number(nb.get('a', 3));\n    var b = Number(nb.get('b', 2));\n    var delta = Number(nb.get('delta', 1.57));\n    var stroke = nb.get('stroke', '#f472b6');\n    var fade = !!nb.get('fade', true);\n\n    ctx.clearRect(0, 0, W, H);\n    var N = 2000, pts = [];\n    if (mode === 'polar') {\n      var tmax = 2 * Math.PI * b;\n      for (var i = 0; i <= N; i++) {\n        var th = tmax * i / N;\n        var r = Math.cos((a / b) * th) * R;\n        pts.push([CX + r * Math.cos(th), CY + r * Math.sin(th)]);\n      }\n      cap.textContent = 'polar rose · r = cos((' + a + '/' + b + ')·θ) · ' +\n        (a % 2 === 0 || b % 2 === 0 ? '' : (a * 2) + ' petals-ish');\n    } else {\n      for (var j = 0; j <= N; j++) {\n        var t = 2 * Math.PI * j / N;\n        pts.push([CX + R * Math.sin(a * t + delta), CY + R * Math.sin(b * t)]);\n      }\n      cap.textContent = 'Lissajous · x=sin(' + a + 't+' + delta.toFixed(2) + '), y=sin(' + b + 't)';\n    }\n\n    ctx.lineWidth = 2; ctx.lineJoin = 'round';\n    if (fade) {\n      for (var s = 1; s < pts.length; s++) {\n        ctx.globalAlpha = 0.15 + 0.85 * s / pts.length;\n        ctx.strokeStyle = stroke;\n        ctx.beginPath(); ctx.moveTo(pts[s - 1][0], pts[s - 1][1]);\n        ctx.lineTo(pts[s][0], pts[s][1]); ctx.stroke();\n      }\n      ctx.globalAlpha = 1;\n    } else {\n      ctx.strokeStyle = stroke; ctx.beginPath();\n      ctx.moveTo(pts[0][0], pts[0][1]);\n      for (var q = 1; q < pts.length; q++) ctx.lineTo(pts[q][0], pts[q][1]);\n      ctx.stroke();\n    }\n  }\n\n  nb.onChange(draw);\n  draw();\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 460,
+          "height": 460,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-ex811-js01",
+      "kind": "js",
+      "source": "// Live values — the three numbers and the mode driving both curve families.\nconst val = (k) => ({ value: nb.get(k), type: typeof nb.get(k) });\nreturn {\n  mode:  val('mode'),   // string — the branch selector\n  a:     val('a'),      // number\n  b:     val('b'),      // number\n  delta: val('delta'),\n  ratio: nb.get('a') + ':' + nb.get('b'),  // the a:b ratio is what shapes both families\n};"
+    },
+    {
+      "id": "c-ex811-md02",
+      "kind": "md",
+      "source": "## Try this\n\n- In **Parametric** mode set `a=3, b=2` — the classic 3:2 Lissajous knot. Now sweep **Phase δ** from 0 to π and watch the figure breathe from a line to an open loop.\n- Set `a=b` (say 4:4) in parametric mode — the curve collapses toward an ellipse/line, because equal frequencies trace a single closed loop. The ratio, not the absolute values, is what matters.\n- Switch to **Polar** and try `a=5, b=1` for a five-petal rose, then `a=4, b=1` — even numerators give **2a** petals, odd give **a**. A tiny number-theory lesson hiding in a flower.\n- Toggle **Fade tail** off for a solid outline, or on to see the drawing direction.\n- **Future upgrade (noted in the spec):** an `xy-pad` control would let you drag `(a, b)` as one point on a 2D pad instead of two sliders — a cleaner input for this exact toy. It's a deferred control type, so we stick with sliders here."
+    }
+  ],
+  "createdAt": "2026-07-11T00:00:00.000Z",
+  "updatedAt": "2026-07-11T00:00:00.000Z"
+}
