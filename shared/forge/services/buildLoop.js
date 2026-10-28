@@ -120,6 +120,19 @@ export async function runBuild({
   // and `completionEvidence` decides when a project is finished.
   previewInspector = null, projectRunner = null, completionEvidence = inspectProjectCompletion,
   completion = modelCompletion,
+  // Limit-aware continuation (spec 343). All three are off unless supplied, so
+  // existing callers are unchanged.
+  // - `resume` { messages, turn } continues a build from a checkpoint: the
+  //   history is restored and turn numbering carries on from `turn`.
+  // - `onCheckpoint({ turn, messages, at })` is awaited at the start of every
+  //   turn after the first, i.e. between turns, with the compacted history the
+  //   next request would send. A limit hit inside a turn resumes from the
+  //   checkpoint taken just before it, so that turn is simply retried.
+  // - `verifyResponse(response)` runs on each model response BEFORE its tool
+  //   calls execute; throwing stops the build there, so a substitute model
+  //   that answered in place of the requested one never writes a file.
+  resume = null, onCheckpoint = null, verifyResponse = null,
+  telemetryMeta = null,
 }) {
   budgets = normalizeBudgets({ ...budgets, maxTurns });
   maxTurns = budgets.maxTurns;
@@ -128,10 +141,13 @@ export async function runBuild({
     ? [...new Set(capabilities)]
     : null; // Legacy direct callers retain the historical complete tool set.
   const tools = getOpenAIToolsArray({ imageGen: imageAssets, capabilities: allowedCapabilities });
-  const messages = [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: task },
-  ];
+  const messages = resume?.messages?.length
+    ? clone(resume.messages)
+    : [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: task },
+    ];
+  const startTurn = Math.max(0, Number(resume?.turn) || 0);
   const steps = [];
   const capabilityAudit = [];
   const telemetry = {
@@ -165,8 +181,13 @@ export async function runBuild({
   let stopReason = null, lastAction = null;
   let noToolStreak = 0;
 
-  for (let turn = 0; turn < maxTurns; turn++) {
+  for (let turn = startTurn; turn < maxTurns; turn++) {
     if (abortSignal?.aborted) throw new Error('Run cancelled');
+    if (onCheckpoint && turn > startTurn) {
+      try {
+        await onCheckpoint({ turn, messages: compactToolHistory(messages), at: new Date().toISOString() });
+      } catch (error) { console.warn('[buildLoop] checkpoint failed', error); }
+    }
     await pauseGate({ phase: 'before-turn', turn: turn + 1 });
 
     // Snapshot the exact request going on the wire and surface it as a *pending*
@@ -208,11 +229,13 @@ export async function runBuild({
         returnResponse: true, signal: responseController.signal,
         timeouts: { streamMs: budgets.idleTimeoutSeconds * 1000, generationMs: budgets.idleTimeoutSeconds * 1000 },
         onChunk: resetIdle,
+        ...(telemetryMeta ? { telemetryMeta } : {}),
       });
     } finally {
       clearTimeout(idleTimer);
       abortSignal?.removeEventListener('abort', abortParent);
     }
+    if (verifyResponse) await verifyResponse(response, { turn: turn + 1 });
     const choice = response.choices?.[0];
     if (!choice) throw new Error('No response from model');
 

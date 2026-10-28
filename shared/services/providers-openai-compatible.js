@@ -12,6 +12,7 @@
 // call the endpoint directly instead — correct when the server does send CORS
 // headers, and required when the page is not served by serve.py.
 
+import { readErrorBody, withHttpDetails } from './provider-errors.js';
 import { applyParams, withUsageReporting, createRunStats } from './gen-params.js';
 import { localNetworkFetch } from './local-network.js';
 import { isPublicDistribution } from './distribution.js';
@@ -71,15 +72,6 @@ function requestHeaders(provider) {
   const headers = { 'Content-Type': 'application/json' };
   if (provider.apiKey) headers.Authorization = `Bearer ${provider.apiKey}`;
   return headers;
-}
-
-async function readError(res) {
-  try {
-    const data = await res.json();
-    return data.error?.message || data.message || `HTTP ${res.status}`;
-  } catch {
-    return `HTTP ${res.status}: ${res.statusText}`;
-  }
 }
 
 // A proxied 404 with no body is what a plain static server returns for
@@ -144,6 +136,14 @@ function messagesForPrompt(systemPrompt, userPrompt) {
 
 function providerError(provider, message) {
   return new Error(`${provider.name}: ${message}`);
+}
+
+// The provider's own error message (or the HTTP status), plus the status, limit headers and
+// error metadata a rate-limited caller needs to know when to carry on.
+async function httpFailure(provider, res) {
+  const { message, metadata, body } = await readErrorBody(res);
+  const text = body ? (message || `HTTP ${res.status}`) : `HTTP ${res.status}: ${res.statusText}`;
+  return withHttpDetails(providerError(provider, `${text}${proxyUnavailableHint(provider, res)}`), res, { metadata });
 }
 
 /** Validate an OpenAI-compatible provider config. */
@@ -331,7 +331,7 @@ export async function streamChat({ provider, modelId, systemPrompt, userPrompt, 
   const { res } = call;
   if (!res.ok) {
     call.release();
-    throw providerError(provider, `${await readError(res)}${proxyUnavailableHint(provider, res)}`);
+    throw await httpFailure(provider, res);
   }
 
   if (!onChunk) {
@@ -359,6 +359,8 @@ async function readStreamingResponse(call, provider, onChunk, onStats, stats, { 
   let buffer = '';
   let full = '';
   let finishReason = null;
+  let answeredBy = null;
+  let usage = null;
   const toolCallParts = [];
 
   try {
@@ -381,7 +383,8 @@ async function readStreamingResponse(call, provider, onChunk, onStats, stats, { 
           call.telemetry?.mark('firstTool');
           delta.tool_calls.forEach(part => addToolCallDelta(toolCallParts, part));
         }
-        if (event.parsed?.usage) stats.setUsage(event.parsed.usage);
+        if (event.parsed?.usage) { stats.setUsage(event.parsed.usage); usage = event.parsed.usage; }
+        if (event.parsed?.model) answeredBy = event.parsed.model;
         if (delta.content) {
           stats.markFirstToken();
           full += delta.content;
@@ -398,7 +401,7 @@ async function readStreamingResponse(call, provider, onChunk, onStats, stats, { 
       // much text had already streamed — otherwise a hard stop just becomes a
       // short answer and the agent loop marches on to the next turn.
       if (signal?.aborted) throw new DOMException('Request aborted by caller', 'AbortError');
-      if (full) return returnResponse ? openAiResponse(full, toolCallParts, finishReason) : full;
+      if (full) return returnResponse ? openAiResponse(full, toolCallParts, finishReason, { model: answeredBy, usage }) : full;
       throw providerError(provider, 'Stream timed out');
     }
     throw e;
@@ -408,14 +411,19 @@ async function readStreamingResponse(call, provider, onChunk, onStats, stats, { 
 
   onStats?.(stats.finish());
   if (!returnResponse) return full;
-  return openAiResponse(full, toolCallParts, finishReason);
+  return openAiResponse(full, toolCallParts, finishReason, { model: answeredBy, usage });
 }
 
-function openAiResponse(content, toolCallParts, finishReason) {
+// `model` is which model actually answered (a router can substitute one) and
+// `usage` the final usage chunk; both are absent when the server sent neither.
+function openAiResponse(content, toolCallParts, finishReason, { model = null, usage = null } = {}) {
   const message = { role: 'assistant', content: content || null };
   const toolCalls = normalizedToolCalls(toolCallParts);
   if (toolCalls.length) message.tool_calls = toolCalls;
-  return { choices: [{ message, finish_reason: finishReason || 'stop' }] };
+  const response = { choices: [{ message, finish_reason: finishReason || 'stop' }] };
+  if (model) response.model = model;
+  if (usage) response.usage = usage;
+  return response;
 }
 
 /** Raw non-streaming completion, including tools. */
@@ -428,7 +436,7 @@ export async function chatCompletion({ provider, modelId, messages, tools, toolC
   const call = await postChat(provider, body, { timeouts, telemetry });
   const { res } = call;
   try {
-    if (!res.ok) throw providerError(provider, `${await readError(res)}${proxyUnavailableHint(provider, res)}`);
+    if (!res.ok) throw await httpFailure(provider, res);
     const data = await res.json();
     if (telemetry) createRunStats(undefined, telemetry).setUsage(data?.usage);
     return data;
@@ -450,7 +458,7 @@ export async function streamChatCompletion({
   const call = await postChat(provider, body, { stream: true, signal, timeouts, telemetry });
   if (!call.res.ok) {
     call.release();
-    throw providerError(provider, `${await readError(call.res)}${proxyUnavailableHint(provider, call.res)}`);
+    throw await httpFailure(provider, call.res);
   }
   return readStreamingResponse(call, provider, onChunk, null, createRunStats(undefined, telemetry), { returnResponse });
 }

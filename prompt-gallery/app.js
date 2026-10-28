@@ -14,6 +14,7 @@ import { ImportPromptsDialog } from './components/ImportPromptsDialog.js';
 import { RefineView } from './components/RefineView.js';
 import { BatchRunDialog } from './components/BatchRunDialog.js';
 import { runHtmlSandbox, runStatusLabel } from './services/sandboxRunner.js';
+import { addConsoleEntry, consoleCounts, mergePreviewErrors } from './services/previewConsole.js';
 import { planRunMerge } from './services/runs.js';
 import { withRating, ratingFromKey, RATING_MAX } from './services/rating.js';
 import { auditHtml, healHtml, repairAgainstAudit } from './services/refine.js';
@@ -121,6 +122,12 @@ function App() {
   const [refineSession, setRefineSession] = useState(null);
   const [createRunStatus, setCreateRunStatus] = useState(null); // sandbox result for the Create preview
   const createRunTokenRef = useRef(0);
+  // What the live Create preview has reported, and whether the bottom-left
+  // panel shows the code or those errors.
+  const [previewConsole, setPreviewConsole] = useState([]);
+  const [responseView, setResponseView] = useState('code');
+  const handlePreviewConsoleEntry = useCallback(entry => setPreviewConsole(list => addConsoleEntry(list, entry)), []);
+  const handlePreviewConsoleReset = useCallback(() => setPreviewConsole([]), []);
 
   // Provider/model state
   const [allModels, setAllModels] = useState([]);
@@ -1057,9 +1064,10 @@ function App() {
       prompt,
       model: model || modelInfo?.displayLabel || modelInfo?.name || '',
       html: response,
-      runStatus: createRunStatus && !createRunStatus.running ? createRunStatus : null,
+      // Heal also sees what the live preview threw, which the short hidden check can miss.
+      runStatus: mergePreviewErrors(createRunStatus && !createRunStatus.running ? createRunStatus : null, previewConsole),
     });
-  }, [response, prompt, editingId, model, allModels, selectedProviderId, selectedModelId, createRunStatus, handleOpenRefine, addToast]);
+  }, [response, prompt, editingId, model, allModels, selectedProviderId, selectedModelId, createRunStatus, previewConsole, handleOpenRefine, addToast]);
 
   const handleRefineGeneration = useCallback(async (id) => {
     if (!rootHandle) return;
@@ -1427,7 +1435,9 @@ function App() {
         />`;
 
       case 'create':
-      default:
+      default: {
+        const previewErrors = consoleCounts(previewConsole).errors;
+        const checkFailed = !!(createRunStatus && !createRunStatus.running && (createRunStatus.errors?.length || createRunStatus.timedOut));
         return html`
           <div class="create-view">
             <${PromptEditor}
@@ -1441,6 +1451,11 @@ function App() {
               theme=${theme}
               onMorph=${crossAppHandoffsEnabled(undefined, 'code-morph-lab-v3') ? handleMorphCurrent : null}
               onSavePromptToLibrary=${() => handleOpenPromptForm({ prompt })}
+              consoleEntries=${previewConsole}
+              checkStatus=${createRunStatus}
+              responseView=${responseView}
+              onResponseViewChange=${setResponseView}
+              onClearConsole=${handlePreviewConsoleReset}
             />
             <div class="create-right">
               <${AgentRunTrace} run=${agentRun} />
@@ -1449,26 +1464,43 @@ function App() {
                   ${createRunStatus?.running
                     ? html`<span class="create-run-label pending"><i class="fa-solid fa-spinner fa-spin"></i> checking...</span>`
                     : createRunStatus
-                      ? html`
-                          <span class=${`create-run-label ${createRunStatus.errors?.length || createRunStatus.timedOut ? 'error' : 'ok'}`}>
-                            <i class=${`fa-solid ${createRunStatus.errors?.length || createRunStatus.timedOut ? 'fa-triangle-exclamation' : 'fa-circle-check'}`}></i>
+                      ? checkFailed
+                        ? html`
+                          <button class="create-run-label error" onClick=${() => setResponseView('errors')} title="Show the errors">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            ${runStatusLabel(createRunStatus)}
+                          </button>
+                        `
+                        : html`
+                          <span class="create-run-label ok">
+                            <i class="fa-solid fa-circle-check"></i>
                             ${runStatusLabel(createRunStatus)}
                           </span>
                         `
                       : null
                   }
+                  ${previewErrors > 0 && html`
+                    <button class="create-run-label error" onClick=${() => setResponseView('errors')} title="Show the errors">
+                      <i class="fa-solid fa-bug"></i>
+                      ${previewErrors} error${previewErrors === 1 ? '' : 's'} in the preview
+                    </button>
+                  `}
                   <span class="library-card-actions-spacer"></span>
                   <button class="btn btn-sm" onClick=${handleRefineCurrent} title="Open in the Refine tab to heal errors or add features">
                     <i class="fa-solid fa-screwdriver-wrench"></i>
-                    ${createRunStatus && !createRunStatus.running && (createRunStatus.errors?.length || createRunStatus.timedOut)
-                      ? 'Heal in Refine' : 'Refine'}
+                    ${checkFailed || previewErrors > 0 ? 'Heal in Refine' : 'Refine'}
                   </button>
                 </div>
               `}
-              <${PreviewPane} htmlContent=${response} />
+              <${PreviewPane}
+                htmlContent=${response}
+                onConsoleEntry=${handlePreviewConsoleEntry}
+                onConsoleReset=${handlePreviewConsoleReset}
+              />
             </div>
           </div>
         `;
+      }
     }
   };
 

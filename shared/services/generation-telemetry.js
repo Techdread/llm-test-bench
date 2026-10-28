@@ -372,6 +372,9 @@ export function startGeneration(meta = {}) {
         modelId: meta.modelId || null,
         agentId: meta.agentId || null,
         ensemble: meta.ensemble || null,
+        // Free-form grouping a caller supplies through telemetryMeta, e.g.
+        // Showdown Forge's { launchId, laneIndex } so one launch can be filtered.
+        tags: meta.tags && typeof meta.tags === 'object' ? { ...meta.tags } : null,
         streamed: meta.streamed ?? null,
         phases: { ...phases },
         observed: Object.keys(phases),

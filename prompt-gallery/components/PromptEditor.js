@@ -6,6 +6,7 @@ import {
   formatTokensPerSecond,
   tokensPerSecond,
 } from '../services/batchMetrics.js';
+import { consoleCounts, entryLine, formatConsoleForCopy } from '../services/previewConsole.js';
 
 export function PromptEditor({
   prompt,
@@ -18,6 +19,11 @@ export function PromptEditor({
   theme,
   onMorph,
   onSavePromptToLibrary,
+  consoleEntries = [],
+  checkStatus = null,
+  responseView = 'code',
+  onResponseViewChange,
+  onClearConsole,
 }) {
   const editorRef = useRef(null);
   const containerRef = useRef(null);
@@ -31,6 +37,16 @@ export function PromptEditor({
   const reportedTokens = completionTokenCount(responseStats);
   const responseTokens = reportedTokens ?? estimatedTokenCount(response);
   const responseTokenRate = tokensPerSecond(responseStats, responseTokens, responseTiming, rateClock);
+  // A half-written page throws on its unfinished scripts, so nothing is
+  // counted until the generation ends.
+  const liveEntries = isGenerating ? [] : consoleEntries;
+  const liveCounts = consoleCounts(liveEntries);
+  const checkErrors = checkStatus && !checkStatus.running
+    ? (checkStatus.timedOut ? ['The automatic check timed out — possible infinite loop or blocked load'] : (checkStatus.errors || []))
+    : [];
+  const errorTotal = liveCounts.errors + checkErrors.length;
+  const showErrors = responseView === 'errors';
+  const pendingJumpRef = useRef(null);
 
   useEffect(() => {
     if (!isGenerating || !responseCharacters || !responseTiming?.startedAt) return undefined;
@@ -100,6 +116,23 @@ export function PromptEditor({
     observer.observe(containerRef.current);
     return () => observer.disconnect();
   }, []);
+
+  // "line N" in the errors list: back to the code, then to that line.
+  useEffect(() => {
+    const editor = editorRef.current;
+    const jump = pendingJumpRef.current;
+    if (showErrors || !editor || !jump) return;
+    pendingJumpRef.current = null;
+    editor.resize(true);
+    editor.gotoLine(jump.line, Math.max(0, jump.col - 1), true);
+    editor.scrollToLine(jump.line, true, true, () => {});
+    editor.focus();
+  }, [showErrors]);
+
+  const jumpToLine = (at) => {
+    pendingJumpRef.current = at;
+    onResponseViewChange?.('code');
+  };
 
   useEffect(() => {
     if (!showFullscreenPreview) return;
@@ -176,7 +209,9 @@ export function PromptEditor({
       <!-- Response Section -->
       <div class="response-section">
         <div class="section-header">
-          <span><i class="fa-solid fa-code"></i> HTML Response</span>
+          ${showErrors
+            ? html`<span><i class="fa-solid fa-bug"></i> Errors</span>`
+            : html`<span><i class="fa-solid fa-code"></i> HTML Response</span>`}
           <div class="section-header-actions">
             ${responseCharacters > 0 && html`
               <div class="response-metrics" aria-label="HTML response generation metrics">
@@ -187,6 +222,22 @@ export function PromptEditor({
                 <span>${formatTokensPerSecond(responseTokenRate)}</span>
               </div>
             `}
+            <button
+              class=${`btn-icon response-view-toggle ${showErrors ? 'active' : ''} ${errorTotal ? 'has-errors' : liveCounts.warnings ? 'has-warnings' : ''}`}
+              onClick=${() => onResponseViewChange?.(showErrors ? 'code' : 'errors')}
+              title=${showErrors
+                ? 'Show the generated code'
+                : errorTotal
+                  ? `Show errors (${errorTotal})`
+                  : liveCounts.warnings ? `Show warnings (${liveCounts.warnings})` : 'Show errors (none so far)'}
+              aria-pressed=${showErrors}
+              style=${{ fontSize: '12px' }}
+            >
+              <i class=${`fa-solid ${showErrors ? 'fa-code' : 'fa-bug'}`}></i>
+              ${!showErrors && (errorTotal || liveCounts.warnings) ? html`
+                <span class="response-view-badge">${errorTotal || liveCounts.warnings}</span>
+              ` : null}
+            </button>
             <button
               class=${`btn-icon copy-btn ${copiedTarget === 'response' ? 'copied' : ''}`}
               onClick=${() => copyText(response, 'response')}
@@ -218,7 +269,79 @@ export function PromptEditor({
             `}
           </div>
         </div>
-        <div class="editor-container" ref=${containerRef}></div>
+        <div class="editor-container" ref=${containerRef} hidden=${showErrors}></div>
+        ${showErrors && html`
+          <div class="response-errors" aria-label="Errors from the generated page">
+            <div class="response-errors-bar">
+              <span>
+                ${isGenerating
+                  ? 'Errors appear once the generation finishes.'
+                  : `Preview: ${liveCounts.errors} error${liveCounts.errors === 1 ? '' : 's'}, ${liveCounts.warnings} warning${liveCounts.warnings === 1 ? '' : 's'}`}
+              </span>
+              <span class="library-card-actions-spacer"></span>
+              <button
+                class=${`btn btn-sm ${copiedTarget === 'errors' ? 'copied' : ''}`}
+                onClick=${() => copyText([
+                  formatConsoleForCopy(liveEntries),
+                  checkErrors.length ? `Automatic check:\n${checkErrors.join('\n')}` : '',
+                ].filter(Boolean).join('\n\n'), 'errors')}
+                disabled=${!liveEntries.length && !checkErrors.length}
+                title="Copy every error and warning as text"
+              >
+                <i class=${`fa-solid ${copiedTarget === 'errors' ? 'fa-check' : 'fa-copy'}`}></i> Copy
+              </button>
+              <button class="btn btn-sm" onClick=${onClearConsole} disabled=${!liveEntries.length} title="Clear the preview's list (it refills as the page runs)">
+                <i class="fa-solid fa-eraser"></i> Clear
+              </button>
+            </div>
+            <div class="response-errors-list">
+              ${!isGenerating && !liveEntries.length && !checkErrors.length && html`
+                <div class="response-errors-empty">
+                  <i class="fa-solid fa-circle-check"></i>
+                  ${response
+                    ? 'No errors or warnings from the preview so far. Anything it reports while you use it appears here.'
+                    : 'Generate or paste HTML; its errors appear here.'}
+                </div>
+              `}
+              ${liveEntries.map(entry => {
+                const at = entryLine(entry);
+                return html`
+                  <div class=${`response-error ${entry.level}`} key=${entry.key}>
+                    <i class=${`fa-solid ${entry.level === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-xmark'}`}></i>
+                    <div class="response-error-body">
+                      <div class="response-error-message">${entry.message}</div>
+                      <div class="response-error-meta">
+                        ${at && html`
+                          <button class="response-error-line" onClick=${() => jumpToLine(at)} title="Show this line in the code">
+                            line ${at.line}${at.col ? `:${at.col}` : ''}
+                          </button>
+                        `}
+                        ${entry.count > 1 && html`<span class="response-error-count">×${entry.count.toLocaleString()}</span>`}
+                      </div>
+                      ${entry.stack && entry.stack !== entry.message && html`
+                        <details class="response-error-stack">
+                          <summary>Stack</summary>
+                          <pre>${entry.stack}</pre>
+                        </details>
+                      `}
+                    </div>
+                  </div>
+                `;
+              })}
+              ${checkErrors.length > 0 && html`
+                <div class="response-errors-heading">Automatic check (hidden run after generating)</div>
+                ${checkErrors.map((message, i) => html`
+                  <div class="response-error error" key=${`check-${i}`}>
+                    <i class="fa-solid fa-circle-xmark"></i>
+                    <div class="response-error-body">
+                      <div class="response-error-message">${message}</div>
+                    </div>
+                  </div>
+                `)}
+              `}
+            </div>
+          </div>
+        `}
       </div>
       ${showFullscreenPreview && html`
         <div class="html-fullscreen-preview" role="dialog" aria-modal="true" aria-label="Rendered HTML preview">

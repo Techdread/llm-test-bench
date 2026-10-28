@@ -43,6 +43,27 @@ relay prompts or responses.
   `<data-root>/prompt-gallery/runs/<run-id>/project/` and remains on disk with
   its request, trace, and result metadata.
 
+## Errors from the preview
+
+You don't need the browser's DevTools to see why a generated page is broken.
+
+- The **bug** button in the HTML Response header switches that panel between the
+  code and the **errors** the live preview has reported. Its red badge counts
+  them; amber means warnings only.
+- It lists uncaught errors, failed promises, `console.error` / `console.warn`
+  output, and scripts, styles or images that failed to load. An error repeated
+  every frame is one row with a count (×105).
+- **line N** jumps to that line in the code. **Copy** puts the whole list on the
+  clipboard, ready to paste to a model. **Clear** empties it; it refills as the
+  page keeps running, so errors from clicking around in the preview show up too.
+- Errors from the automatic check that runs after each generation are listed
+  under their own heading.
+- The strip above the preview says **N errors in the preview**; click it to open
+  the list. **Heal in Refine** hands these errors to Heal along with the
+  automatic check's.
+- Nothing is counted while a generation is still streaming: a half-written page
+  always throws on its unfinished scripts.
+
 ## Batch Run
 
 - The **Batch** button (top toolbar) runs one model over many prompts in a row.

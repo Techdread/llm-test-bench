@@ -12,6 +12,7 @@
 
 // settings-sync used to restore LS values from cookies; loaded first to
 // preserve that behaviour while we work through the wider settings migration.
+import { withHttpDetails } from './provider-errors.js';
 import './settings-sync.js';
 import { applyParams, withUsageReporting, createRunStats } from './gen-params.js';
 import { withTelemetry, messagesText } from './generation-telemetry.js';
@@ -85,6 +86,9 @@ function describeApiKey(apiKey) {
 async function throwOpenRouterError(res, context = {}) {
   const err = await res.json().catch(() => ({}));
   const message = err.error?.message || `API error: ${res.status}`;
+  // Status, limit headers and OpenRouter's error metadata (where it puts the
+  // X-RateLimit-* values) ride on the thrown Error; the message is unchanged.
+  const fail = text => withHttpDetails(new Error(text), res, { metadata: err.error?.metadata || null });
 
   if (res.status === 401) {
     const keyInfo = describeApiKey(context.apiKey);
@@ -98,10 +102,10 @@ async function throwOpenRouterError(res, context = {}) {
     const keyLabel = keyInfo.present
       ? `configured (${keyInfo.length} chars)`
       : 'missing';
-    throw new Error(`${message}. OpenRouter rejected the API key being sent: ${keyLabel}.`);
+    throw fail(`${message}. OpenRouter rejected the API key being sent: ${keyLabel}.`);
   }
 
-  throw new Error(message);
+  throw fail(message);
 }
 
 // ── Pre-migration: consolidate legacy per-app keys into the hub LS key ──
@@ -322,6 +326,8 @@ async function streamChatCompletionRaw({ modelId, messages, tools, appTitle, onC
   let buffer = '';
   const toolCallParts = [];
   let finishReason = null;
+  let answeredBy = null;
+  let usage = null;
 
   function applyToolCallDelta(delta) {
     if (!delta) return;
@@ -369,7 +375,8 @@ async function streamChatCompletionRaw({ modelId, messages, tools, appTitle, onC
           choice = parsed.choices?.[0] || {};
         } catch { continue; /* skip malformed chunks */ }
         if (choice.finish_reason) finishReason = choice.finish_reason;
-        if (parsed.usage) stats.setUsage(parsed.usage);
+        if (parsed.usage) { stats.setUsage(parsed.usage); usage = parsed.usage; }
+        if (parsed.model) answeredBy = parsed.model;
         const delta = choice.delta || {};
         if (delta.reasoning) stats.markReasoning();
         if (delta.content) {
@@ -398,7 +405,11 @@ async function streamChatCompletionRaw({ modelId, messages, tools, appTitle, onC
   };
   const calls = normalisedToolCalls();
   if (calls.length > 0) message.tool_calls = calls;
-  return { choices: [{ message, finish_reason: finishReason || 'stop' }] };
+  const response = { choices: [{ message, finish_reason: finishReason || 'stop' }] };
+  // Which model answered (OpenRouter can route elsewhere) and the usage chunk.
+  if (answeredBy) response.model = answeredBy;
+  if (usage) response.usage = usage;
+  return response;
 }
 
 // ── Generic streaming chat completion ──

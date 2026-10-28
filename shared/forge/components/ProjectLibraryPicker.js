@@ -40,6 +40,25 @@ export function ProjectLibraryPicker({
         if (!choices.length) return null;
         const current = choices.find(item => selected.includes(item.id));
         const name = `forge-library-${domain || 'project'}-${group.id}`;
+        // A group that allows several (spec 343's data/docs group) is a set of
+        // checkboxes with no "None" row: nothing ticked already means none.
+        if (group.multiple) {
+          return html`
+            <fieldset class="forge-library-picker__group" disabled=${disabled}>
+              <legend>${group.label}</legend>
+              <p>${group.description}</p>
+              ${choices.map(item => html`
+                <label class=${`forge-library-choice ${selected.includes(item.id) ? 'is-selected' : ''}`}>
+                  <input type="checkbox" checked=${selected.includes(item.id)}
+                    onChange=${() => onChange?.(selectProjectLibrary(selected, item.id))} />
+                  <span class="forge-library-choice__body">
+                    <span class="forge-library-choice__title"><strong>${item.label}</strong></span>
+                    <small>${item.description}</small>
+                    <small>${formatBytes(item.approxBytes)} · ${item.files.length} pinned ${item.files.length === 1 ? 'file' : 'files'}${item.globalName ? ` · global ${item.globalName}` : ''}</small>
+                  </span>
+                </label>`)}
+            </fieldset>`;
+        }
         return html`
           <fieldset class="forge-library-picker__group" disabled=${disabled}>
             <legend>${group.label}</legend>

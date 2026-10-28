@@ -8,6 +8,8 @@
 const ALL_FORGE_DOMAINS = Object.freeze([
   'game', 'simulation', 'graphics', 'shader', 'web-app', 'application',
   'lesson-exercise', 'documentation-api', 'code-repair',
+  // Showdown Forge (spec 343): general apps, any provisioned library.
+  'app',
 ]);
 
 // `vr` is deliberately NOT in that list: it opts in library by library. A VR
@@ -29,6 +31,17 @@ export const PROJECT_LIBRARY_GROUPS = Object.freeze([
     id: 'audio',
     label: 'Audio',
     description: 'Optional sound layer. Choose at most one.',
+  }),
+  Object.freeze({
+    id: 'ui',
+    label: 'UI framework',
+    description: 'Optional component layer for the interface. Choose at most one.',
+  }),
+  Object.freeze({
+    id: 'data',
+    label: 'Data, charts & documents',
+    description: 'Charts, Markdown and similar helpers. Choose any number.',
+    multiple: true,
   }),
   Object.freeze({
     id: 'services',
@@ -98,7 +111,7 @@ export const PROJECT_LIBRARIES = Object.freeze({
     files: [
       file('../../lib/phaser/3.80.1/phaser.min.js', 'lib/phaser.min.js', 1_181_917, '62081f6a1b51d040473f919ffedef9009953c20833518e146da5a8d1c9405ea8'),
     ],
-    domains: ['game', 'simulation', 'lesson-exercise'],
+    domains: ['game', 'simulation', 'lesson-exercise', 'app'],
     briefing: [
       'Use the global Phaser object and Phaser 3 scene APIs.',
       'Prefer Phaser Arcade Physics unless the brief specifically requires the bundled Matter integration.',
@@ -152,7 +165,7 @@ export const PROJECT_LIBRARIES = Object.freeze({
       file('../../lib/babylonjs/9.18.0/babylon.js', 'lib/babylon.js', 8_180_848, '1b7e6718668aa1a6ca53c9539aaa7d539dbf166bd1ded9eef262e58cb575a3a7'),
       file('../../lib/babylonjs/9.18.0/LICENSE.md', 'lib/licenses/babylonjs-9.18.0.txt', 9_226, '9362ea9ea17cb221a20cbbd63f404710834cc273d2a9a7b60314fd68ab702cd6', 'license'),
     ],
-    domains: ['game', 'simulation', 'graphics', 'shader'],
+    domains: ['game', 'simulation', 'graphics', 'shader', 'app'],
     briefing: [
       'Use the global BABYLON object. This profile contains the core UMD engine only.',
       'Do not assume optional loaders, GUI packages, Havok or external assets are installed.',
@@ -170,7 +183,7 @@ export const PROJECT_LIBRARIES = Object.freeze({
       file('../../lib/playcanvas/2.21.1/playcanvas.min.js', 'lib/playcanvas.min.js', 2_373_183, '1c21dbd51b19d0eb048e936bcb69dbc1779c12ed5eb0a8210f7d20e4c6253a47'),
       file('../../lib/playcanvas/2.21.1/LICENSE', 'lib/licenses/playcanvas-2.21.1.txt', 1_064, '42fa51ddd556be151a29f381fb97ee975825dcc454e805ea3ea9c079cca04d34', 'license'),
     ],
-    domains: ['game', 'simulation', 'graphics', 'shader'],
+    domains: ['game', 'simulation', 'graphics', 'shader', 'app'],
     briefing: [
       'Use the global pc namespace and the standalone PlayCanvas Engine, not the hosted PlayCanvas Editor.',
       'Do not request cloud assets or Editor services; create entities and resources in project code.',
@@ -187,7 +200,7 @@ export const PROJECT_LIBRARIES = Object.freeze({
       file('../../lib/kaplay/3001.0.19/kaplay.js', 'lib/kaplay.js', 189_085, '88a946eafc4161f83505449d830b87c7bc15822bb0dae8ce03b2437506ef4a4b'),
       file('../../lib/kaplay/3001.0.19/LICENSE.md', 'lib/licenses/kaplay-3001.0.19.txt', 1_957, '04548e9fae3b077ce4db0c58163a3f35da5ca561779cda7626bf84e389e81dd6', 'license'),
     ],
-    domains: ['game', 'lesson-exercise'],
+    domains: ['game', 'lesson-exercise', 'app'],
     briefing: [
       'Call the global kaplay(options) function once, then use the returned/global KAPLAY component APIs.',
       'Do not fetch sprite or sound URLs; use shapes, text and project-local assets.',
@@ -204,7 +217,7 @@ export const PROJECT_LIBRARIES = Object.freeze({
       file('../../lib/kontra/10.0.2/kontra.min.js', 'lib/kontra.min.js', 33_089, 'e9bf6a3b29e8d25132cd971bfd129c0dce8dcca2a51527bb64273b95c389caf0'),
       file('../../lib/kontra/10.0.2/LICENSE', 'lib/licenses/kontra-10.0.2.txt', 1_080, 'd0336c6366f27726fa732ac33f15c444e95223483b660fbd97ae32e9a2930fa7', 'license'),
     ],
-    domains: ['game', 'simulation', 'lesson-exercise'],
+    domains: ['game', 'simulation', 'lesson-exercise', 'app'],
     briefing: [
       'Use the global kontra namespace. Initialise the canvas before creating sprites or the game loop.',
       'Kontra is deliberately small; implement domain-specific mechanics in project code.',
@@ -220,7 +233,7 @@ export const PROJECT_LIBRARIES = Object.freeze({
     files: [
       file('../../lib/melonjs/19.9.0/melonjs.mjs', 'lib/melonjs.mjs', 1_619_754, '7e1abc4257cd54bd3a6f0fa092b2a81ad9d4762fea9717f94c483492129bd163'),
     ],
-    domains: ['game', 'simulation', 'lesson-exercise'],
+    domains: ['game', 'simulation', 'lesson-exercise', 'app'],
     briefing: [
       'This is an ES-module profile. Set forge-project.json runtime to "module-web".',
       'Put project logic in an .mjs module and import the me namespace from the project-relative library path.',
@@ -238,7 +251,7 @@ export const PROJECT_LIBRARIES = Object.freeze({
       file('../../lib/matter-js/0.20.0/matter.min.js', 'lib/matter.min.js', 83_476, '72d30be0f579eb02ce1e0b6f9d359a4f392e6837e5a26ba8be5dbee7f88e24ae'),
       file('../../lib/matter-js/0.20.0/LICENSE', 'lib/licenses/matter-js-0.20.0.txt', 1_092, 'ed182087be5b26734aa6d4789743de3a97417950e8c1e3ff2e3d19c6462720d3', 'license'),
     ],
-    domains: ['game', 'simulation', 'graphics', 'lesson-exercise'],
+    domains: ['game', 'simulation', 'graphics', 'lesson-exercise', 'app'],
     briefing: [
       'Use the global Matter namespace and a fixed simulation timestep.',
       'Keep rendering separate from Engine.update() so deterministic runs are possible.',
@@ -255,7 +268,7 @@ export const PROJECT_LIBRARIES = Object.freeze({
       file('../../lib/planck/1.5.0/planck.min.js', 'lib/planck.min.js', 296_776, '69c6675a04121ec4042921b7d3d298058617d3211c243d8ea4d940a58af99974'),
       file('../../lib/planck/1.5.0/LICENSE.txt', 'lib/licenses/planck-1.5.0.txt', 1_078, '49fd3df949edd5f294edafb22e8905263dd7560b514bee6df2f17538069aafca', 'license'),
     ],
-    domains: ['game', 'simulation', 'graphics', 'lesson-exercise'],
+    domains: ['game', 'simulation', 'graphics', 'lesson-exercise', 'app'],
     briefing: [
       'Use the global planck namespace with metre-scale world units and a fixed timestep.',
       'Do not use the optional testbed; render bodies through the selected renderer or Canvas.',
@@ -274,7 +287,7 @@ export const PROJECT_LIBRARIES = Object.freeze({
     files: [
       file('../../lib/@dimforge/rapier3d-compat/0.14.0/rapier3d-compat.bundle.mjs', 'lib/rapier3d-compat.mjs', 2_057_990, 'f4c91a3b3a4815fdfa11aa46f404ba9f2f878263404930ca7e9201592ef7e774'),
     ],
-    domains: ['game', 'simulation', 'graphics', 'vr'],
+    domains: ['game', 'simulation', 'graphics', 'vr', 'app'],
     briefing: [
       'This is a self-contained ES-module bundle with embedded WASM. Set runtime to "module-web".',
       'Import the default RAPIER namespace, await RAPIER.init() once, then create the world.',
@@ -323,6 +336,89 @@ export const PROJECT_LIBRARIES = Object.freeze({
         'Keep per-frame allocation out of the animation loop: a Quest 3 frame budget at 72 Hz is 13.9 ms for BOTH eyes.',
       ],
     },
+  }),
+  'preact-htm': library({
+    id: 'preact-htm',
+    label: 'Preact 10.19.3 + HTM 3.1.1',
+    version: '10.19.3',
+    group: 'ui',
+    description: 'Component UI with hooks and tagged-template markup — no JSX, no build step. The hub\'s own idiom.',
+    entry: moduleEntry(
+      'lib/preact/preact.mjs',
+      'import { render } from "preact";\nimport { useState, useEffect } from "preact/hooks";\nimport { html } from "htm/preact";',
+    ),
+    files: [
+      file('../../lib/preact/10.19.3/preact.mjs', 'lib/preact/preact.mjs', 11_045, 'bfac992a6446c5e8f1232320fdf1ac61a0307e0c02e4599b84f1e2719dfc134e'),
+      file('../../lib/preact/10.19.3/hooks.mjs', 'lib/preact/hooks.mjs', 3_702, 'd952f1d8b6c2237f97e3bb4acef1173ddfb666bd12e037ac4d7bb728ca702d7e'),
+      file('../../lib/htm/3.1.1/htm.mjs', 'lib/htm/htm.mjs', 1_207, 'ab33dd3f38059b9be4d5f5350128eefb2356639c4e0bbe9d9e8b3ba75847e9e4'),
+      file('../../lib/htm/3.1.1/preact.mjs', 'lib/htm/preact.mjs', 153, '34cf7618b9f632411b80b3b40fa1b39d6ba1c350f48924a0b53830e4cdb15704'),
+    ],
+    domains: ['app', 'web-app'],
+    briefing: [
+      'ES modules only. Put this import map in index.html BEFORE any module script, and use the bare specifiers everywhere:',
+      '<script type="importmap">{"imports":{"preact":"./lib/preact/preact.mjs","preact/hooks":"./lib/preact/hooks.mjs","htm/preact":"./lib/htm/preact.mjs"}}</script>',
+      'Write components as functions returning html`...` tagged templates (import { html, render } from "htm/preact"). There is NO JSX and NO build step: the files run exactly as written.',
+      'Self-close void elements in templates (<input />, <br />, <img />); an unclosed one breaks the whole template.',
+      'Keep top-level state in one App component and pass it down as props; hooks come from "preact/hooks". Every module must import from the same bare specifiers so there is only one Preact instance.',
+    ],
+  }),
+  'three-modern': library({
+    id: 'three-modern',
+    label: 'Three.js 0.185.1 (modules + OrbitControls, GLTFLoader)',
+    version: '0.185.1',
+    group: 'engine',
+    description: 'Modern ES-module Three.js with orbit controls and the glTF loader.',
+    entry: moduleEntry(
+      'lib/three/build/three.module.js',
+      'import * as THREE from "three";\nimport { OrbitControls } from "three/addons/controls/OrbitControls.js";',
+    ),
+    files: [
+      file('../../lib/three/0.185.1/build/three.module.js', 'lib/three/build/three.module.js', 650_153, 'bbf5ed13fe4373f5bd38b14ea8e62e9f157327da5638edc6d3863e08b167c9c7'),
+      file('../../lib/three/0.185.1/build/three.core.js', 'lib/three/build/three.core.js', 1_443_056, '3718df126d69c125362a03340913204470d8c50238605150e57f808840fb7759'),
+      file('../../lib/three/0.185.1/examples/jsm/controls/OrbitControls.js', 'lib/three/examples/jsm/controls/OrbitControls.js', 40_529, '7795af066631b5a324ec4a36d1667dc6a9d33fc6156912ebbe081ad475730f4b'),
+      file('../../lib/three/0.185.1/examples/jsm/loaders/GLTFLoader.js', 'lib/three/examples/jsm/loaders/GLTFLoader.js', 114_984, 'dfe84129d4658a277997cb509712f2c9bb71b5f72b8b1dba442d3c812a28706c'),
+      file('../../lib/three/0.185.1/examples/jsm/utils/BufferGeometryUtils.js', 'lib/three/examples/jsm/utils/BufferGeometryUtils.js', 37_646, '1820aa5e010e73bb7507f937270b57da0fef8aef088c0da72083c2ad4ccaae0f'),
+    ],
+    domains: ['app'],
+    briefing: [
+      'ES modules only. Put this import map in index.html BEFORE any module script (merge it with any other import map — a page may have only one):',
+      '<script type="importmap">{"imports":{"three":"./lib/three/build/three.module.js","three/addons/":"./lib/three/examples/jsm/"}}</script>',
+      'Available add-ons: controls/OrbitControls.js, loaders/GLTFLoader.js, utils/BufferGeometryUtils.js. Nothing else from examples/jsm is present — write any other helper yourself.',
+      'Size the renderer to its container and handle resize; dispose geometries and materials you replace.',
+    ],
+  }),
+  chartjs: library({
+    id: 'chartjs',
+    label: 'Chart.js 4.4.7',
+    version: '4.4.7',
+    group: 'data',
+    description: 'Line, bar, pie, scatter and other charts on a canvas.',
+    entry: classic('lib/chart.umd.min.js', 'Chart'),
+    files: [
+      file('../../lib/chart.js/4.4.7/chart.umd.min.js', 'lib/chart.umd.min.js', 205_889, '206b6e8bb00fc7bba2c7ee80ca41db3e9e05ba7be0aa35abeba9cfd5357f5d0e'),
+    ],
+    domains: ['app', 'web-app', 'simulation', 'lesson-exercise'],
+    briefing: [
+      'new Chart(canvasOrContext, { type, data, options }) — keep the instance and call chart.update() when data changes rather than creating a new chart.',
+      'Call chart.destroy() before reusing a canvas for a different chart.',
+    ],
+  }),
+  markdown: library({
+    id: 'markdown',
+    label: 'Marked 12.0.2 + DOMPurify 3.0.9',
+    version: '12.0.2',
+    group: 'data',
+    description: 'Render Markdown to safe HTML.',
+    entry: classic('lib/marked.min.js', 'marked'),
+    files: [
+      file('../../lib/marked/12.0.2/marked.min.js', 'lib/marked.min.js', 35_479, '15fabce5b65898b32b03f5ed25e9f891a729ad4c0d6d877110a7744aa847a894'),
+      file('../../lib/dompurify/3.0.9/purify.min.js', 'lib/purify.min.js', 21_105, 'a3876688dffda0991175e82ff447dba95895bcc702f5388d04ffaa6240f43ab2'),
+    ],
+    domains: ['app', 'web-app', 'documentation-api'],
+    briefing: [
+      'Load both: <script src="lib/marked.min.js"></script><script src="lib/purify.min.js"></script>. They define the globals marked and DOMPurify.',
+      'Always sanitise: element.innerHTML = DOMPurify.sanitize(marked.parse(text)).',
+    ],
   }),
   'hub-bridge': library({
     id: 'hub-bridge',
@@ -431,6 +527,7 @@ export function librarySelectionErrors(value, { domain = '', targetStack = 'web'
     errors.push('Browser project libraries can only be used with the web target stack.');
   }
   for (const group of PROJECT_LIBRARY_GROUPS) {
+    if (group.multiple) continue;
     const selected = libraries.filter(item => item.group === group.id);
     if (selected.length > 1) {
       errors.push(`Choose at most one ${group.label.toLowerCase()}: ${selected.map(item => item.label).join(', ')}.`);
@@ -453,6 +550,7 @@ export function selectProjectLibrary(value, id) {
   const item = PROJECT_LIBRARIES[id];
   if (!item) return current;
   if (current.includes(id)) return current.filter(valueId => valueId !== id);
+  if (PROJECT_LIBRARY_GROUPS.find(group => group.id === item.group)?.multiple) return [...current, id];
   return [
     ...current.filter(valueId => PROJECT_LIBRARIES[valueId]?.group !== item.group),
     id,
