@@ -63,14 +63,26 @@ export function deleteKey(key) {
   emit({ type: 'delete', key: k });
 }
 
+// JS cells trade copies in both directions. Handing out the stored object let
+// a cell change shared state in place (`nb.get('list').push(x)`) without a
+// change event, so the Variables panel, live HTML cells and Save never saw
+// it. Python and HTML cells already received copies; this makes JS match.
+function copyForCell(value, key) {
+  try {
+    return structuredClone(value);
+  } catch {
+    throw new TypeError(`nb.set('${key}') can't share this value: functions and page elements can't be copied between cells. Store plain data (numbers, strings, arrays, objects).`);
+  }
+}
+
 // The object passed into JS cell sandboxes.
 export function makeNbProxy() {
   return {
-    set: setValue,
-    get: getValue,
+    set: (key, value) => setValue(key, copyForCell(value, key)),
+    get: (key) => copyForCell(getValue(key), key),
     has: hasKey,
     delete: deleteKey,
     keys: () => [...store.keys()],
-    all: () => Object.fromEntries(store),
+    all: () => copyForCell(Object.fromEntries(store), '*'),
   };
 }

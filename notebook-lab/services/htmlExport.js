@@ -16,6 +16,8 @@ import { parseUiDefinition } from '../components/UiCellFormEditor.js';
 import { ensureVega } from '../components/OutputRenderer.js';
 import { displayValue, formatDisplay, optionValue, optionLabel, clampToControl } from './uiCellModel.js';
 import { isVegaLiteSpec, prepareVegaLiteSpec } from './vegaSpec.js';
+import { exportCodeBlock } from './codeVisibility.js';
+import { exportValueFrame, HTML_VALUE_MARKER, looksLikeHtml, MAX_AUTO_HEIGHT } from './htmlValueOutput.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
@@ -178,7 +180,7 @@ function renderUiCell(cell, cellIndex, vars) {
 
 // ── document assembly ──────────────────────────────────────────────────────
 
-async function renderOutputs(cell) {
+async function renderOutputs(cell, theme) {
   const rendered = [];
   for (const output of cell.outputs || []) {
     if (output.type === 'image') {
@@ -191,6 +193,8 @@ async function renderOutputs(cell) {
       } catch (error) {
         rendered.push(`<div class="c-error">Chart could not be rendered: ${esc(error.message || String(error))}</div>`);
       }
+    } else if (output.type === 'value' && looksLikeHtml(output.value)) {
+      rendered.push(exportValueFrame(output.value, theme));
     } else if (output.type === 'value') {
       try { rendered.push(`<pre>${esc(typeof output.value === 'string' ? output.value : JSON.stringify(output.value, null, 2))}</pre>`); }
       catch { rendered.push(`<pre>${esc(String(output.value))}</pre>`); }
@@ -258,8 +262,8 @@ export async function buildStandaloneHtml(nb, options = {}) {
         : `<div class="c-error">Chart could not be rendered: ${esc(chartError || 'unknown error')}</div>`
           + `<pre class="c-src"><code>${esc(cell.source || '')}</code></pre>`;
     } else {
-      const outputs = await renderOutputs(cell);
-      body = `<pre class="c-src"><code>${esc(cell.source || '')}</code></pre>`
+      const outputs = await renderOutputs(cell, theme);
+      body = exportCodeBlock(cell)
         + (outputs ? `<div class="c-out">${outputs}</div>` : '');
     }
 
@@ -325,8 +329,12 @@ h1 { margin: 0; }
 .cell { border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; overflow: hidden; }
 .c-head { background: var(--bg-tertiary); padding: 4px 10px; font: 11px/1 monospace;
   color: var(--text-secondary); text-transform: uppercase; }
+.c-code > summary { padding: 6px 14px; background: var(--bg-secondary); color: var(--text-secondary);
+  font: 12px/1.4 -apple-system, system-ui, sans-serif; cursor: pointer; }
+.c-code[open] > summary { border-bottom: 1px solid var(--border-color); }
 .c-src { margin: 0; padding: 10px 14px; background: var(--bg-secondary); font: 13px/1.5 monospace; overflow: auto; }
 .c-out { padding: 10px 14px; background: var(--bg-primary); border-top: 1px solid var(--border-color); }
+.c-value { display: block; width: 100%; height: 120px; border: 0; }
 .c-error { padding: 10px 14px; background: var(--danger-bg); color: var(--danger); font: 13px/1.5 monospace; }
 .c-md { padding: 10px 14px; line-height: 1.6; }
 .c-md h1, .c-md h2, .c-md h3 { margin: 0.8em 0 0.4em; line-height: 1.25; }
@@ -368,11 +376,13 @@ pre { white-space: pre-wrap; word-break: break-word; }
 .ui-label strong { color: var(--accent); font-weight: 700; }
 .ui-static-text { font-size: 13px; line-height: 1.5; }
 .ui-readout-value { color: var(--accent); font-weight: 700; }
-.ui-control input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.ui-control input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
 .ui-control textarea, .ui-control select { width: 100%; min-width: 0; background: var(--bg-secondary);
   color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 7px 8px;
   font: inherit; box-sizing: border-box; }
 .ui-control input[type="range"] { width: 100%; }
+.ui-control input[type="color"] { width: 100%; height: 34px; padding: 3px; background: var(--bg-secondary);
+  border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; cursor: pointer; }
 .ui-control-fieldset { border: 0; margin: 0; padding: 0; }
 .ui-radio-group { display: flex; flex-wrap: wrap; gap: 8px; }
 .ui-radio-option { display: flex; align-items: center; gap: 4px; font-size: 13px; }
@@ -601,6 +611,16 @@ function fitHtmlFrames() {
     }
   });
 }
+
+// HTML returned by a cell reports its own height, as it does in the app.
+window.addEventListener('message', function (e) {
+  var d = e.data;
+  if (!d || d['${HTML_VALUE_MARKER}'] !== 'height') return;
+  document.querySelectorAll('iframe.c-value').forEach(function (frame) {
+    if (frame.contentWindow !== e.source) return;
+    frame.style.height = Math.min(${MAX_AUTO_HEIGHT}, Math.max(24, Math.ceil(Number(d.height) || 0))) + 'px';
+  });
+});
 
 frames().forEach(function (frame) {
   frame.addEventListener('load', function () { sendSnapshot(frame); });

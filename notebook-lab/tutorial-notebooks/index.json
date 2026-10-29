@@ -2,56 +2,86 @@
   {
     "file": "tutorial-01-notebook-basics.json",
     "title": "01 Notebook Basics",
-    "description": "Core cell types (md, js, py, html, chart) and how outputs behave."
+    "description": "How long is a day? One small project that tours every core cell: JavaScript, Python, a chart, a slider and a live HTML card."
+  },
+  {
+    "file": "tutorial-ai-1-build-with-prompts.json",
+    "title": "AI 1 Build With Prompts",
+    "description": "No coding needed: describe what you want and a model writes the cell. Build a live aquarium in four prompts, then fix a broken cell with AI Fix and learn what makes a prompt work."
+  },
+  {
+    "file": "tutorial-ai-2-generate-a-notebook.json",
+    "title": "AI 2 Generate a Whole Notebook",
+    "description": "One prompt, a whole notebook. How Generate notebook works, what a strong prompt includes, a prompt builder that writes one for you, and four prompts to try."
+  },
+  {
+    "file": "tutorial-ai-3-solar-system.json",
+    "title": "AI 3 A 3D Solar System",
+    "description": "A three.js Solar System from three prompts: planets where they really are today, real spin and tilt, Saturn's rings, follow a planet, click for facts."
+  },
+  {
+    "file": "tutorial-ai-4-gravity-courier.json",
+    "title": "AI 4 A Game From Two Prompts",
+    "description": "Gravity Courier, an original arcade game: deliver parcels between orbiting planets, with a tuning panel that changes the game mid-flight."
+  },
+  {
+    "file": "tutorial-ai-5-ecosystem.json",
+    "title": "AI 5 A Living Ecosystem",
+    "description": "Grass, rabbits and foxes in a live agent simulation, then Python finds the predator–prey cycle in the history. Three prompts."
+  },
+  {
+    "file": "tutorial-ai-6-research-with-search.json",
+    "title": "AI 6 Research With Search",
+    "description": "Has my city got warmer? Web search supplies current figures with sources and the right data to use, then 75 years of real daily temperatures answer the question, with warming stripes."
   },
   {
     "file": "tutorial-02-sharing-data-between-cells.json",
     "title": "02 Sharing Data Between Cells",
-    "description": "Use the shared `nb` state to pass values between JS, Python, and HTML cells."
+    "description": "A shopping basket passed through JavaScript, Python, a chart, controls, a live HTML receipt and Lua, with the habits that keep shared `nb` values in step."
   },
   {
     "file": "tutorial-03-python-to-javascript-to-html.json",
     "title": "03 Python to JavaScript to HTML",
-    "description": "End-to-end: compute in Python, post-process in JS, render in HTML."
+    "description": "Is my bus late? Python works out the delays and JavaScript draws a departure board, twice: once as a snapshot it returns, once as a live HTML cell that follows a slider."
   },
   {
     "file": "tutorial-04-matplotlib-data-science.json",
     "title": "04 Matplotlib & Data Science",
-    "description": "NumPy data generation, matplotlib charts auto-captured as PNGs, and styled stats cards."
+    "description": "When should we have the picnic? NumPy works through a year of weather, matplotlib plots it, and an interactive Vega-Lite calendar shows the same days."
   },
   {
     "file": "tutorial-05-live-api-visualization.json",
     "title": "05 Live API → Analysis → Visualization",
-    "description": "Fetch live earthquake data from USGS, analyse in Python, visualise with Vega-Lite and HTML."
+    "description": "A week of real earthquakes from the USGS: fetch it in JavaScript, tidy it with pandas, then see the Ring of Fire appear on a world map."
   },
   {
     "file": "tutorial-06-interactive-html-apps.json",
     "title": "06 Interactive HTML Mini-Apps",
-    "description": "Three self-contained apps in HTML cells: color palette generator, pomodoro timer, pixel art editor."
+    "description": "Three small apps that work together through `nb`: a palette picker, a pixel editor and a live animation of your drawing, which Python then turns into a sprite sheet."
   },
   {
     "file": "tutorial-07-building-a-report.json",
     "title": "07 Building a Report (End-to-End)",
-    "description": "All cell types combined into an exportable employee data report with charts, tables, and executive summary."
+    "description": "How did the school fair do? A real report: findings written by code, charts, a live what-if with sliders, and an Export that keeps it all working in one file."
   },
   {
     "file": "tutorial-08-c-cells.json",
     "title": "08 C Cells",
-    "description": "Run small C programs, capture stdout, and pass values back to the notebook with stdout markers."
+    "description": "C close to the machine: the first program in the classic C book and its whole-number trap, bit flags, and a Rule 30 pattern computed in C and drawn by an HTML cell."
   },
   {
     "file": "tutorial-10-ui-controls.json",
     "title": "10 UI Controls",
-    "description": "Demonstrates every UI control type, two-way nb bindings, and saved notebook state."
+    "description": "Design a creature with every kind of control (text, colour, slider, dropdown, buttons and more) and watch it redraw live, then read the same values from Python."
   },
   {
     "file": "tutorial-11-lua-cells.json",
     "title": "11 Lua Cells",
-    "description": "Run small Lua 5.4 programs offline via Wasmoon, and publish values to other cells with stdout markers."
+    "description": "Lua makes a dungeon, an HTML cell turns it into a game you can play, and JavaScript checks it can be finished. With a guide to reading Lua."
   },
   {
     "file": "tutorial-12-lua-to-javascript.json",
     "title": "12 Lua ↔ JavaScript",
-    "description": "Crunch data in Lua, then read and transform it in JavaScript and Python through the shared nb state."
+    "description": "Lua plays 5,000 games of Snakes and Ladders; JavaScript charts them, Python works out the odds, and a live board shows where players land."
   }
 ]

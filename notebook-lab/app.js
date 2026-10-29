@@ -55,6 +55,8 @@ const AGENT_MODELS_KEY = 'notebook-lab-agent-models';
 const LAST_NB_KEY = 'notebook-lab-last-notebook-id';
 const AUTOSAVE_KEY = 'notebook-lab-autosave';
 const APP_ID = 'notebook-lab';
+// Set once the user has opened the Library or closed its hint.
+const LIBRARY_HINT_KEY = 'notebook-lab-library-hint-dismissed';
 
 // Read before the first render writes an autosave: a visitor arriving with no
 // draft in this tab is shown a starting notebook instead of a blank one.
@@ -218,6 +220,8 @@ function App() {
   const [tutorials, setTutorials] = useState([]);
   const [examples, setExamples] = useState([]);
   const [exampleCategories, setExampleCategories] = useState([]);
+  const [libraryHint, setLibraryHint] = useState(() => !localStorage.getItem(LIBRARY_HINT_KEY));
+  const [libraryCounts, setLibraryCounts] = useState(null);
   const [hasDirectory, setHasDirectory] = useState(false);
   const [apiQueueStatus, setApiQueueStatus] = useState({ state: 'disabled', message: 'No data root selected' });
   const [sidePanelTab, setSidePanelTab] = useState('variables');
@@ -606,7 +610,7 @@ function App() {
         const completed = await agentRun.start({
           agentId: selectedAgentId,
           modelId: agentModels[selectedAgentId] || '',
-          task: buildNotebookAgentTask({ kind, prompt, contextCells: ctxCells, searchContext }),
+          task: buildNotebookAgentTask({ kind, prompt, contextCells: ctxCells, variables: nbBridge.snapshot(), searchContext }),
           outputFile: notebookAgentOutputFile(kind),
           onOutput: (content) => updateCell(targetId, {
             kind, source: openrouter.stripFences(content), outputs: null, error: null,
@@ -633,6 +637,7 @@ function App() {
           kind,
           prompt,
           contextCells: ctxCells,
+          variables: nbBridge.snapshot(),
           providerId: selectedProviderId,
           modelId: selectedModelId,
           searchContext,
@@ -719,7 +724,7 @@ function App() {
         const completed = await agentRun.start({
           agentId: selectedAgentId,
           modelId: agentModels[selectedAgentId] || '',
-          task: buildNotebookRepairAgentTask({ cell: repairCell, contextCells }),
+          task: buildNotebookRepairAgentTask({ cell: repairCell, contextCells, variables: nbBridge.snapshot() }),
           outputFile: notebookAgentOutputFile(cell.kind),
         });
         finalSource = openrouter.stripFences(completed.content);
@@ -732,6 +737,7 @@ function App() {
         finalSource = await openrouter.repairCell({
           cell: repairCell,
           contextCells,
+          variables: nbBridge.snapshot(),
           providerId: selectedProviderId,
           modelId: selectedModelId,
         });
@@ -810,7 +816,7 @@ function App() {
           agentId: selectedAgentId,
           modelId: agentModels[selectedAgentId] || '',
           task: buildNotebookGenerationAgentTask({
-            prompt, mode, currentNotebook, searchContext, languages, visualOutput,
+            prompt, mode, currentNotebook, searchContext, languages, visualOutput, variables: nbBridge.snapshot(),
           }),
           outputFile: NOTEBOOK_AGENT_OUTPUT_FILE,
           onOutput: content => setNotebookGenStatus({
@@ -838,6 +844,7 @@ function App() {
           searchContext,
           languages,
           visualOutput,
+          variables: nbBridge.snapshot(),
           onChunk: partial => setNotebookGenStatus({
             stage: 'generating',
             message: 'Streaming the multi-cell notebook…',
@@ -985,7 +992,25 @@ function App() {
     setNbList(list);
   }, []);
 
+  const dismissLibraryHint = useCallback(() => {
+    localStorage.setItem(LIBRARY_HINT_KEY, '1');
+    setLibraryHint(false);
+  }, []);
+
+  // The hint quotes real counts: the public build drops notebooks this
+  // edition cannot run, so the shipped indexes are the source of truth.
+  useEffect(() => {
+    if (!libraryHint) return;
+    Promise.all([store.listTutorials(), store.listExamples()])
+      .then(([tutorialEntries, exampleEntries]) => setLibraryCounts({
+        tutorials: tutorialEntries.length,
+        examples: exampleEntries.length,
+      }))
+      .catch(() => {});
+  }, [libraryHint]);
+
   const handleOpenDialog = useCallback(async () => {
+    if (libraryHint) dismissLibraryHint();
     if (!hasDirectory) {
       const ok = await store.initHandle();
       setHasDirectory(ok);
@@ -1000,7 +1025,7 @@ function App() {
     setExamples(exampleEntries);
     setExampleCategories(categoryEntries);
     setNbPickerOpen(true);
-  }, [hasDirectory, refreshList]);
+  }, [hasDirectory, refreshList, libraryHint, dismissLibraryHint]);
 
   const handleOpenTutorial = useCallback(async (file) => {
     try {
@@ -1214,6 +1239,26 @@ function App() {
     />
     <div class="notebook-layout">
       <div class="notebook-main">
+        ${libraryHint && html`
+          <div class="library-hint" role="note">
+            <i class="fa-solid fa-book-open library-hint-icon"></i>
+            <div class="library-hint-text">
+              <strong>There's a whole library to explore.</strong>
+              <span>
+                ${libraryCounts
+                  ? `${libraryCounts.tutorials} tutorials and ${libraryCounts.examples} example notebooks: `
+                  : 'Tutorials and example notebooks: '}
+                games, simulations, 3D, data structures, live data and interactive controls. Open one, run it, change it.
+              </span>
+            </div>
+            <button class="btn btn-library" onClick=${handleOpenDialog}>
+              <i class="fa-solid fa-book-open"></i> Browse the library
+            </button>
+            <button class="btn-icon" onClick=${dismissLibraryHint} title="Hide this tip (the Library button stays in the toolbar)" aria-label="Hide library tip">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        `}
         <${CellList}
           cells=${notebook.cells}
           runningCellId=${runningCellId}

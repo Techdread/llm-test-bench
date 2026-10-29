@@ -88,3 +88,24 @@ export function clampHeight(height) {
   if (!Number.isFinite(value) || value <= 0) return 24;
   return Math.min(MAX_AUTO_HEIGHT, Math.max(24, Math.ceil(value)));
 }
+
+// Colours the standalone export opens with (its DOCUMENT_CSS text colours).
+const EXPORT_THEMES = {
+  light: { color: '#1a1a1a', colorScheme: 'light' },
+  dark: { color: '#d4d4d4', colorScheme: 'dark' },
+};
+
+const escapeAttribute = (s) => String(s).replace(/[&<>"']/g, c => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+
+/**
+ * The same render for a standalone export: a sandboxed frame that reports its
+ * height to the export's runtime, instead of the markup printed as text. The
+ * text colour is the one the export opens in.
+ */
+export function exportValueFrame(value, theme = 'dark') {
+  const colours = EXPORT_THEMES[theme] || EXPORT_THEMES.dark;
+  const srcdoc = buildValueSrcdoc(value, { ...colours, fontFamily: '-apple-system, system-ui, sans-serif', fontSize: '14px' });
+  return `<iframe class="c-value" sandbox="allow-scripts" title="Cell output" srcdoc="${escapeAttribute(srcdoc)}"></iframe>`;
+}

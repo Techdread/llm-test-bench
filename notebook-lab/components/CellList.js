@@ -3,6 +3,7 @@
 import { html } from 'htm/preact';
 import { Cell } from './Cell.js';
 import { availableKindOptions } from '../services/edition.js';
+import { withHideCode } from '../services/codeVisibility.js';
 
 const ADD_KINDS = [
   { kind: 'md', label: 'MD', icon: 'fa-font' },
@@ -80,6 +81,7 @@ export function CellList({
               htmlPreview: preview,
             },
           })}
+          onHideCodeChange=${(hidden) => onUpdateCell(cell.id, { metadata: withHideCode(cell, hidden) })}
           selectedUiControlIndex=${uiFormSelection?.cellId === cell.id ? uiFormSelection.controlIndex : -1}
           onSelectUiControl=${(controlIndex) => onSelectUiControl(cell.id, controlIndex)}
         />

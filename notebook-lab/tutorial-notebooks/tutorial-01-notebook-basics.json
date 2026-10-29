@@ -1,43 +1,53 @@
 {
   "id": "tutorial-01-notebook-basics",
   "title": "01 Notebook Basics",
+  "state": {
+    "day_of_year": 172
+  },
   "cells": [
     {
-      "id": "c-fe229951",
+      "id": "c-t01-intro",
       "kind": "md",
-      "source": "# 01 Notebook Basics\n\nWelcome to **Notebook Lab**. This tutorial shows the core cell types and how outputs behave.\n\nRun cells from top to bottom with **Shift+Enter** or the run button."
+      "source": "# 01 Notebook Basics — How long is a day?\n\nA notebook is a stack of **cells**. Each cell is one kind of thing — notes, JavaScript, Python, a chart, a control, or a small web page — and they share data through `nb`. This one asks a simple question: *how many hours of daylight does a city get, and how does that change through the year?*\n\n1. **JavaScript** works out the day length for five cities, for every day of the year.\n2. **Python** reads those numbers and prints a summary.\n3. A **chart** cell plots the whole year.\n4. A **slider** picks a day, and an **HTML** card redraws live as you drag it.\n\nPress **Run all** at the top, or click into a cell and press **Shift+Enter**.\n\n> 📚 **This is one notebook from a library.** Click **Library** in the toolbar to browse every tutorial and dozens of ready-made examples (games, simulations, 3D, data structures, live data, interactive controls). Search them by topic or filter by language."
     },
     {
-      "id": "c-0d038107",
-      "kind": "md",
-      "source": "## What this notebook demonstrates\n\n- Markdown cells for notes and documentation\n- JavaScript cells for quick code experiments\n- Python cells via Pyodide\n- HTML cells for self-contained rendered views\n- Chart cells for Vega-Lite specs\n- The Variables panel for shared notebook state"
-    },
-    {
-      "id": "c-c43b1591",
+      "id": "c-t01-js",
       "kind": "js",
-      "source": "console.log('Hello from JavaScript');\nconst nums = [1, 2, 3, 4, 5];\nnb.set('js_total', nums.reduce((a, b) => a + b, 0));\n({ message: 'JS ran successfully', total: nb.get('js_total') });"
+      "source": "// JavaScript cell: runs right in your browser.\n// nb.set() shares a value with every other cell; `return` shows a result below.\nconst cities = [\n  { name: 'Reykjavík', lat: 64.1 },\n  { name: 'London', lat: 51.5 },\n  { name: 'Cairo', lat: 30.0 },\n  { name: 'Singapore', lat: 1.35 },\n  { name: 'Cape Town', lat: -33.9 },\n];\n\nconst rad = deg => deg * Math.PI / 180;\nfunction dayLength(lat, day) {\n  const tilt = 23.44 * Math.sin(rad(360 / 365 * (day - 81)));   // sun's declination\n  const x = -Math.tan(rad(lat)) * Math.tan(rad(tilt));\n  return 24 / Math.PI * Math.acos(Math.max(-1, Math.min(1, x)));\n}\n\nconst daylight = {};\nfor (const city of cities) {\n  daylight[city.name] = Array.from({ length: 365 }, (_, i) => +dayLength(city.lat, i + 1).toFixed(2));\n}\nnb.set('cities', cities);\nnb.set('daylight', daylight);\nconsole.log(`Stored 365 days of daylight for ${cities.length} cities in nb`);\n\n// 21 June is day 172 and 21 December is day 355.\nreturn Object.fromEntries(cities.map(c =>\n  [c.name, `${daylight[c.name][171]} h in June, ${daylight[c.name][354]} h in December`]));"
     },
     {
-      "id": "c-029fd1dc",
+      "id": "c-t01-py",
       "kind": "py",
-      "source": "import math\nvalues = [round(math.sin(x / 3), 3) for x in range(10)]\nnb['py_values'] = values\nprint('Stored py_values in shared notebook state')\nvalues"
+      "source": "# Python cell: runs in your browser too (Pyodide).\n# nb['daylight'] is the dictionary the JavaScript cell stored.\ndaylight = nb['daylight']\n\nprint(f\"{'City':<11}{'Shortest':>10}{'Longest':>10}   Swing through the year\")\nsummary = {}\nfor city, hours in daylight.items():\n    lo, hi = min(hours), max(hours)\n    summary[city] = {'shortest': lo, 'longest': hi}\n    bar = '━' * round((hi - lo) * 1.5)\n    print(f\"{city:<11}{lo:>8.1f} h{hi:>8.1f} h   {bar} {hi - lo:.1f} h\")\n\nnb['daylight_summary'] = summary"
     },
     {
-      "id": "c-a06f7f42",
-      "kind": "html",
-      "source": "<div style=\"font-family: system-ui; padding: 16px; border-radius: 12px; background: linear-gradient(135deg, #1f2937, #111827); color: white;\">\n  <h3 style=\"margin-top:0\">HTML Cell</h3>\n  <p>This is rendered inside a sandboxed iframe.</p>\n  <ul>\n    <li>Great for mini mockups</li>\n    <li>Can include inline CSS</li>\n    <li>Can include inline JavaScript</li>\n  </ul>\n</div>"
-    },
-    {
-      "id": "c-3f64549e",
+      "id": "c-t01-chart",
       "kind": "chart",
-      "source": "{\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v5.json\",\n  \"description\": \"A simple bar chart\",\n  \"data\": {\n    \"values\": [\n      {\n        \"feature\": \"Markdown\",\n        \"score\": 5\n      },\n      {\n        \"feature\": \"JavaScript\",\n        \"score\": 4\n      },\n      {\n        \"feature\": \"Python\",\n        \"score\": 5\n      },\n      {\n        \"feature\": \"HTML\",\n        \"score\": 4\n      },\n      {\n        \"feature\": \"Charts\",\n        \"score\": 4\n      }\n    ]\n  },\n  \"mark\": {\n    \"type\": \"bar\",\n    \"cornerRadiusTopLeft\": 4,\n    \"cornerRadiusTopRight\": 4\n  },\n  \"encoding\": {\n    \"x\": {\n      \"field\": \"feature\",\n      \"type\": \"nominal\",\n      \"sort\": null\n    },\n    \"y\": {\n      \"field\": \"score\",\n      \"type\": \"quantitative\"\n    },\n    \"color\": {\n      \"field\": \"feature\",\n      \"type\": \"nominal\",\n      \"legend\": null\n    }\n  }\n}"
+      "source": "{\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v5.json\",\n  \"title\": {\n    \"text\": \"Hours of daylight through the year\",\n    \"subtitle\": \"Click a city in the legend to pick it out. Southern cities peak in December.\"\n  },\n  \"width\": 620,\n  \"height\": 260,\n  \"data\": {\n    \"values\": [\n      {\n        \"city\": \"Reykjavík\",\n        \"lat\": 64.1\n      },\n      {\n        \"city\": \"London\",\n        \"lat\": 51.5\n      },\n      {\n        \"city\": \"Cairo\",\n        \"lat\": 30\n      },\n      {\n        \"city\": \"Singapore\",\n        \"lat\": 1.35\n      },\n      {\n        \"city\": \"Cape Town\",\n        \"lat\": -33.9\n      }\n    ]\n  },\n  \"transform\": [\n    {\n      \"calculate\": \"sequence(1, 366, 2)\",\n      \"as\": \"day\"\n    },\n    {\n      \"flatten\": [\n        \"day\"\n      ]\n    },\n    {\n      \"calculate\": \"23.44 * sin(2 * PI * (datum.day - 81) / 365)\",\n      \"as\": \"tilt\"\n    },\n    {\n      \"calculate\": \"24 / PI * acos(clamp(-tan(datum.lat * PI / 180) * tan(datum.tilt * PI / 180), -1, 1))\",\n      \"as\": \"hours\"\n    },\n    {\n      \"calculate\": \"datetime(2026, 0, datum.day)\",\n      \"as\": \"date\"\n    }\n  ],\n  \"params\": [\n    {\n      \"name\": \"pick\",\n      \"select\": {\n        \"type\": \"point\",\n        \"fields\": [\n          \"city\"\n        ]\n      },\n      \"bind\": \"legend\"\n    }\n  ],\n  \"mark\": {\n    \"type\": \"line\",\n    \"strokeWidth\": 3,\n    \"interpolate\": \"monotone\"\n  },\n  \"encoding\": {\n    \"x\": {\n      \"field\": \"date\",\n      \"type\": \"temporal\",\n      \"axis\": {\n        \"format\": \"%b\",\n        \"title\": null,\n        \"tickCount\": 12\n      }\n    },\n    \"y\": {\n      \"field\": \"hours\",\n      \"type\": \"quantitative\",\n      \"scale\": {\n        \"domain\": [\n          0,\n          24\n        ]\n      },\n      \"axis\": {\n        \"values\": [\n          0,\n          6,\n          12,\n          18,\n          24\n        ],\n        \"title\": \"Hours of daylight\"\n      }\n    },\n    \"color\": {\n      \"field\": \"city\",\n      \"type\": \"nominal\",\n      \"sort\": null,\n      \"title\": null,\n      \"scale\": {\n        \"range\": [\n          \"#6366f1\",\n          \"#0ea5e9\",\n          \"#f59e0b\",\n          \"#10b981\",\n          \"#ef4444\"\n        ]\n      }\n    },\n    \"opacity\": {\n      \"condition\": {\n        \"param\": \"pick\",\n        \"value\": 1\n      },\n      \"value\": 0.15\n    },\n    \"tooltip\": [\n      {\n        \"field\": \"city\",\n        \"title\": \"City\"\n      },\n      {\n        \"field\": \"date\",\n        \"type\": \"temporal\",\n        \"format\": \"%d %b\",\n        \"title\": \"Date\"\n      },\n      {\n        \"field\": \"hours\",\n        \"type\": \"quantitative\",\n        \"format\": \".1f\",\n        \"title\": \"Hours\"\n      }\n    ]\n  }\n}"
     },
     {
-      "id": "c-00cbbf64",
+      "id": "c-t01-ui",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Pick a day\",\n  \"description\": \"The slider writes day_of_year into nb. The HTML card below listens and redraws as you drag.\",\n  \"width\": 620,\n  \"height\": 64,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"Day of the year\",\n      \"bind\": \"day_of_year\",\n      \"default\": 172,\n      \"min\": 1,\n      \"max\": 365,\n      \"step\": 1,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 620,\n      \"height\": 64\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-t01-card",
+      "kind": "html",
+      "source": "<!-- HTML cell: a small web page in a sandboxed frame.\n     It reads nb, and nb.onChange() redraws it whenever the slider moves. -->\n<style>\n  html, body { margin: 0; height: 100%; background: #020617; }\n  body { font: 14px/1.4 system-ui, sans-serif; color: #e2e8f0; padding: 18px 22px; box-sizing: border-box; }\n  h2 { margin: 0 0 14px; font-size: 20px; font-weight: 600; }\n  h2 span { color: #94a3b8; font-weight: 400; font-size: 14px; margin-left: 8px; }\n  .row { display: grid; grid-template-columns: 130px 1fr 64px 112px; gap: 14px; align-items: center; margin: 7px 0; }\n  .name small { color: #94a3b8; margin-left: 4px; }\n  .track { position: relative; height: 22px; border-radius: 11px; background: #1e293b; overflow: hidden; }\n  .sun { position: absolute; top: 0; bottom: 0; border-radius: 11px;\n         background: linear-gradient(90deg, #f97316, #fde047 50%, #f97316); }\n  .noon { position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(15, 23, 42, .45); }\n  .hours { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }\n  .times { color: #94a3b8; font-variant-numeric: tabular-nums; }\n  .axis { display: grid; grid-template-columns: 130px 1fr 64px 112px; gap: 14px; color: #64748b; font-size: 11px; margin-top: 4px; }\n  .axis div:nth-child(2) { display: flex; justify-content: space-between; }\n  .empty { color: #94a3b8; padding: 30px 0; }\n</style>\n<div id=\"card\"></div>\n<script>\n  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',\n    'August', 'September', 'October', 'November', 'December'];\n  const clock = h => {\n    const m = Math.round(h * 60);\n    return String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');\n  };\n\n  function draw() {\n    const cities = nb.get('cities');\n    const daylight = nb.get('daylight');\n    const card = document.getElementById('card');\n    if (!cities || !daylight) {\n      card.innerHTML = '<p class=\"empty\">Run the JavaScript cell (or Run all) to fill in the cities.</p>';\n      return;\n    }\n    const day = Number(nb.get('day_of_year', 172));\n    const date = new Date(2026, 0, day);\n    const rows = cities.map(c => {\n      const h = daylight[c.name][day - 1];\n      const lat = Math.abs(c.lat) + '°' + (c.lat >= 0 ? 'N' : 'S');\n      return '<div class=\"row\"><div class=\"name\">' + c.name + '<small>' + lat + '</small></div>'\n        + '<div class=\"track\"><div class=\"sun\" style=\"left:' + (50 - h / 48 * 100) + '%;width:' + (h / 24 * 100) + '%\"></div><div class=\"noon\"></div></div>'\n        + '<div class=\"hours\">' + h.toFixed(1) + ' h</div>'\n        + '<div class=\"times\">' + (h > 0 && h < 24 ? clock(12 - h / 2) + ' – ' + clock(12 + h / 2) : h >= 24 ? 'sun all day' : 'no sunrise') + '</div></div>';\n    }).join('');\n    card.innerHTML = '<h2>☀ ' + date.getDate() + ' ' + MONTHS[date.getMonth()] + '<span>day ' + day + ' of 365</span></h2>'\n      + rows + '<div class=\"axis\"><div></div><div><span>midnight</span><span>6am</span><span>noon</span><span>6pm</span><span>midnight</span></div></div>';\n  }\n\n  draw();\n  nb.onChange(draw);\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 250,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-t01-next",
       "kind": "md",
-      "source": "## Try this next\n\n- Edit the JavaScript cell and change the numbers\n- Edit the Python cell to store a different list into `nb`\n- Open the **Variables** panel and inspect `js_total` and `py_values`\n- Duplicate a cell and re-run it"
+      "source": "## Where next\n\n> 📚 Click **Library** in the toolbar any time. It lists every tutorial and example, with search, language filters and favourites.\n\n| If you want to… | Open |\n| --- | --- |\n| **Build your own, without writing code** | Tutorials **AI 1** (one cell at a time) and **AI 2** (a whole notebook from one prompt) |\n| Passing data between cells | Tutorials **02** and **03** |\n| Charts and data science | Tutorials **04** (Matplotlib) and **05** (live earthquake data) |\n| The slider | Tutorial **10** *UI Controls*, then the **Controls** examples |\n| Small apps in a cell | Tutorial **06** *Interactive HTML Mini-Apps* |\n| Something to play with | The **Games**, **Simulations** and **3D Visualisation** examples |\n\n**Try this:** pick a model in the toolbar, press **✨** on the JavaScript cell and ask: *\"Add Oslo (latitude 59.9) to the cities.\"* Press **Replace cell**, then **Run all**. Python and the HTML card pick Oslo up on their own; the chart keeps its own list, so ask its **✨** too. Open the **Variables** panel on the right to see `daylight`, `daylight_summary` and `day_of_year`.\n\nEdits stay in this tab. Use **Save** to keep a copy, or **Generate notebook** to have an AI write a new notebook from a one-line prompt."
     }
   ],
   "createdAt": "2026-04-18T19:35:37.853724Z",
-  "updatedAt": "2026-04-18T19:35:37.853724Z"
+  "updatedAt": "2026-10-29T12:00:00.000Z"
 }

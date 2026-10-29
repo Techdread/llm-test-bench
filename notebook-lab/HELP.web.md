@@ -6,7 +6,7 @@ This is the web edition. The full Notebook Lab also runs Java, Go, Scala, Clojur
 
 ## Getting started
 
-1. Open **📂 Open** and pick a **Tutorial** or an **Example**. *01 Notebook Basics* is a good first stop.
+1. Click **📖 Library** in the toolbar and pick a **Tutorial** or an **Example**. *01 Notebook Basics* is a good first stop.
 2. Click **Run all** in the toolbar, or the **▶ Run** icon on a cell header (**Shift+Enter** inside the editor).
 3. Change something and run it again. Click the **`+`** buttons between cells to add a cell of any kind.
 4. **Clear all** hides every output without changing the code or the shared `nb` variables.
@@ -16,7 +16,7 @@ Your notebook is kept for this browser tab, so reloading restores it. **💾 Sav
 ## Folding cells & hiding code
 
 - **Fold cell**: the chevron on the left of a cell header collapses it to a one-line preview.
-- **Collapse code, keep output**: the **`</>`** button on HTML, Chart, JS and Python cells hides the editor but keeps the result. HTML and Chart cells do this automatically after a clean run.
+- **Hide code, keep output**: the **`</>`** button on any cell with an output hides the editor but keeps the result. HTML and Chart cells do this automatically after a clean run. Your choice is saved with the notebook, and Export folds that code behind a **Show code** link.
 
 Folding only changes the view; it never edits the notebook.
 
@@ -25,7 +25,7 @@ Folding only changes the view; it never edits the notebook.
 | Kind     | What it does |
 |----------|--------------|
 | **MD**   | Markdown. Double-click to edit, press *Done* (or Shift+Enter) to render. |
-| **JS**   | JavaScript. `console.log` output is captured, top-level `await` works, and the last value is shown. Return a Vega-Lite spec to draw a chart, or a string of HTML to render it. |
+| **JS**   | JavaScript. `console.log` output is captured, top-level `await` works, and whatever you `return` is shown. Return a Vega-Lite spec to draw a chart, or a string of HTML to render it. |
 | **Py**   | Python 3.12 via Pyodide (WebAssembly). NumPy, pandas, Matplotlib and SymPy are included and load the first time a cell imports them. The first Python run takes a few seconds while the runtime starts. |
 | **C**    | Small single-file C programs, interpreted in the browser. Use `printf` / `puts` for output. |
 | **Lua**  | Lua 5.4 programs via WebAssembly. Use `print` for output. |
@@ -36,6 +36,7 @@ Folding only changes the view; it never edits the notebook.
 ## Sharing values between cells: the `nb` object
 
 - **JS:** `nb.set('result', 42)`, `nb.get('result')`, `nb.keys()`, `nb.has('x')`.
+  `nb.get` and `nb.set` trade copies: changing a list you got from `nb.get` changes nothing shared until you `nb.set` it back.
 - **Python:** `nb["result"] = 42`, `nb["result"]`, `nb.keys()`, `nb.get("x")`.
 - **C and Lua:** print a marker line to set a variable:
 
@@ -71,10 +72,12 @@ HTML cells can load the libraries this site serves, for example
 
 ## AI cells
 
+You don't have to write code: describe what you want and a model writes the cell. Tutorials **AI 1** and **AI 2** in the Library show how.
+
 Pick a model in the toolbar first. Use **🔑** for an OpenRouter key, or the server icon to connect a model running on your own computer (LM Studio or any OpenAI-compatible server). The site's **Settings** page explains both.
 
-- **⚡ Generate new cell** (at the bottom) writes a new cell from a description, with the cells above as context. The wand in a cell header regenerates that cell.
-- **🛠 AI Fix** lights up when a cell fails, or when a Chart or UI cell has invalid JSON. The model receives the source, the error and recent output, and replaces the cell. Run it again to check; repaired code is never run automatically.
+- **⚡ Generate new cell** (at the bottom) writes a new cell from a description. The model sees the cells above and the current values in `nb`. The wand in a cell header reopens a cell's saved prompt so you can change it and regenerate.
+- **🛠 AI Fix** lights up when a cell fails, or when a Chart or UI cell has invalid JSON. The model receives the source, the error, recent output and the values in `nb`, and replaces the cell. Run it again to check; repaired code is never run automatically.
 - **💬 Explain** adds a Markdown cell explaining the one above it.
 
 ### Generate a complete notebook
@@ -84,7 +87,7 @@ Pick a model in the toolbar first. Use **🔑** for an OpenRouter key, or the se
 1. Describe the whole investigation: data, calculations, visuals, interaction and explanation.
 2. Leave **Languages** on **Auto**, or choose which languages it may use.
 3. Choose a **Visual output**: a Vega-Lite chart, a Matplotlib plot, an interactive HTML visual, a network graph, none, or Auto.
-4. Choose **Create a new notebook** or **Append** to the current one.
+4. Choose **Create a new notebook** or **Append** to the current one. When appending, the model sees the current cells and the values in `nb`, so the new cells can build on them.
 5. Click **Generate draft**. Every cell is checked against your choices before you see the plan.
 6. Review it, then open or append it. Nothing in your notebook changes until you do.
 
@@ -93,8 +96,8 @@ Generation is strict on purpose: unknown cell kinds, malformed JSON, invalid cha
 ## Saving & export
 
 - **💾 Save** writes the notebook to `notebook-lab/notebooks/<id>.json` in a folder you choose. The browser asks for permission the first time.
-- **📂 Open** lists your saved notebooks, the **Tutorials**, and the **Examples** (data structures, search, OOP, simulations, games, 3D, live APIs and an Interactive Controls gallery). Tutorials and examples open as a copy, so the original is never changed.
-- **⬇ Export** downloads one standalone HTML file that works offline. Charts and Markdown are rendered into it, and UI controls still drive the HTML cells inside it.
+- **📖 Library** lists your saved notebooks, the **Tutorials**, and the **Examples** (data structures, search, OOP, simulations, games, 3D, live APIs and an Interactive Controls gallery). Tutorials and examples open as a copy, so the original is never changed.
+- **⬇ Export** downloads one standalone HTML file that works offline. Charts, Markdown and HTML that cells returned are rendered into it, and UI controls still drive the HTML cells inside it.
 - **Record** captures a video of the tab, downloadable as MP4 or WebM.
 
 ## Tips

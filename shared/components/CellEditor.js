@@ -19,6 +19,8 @@
 //   fontSize      default 13
 //   followOutput  scroll to the final line after programmatic value updates
 //   markers       [{line, column, length?, className?}] — error highlight ranges
+//   checkSyntax   optional (code) => Ace annotations — replaces Ace's own
+//                 background checker (e.g. JSHint) for this editor
 //   onRun         optional () => void — if provided, binds Shift-Enter / Ctrl-Enter / Cmd-Enter
 //   runKeys       { win, mac } — override the default run key bindings
 //   className     wrapper <div> class — defaults to 'ace-host'
@@ -78,6 +80,7 @@ export function CellEditor({
   fontSize = 13,
   followOutput = false,
   markers = [],
+  checkSyntax,
   onRun,
   runKeys = DEFAULT_RUN_KEYS,
   className = 'ace-host',
@@ -139,8 +142,27 @@ export function CellEditor({
   }, [theme]);
 
   useEffect(() => {
-    if (aceRef.current) aceRef.current.session.setMode(resolveMode({ mode, kind }));
-  }, [mode, kind]);
+    if (!aceRef.current) return;
+    aceRef.current.session.setUseWorker(!checkSyntax);
+    aceRef.current.session.setMode(resolveMode({ mode, kind }));
+  }, [mode, kind, Boolean(checkSyntax)]);
+
+  useEffect(() => {
+    const session = aceRef.current?.session;
+    if (!session || !checkSyntax) return;
+    let timer = null;
+    const check = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => session.setAnnotations(checkSyntax(session.getValue())), 250);
+    };
+    check();
+    session.on('change', check);
+    return () => {
+      clearTimeout(timer);
+      session.off('change', check);
+      session.clearAnnotations();
+    };
+  }, [checkSyntax]);
 
   useEffect(() => {
     if (aceRef.current) aceRef.current.setReadOnly(!!readOnly);

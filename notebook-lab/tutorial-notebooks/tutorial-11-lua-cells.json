@@ -1,37 +1,100 @@
 {
+  "id": "tutorial-11-lua-cells",
   "title": "11 Lua Cells",
   "cells": [
     {
-      "id": "c-t11-md01",
+      "id": "c-t11-intro",
       "kind": "md",
-      "source": "# 11 Lua Cells\n\nLua cells run small single-file **Lua 5.4** programs via **Wasmoon** (WebAssembly) — fully offline, no network needed. Use `print` for output.\n\nStandard Lua only: no LuaJIT, no external rocks. The Roblox engine APIs (`game`, `workspace`, `Instance`) are **not** available here — this is the language, not Roblox."
+      "source": "# 11 Lua Cells\n\n**Lua** is a small, fast language built to live inside other programs. Games use it most: Roblox's Luau grew out of it, and World of Warcraft, Factorio and many others use it for add-ons and mods. Here it runs offline in your browser.\n\nThis notebook builds a small dungeon game in three cells, and shows you how to read the Lua that makes it:\n\n1. **Lua** generates the dungeon and publishes it to `nb`.\n2. An **HTML cell** turns it into a game you can play.\n3. **JavaScript** checks the dungeon can be finished.\n\nLike C, Lua can **publish** values to `nb` but can't read them: it prints a line starting with `__NB_SET__`, and the notebook picks it up.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it. The **AI** tutorials in the Library are all about building that way.\n\nPress **Run all**, then click the map and play."
     },
     {
-      "id": "c-t11-lua01",
-      "kind": "lua",
-      "source": "print(\"Hello from Lua!\")\n\n-- numbers and a loop\nlocal total = 0\nfor i = 1, 5 do\n  total = total + i\nend\nprint(\"1 + 2 + ... + 5 = \" .. total)\n\n-- tables are Lua's arrays/maps (1-indexed)\nlocal fruits = { \"apple\", \"banana\", \"cherry\" }\nfor i, name in ipairs(fruits) do\n  print(i .. \": \" .. name)\nend"
-    },
-    {
-      "id": "c-t11-md02",
+      "id": "c-t11-map-md",
       "kind": "md",
-      "source": "## Sending values to other cells\n\nLike the C and Rust cells, Lua talks to the rest of the notebook through its **stdout**: print a line in the exact form\n\n```\n__NB_SET__ {\"key\":\"name\",\"value\":123}\n```\n\nand the value lands in the shared `nb` state, where **JS** and **Python** cells can read it with `nb.get(\"name\")`. (Lua is emit-only — it can publish values but can't read `nb` back.)"
+      "source": "## 1. Lua makes a dungeon\n\nThe cell below starts with a 40 × 24 grid of walls, carves out 8 rooms, joins them with corridors, then drops in a start `@`, an exit `E` and 6 coins `$`. Open its code with **</>** and follow along:\n\n- **`math.randomseed(7)`** fixes the random numbers, so you get the same dungeon every run. Change the 7 and you get a new one.\n- **`grid[y][x]`** is a table of tables: one table per row, one entry per tile. Lua lists count from **1**.\n- **`clashes(a, b)`** checks two rooms don't overlap or touch, and the `while` loop keeps trying random spots until 8 rooms fit.\n- **Corridors** go across from one room's centre, then up or down to the next room's. That's the \"L\" shape.\n- **The last line** builds a JSON list of the 24 rows with `table.concat` and prints it after `__NB_SET__`, which puts it in `nb.dungeon`."
     },
     {
-      "id": "c-t11-lua02",
+      "id": "c-t11-map",
       "kind": "lua",
-      "source": "-- Build the first 8 Fibonacci numbers\nlocal fib = { 1, 1 }\nfor i = 3, 8 do\n  fib[i] = fib[i - 1] + fib[i - 2]\nend\n\nlocal sum = 0\nfor _, v in ipairs(fib) do sum = sum + v end\n\nprint(\"fib = \" .. table.concat(fib, \", \"))\nprint(\"sum = \" .. sum)\n\n-- publish values for other cells to read:\nprint('__NB_SET__ {\"key\":\"fib\",\"value\":[' .. table.concat(fib, \",\") .. ']}')\nprint('__NB_SET__ {\"key\":\"fib_sum\",\"value\":' .. sum .. '}')"
+      "source": "-- A dungeon for a game: 8 rooms joined by corridors, the same map every run.\nmath.randomseed(7)\n\nlocal WIDTH, HEIGHT = 40, 24\nlocal ROOMS, COINS = 8, 6\n\n-- Start with solid wall everywhere.\nlocal grid = {}\nfor y = 1, HEIGHT do\n  grid[y] = {}\n  for x = 1, WIDTH do grid[y][x] = \"#\" end\nend\n\n-- Two rooms clash if they overlap or touch: keep at least one wall tile between them.\nlocal function clashes(a, b)\n  return a.x <= b.x + b.w and b.x <= a.x + a.w\n     and a.y <= b.y + b.h and b.y <= a.y + a.h\nend\n\n-- Try random places until 8 rooms fit.\nlocal rooms, tries = {}, 0\nwhile #rooms < ROOMS and tries < 5000 do\n  tries = tries + 1\n  local w, h = math.random(4, 9), math.random(3, 6)\n  local room = { x = math.random(2, WIDTH - w), y = math.random(2, HEIGHT - h), w = w, h = h }\n  local fits = true\n  for _, other in ipairs(rooms) do\n    if clashes(room, other) then fits = false break end\n  end\n  if fits then\n    rooms[#rooms + 1] = room\n    for y = room.y, room.y + h - 1 do\n      for x = room.x, room.x + w - 1 do grid[y][x] = \".\" end\n    end\n  end\nend\n\nlocal function centre(room)\n  return room.x + room.w // 2, room.y + room.h // 2\nend\n\n-- Join each room to the next with an L-shaped corridor: across, then up or down.\nfor i = 1, #rooms - 1 do\n  local x1, y1 = centre(rooms[i])\n  local x2, y2 = centre(rooms[i + 1])\n  for x = x1, x2, (x1 <= x2 and 1 or -1) do grid[y1][x] = \".\" end\n  for y = y1, y2, (y1 <= y2 and 1 or -1) do grid[y][x2] = \".\" end\nend\n\n-- The player starts in the first room; the exit is in the last.\nlocal sx, sy = centre(rooms[1])\nlocal ex, ey = centre(rooms[#rooms])\ngrid[sy][sx] = \"@\"\ngrid[ey][ex] = \"E\"\n\n-- Coins go on plain floor, never on the start, the exit or another coin.\nlocal placed = 0\nwhile placed < COINS do\n  local x, y = math.random(2, WIDTH - 1), math.random(2, HEIGHT - 1)\n  if grid[y][x] == \".\" then\n    grid[y][x] = \"$\"\n    placed = placed + 1\n  end\nend\n\nlocal rows = {}\nfor y = 1, HEIGHT do\n  rows[y] = table.concat(grid[y])\n  print(rows[y])\nend\n\n-- Publish the rows as a JSON list. Only # . @ E $ appear, so nothing needs escaping.\nprint('__NB_SET__ {\"key\":\"dungeon\",\"value\":[\"' .. table.concat(rows, '\",\"') .. '\"]}')",
+      "metadata": {
+        "ai": {
+          "prompt": "Generate a dungeon map for a game. Use math.randomseed(7) so the map is the same every run. Make a 40 by 24 grid where every tile starts as a wall \"#\". Carve 8 non-overlapping rectangular rooms (each 4 to 9 tiles wide and 3 to 6 tall, at least one wall tile apart, retrying random positions until they fit) as floor \".\". Join each room to the next one with an L-shaped corridor of floor tiles. Put the player start \"@\" in the middle of the first room, the exit \"E\" in the middle of the last room, and 6 coins \"$\" on random floor tiles that are not the start or exit. Print the map row by row. Then publish it with a single line: __NB_SET__ followed by a JSON object with key \"dungeon\" and value a JSON array of 24 strings, one per row, each 40 characters long.",
+          "kind": "lua",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "80485f96",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
     },
     {
-      "id": "c-t11-js01",
+      "id": "c-t11-game-md",
+      "kind": "md",
+      "source": "## 2. An HTML cell turns it into a game\n\nThe game cell is HTML and JavaScript. It reads `nb.dungeon`, draws each tile on a canvas, and moves the player when you press a key: walls block the way, coins get collected, and the exit wins.\n\nClick the map, then use the arrow keys (or WASD). The cell passes its drawing function to `nb.onChange`, so when the Lua cell publishes a new dungeon, the game restarts on the new map by itself."
+    },
+    {
+      "id": "c-t11-game",
+      "kind": "html",
+      "source": "<style>\n  html, body { margin: 0; background: #0b0f19; color: #e2e8f0; font: 15px/1.4 system-ui, sans-serif; }\n  .wrap { padding: 12px 20px; text-align: center; }\n  .hint { color: #94a3b8; margin: 0 0 6px; }\n  .stats { font-weight: 600; margin-bottom: 8px; }\n  .stats span { margin: 0 14px; }\n  .stage { position: relative; display: inline-block; }\n  canvas { display: block; border-radius: 6px; outline: none; }\n  canvas:focus { box-shadow: 0 0 0 2px #38bdf8; }\n  .banner { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(11, 15, 25, 0.78); border-radius: 6px; }\n  .banner.show { display: flex; }\n  .banner b { font-size: 36px; color: #4ade80; }\n  .banner p { margin: 6px 0 0; font-size: 17px; }\n</style>\n<div class=\"wrap\">\n  <p class=\"hint\">Click the map, then use the arrow keys (or WASD)</p>\n  <div class=\"stats\"><span id=\"coins\">Coins: 0 / 0</span><span id=\"steps\">Steps: 0</span></div>\n  <div class=\"stage\">\n    <canvas id=\"map\" tabindex=\"0\"></canvas>\n    <div class=\"banner\" id=\"banner\"><b>You escaped!</b><p id=\"result\"></p></div>\n  </div>\n</div>\n<script>\n  const TILE = 20;\n  const canvas = document.getElementById('map');\n  const ctx = canvas.getContext('2d');\n  let grid = [];\n  let player = null;\n  let coinsTotal = 0, coinsGot = 0, steps = 0, won = false, lastMap = '';\n\n  // Rebuild the game from nb.dungeon. Only a different map restarts it, so\n  // our own nb.set(\"coins_collected\") doesn't reset the game.\n  function build() {\n    const rows = nb.get('dungeon', []);\n    const key = JSON.stringify(rows);\n    if (key === lastMap) return;\n    lastMap = key;\n    grid = rows.map((row) => row.split(''));\n    player = null;\n    coinsTotal = 0; coinsGot = 0; steps = 0; won = false;\n    grid.forEach((row, y) => row.forEach((ch, x) => {\n      if (ch === '@') { player = { x, y }; row[x] = '.'; }\n      if (ch === '$') coinsTotal++;\n    }));\n    canvas.width = (grid[0] ? grid[0].length : 40) * TILE;\n    canvas.height = (grid.length || 6) * TILE;\n    document.getElementById('banner').classList.remove('show');\n    draw();\n  }\n\n  function drawWall(x, y) {\n    const px = x * TILE, py = y * TILE;\n    ctx.fillStyle = '#262b3b';\n    ctx.fillRect(px, py, TILE, TILE);\n    ctx.strokeStyle = '#1a1e2a';\n    ctx.lineWidth = 1;\n    ctx.beginPath();\n    ctx.moveTo(px, py + TILE / 2 + 0.5); ctx.lineTo(px + TILE, py + TILE / 2 + 0.5);\n    const offset = y % 2 ? TILE / 2 : 0;              // bricks are staggered row by row\n    ctx.moveTo(px + offset + 0.5, py); ctx.lineTo(px + offset + 0.5, py + TILE / 2);\n    ctx.moveTo(px + ((offset + TILE / 2) % TILE) + 0.5, py + TILE / 2); ctx.lineTo(px + ((offset + TILE / 2) % TILE) + 0.5, py + TILE);\n    ctx.stroke();\n  }\n\n  function drawFloor(x, y) {\n    ctx.fillStyle = '#d6b98a';\n    ctx.fillRect(x * TILE, y * TILE, TILE, TILE);\n    ctx.fillStyle = 'rgba(120, 90, 50, 0.25)';          // a few grains of sand\n    for (let i = 0; i < 3; i++) {\n      const gx = (x * 7 + y * 13 + i * 5) % (TILE - 4) + 2;\n      const gy = (x * 11 + y * 3 + i * 7) % (TILE - 4) + 2;\n      ctx.fillRect(x * TILE + gx, y * TILE + gy, 2, 2);\n    }\n  }\n\n  function drawCoin(x, y) {\n    const cx = x * TILE + TILE / 2, cy = y * TILE + TILE / 2;\n    ctx.fillStyle = '#facc15';\n    ctx.strokeStyle = '#a16207';\n    ctx.lineWidth = 2;\n    ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();\n    ctx.fillStyle = '#fef9c3';\n    ctx.beginPath(); ctx.arc(cx - 2, cy - 2, 1.6, 0, Math.PI * 2); ctx.fill();\n  }\n\n  function drawExit(x, y) {\n    ctx.save();\n    ctx.shadowColor = '#22c55e';\n    ctx.shadowBlur = 14;\n    ctx.fillStyle = '#22c55e';\n    ctx.fillRect(x * TILE + 3, y * TILE + 3, TILE - 6, TILE - 6);\n    ctx.restore();\n  }\n\n  function drawPlayer() {\n    const cx = player.x * TILE + TILE / 2, cy = player.y * TILE + TILE / 2;\n    ctx.fillStyle = '#38bdf8';\n    ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.fill();\n    for (const dx of [-3, 3]) {\n      ctx.fillStyle = '#fff';\n      ctx.beginPath(); ctx.arc(cx + dx, cy - 2, 2.4, 0, Math.PI * 2); ctx.fill();\n      ctx.fillStyle = '#0b0f19';\n      ctx.beginPath(); ctx.arc(cx + dx, cy - 1.6, 1.1, 0, Math.PI * 2); ctx.fill();\n    }\n  }\n\n  function draw() {\n    ctx.fillStyle = '#0b0f19';\n    ctx.fillRect(0, 0, canvas.width, canvas.height);\n    if (!grid.length) {\n      ctx.fillStyle = '#94a3b8';\n      ctx.font = '16px system-ui, sans-serif';\n      ctx.fillText('Run the Lua cell above to make a dungeon.', 20, 40);\n    }\n    grid.forEach((row, y) => row.forEach((ch, x) => {\n      if (ch === '#') { drawWall(x, y); return; }\n      drawFloor(x, y);\n      if (ch === '$') drawCoin(x, y);\n      if (ch === 'E') drawExit(x, y);\n    }));\n    if (player) drawPlayer();\n    document.getElementById('coins').textContent = 'Coins: ' + coinsGot + ' / ' + coinsTotal;\n    document.getElementById('steps').textContent = 'Steps: ' + steps;\n  }\n\n  const MOVES = {\n    ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],\n    w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0],\n  };\n\n  canvas.addEventListener('click', () => canvas.focus());\n  canvas.addEventListener('keydown', (event) => {\n    const move = MOVES[event.key.length === 1 ? event.key.toLowerCase() : event.key];\n    if (!move || !player) return;\n    event.preventDefault();                           // keep the page from scrolling\n    if (won) return;\n    const nx = player.x + move[0], ny = player.y + move[1];\n    const tile = grid[ny] && grid[ny][nx];\n    if (!tile || tile === '#') return;                // walls block the way\n    player = { x: nx, y: ny };\n    steps++;\n    if (tile === '$') {\n      grid[ny][nx] = '.';\n      coinsGot++;\n      nb.set('coins_collected', coinsGot);\n    }\n    if (tile === 'E') {\n      won = true;\n      document.getElementById('result').textContent = coinsGot + ' of ' + coinsTotal + ' coins in ' + steps + ' steps';\n      document.getElementById('banner').classList.add('show');\n    }\n    draw();\n  });\n\n  build();\n  nb.onChange(build);\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 620,
+          "scale": 1
+        },
+        "ai": {
+          "prompt": "A playable dungeon game. Read nb.get(\"dungeon\", []), a list of strings where \"#\" is a wall, \".\" is floor, \"@\" is the player start, \"E\" is the exit and \"$\" is a coin. Draw it on a canvas with 20 pixel tiles: dark stone walls with a subtle brick pattern, warm sandy floor, round gold coins, a glowing green exit, and the player as a bright blue circle with eyes. Let the player move one tile at a time with the arrow keys or WASD (the canvas must be focusable: give it tabindex=\"0\", focus it on click, and say \"Click the map, then use the arrow keys\" above it). Call preventDefault() on those key presses so the page does not scroll while playing. Walls block movement. Walking onto a coin collects it. Show \"Coins: n / total\" and \"Steps: n\" above the map, and when the player reaches the exit show a \"You escaped!\" banner with the coins and steps. Each time the coin count changes, call nb.set(\"coins_collected\", count). Wrap the drawing in a function that rebuilds the game from nb.dungeon, call it once, and pass it to nb.onChange so a new map from another cell restarts the game. Give html and body no margin and the background #0b0f19 so no white shows around the game, and use light text.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "9060efbf",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-t11-read",
+      "kind": "md",
+      "source": "## Lua at a glance\n\n| You'll see | It means |\n| --- | --- |\n| `local x = 5` | make a variable |\n| `{ }` | a **table**: Lua's list and dictionary in one |\n| `grid[y][x]` | lists count from **1**, not 0 |\n| `for i = 1, 10 do … end` | a counting loop |\n| `while … do … end` | repeat while something is true |\n| `\"a\" .. \"b\"` | join text together |\n| `7 // 2` | whole-number division (3) |\n| `~=` | \"not equal\" |\n| `-- note` | a comment |\n\nStuck on a line? Press **💬 Explain** on the cell and a plain-English explanation appears underneath."
+    },
+    {
+      "id": "c-t11-check-md",
+      "kind": "md",
+      "source": "## 3. JavaScript checks the map can be finished\n\nA random dungeon might wall a coin off. This cell does a **breadth-first search**: it spreads out from the start one step at a time, like a flood, so the first time it reaches the exit is the shortest walk. It counts the coins it reaches along the way, and saves the result in `nb.route`."
+    },
+    {
+      "id": "c-t11-check",
       "kind": "js",
-      "source": "// Read the values Lua published into the shared `nb` state\nconst fib = nb.get('fib');\nconst sum = nb.get('fib_sum');\nconsole.log('Lua sent fib =', fib);\nconsole.log('Lua sent fib_sum =', sum);\n\n// Use them like any JS data\nconst doubled = fib.map(x => x * 2);\nreturn { fib, sum, doubled, average: sum / fib.length };"
+      "source": "// Breadth-first search: spread out from the start one step at a time, like a flood.\n// The first time the flood reaches the exit, that's the shortest walk.\nconst map = nb.get('dungeon') ?? [];\nif (map.length === 0) return '<p>Run the Lua cell above first to make a dungeon.</p>';\n\nlet start = null;\nlet coinsTotal = 0;\nmap.forEach((row, y) => [...row].forEach((ch, x) => {\n  if (ch === '@') start = { x, y };\n  if (ch === '$') coinsTotal++;\n}));\nif (!start) return '<p>The map has no start square \"@\".</p>';\n\nconst distance = map.map((row) => Array(row.length).fill(-1));\ndistance[start.y][start.x] = 0;\nconst queue = [start];\nlet steps = null;\nlet coinsReachable = 0;\n\nfor (let i = 0; i < queue.length; i++) {\n  const { x, y } = queue[i];\n  if (map[y][x] === 'E' && steps === null) steps = distance[y][x];\n  if (map[y][x] === '$') coinsReachable++;\n  for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {\n    const nx = x + dx, ny = y + dy;\n    const tile = map[ny]?.[nx];\n    if (tile && tile !== '#' && distance[ny][nx] === -1) {\n      distance[ny][nx] = distance[y][x] + 1;\n      queue.push({ x: nx, y: ny });\n    }\n  }\n}\n\nnb.set('route', { steps, coinsReachable, coinsTotal });\n\nconst allCoins = coinsReachable === coinsTotal;\nconst stat = (label, value) => `<div style=\"flex:1;background:#1e293b;border-radius:10px;padding:10px 14px\">\n  <div style=\"color:#94a3b8;font-size:12px\">${label}</div>\n  <div style=\"font-size:24px;font-weight:700;color:#f8fafc\">${value}</div></div>`;\n\nreturn `\n<div style=\"background:#0f172a;color:#e2e8f0;font:14px/1.5 system-ui,sans-serif;border-radius:12px;padding:16px 18px\">\n  <div style=\"font-weight:700;font-size:16px;margin-bottom:10px\">Route check</div>\n  <div style=\"display:flex;gap:10px\">\n    ${stat('Steps to the exit', steps === null ? 'no way out!' : steps)}\n    ${stat('Coins you can reach', `${coinsReachable} / ${coinsTotal}`)}\n  </div>\n  <div style=\"margin-top:12px;font-weight:600;color:${allCoins ? '#4ade80' : '#f87171'}\">\n    ${allCoins ? '✔ Every coin can be reached' : '✘ Some coins are walled off'}\n  </div>\n</div>`;",
+      "metadata": {
+        "ai": {
+          "prompt": "Read nb.get(\"dungeon\"), a list of strings where \"#\" is a wall and \"@\", \"E\", \"$\" and \".\" are walkable. Use a breadth-first search from \"@\" (moving up, down, left and right) to find the number of steps in the shortest walk to \"E\", and count how many of the \"$\" coins can be reached. Save the result with nb.set(\"route\", { steps, coinsReachable, coinsTotal }). Return a small HTML card with a dark background and light text showing the steps to the exit, the coins reachable out of the total, and a green tick or red cross for \"every coin can be reached\".",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "cbaed271",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
     },
     {
-      "id": "c-t11-md03",
+      "id": "c-t11-try",
       "kind": "md",
-      "source": "## Try this\n\n- Change `for i = 3, 8` to compute more Fibonacci numbers, then re-run both cells.\n- Add your own `__NB_SET__` line in the Lua cell and read it from the JS cell.\n- Break the Lua on purpose (e.g. `for i = 1 5 do`) to see the error appear in the cell output."
+      "source": "## Try this\n\n**Change the Lua:**\n\n- Change `math.randomseed(7)` to another number and run the Lua cell. The game and the route check pick up the new dungeon.\n- Set `ROOMS` to `12` or `COINS` to `10`.\n- Break something on purpose, such as `for i = 1 5 do` (a missing comma), to see how Lua reports errors.\n\n**Or ask the AI:** press **✨** on a cell, add to its prompt, and **Replace cell**:\n\n- Lua cell: *\"Add 4 goblins \"g\" on random floor tiles.\"*\n- Game cell: *\"Draw \"g\" as red goblins that step towards the player every second move, and end the game if they catch the player.\"*\n\n**Next:** tutorial **12** passes data from Lua to JavaScript and Python. It's in the **Library**."
     }
   ],
   "createdAt": "2026-06-07T00:00:00.000Z",
-  "updatedAt": "2026-06-07T00:00:00.000Z"
+  "updatedAt": "2026-10-29T12:00:00.000Z"
 }

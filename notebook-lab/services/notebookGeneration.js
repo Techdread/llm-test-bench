@@ -1,6 +1,13 @@
 // Pure helpers for whole-notebook AI generation.
 
 import { hashSource } from './cellMetadata.js';
+import {
+  C_INTERPRETER_GUIDE,
+  HTML_NB_BRIDGE_GUIDE,
+  JS_RETURN_GUIDE,
+  UI_CONTROL_GUIDE,
+  describeNotebookVariables,
+} from './generationContext.js';
 
 export const SUPPORTED_NOTEBOOK_KINDS = new Set([
   'md', 'js', 'py', 'c', 'rust', 'lua', 'java', 'go', 'scala', 'clojure', 'html', 'ui', 'chart',
@@ -262,13 +269,14 @@ Notebook design rules:
 - Produce 3–16 purposeful cells in a runnable teaching sequence. Start with a Markdown overview and finish with interpretation, conclusions, or exercises.
 - Use Markdown cells for explanations and citations. Cite supplied web sources with normal Markdown links; never invent a citation or claim a URL was inspected when it was not supplied.
 - Use Python for data cleaning, statistics, numerical work, and scientific calculations. NumPy, pandas, and matplotlib are available in Pyodide. Share JSON-serialisable results with nb["key"] = value and read prior values with nb.get("key", default).
-- Use JavaScript for browser APIs, post-processing, and data-driven Vega-Lite. Read shared values with nb.get("key"), write with nb.set("key", value), and RETURN a Vega-Lite object to render it interactively.
+- Use JavaScript for browser APIs (including fetch), post-processing, and data-driven Vega-Lite. Read shared values with nb.get("key"), write with nb.set("key", value), use top-level await freely, and RETURN a Vega-Lite object to render it interactively. ${JS_RETURN_GUIDE}
 - Prefer a JavaScript cell that returns a Vega-Lite spec when chart data comes from Python or another earlier cell. A chart cell is static strict Vega-Lite JSON and cannot read notebook variables.
 - Vega-Lite visualisations should include meaningful axis titles, tooltips, legends, responsive width where practical, and selections/parameters when the request asks for interactivity.
 - In a layered Vega-Lite spec, define selection params on exactly one unit layer (normally the interactive point/bar layer), not on the outer layered spec. Sibling layers may still reference the named selection. This prevents duplicate compiled Vega signals.
-- HTML cells are complete fragments rendered in a sandboxed iframe. Inline CSS and JavaScript, omit html/head wrappers, and use the injected nb.get/nb.set/nb.onChange bridge. Do not reference repository-relative files.
-- UI cells contain one strict JSON object with title, description, and a controls array. Controls may be label, text, textarea, number, checkbox, select, radio, slider, color, date, or button.
-- ${compiled.join('/')} cells are complete executable programs. They can publish data by printing __NB_SET__ {"key":"name","value":...} but cannot read notebook state.
+- HTML cells are complete fragments rendered in a sandboxed iframe. Inline CSS and JavaScript, omit html/head wrappers, and do not reference repository-relative files. ${HTML_NB_BRIDGE_GUIDE}
+- UI cells contain one strict JSON object with title, description, and a controls array. Controls may be label, text, textarea, number, checkbox, select, radio, slider, color, date, or button. Bind each input with "bind": "key" and give it a "default"; later cells read the value with nb.get / nb["key"]. ${UI_CONTROL_GUIDE}
+- To make a notebook interactive, put a UI cell before the cells that use its values; an HTML cell that redraws from nb.onChange updates live as the controls move, while code cells use the new values when they are run again.
+- ${compiled.join('/')} cells are complete executable programs. They can publish data by printing __NB_SET__ {"key":"name","value":...} but cannot read notebook state.${blocked.has('c') ? '' : `\n- ${C_INTERPRETER_GUIDE}`}
 - Make every source string complete and executable. JSON-escape newlines, quotes, and backslashes correctly.
 - When live network data may fail because of CORS or availability, explain that limitation and include a small attributed fallback sample so the notebook remains demonstrable.
 - Clearly separate retrieved facts, assumptions, and calculated results. Do not fabricate outputs that have not been computed.${unavailableRule}`;
@@ -281,6 +289,7 @@ export function buildNotebookGenerationUserPrompt({
   searchContext = '',
   languages = [],
   visualOutput = 'auto',
+  variables,
 } = {}) {
   const request = String(prompt || '').trim();
   if (!request) throw new Error('A notebook prompt is required');
@@ -309,7 +318,10 @@ export function buildNotebookGenerationUserPrompt({
     network: ' HTML or JavaScript is permitted as the required network renderer even when not selected separately.',
   };
   const constraintBlock = `\n\nGENERATION CONSTRAINTS\n- ${languageInstruction}\n- ${visualInstructions[constraints.visualOutput]}${rendererExceptions[constraints.visualOutput]}`;
-  return `${modeInstruction}${notebookContext(mode === 'append' ? currentNotebook : null)}${research ? `\n\nWEB RESEARCH SUPPLIED TO YOU\n${research}` : ''}${constraintBlock}\n\nUSER REQUEST\n${request}`;
+  // Only an append builds on the open notebook's nb values; a new notebook starts empty.
+  const variablesText = mode === 'append' ? describeNotebookVariables(variables) : '';
+  const variablesBlock = variablesText ? `\n\n${variablesText}` : '';
+  return `${modeInstruction}${notebookContext(mode === 'append' ? currentNotebook : null)}${variablesBlock}${research ? `\n\nWEB RESEARCH SUPPLIED TO YOU\n${research}` : ''}${constraintBlock}\n\nUSER REQUEST\n${request}`;
 }
 
 export function materializeGeneratedNotebook(draft, {

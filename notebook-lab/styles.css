@@ -14,6 +14,60 @@
   background: var(--bg-primary);
 }
 
+/* The Library is the way into the tutorials and examples, so it gets its own
+   colour (fixed green, white text readable in both themes). */
+.btn.btn-library {
+  background: #16a34a;
+  color: #fff;
+  border-color: #16a34a;
+}
+
+.btn.btn-library:hover:not(:disabled) {
+  background: #15803d;
+  border-color: #15803d;
+}
+
+/* Tip pointing first-time visitors at the notebook library. */
+.library-hint {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent-light);
+  color: var(--text-primary);
+}
+
+.library-hint-icon {
+  font-size: 22px;
+  color: var(--accent);
+}
+
+.library-hint-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.library-hint .btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .library-hint {
+    flex-wrap: wrap;
+  }
+
+  .library-hint-icon {
+    display: none;
+  }
+}
+
 .notebook-title-bar {
   display: flex;
   align-items: center;
@@ -524,7 +578,7 @@
   line-height: 1.5;
 }
 
-.ui-control input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.ui-control input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
 .ui-control textarea,
 .ui-control select {
   width: 100%;
@@ -539,6 +593,18 @@
 
 .ui-control input[type="range"] {
   width: 100%;
+}
+
+/* Kept out of the text-box rule above: its padding squashed the colour
+   swatch into a thin line. */
+.ui-control input[type="color"] {
+  width: 100%;
+  height: 34px;
+  padding: 3px;
+  background: var(--input-bg, var(--bg-secondary));
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .ui-form-editor {
@@ -808,6 +874,64 @@
 .cell-md-rendered h1, .cell-md-rendered h2, .cell-md-rendered h3 {
   margin-top: 0.8em;
   margin-bottom: 0.4em;
+}
+
+/* base.css zeroes every margin and padding; give rendered prose its rhythm
+   back (list markers otherwise hang outside the cell). */
+.cell-md-rendered p,
+.cell-md-rendered ul,
+.cell-md-rendered ol {
+  margin: 0.6em 0;
+}
+
+.cell-md-rendered ul,
+.cell-md-rendered ol {
+  padding-left: 1.6em;
+}
+
+.cell-md-rendered li + li {
+  margin-top: 0.2em;
+}
+
+/* The cell already pads its content; a heading's own top margin on the first
+   line would double that gap. */
+.cell-md-rendered > :first-child {
+  margin-top: 0;
+}
+
+.cell-md-rendered > :last-child {
+  margin-bottom: 0;
+}
+
+/* Links were left at the browser's default dark blue, unreadable on the dark theme. */
+.cell-md-rendered a { color: var(--accent); text-underline-offset: 2px; }
+[data-theme="dark"] .cell-md-rendered a { color: #7cb4ff; }
+
+.cell-md-rendered blockquote {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  background: var(--accent-light);
+}
+
+.cell-md-rendered blockquote > :first-child { margin-top: 0; }
+.cell-md-rendered blockquote > :last-child { margin-bottom: 0; }
+
+.cell-md-rendered table {
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+.cell-md-rendered th,
+.cell-md-rendered td {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.cell-md-rendered th {
+  background: var(--bg-secondary);
 }
 
 .cell-md-rendered pre {

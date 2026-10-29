@@ -1,0 +1,114 @@
+{
+  "id": "tutorial-ai-6-research-with-search",
+  "title": "AI 6 Research With Search",
+  "cells": [
+    {
+      "id": "c-ai6-intro",
+      "kind": "md",
+      "source": "# AI 6 Research With Search\n\n**Has my city got warmer?** This notebook answers that with research and real data: what the experts say, where to get trustworthy numbers, and what 75 years of daily temperatures for one city show.\n\nIts research cells were written with **web search**: before writing them, the model searched the web and worked from what it found. That's what the **Search web for context** tick box in the DevTools Hub does for you: it searches the web (with Brave Search) and hands the results to the model with your prompt. The results made two differences here:\n\n- to give **current figures with sources**, instead of whatever it remembered from training;\n- to pick **the right data**: Open-Meteo's own documentation advises one particular model for long-term trends, and the data cell follows that advice.\n\nPress **Run all**. Then try your own city.\n\n> 🌐 **Search is a DevTools Hub feature.** On the website this notebook still runs (the data comes straight from Open-Meteo), but the **Search web for context** tick box only appears in the hub."
+    },
+    {
+      "id": "c-ai6-brief-md",
+      "kind": "md",
+      "source": "## Step 1: research\n\n> **Prompt (search on):** Using the web search results, write a short research brief in Markdown. Say how much the world has warmed since pre-industrial times according to the latest WMO and Copernicus reports, and which free data source can give decades of daily temperatures for one city, including any advice its documentation gives about using it for long-term trends. End with caveats a beginner should know. Cite every fact with a link to its source.\n\nThe cell below is the model's brief, written from the search results. Press **✨** on it to see the prompt; the 🌐 setting is saved with it."
+    },
+    {
+      "id": "c-ai6-brief",
+      "kind": "md",
+      "source": "## Research brief\n\n**How much has the world warmed?**\n\n- The World Meteorological Organization's *State of the Global Climate 2024* puts 2024 at about **1.55 °C** above the 1850–1900 average (±0.13 °C), likely the first calendar year above 1.5 °C. It estimates long-term warming at **1.34–1.41 °C**. ([WMO](https://wmo.int/files/state-of-global-climate-2024))\n- Copernicus found that 2025 was the third-warmest year on record, at **1.47 °C** above pre-industrial, after 2024's record **1.60 °C**, and that 2023–2025 was the first three-year period to average more than 1.5 °C. It puts long-term warming at around **1.4 °C**. ([Copernicus](https://climate.copernicus.eu/copernicus-2025-was-third-hottest-year-record))\n\n**Where can we get decades of data for one city?**\n\n- Open-Meteo's Historical Weather API serves free daily data with no key: ERA5 from 1940, ERA5-Land from 1950, and ECMWF IFS from 2017. ([Open-Meteo](https://open-meteo.com/en/docs/historical-weather-api))\n- Its default, *Best Match*, blends those models, using the newer 9 km models from 2017 onwards. For climate change over decades, the documentation advises using **ERA5 or ERA5-Land exclusively**, for consistency. So the data cell asks for `models=era5`. ([Open-Meteo](https://open-meteo.com/en/docs/historical-weather-api))\n\n**Things to bear in mind**\n\n- One place swings far more from year to year than the global average, so look at decades, not single years.\n- ERA5 is a reanalysis: a weather model held to past observations. For one city it describes the grid square around it (about 25 km across), not a thermometer in the street.\n- The global figures above compare with 1850–1900; the city analysis below compares with 1961–1990, because ERA5 doesn't go back that far. The two numbers measure different things.",
+      "metadata": {
+        "ai": {
+          "prompt": "Using the web search results, write a short research brief in Markdown. Say how much the world has warmed since pre-industrial times according to the latest WMO and Copernicus reports, and which free data source can give decades of daily temperatures for one city, including any advice its documentation gives about using it for long-term trends. End with caveats a beginner should know. Cite every fact with a link to its source.",
+          "kind": "md",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": true,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "3bf23766",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ai6-controls-md",
+      "kind": "md",
+      "source": "## Step 2: choose a city\n\n> Controls for choosing what to research, 900 pixels wide: a label explaining to type a city and pick a start year, then run the data cell and the analysis cell; a text box \"City\" bound to research_city (default \"London\"); and a slider \"Start year\" bound to research_from (1950 to 1990, step 1, default 1950)."
+    },
+    {
+      "id": "c-ai6-controls",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Which city?\",\n  \"width\": 900,\n  \"height\": 130,\n  \"controls\": [\n    { \"type\": \"label\", \"label\": \"How to use\", \"text\": \"Type a city and pick a start year, then run the data cell (▶) and the analysis cell below it.\", \"x\": 0, \"y\": 0, \"width\": 900, \"height\": 44 },\n    { \"type\": \"text\", \"label\": \"City\", \"bind\": \"research_city\", \"default\": \"London\", \"placeholder\": \"Any city or town\", \"x\": 0, \"y\": 54, \"width\": 300, \"height\": 64 },\n    { \"type\": \"slider\", \"label\": \"Start year\", \"bind\": \"research_from\", \"default\": 1950, \"min\": 1950, \"max\": 1990, \"step\": 1, \"x\": 330, \"y\": 54, \"width\": 300, \"height\": 64 }\n  ]\n}",
+      "metadata": {
+        "ai": {
+          "prompt": "Controls for choosing what to research, 900 pixels wide: a label explaining to type a city and pick a start year, then run the data cell and the analysis cell; a text box \"City\" bound to research_city (default \"London\"); and a slider \"Start year\" bound to research_from (1950 to 1990, step 1, default 1950).",
+          "kind": "ui",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "4ffd717e",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ai6-fetch-md",
+      "kind": "md",
+      "source": "## Step 3: fetch the data\n\n> **Prompt (search on):** Look up nb.research_city with the Open-Meteo geocoding API, then fetch the daily mean temperature for every day from the year nb.research_from to the end of last year from the Open-Meteo historical weather archive, using the ERA5 model only, as the search results advise for long-term trends. Work out each year's mean temperature. Store {city, country, latitude, longitude, first_year, last_year, years: [{year, mean, days}], source} as nb.city_climate. Give a clear error if the city isn't found or the archive fails. Return a small dark card with the place, its coordinates, the number of years and days of data, and the warmest and coolest years.\n\nThe phrase *\"using the ERA5 model only, as the search results advise\"* matters. Open-Meteo's default blends in newer high-resolution models from 2017 onwards, which can create a jump in the record that looks like climate change but isn't. Search found that advice in the documentation. Without it, it's easy to use the default and never notice."
+    },
+    {
+      "id": "c-ai6-fetch",
+      "kind": "js",
+      "source": "// Find the city, then fetch every day's mean temperature from the Open-Meteo\n// archive. models=era5 keeps the whole record from one consistent source, as\n// Open-Meteo's documentation advises for decades-long trends.\nconst city = String(nb.get('research_city') ?? 'London').trim() || 'London';\nconst firstYear = Number(nb.get('research_from') ?? 1950);\nconst lastYear = new Date().getFullYear() - 1;            // the last complete year\n\nconst found = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`).then((r) => r.json());\nif (!found.results?.length) throw new Error(`Couldn't find a place called \"${city}\". Check the spelling in the City box.`);\nconst { name, country, latitude, longitude } = found.results[0];\n\nconst url = 'https://archive-api.open-meteo.com/v1/archive'\n  + `?latitude=${latitude}&longitude=${longitude}&start_date=${firstYear}-01-01&end_date=${lastYear}-12-31`\n  + '&daily=temperature_2m_mean&models=era5&timezone=auto';\nconst response = await fetch(url);\nif (!response.ok) throw new Error(`The Open-Meteo archive answered ${response.status}. Wait a minute and run this cell again.`);\nconst data = await response.json();\n\n// Average each year's days.\nconst totals = {};\ndata.daily.time.forEach((day, i) => {\n  const t = data.daily.temperature_2m_mean[i];\n  if (t === null) return;\n  const year = day.slice(0, 4);\n  totals[year] ??= { sum: 0, days: 0 };\n  totals[year].sum += t;\n  totals[year].days++;\n});\nconst years = Object.entries(totals).map(([year, { sum, days }]) => ({ year: Number(year), mean: Math.round((sum / days) * 100) / 100, days }));\n\nnb.set('city_climate', { city: name, country, latitude, longitude, first_year: firstYear, last_year: lastYear, years, source: 'Open-Meteo Historical Weather API, ERA5' });\n\nconst warmest = years.reduce((a, b) => (b.mean > a.mean ? b : a));\nconst coolest = years.reduce((a, b) => (b.mean < a.mean ? b : a));\nconst days = years.reduce((sum, y) => sum + y.days, 0);\nconst esc = (text) => String(text).replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[c]);\n\nreturn `\n<div style=\"background:#0f172a;color:#e2e8f0;font:14px/1.6 system-ui,sans-serif;border-radius:12px;padding:14px 18px\">\n  <div style=\"font-size:18px;font-weight:700;color:#f8fafc\">${esc(name)}, ${esc(country)}</div>\n  <div style=\"color:#94a3b8\">${latitude.toFixed(2)}°, ${longitude.toFixed(2)}° · ${years.length} years, ${days.toLocaleString()} days of ERA5 data via Open-Meteo</div>\n  <div style=\"margin-top:8px\">Warmest year: <b style=\"color:#f87171\">${warmest.year}</b> (${warmest.mean.toFixed(1)} °C) · Coolest year: <b style=\"color:#60a5fa\">${coolest.year}</b> (${coolest.mean.toFixed(1)} °C)</div>\n</div>`;",
+      "metadata": {
+        "ai": {
+          "prompt": "Look up nb.research_city with the Open-Meteo geocoding API, then fetch the daily mean temperature for every day from the year nb.research_from to the end of last year from the Open-Meteo historical weather archive, using the ERA5 model only, as the search results advise for long-term trends. Work out each year's mean temperature. Store {city, country, latitude, longitude, first_year, last_year, years: [{year, mean, days}], source} as nb.city_climate. Give a clear error if the city isn't found or the archive fails. Return a small dark card with the place, its coordinates, the number of years and days of data, and the warmest and coolest years.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": true,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "252c7b5d",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ai6-analysis-md",
+      "kind": "md",
+      "source": "## Step 4: what the numbers say\n\n> Analyse nb[\"city_climate\"]. Compare every year with the 1961–1990 average (or the first 30 years if the record starts later). Draw a matplotlib figure with warming stripes (one blue-to-red stripe per year) above a bar chart of each year's difference from that baseline in the same colours, with a 10-year rolling average line. Print plain sentences: the years covered, the baseline average, the last 10 years' average and its difference, the trend per decade over the whole record and since 1980, and the warmest and coolest years, then note that the global figures in the research brief use a different baseline. Save the main numbers as nb[\"city_warming\"].\n\nThe coloured stripes follow the style of the \"warming stripes\" made famous by climate scientist Ed Hawkins: one stripe per year, no axes, just blue fading to red."
+    },
+    {
+      "id": "c-ai6-analysis",
+      "kind": "py",
+      "source": "import numpy as np\nimport matplotlib.pyplot as plt\nfrom matplotlib.colors import TwoSlopeNorm\n\ndata = nb.get(\"city_climate\")\nif not data:\n    raise RuntimeError(\"No data yet. Run the JavaScript data cell above first.\")\n\nyears = np.array([y[\"year\"] for y in data[\"years\"]])\ntemps = np.array([y[\"mean\"] for y in data[\"years\"]])\nplace = f\"{data['city']}, {data['country']}\"\n\n# Compare each year with 1961–1990, a long-used baseline. If the record starts\n# later than that, use its first 30 years instead, and say so.\nin_baseline = (years >= 1961) & (years <= 1990)\nif in_baseline.sum() >= 20:\n    baseline, baseline_name = temps[in_baseline].mean(), \"1961–1990\"\nelse:\n    baseline, baseline_name = temps[:30].mean(), f\"{years[0]}–{years[min(29, len(years) - 1)]}\"\ndifference = temps - baseline\nrecent = temps[-10:].mean()\nper_decade = np.polyfit(years, temps, 1)[0] * 10\nsince_1980 = years >= 1980\nper_decade_1980 = np.polyfit(years[since_1980], temps[since_1980], 1)[0] * 10 if since_1980.sum() > 10 else per_decade\n\nfig, (stripes, bars) = plt.subplots(2, 1, figsize=(10, 5.4), gridspec_kw={\"height_ratios\": [1, 2.2]})\nnorm = TwoSlopeNorm(vmin=min(difference.min(), -0.1), vcenter=0, vmax=max(difference.max(), 0.1))\ncolours = plt.cm.RdBu_r(norm(difference))\n\n# Warming stripes: one stripe per year, blue cooler and red warmer than the baseline.\nstripes.imshow(difference[np.newaxis, :], aspect=\"auto\", cmap=\"RdBu_r\", norm=norm,\n               extent=[years[0] - 0.5, years[-1] + 0.5, 0, 1])\nstripes.set_yticks([])\nstripes.set_title(f\"{place}: one stripe per year, blue cooler and red warmer than {baseline_name}\")\n\nbars.bar(years, difference, color=colours, width=0.9)\nten_year = np.convolve(temps, np.ones(10) / 10, mode=\"valid\") - baseline\nbars.plot(years[9:], ten_year, color=\"#0f172a\", linewidth=2.2, label=\"10-year average\")\nbars.axhline(0, color=\"#64748b\", linewidth=0.8)\nbars.set_ylabel(f\"°C compared with {baseline_name}\")\nbars.set_xlim(years[0] - 0.5, years[-1] + 0.5)\nbars.legend(frameon=False, loc=\"upper left\")\nfig.tight_layout()\n\nprint(f\"{place}: {len(years)} years of ERA5 data, {years[0]} to {years[-1]}.\")\nprint(f\"The {baseline_name} average was {baseline:.1f} °C.\")\nprint(f\"The last 10 years ({years[-10]} to {years[-1]}) averaged {recent:.1f} °C: {recent - baseline:+.1f} °C.\")\nprint(f\"The trend is {per_decade:+.2f} °C per decade over the whole record, and {per_decade_1980:+.2f} °C per decade since 1980.\")\nprint(f\"The warmest year was {years[temps.argmax()]} and the coolest {years[temps.argmin()]}.\")\nprint()\nprint(\"For context, the research brief puts the whole world at about 1.4 °C above 1850–1900.\")\nprint(\"That's a different baseline and the whole planet, so the two numbers aren't directly comparable.\")\n\nnb[\"city_warming\"] = {\n    \"place\": place, \"baseline\": baseline_name, \"baseline_c\": round(float(baseline), 2),\n    \"last_10_years_c\": round(float(recent), 2), \"change_c\": round(float(recent - baseline), 2),\n    \"per_decade_c\": round(float(per_decade), 3), \"per_decade_since_1980_c\": round(float(per_decade_1980), 3),\n}",
+      "metadata": {
+        "ai": {
+          "prompt": "Analyse nb[\"city_climate\"]. Compare every year with the 1961–1990 average (or the first 30 years if the record starts later). Draw a matplotlib figure with warming stripes (one blue-to-red stripe per year) above a bar chart of each year's difference from that baseline in the same colours, with a 10-year rolling average line. Print plain sentences: the years covered, the baseline average, the last 10 years' average and its difference, the trend per decade over the whole record and since 1980, and the warmest and coolest years, then note that the global figures in the research brief use a different baseline. Save the main numbers as nb[\"city_warming\"].",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "efb00f8b",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ai6-yours",
+      "kind": "md",
+      "source": "## Your own research\n\n**Change the city** in the box above, then run the data cell and the analysis cell. Try somewhere very different from London, such as Moscow, Singapore or Phoenix.\n\n**Ask new questions.** In the hub, use **⚡ AI Generate New Cell** with **Search web for context** ticked:\n\n- *\"Is Leeds getting more days above 25 °C? Fetch daily maximum temperatures from Open-Meteo (ERA5) and count them per year.\"*\n- *\"Has rainfall in my city changed since 1950? Use the same source and show a chart by decade.\"*\n- *\"Compare the warming in nb.city_climate with the latest IPCC figure for warming over land, and cite the source.\"*\n\n**Check the sources.** Search makes a model more current, not infallible. Open the links in the research brief and make sure they say what the brief claims."
+    }
+  ],
+  "createdAt": "2026-10-29T12:00:00.000Z",
+  "updatedAt": "2026-10-29T12:00:00.000Z"
+}

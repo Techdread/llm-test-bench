@@ -1,43 +1,69 @@
 {
   "id": "tutorial-02-sharing-data-between-cells",
   "title": "02 Sharing Data Between Cells",
+  "state": {
+    "discount_pct": 10,
+    "delivery": false
+  },
   "cells": [
     {
-      "id": "c-ff9b01b8",
+      "id": "c-t02-intro",
       "kind": "md",
-      "source": "# 02 Sharing Data Between Cells\n\nThis notebook shows how Notebook Lab shares values through the `nb` object.\n\nRule of thumb: values should be JSON-serialisable, like numbers, strings, arrays, and plain objects."
+      "source": "# 02 Sharing Data Between Cells\n\nEvery cell in a notebook can read and write one shared store called `nb`. Think of it as a set of named boxes. One cell puts a value in a box, and any other cell can take a look. This notebook passes a shopping basket around, from JavaScript to Python to a chart, a slider, a live receipt and a Lua cell.\n\n| Cell | Read a value | Write a value |\n| --- | --- | --- |\n| **JavaScript** | `nb.get('basket')` | `nb.set('basket', value)` |\n| **Python** | `nb['basket']` or `nb.get('basket', [])` | `nb['basket'] = value` |\n| **HTML** | `nb.get('basket')`, plus `nb.onChange(fn)` to redraw | `nb.set('basket', value)` |\n| **Controls** | show the current value | `\"bind\": \"discount_pct\"` |\n| **Lua, C** | can't read | print `__NB_SET__ {\"key\": \"…\", \"value\": …}` |\n\nPress **Run all**, then open the **Variables** panel on the right to watch the boxes fill up."
     },
     {
-      "id": "c-2d205e9f",
+      "id": "c-t02-basket",
       "kind": "js",
-      "source": "const sales = [12, 18, 9, 22, 15];\nnb.set('sales', sales);\nnb.set('sales_summary', {\n  count: sales.length,\n  total: sales.reduce((a, b) => a + b, 0),\n  average: sales.reduce((a, b) => a + b, 0) / sales.length\n});\nconsole.log('Saved sales and sales_summary from JS');"
+      "source": "// JavaScript writes: nb.set(name, value) puts a copy of the value into nb.\nconst basket = [\n  { item: 'Sourdough loaf', price: 3.20, qty: 1, aisle: 'Bakery' },\n  { item: 'Strawberries', price: 2.50, qty: 2, aisle: 'Fruit & veg' },\n  { item: 'Cheddar', price: 4.10, qty: 1, aisle: 'Dairy' },\n  { item: 'Lemonade', price: 1.80, qty: 3, aisle: 'Drinks' },\n  { item: 'Crisps', price: 1.25, qty: 4, aisle: 'Snacks' },\n  { item: 'Picnic blanket', price: 12.00, qty: 1, aisle: 'Home' },\n];\nnb.set('basket', basket);\n\nreturn `Put ${basket.length} lines into nb.basket`;"
     },
     {
-      "id": "c-716ce9bf",
+      "id": "c-t02-totals",
       "kind": "py",
-      "source": "sales = nb['sales']\nsummary = nb['sales_summary']\npeak = max(sales)\nnb['sales_peak'] = peak\nprint(f\"Python read {len(sales)} values from JS\")\nprint(f\"Average was {summary['average']:.2f}\")\n{'peak': peak, 'delta_from_average': round(peak - summary['average'], 2)}"
+      "source": "# Python reads with nb['name'] and writes with nb['name'] = value.\n# nb.get('name', default) is the safe form if the cell that sets it hasn't run yet.\nbasket = nb.get('basket', [])\n\nif not basket:\n    print(\"The basket is empty. Run the JavaScript cell above first.\")\nelse:\n    subtotal = sum(row['price'] * row['qty'] for row in basket)\n    by_aisle = {}\n    for row in basket:\n        by_aisle[row['aisle']] = round(by_aisle.get(row['aisle'], 0) + row['price'] * row['qty'], 2)\n    biggest = max(basket, key=lambda row: row['price'] * row['qty'])\n\n    nb['subtotal'] = round(subtotal, 2)\n    nb['by_aisle'] = by_aisle\n\n    print(f\"{len(basket)} lines, subtotal £{subtotal:.2f}\")\n    print(f\"Biggest line: {biggest['qty']} × {biggest['item']} (£{biggest['price'] * biggest['qty']:.2f})\")\n    print(f\"Wrote nb['subtotal'] and nb['by_aisle'] ({len(by_aisle)} aisles)\")"
     },
     {
-      "id": "c-7f27e124",
+      "id": "c-t02-chart",
       "kind": "js",
-      "source": "const peak = nb.get('sales_peak');\nconst summary = nb.get('sales_summary');\nconst rows = nb.get('sales').map((value, index) => ({ day: index + 1, value }));\nreturn {\n  title: 'Round-trip data flow',\n  peak,\n  average: Number(summary.average.toFixed(2)),\n  rows\n};"
+      "source": "// A JavaScript cell can return a Vega-Lite chart. Building it from nb means\n// the chart follows the data: change the basket, re-run, and the bars change.\nconst byAisle = nb.get('by_aisle') ?? {};\n\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  title: 'Spend by aisle (from Python\\'s nb.by_aisle)',\n  width: 520,\n  height: 190,\n  data: { values: Object.entries(byAisle).map(([aisle, spend]) => ({ aisle, spend })) },\n  mark: { type: 'bar', cornerRadiusEnd: 4 },\n  encoding: {\n    y: { field: 'aisle', type: 'nominal', sort: '-x', title: null },\n    x: { field: 'spend', type: 'quantitative', title: 'Spend (£)' },\n    color: { field: 'aisle', type: 'nominal', legend: null },\n    tooltip: [{ field: 'aisle', title: 'Aisle' }, { field: 'spend', title: 'Spend (£)', format: '.2f' }],\n  },\n};"
     },
     {
-      "id": "c-6b45ddd8",
+      "id": "c-t02-controls",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Checkout options\",\n  \"description\": \"Controls write straight into nb. The receipt below listens and redraws as you change them.\",\n  \"width\": 620,\n  \"height\": 64,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"Discount (%)\",\n      \"bind\": \"discount_pct\",\n      \"default\": 10,\n      \"min\": 0,\n      \"max\": 50,\n      \"step\": 5,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 380,\n      \"height\": 64\n    },\n    {\n      \"type\": \"checkbox\",\n      \"label\": \"Home delivery (£3.99)\",\n      \"bind\": \"delivery\",\n      \"default\": false,\n      \"x\": 410,\n      \"y\": 0,\n      \"width\": 210,\n      \"height\": 64\n    }\n  ]\n}"
+    },
+    {
+      "id": "c-t02-receipt",
+      "kind": "html",
+      "source": "<!-- HTML cell: reads nb, redraws on nb.onChange, and writes back with nb.set. -->\n<style>\n  html, body { margin: 0; height: 100%; background: #020617; }\n  body { font: 14px/1.45 system-ui, sans-serif; color: #0f172a; padding: 16px 20px; box-sizing: border-box; }\n  .wrap { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; align-items: start; }\n  .paper { background: #fffdf7; border-radius: 10px; padding: 14px 18px; }\n  h3 { margin: 0 0 8px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #64748b; }\n  .line { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; padding: 3px 0; border-bottom: 1px dashed #e2e8f0; font-variant-numeric: tabular-nums; }\n  .qty { color: #64748b; }\n  .row { display: flex; justify-content: space-between; padding: 2px 0; font-variant-numeric: tabular-nums; }\n  .row.total { font-weight: 700; font-size: 18px; border-top: 2px solid #0f172a; margin-top: 6px; padding-top: 8px; }\n  .src { color: #94a3b8; font-size: 11px; margin-left: 4px; }\n  .note { border-radius: 6px; padding: 6px 8px; font-size: 12px; margin-top: 8px; }\n  .warn { background: #fef3c7; color: #92400e; }\n  .done { background: #dcfce7; color: #166534; }\n  .hours { color: #64748b; font-size: 12px; margin-top: 8px; }\n  button { margin-top: 10px; width: 100%; padding: 9px; border: 0; border-radius: 8px; background: #16a34a; color: #fff; font: 600 14px system-ui, sans-serif; cursor: pointer; }\n  button:hover { background: #15803d; }\n  .empty { color: #94a3b8; padding: 24px 0; }\n</style>\n<div id=\"app\"></div>\n<script>\n  const money = n => '£' + n.toFixed(2);\n\n  function draw() {\n    const app = document.getElementById('app');\n    const basket = nb.get('basket');\n    if (!basket) {\n      app.innerHTML = '<p class=\"empty\">Run the cells above (or Run all) to fill the basket.</p>';\n      return;\n    }\n    const linesTotal = basket.reduce((sum, row) => sum + row.price * row.qty, 0);\n    const subtotal = nb.get('subtotal');                 // written by Python\n    const pct = Number(nb.get('discount_pct', 0));       // written by the slider\n    const delivery = nb.get('delivery', false) ? 3.99 : 0;\n    const base = subtotal ?? linesTotal;\n    const discount = base * pct / 100;\n    const total = base - discount + delivery;\n    const stale = subtotal === undefined\n      ? 'No subtotal from Python yet. Run the Python cell.'\n      : Math.abs(subtotal - linesTotal) > 0.005\n        ? 'Python\\'s subtotal (' + money(subtotal) + ') doesn\\'t match the basket (' + money(linesTotal) + '). Re-run the Python cell.'\n        : '';\n    const done = nb.get('checked_out');\n    const hours = nb.get('shop_hours');\n\n    const lines = basket.map(row => '<div class=\"line\"><span class=\"qty\">' + row.qty + '×</span><span>' + row.item\n      + '</span><span>' + money(row.price * row.qty) + '</span></div>').join('');\n    app.innerHTML = '<div class=\"wrap\">'\n      + '<div class=\"paper\"><h3>Basket <span class=\"src\">nb.basket</span></h3>' + lines + '</div>'\n      + '<div class=\"paper\"><h3>Receipt</h3>'\n      + '<div class=\"row\"><span>Subtotal<span class=\"src\">Python</span></span><span>' + money(base) + '</span></div>'\n      + '<div class=\"row\"><span>Discount ' + pct + '%<span class=\"src\">slider</span></span><span>−' + money(discount) + '</span></div>'\n      + '<div class=\"row\"><span>Delivery<span class=\"src\">checkbox</span></span><span>' + money(delivery) + '</span></div>'\n      + '<div class=\"row total\"><span>Total</span><span>' + money(total) + '</span></div>'\n      + (stale ? '<div class=\"note warn\">' + stale + '</div>' : '')\n      + (done\n        ? '<div class=\"note done\">✓ Checked out: wrote nb.checked_out = ' + JSON.stringify(done) + '</div>'\n        : '<button id=\"pay\">Check out</button>')\n      + (hours ? '<div class=\"hours\">Open today ' + hours + ' <span class=\"src\">Lua</span></div>' : '')\n      + '</div></div>';\n\n    const pay = document.getElementById('pay');\n    if (pay) pay.addEventListener('click', () => {\n      nb.set('checked_out', { lines: basket.length, total: Math.round(total * 100) / 100 });\n    });\n  }\n\n  draw();\n  nb.onChange(draw);\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 340,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-t02-updates",
       "kind": "md",
-      "source": "## What happened\n\n1. A **JS** cell wrote `sales` and `sales_summary`\n2. A **Python** cell read them, calculated `sales_peak`, then wrote it back\n3. A final **JS** cell read the Python result and built a combined view\n\nThis is the bridge that makes Notebook Lab unusually powerful."
+      "source": "## What updates by itself?\n\n- **Drag the slider or tick delivery.** The receipt changes at once, because HTML cells can listen with `nb.onChange`.\n- **Press Check out.** The HTML cell writes `nb.checked_out`; look for it in the Variables panel.\n- **Everything else waits to be run.** JavaScript and Python cells only run when you run them. If the basket changes, Python's subtotal stays the same until you re-run the Python cell, and the receipt will warn you. `nb` is shared memory, not a spreadsheet."
     },
     {
-      "id": "c-7054d8d8",
-      "kind": "chart",
-      "source": "{\n  \"$schema\": \"https://vega.github.io/schema/vega-lite/v5.json\",\n  \"description\": \"Sales values shared across cells\",\n  \"data\": {\n    \"values\": [\n      {\n        \"day\": \"Day 1\",\n        \"sales\": 12\n      },\n      {\n        \"day\": \"Day 2\",\n        \"sales\": 18\n      },\n      {\n        \"day\": \"Day 3\",\n        \"sales\": 9\n      },\n      {\n        \"day\": \"Day 4\",\n        \"sales\": 22\n      },\n      {\n        \"day\": \"Day 5\",\n        \"sales\": 15\n      }\n    ]\n  },\n  \"mark\": {\n    \"type\": \"line\",\n    \"point\": true\n  },\n  \"encoding\": {\n    \"x\": {\n      \"field\": \"day\",\n      \"type\": \"ordinal\"\n    },\n    \"y\": {\n      \"field\": \"sales\",\n      \"type\": \"quantitative\"\n    }\n  }\n}"
+      "id": "c-t02-lua",
+      "kind": "lua",
+      "source": "-- Lua cell: Lua (like C) can't read nb, but it can publish to it.\n-- Print a line starting with __NB_SET__, followed by {\"key\": ..., \"value\": ...} as JSON.\n-- That line is picked up and hidden from the output.\nlocal open, close = 8, 20\nprint(string.format(\"Shop hours: %02d:00 to %02d:00\", open, close))\nprint(string.format('__NB_SET__ {\"key\":\"shop_hours\",\"value\":\"%02d:00 to %02d:00\"}', open, close))"
     },
     {
-      "id": "c-8a4903d1",
+      "id": "c-t02-copies",
+      "kind": "js",
+      "source": "// nb hands out copies, not links. Changing what nb.get gave you changes nothing shared...\nconst basket = nb.get('basket');\nbasket.push({ item: 'Umbrella', price: 6.50, qty: 1, aisle: 'Home' });\n\nconsole.log(`This cell's copy: ${basket.length} lines`);\nconsole.log(`Shared nb.basket: ${nb.get('basket').length} lines`);\n\n// ...until you set it back. Remove the // from the next line and run this cell:\n// the receipt gains an umbrella and warns that Python's subtotal is out of date.\n// nb.set('basket', basket);"
+    },
+    {
+      "id": "c-t02-next",
       "kind": "md",
-      "source": "## Try this next\n\n- Change the `sales` array in the first JS cell\n- Re-run the notebook from the top\n- Watch how Python and the later JS cell both update\n- Inspect the Variables panel to see the shared state evolve"
+      "source": "## Good habits\n\n- **Run order matters.** A cell that reads a value nobody has set yet gets nothing. Give it a default: `nb.get('key', [])` in Python, `nb.get('key') ?? []` in JavaScript.\n- **Change, then set.** Values come out of `nb` as copies (the cell above), so after changing one, `nb.set` it again.\n- **Plain data only.** Use numbers, text, true/false, lists and objects. **Save** stores everything in `nb` inside the notebook, so the values come back when you reopen it. Functions and page elements can't be shared.\n- **Clean up.** The broom in the Variables panel clears every value; **Run all** puts them back.\n\n**Next:** tutorial **03** builds a longer Python → JavaScript → HTML pipeline, **10** covers every kind of control, and **11** and **12** go further with Lua. They're all in the **Library**."
     }
   ],
   "createdAt": "2026-04-18T19:35:37.853724Z",
-  "updatedAt": "2026-04-18T19:35:37.853724Z"
+  "updatedAt": "2026-10-29T12:00:00.000Z"
 }

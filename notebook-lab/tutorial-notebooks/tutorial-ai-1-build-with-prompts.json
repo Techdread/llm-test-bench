@@ -1,0 +1,139 @@
+{
+  "id": "tutorial-ai-1-build-with-prompts",
+  "title": "AI 1 Build With Prompts",
+  "cells": [
+    {
+      "id": "c-ai1-intro",
+      "kind": "md",
+      "source": "# AI 1 Build With Prompts\n\nIn Notebook Lab you don't have to write code. **Describe what you want, and an AI model writes the cell.** Then run it, look at the result, and say what to change.\n\nEvery code cell in this notebook was made that way, from the prompt shown above it. Together they build a small live aquarium. Press **Run all** to see it."
+    },
+    {
+      "id": "c-ai1-setup",
+      "kind": "md",
+      "source": "## Before you start: pick a model\n\nChoose a model in the toolbar, next to the key icon:\n\n- **🔑 An OpenRouter key** gives you hundreds of models, including free ones.\n- **The server icon** connects a model running on your own computer, such as LM Studio. Nothing leaves your machine.\n- **In the DevTools Hub,** coding agents such as Claude Code and Codex appear in the same list.\n\nStronger models write better cells. If a result keeps going wrong, try a bigger one.\n\n## The four AI buttons\n\n| Button | Where | What it does |\n| --- | --- | --- |\n| **✨** | in a cell's header | writes the cell from a prompt. The prompt is **saved with the cell**, so you can reopen it, change it and press **Replace cell**, or **Generate copy** to keep both |\n| **⚡ AI Generate New Cell** | at the bottom of the notebook | adds a new cell from a prompt |\n| **🔧 AI Fix** | in a cell's header, lit up after an error | sends the error and the notebook's values to the model, which rewrites the cell |\n| **💬 Explain** | in a cell's header | adds a plain-English explanation underneath |\n\nThe model sees the cells above the one it's writing, and **every value in `nb`**, so it knows what data is already there."
+    },
+    {
+      "id": "c-ai1-fish-md",
+      "kind": "md",
+      "source": "## Step 1: the data\n\n> Make a list of 10 freshwater aquarium fish, each with a name, colour, length, speed and the part of the tank it likes. Store it as nb[\"fish\"].\n\nPress **✨** on the cell below to see the whole prompt."
+    },
+    {
+      "id": "c-ai1-fish",
+      "kind": "py",
+      "source": "# Ten freshwater aquarium fish, with what the aquarium and the chart will need.\nfish = [\n    {\"name\": \"Neon tetra\",        \"colour\": \"#1e90ff\", \"length_cm\": 3.5, \"speed\": 4, \"zone\": \"middle\"},\n    {\"name\": \"Cardinal tetra\",    \"colour\": \"#e8304a\", \"length_cm\": 4,   \"speed\": 4, \"zone\": \"middle\"},\n    {\"name\": \"Guppy\",             \"colour\": \"#ff8c1a\", \"length_cm\": 5,   \"speed\": 3, \"zone\": \"top\"},\n    {\"name\": \"Zebra danio\",       \"colour\": \"#a8c0d6\", \"length_cm\": 5,   \"speed\": 5, \"zone\": \"top\"},\n    {\"name\": \"Betta\",             \"colour\": \"#7b2fbe\", \"length_cm\": 7,   \"speed\": 2, \"zone\": \"top\"},\n    {\"name\": \"Platy\",             \"colour\": \"#ff5a36\", \"length_cm\": 6,   \"speed\": 3, \"zone\": \"middle\"},\n    {\"name\": \"Bronze corydoras\",  \"colour\": \"#a0784a\", \"length_cm\": 6,   \"speed\": 2, \"zone\": \"bottom\"},\n    {\"name\": \"Kuhli loach\",       \"colour\": \"#d9a441\", \"length_cm\": 9,   \"speed\": 2, \"zone\": \"bottom\"},\n    {\"name\": \"Angelfish\",         \"colour\": \"#ece6d2\", \"length_cm\": 15,  \"speed\": 1, \"zone\": \"middle\"},\n    {\"name\": \"Bristlenose pleco\", \"colour\": \"#6b5844\", \"length_cm\": 12,  \"speed\": 1, \"zone\": \"bottom\"},\n]\nnb[\"fish\"] = fish\n\nprint(f\"{'Name':<18} {'Colour':<8} {'Length':>8} {'Speed':>6}  Zone\")\nprint(\"-\" * 50)\nfor f in fish:\n    print(f\"{f['name']:<18} {f['colour']:<8} {f['length_cm']:>5} cm {f['speed']:>6}  {f['zone']}\")",
+      "metadata": {
+        "ai": {
+          "prompt": "Make a list of 10 freshwater aquarium fish. For each give \"name\", \"colour\" (a hex colour that suits the real fish), \"length_cm\" (a typical adult length), \"speed\" (a whole number from 1 for slow to 5 for fast) and \"zone\" (\"top\", \"middle\" or \"bottom\", where it likes to swim). Store the list as nb[\"fish\"] and print it as a neat table with aligned columns.",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "d9529975",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ai1-controls-md",
+      "kind": "md",
+      "source": "## Step 2: the controls\n\n> Aquarium controls: a slider for how many fish, a slider for the water temperature, a bubbles checkbox, and a \"Feed the fish\" button."
+    },
+    {
+      "id": "c-ai1-controls",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Aquarium controls\",\n  \"description\": \"Each control writes to nb, and the aquarium below follows along.\",\n  \"width\": 900,\n  \"height\": 84,\n  \"controls\": [\n    { \"type\": \"slider\", \"label\": \"Fish in the tank\", \"bind\": \"fish_count\", \"default\": 12, \"min\": 1, \"max\": 30, \"step\": 1, \"x\": 0, \"y\": 0, \"width\": 210, \"height\": 64 },\n    { \"type\": \"slider\", \"label\": \"Water temperature\", \"bind\": \"water_temp\", \"default\": 24, \"min\": 18, \"max\": 30, \"step\": 1, \"suffix\": \" °C\", \"x\": 230, \"y\": 0, \"width\": 210, \"height\": 64 },\n    { \"type\": \"checkbox\", \"label\": \"Bubbles\", \"bind\": \"bubbles\", \"default\": true, \"x\": 460, \"y\": 14, \"width\": 210, \"height\": 42 },\n    { \"type\": \"button\", \"label\": \"Feed the fish\", \"icon\": \"fa-fish\", \"bind\": \"food_drops\", \"action\": \"increment\", \"x\": 690, \"y\": 14, \"width\": 210, \"height\": 42 }\n  ]\n}",
+      "metadata": {
+        "ai": {
+          "prompt": "Aquarium controls in one row: a slider \"Fish in the tank\" bound to fish_count (1 to 30, step 1, default 12); a slider \"Water temperature\" bound to water_temp (18 to 30, step 1, default 24, suffix \" °C\"); a checkbox \"Bubbles\" bound to bubbles (default true); and a button \"Feed the fish\" with the fa-fish icon that increments food_drops. Place them left to right, each 210 pixels wide, in a form 900 pixels wide.",
+          "kind": "ui",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "ec6e0164",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ai1-tank-md",
+      "kind": "md",
+      "source": "## Step 3: the aquarium\n\n> A live aquarium on a canvas. Draw the fish from nb.fish swimming in their part of the tank, use the controls for how many there are, how fast they swim and the bubbles, and drop food when the button is pressed.\n\nThis is the longest prompt, because it says how everything should look and behave. Move the sliders and press **Feed the fish**: the aquarium follows along.\n\n> **What happened the first time.** When we first tried this prompt with a smaller model, its aquarium had water, plants and bubbles, but **no fish**: it only created them when the fish slider moved. Nothing crashed, so 🔧 AI Fix had no error to work from. The cure was one more sentence at the end of the prompt: *\"Create the fish as soon as the cell starts, and again whenever nb.fish or fish_count changes.\"* When a result is wrong rather than broken, say what you expected and ask again."
+    },
+    {
+      "id": "c-ai1-tank",
+      "kind": "html",
+      "source": "<style>\n  html, body { margin: 0; background: #020617; color: #e2e8f0; font-family: system-ui, sans-serif; }\n  .wrap { padding: 16px 20px; }\n  canvas { display: block; border-radius: 12px; }\n</style>\n<div class=\"wrap\"><canvas id=\"tank\" width=\"860\" height=\"420\"></canvas></div>\n<script>\n  const canvas = document.getElementById('tank');\n  const ctx = canvas.getContext('2d');\n  const W = canvas.width, H = canvas.height;\n  const SAND = H - 42;                                   // where the sand starts\n  const ZONES = { top: [34, SAND / 3], middle: [SAND / 3, (2 * SAND) / 3], bottom: [(2 * SAND) / 3, SAND - 18] };\n\n  let species = [], count = 12, temperature = 24, bubblesOn = true, lastFood = null;\n  let fish = [], flakes = [], bubbles = [];\n  const plants = Array.from({ length: 9 }, (_, i) => ({ x: 40 + i * 96 + (i % 3) * 14, height: 70 + ((i * 37) % 90), phase: i * 0.8 }));\n\n  // Make the fish, taking species from the list in turn.\n  function makeFish() {\n    fish = [];\n    if (!species.length) return;\n    for (let i = 0; i < count; i++) {\n      const kind = species[i % species.length];\n      const [top, bottom] = ZONES[kind.zone] || ZONES.middle;\n      fish.push({\n        kind,\n        top, bottom,\n        x: 40 + Math.random() * (W - 80),\n        homeY: top + Math.random() * (bottom - top),\n        y: 0,\n        dir: Math.random() < 0.5 ? -1 : 1,\n        phase: Math.random() * Math.PI * 2,\n        length: 10 + Number(kind.length_cm || 5) * 3,\n        target: null,\n      });\n    }\n  }\n\n  function dropFood() {\n    for (let i = 0; i < 6; i++) {\n      flakes.push({ x: 60 + Math.random() * (W - 120), y: -Math.random() * 30, vy: 0.5 + Math.random() * 0.4, sway: Math.random() * 6, landed: 0 });\n    }\n  }\n\n  // Read the notebook's values. New species or a new count rebuilds the fish;\n  // everything else just updates, so the animation keeps running.\n  function readState() {\n    const nextSpecies = nb.get('fish', []);\n    const nextCount = Math.max(0, Math.round(Number(nb.get('fish_count', 12)) || 0));\n    temperature = Number(nb.get('water_temp', 24)) || 24;\n    bubblesOn = !!nb.get('bubbles', true);\n    const food = Number(nb.get('food_drops', 0)) || 0;\n    if (lastFood !== null && food > lastFood) dropFood();\n    lastFood = food;\n    if (JSON.stringify(nextSpecies) !== JSON.stringify(species) || nextCount !== count || fish.length === 0) {\n      species = Array.isArray(nextSpecies) ? nextSpecies : [];\n      count = nextCount;\n      makeFish();\n    }\n  }\n\n  function update(t, dt) {\n    const warmth = 1 + (temperature - 24) * 0.05;       // warmer water, livelier fish\n\n    // Each falling flake attracts the fish nearest to it.\n    for (const f of fish) f.target = null;\n    for (const flake of flakes) {\n      let best = null, bestDistance = Infinity;\n      for (const f of fish) {\n        const d = Math.hypot(f.x - flake.x, f.y - flake.y);\n        if (d < bestDistance && !f.target) { best = f; bestDistance = d; }\n      }\n      if (best) best.target = flake;\n    }\n\n    for (const f of fish) {\n      const speed = (0.4 + Number(f.kind.speed || 3) * 0.35) * warmth * dt * 60;\n      if (f.target) {\n        const dx = f.target.x - f.x, dy = f.target.y - f.y;\n        const d = Math.hypot(dx, dy) || 1;\n        f.x += (dx / d) * speed * 1.6;\n        f.homeY += (dy / d) * speed * 1.6;\n        f.dir = dx < 0 ? -1 : 1;\n        if (d < 8) f.target.eaten = true;\n      } else {\n        f.x += f.dir * speed;\n        if (f.x < 30) { f.x = 30; f.dir = 1; }\n        if (f.x > W - 30) { f.x = W - 30; f.dir = -1; }\n        // Drift back into its own part of the tank after chasing food.\n        if (f.homeY < f.top) f.homeY += 0.6;\n        if (f.homeY > f.bottom) f.homeY -= 0.6;\n      }\n      f.y = f.homeY + Math.sin(t * 1.6 + f.phase) * 4;   // a gentle bob\n    }\n\n    flakes = flakes.filter((flake) => {\n      if (flake.eaten) return false;\n      if (flake.y < SAND - 4) {\n        flake.y += flake.vy * dt * 60;\n        flake.x += Math.sin(t * 2 + flake.sway) * 0.3;\n      } else {\n        flake.landed += dt;\n      }\n      return flake.landed < 8;                            // uneaten food fades on the sand\n    });\n\n    if (bubblesOn && Math.random() < 0.25) {\n      const source = [120, 430, 760][Math.floor(Math.random() * 3)];\n      bubbles.push({ x: source + (Math.random() - 0.5) * 10, y: SAND, r: 1.5 + Math.random() * 3, wobble: Math.random() * 6 });\n    }\n    bubbles = bubbles.filter((b) => {\n      b.y -= (0.8 + b.r * 0.25) * dt * 60;\n      b.x += Math.sin(t * 3 + b.wobble) * 0.4;\n      return b.y > 0;\n    });\n  }\n\n  function drawFish(f) {\n    const len = f.length, h = len * 0.42;\n    ctx.save();\n    ctx.translate(f.x, f.y);\n    ctx.scale(f.dir, 1);\n    ctx.fillStyle = f.kind.colour || '#f59e0b';\n    ctx.beginPath();                                      // tail\n    ctx.moveTo(-len * 0.42, 0);\n    ctx.lineTo(-len * 0.78, -h * 0.65);\n    ctx.lineTo(-len * 0.78, h * 0.65);\n    ctx.closePath();\n    ctx.fill();\n    ctx.beginPath();                                      // body\n    ctx.ellipse(0, 0, len / 2, h / 2, 0, 0, Math.PI * 2);\n    ctx.fill();\n    ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';\n    ctx.lineWidth = 1;\n    ctx.stroke();\n    const eye = Math.max(1.6, h * 0.14);                  // eye\n    ctx.fillStyle = '#fff';\n    ctx.beginPath(); ctx.arc(len * 0.27, -h * 0.1, eye, 0, Math.PI * 2); ctx.fill();\n    ctx.fillStyle = '#0f172a';\n    ctx.beginPath(); ctx.arc(len * 0.29, -h * 0.1, eye * 0.55, 0, Math.PI * 2); ctx.fill();\n    ctx.restore();\n  }\n\n  function draw(t) {\n    const water = ctx.createLinearGradient(0, 0, 0, SAND);\n    water.addColorStop(0, '#1d6fb8');\n    water.addColorStop(1, '#0a2a5c');\n    ctx.fillStyle = water;\n    ctx.fillRect(0, 0, W, H);\n\n    ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';         // soft light from above\n    for (let i = 0; i < 4; i++) {\n      const x = 120 + i * 210 + Math.sin(t * 0.3 + i) * 20;\n      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 60, 0); ctx.lineTo(x + 140, SAND); ctx.lineTo(x + 40, SAND); ctx.fill();\n    }\n\n    for (const plant of plants) {                         // swaying weed\n      ctx.strokeStyle = '#2f9e44';\n      ctx.lineWidth = 5;\n      ctx.lineCap = 'round';\n      for (let blade = -1; blade <= 1; blade++) {\n        const sway = Math.sin(t * 1.2 + plant.phase + blade) * 14;\n        ctx.beginPath();\n        ctx.moveTo(plant.x + blade * 6, SAND + 4);\n        ctx.quadraticCurveTo(plant.x + blade * 10 + sway * 0.4, SAND - plant.height / 2, plant.x + blade * 8 + sway, SAND - plant.height + Math.abs(blade) * 18);\n        ctx.stroke();\n      }\n    }\n\n    ctx.fillStyle = '#d6b98a';                            // wavy sand\n    ctx.beginPath();\n    ctx.moveTo(0, H);\n    for (let x = 0; x <= W; x += 20) ctx.lineTo(x, SAND + Math.sin(x / 70) * 5);\n    ctx.lineTo(W, H);\n    ctx.fill();\n\n    ctx.fillStyle = '#f59e0b';\n    for (const flake of flakes) ctx.fillRect(flake.x - 2, flake.y - 2, 4, 4);\n\n    for (const f of fish) drawFish(f);\n\n    ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';\n    ctx.lineWidth = 1.2;\n    for (const b of bubbles) { ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke(); }\n\n    ctx.fillStyle = 'rgba(2, 6, 23, 0.55)';               // the water temperature, top left\n    ctx.fillRect(12, 12, 132, 30);\n    ctx.fillStyle = '#e0f2fe';\n    ctx.font = '600 15px system-ui, sans-serif';\n    ctx.fillText('Water: ' + temperature + ' °C', 22, 32);\n  }\n\n  let last = performance.now();\n  function frame(now) {\n    const dt = Math.min(0.05, (now - last) / 1000);\n    last = now;\n    update(now / 1000, dt);\n    draw(now / 1000);\n    requestAnimationFrame(frame);\n  }\n\n  readState();\n  nb.onChange(readState);\n  requestAnimationFrame(frame);\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 470,
+          "scale": 1
+        },
+        "ai": {
+          "prompt": "A live aquarium on a canvas 860 by 420 pixels. Read nb.get(\"fish\", []) (a list of objects with name, colour, length_cm, speed from 1 to 5, and zone \"top\", \"middle\" or \"bottom\") and the controls nb.get(\"fish_count\", 12), nb.get(\"water_temp\", 24), nb.get(\"bubbles\", true) and nb.get(\"food_drops\", 0). Draw fish_count fish, taking species from the list in turn: an oval body in the species colour sized by length_cm, a tail, and an eye, facing the way it swims. Each fish swims left and right inside its zone's third of the tank at a speed set by its speed value, a little faster when the water is warmer, turning round at the edges and bobbing gently. When bubbles is true, draw small bubbles rising from the bottom. Whenever food_drops goes up, drop a few flakes from the top; the nearest fish swim towards them and eat them. Use a deep blue water gradient, a sandy bottom and a few swaying green plants. Animate with requestAnimationFrame, and use nb.onChange to pick up new control values without restarting the animation. Show the water temperature in a corner. Create the fish as soon as the cell starts, and again whenever nb.fish or fish_count changes.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "a2ce4bc3",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ai1-chart-md",
+      "kind": "md",
+      "source": "## Step 4: a chart\n\n> A chart of length against speed, one circle per species in its own colour, with names and a tooltip."
+    },
+    {
+      "id": "c-ai1-chart",
+      "kind": "js",
+      "source": "// One circle per species in its own colour, with its name beside it.\nconst fish = nb.get('fish') ?? [];\n\n// Put each name where there's room: when several fish share a speed, the\n// left-most one is labelled on its left and the rest on their right.\nconst values = fish.map((f) => {\n  const sameSpeed = fish.filter((g) => g.speed === f.speed);\n  const leftMost = sameSpeed.length > 1 && sameSpeed.every((g) => g.length_cm >= f.length_cm);\n  return { ...f, side: leftMost ? 'left' : 'right' };\n});\nconst label = (side) => ({\n  transform: [{ filter: `datum.side === '${side}'` }],\n  mark: { type: 'text', align: side === 'left' ? 'right' : 'left', dx: side === 'left' ? -14 : 14, fontSize: 12 },\n  encoding: { text: { field: 'name' } },\n});\n\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  title: 'Big fish, fast fish?',\n  width: 560,\n  height: 300,\n  data: { values },\n  encoding: {\n    x: { field: 'length_cm', type: 'quantitative', title: 'Length (cm)', scale: { domain: [0, 18] } },\n    y: { field: 'speed', type: 'quantitative', title: 'Speed (1 slow, 5 fast)', scale: { domain: [0, 5.5] }, axis: { tickMinStep: 1 } },\n  },\n  layer: [\n    {\n      mark: { type: 'circle', size: 420, opacity: 0.9, stroke: '#334155', strokeWidth: 1 },\n      encoding: {\n        color: { field: 'colour', type: 'nominal', scale: null },\n        tooltip: [\n          { field: 'name', title: 'Fish' },\n          { field: 'length_cm', title: 'Length (cm)' },\n          { field: 'speed', title: 'Speed' },\n          { field: 'zone', title: 'Zone' },\n        ],\n      },\n    },\n    label('left'),\n    label('right'),\n  ],\n};",
+      "metadata": {
+        "ai": {
+          "prompt": "Return a Vega-Lite chart of nb.get(\"fish\"): length_cm on the x axis and speed on the y axis, one large circle per species filled with that species' own colour (use the colour field directly with \"scale\": null), its name written next to it, and a tooltip with name, length, speed and zone. Title it \"Big fish, fast fish?\". Make it 560 wide and 300 tall.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "4c7d8146",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ai1-fix-md",
+      "kind": "md",
+      "source": "## Fixing mistakes: 🔧 AI Fix\n\nThe next cell has **two mistakes on purpose**: it asks for `nb[\"fishes\"]` (the data is called `fish`) and for a `length` field (it's `length_cm`). It shows an error after **Run all**.\n\nPress **🔧** in its header. The model gets the error, the cell, and the values in `nb`, so it can see what the data is really called. It rewrites the cell; run it again to check.\n\nThe error only mentions the first mistake, but a good model fixes both, because it can see that each fish has a `length_cm` field. Even the smaller model we tried did."
+    },
+    {
+      "id": "c-ai1-broken",
+      "kind": "py",
+      "source": "# Two mistakes on purpose. Run it, see the error, then press 🔧 AI Fix.\nfish = nb[\"fishes\"]\nbiggest = max(fish, key=lambda f: f[\"length\"])\nprint(f\"The biggest fish is the {biggest['name']}, at {biggest['length']} cm.\")"
+    },
+    {
+      "id": "c-ai1-explain",
+      "kind": "md",
+      "source": "## Understanding what was written: 💬 Explain\n\nPress **💬** on the aquarium cell. A Markdown cell appears under it explaining how it works, in plain English. It's the quickest way to learn from code you didn't write."
+    },
+    {
+      "id": "c-ai1-tips",
+      "kind": "md",
+      "source": "## Writing prompts that work\n\n1. **Say where the data is, and what it looks like.** *\"Read nb.fish, a list of objects with name, colour and length_cm.\"* The model can see `nb`, but naming things removes the guesswork.\n2. **Say what to show and how it behaves.** Sizes, colours, what happens when a control changes or a button is pressed.\n3. **One cell, one job.** Build in steps, like above: data, then controls, then the view, then a chart.\n4. **Name what a cell shares.** *\"Store it as nb[\"fish\"]\"*, *\"bound to fish_count\"*. Later prompts can then use those names.\n5. **Change it by asking.** Reopen **✨**, add *\"Also…\"* or rewrite the prompt, and **Replace cell**. **Generate copy** keeps the old version to compare.\n6. **Stuck?** Run the cell and press **🔧**, or try a stronger model.\n\n## Try these\n\nUse **⚡ AI Generate New Cell** at the bottom of the notebook, choose the cell kind, and paste a prompt:\n\n- **Python:** *\"Count how many species in nb[\"fish\"] live in each zone, and draw a matplotlib bar chart of it.\"*\n- **HTML:** *\"A fish quiz: show a random fish from nb.fish as a coloured fish shape with three name buttons, one of them right. Keep score with nb.set(\"quiz_score\", n).\"*\n- **UI Controls:** *\"A colour picker 'Water colour' bound to water_colour.\"* Then press **✨** on the aquarium and add: *\"Use nb.water_colour as the main water colour.\"*\n\n**Next:** tutorial **AI 2** generates a whole notebook from a single prompt. It's in the **Library**."
+    }
+  ],
+  "createdAt": "2026-10-29T12:00:00.000Z",
+  "updatedAt": "2026-10-29T12:00:00.000Z"
+}

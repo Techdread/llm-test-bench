@@ -1,32 +1,124 @@
 {
+  "id": "tutorial-12-lua-to-javascript",
   "title": "12 Lua ↔ JavaScript",
   "cells": [
     {
-      "id": "c-t12-md01",
+      "id": "c-t12-intro",
       "kind": "md",
-      "source": "# 12 Lua ↔ JavaScript\n\nA common pattern: **crunch data in Lua, consume it in JavaScript.** Lua publishes values through `__NB_SET__` stdout markers; JS reads them from `nb` and can transform, summarise, or store them back. Python can read them too."
+      "source": "# 12 Lua ↔ JavaScript\n\nA common split: **one language does the heavy lifting, others show and explain the results.** Here Lua simulates 5,000 games of Snakes and Ladders, then JavaScript, Python and an HTML cell each pick up what it found:\n\n| Cell | Reads from `nb` | Writes to `nb` |\n| --- | --- | --- |\n| **Lua** | nothing: Lua can't read `nb` | `turns`, `landings`, `board` |\n| **JavaScript** | `turns` | nothing (it returns a chart) |\n| **Python** | `turns`, `landings`, `board` | `odds` |\n| **HTML** | `landings`, `board`, `odds` | nothing |\n\n> ✨ The code cells were written by an AI model from prompts saved in each cell: press **✨** in a cell's header to see one.\n\nPress **Run all** to play all 5,000 games."
     },
     {
-      "id": "c-t12-lua01",
+      "id": "c-t12-sim-md",
+      "kind": "md",
+      "source": "## 1. Lua plays 5,000 games\n\nOpen the code with **</>**. Things worth spotting:\n\n- **`ladders` and `snakes` are tables used as lookups:** `ladders[28]` is `84`, and `ladders[29]` is `nil` (nothing).\n- **`ladders[square] or snakes[square] or square`** is a Lua idiom: use the first one that isn't `nil`. So a square jumps up a ladder, down a snake, or stays where it is, in one line.\n- **`if square + roll <= 100`**: a roll that would go past 100 doesn't count, so you need an exact roll to finish.\n- **Three `__NB_SET__` lines** publish the results. Lua has no built-in JSON, so the code builds each JSON string with `string.format` and `table.concat`."
+    },
+    {
+      "id": "c-t12-sim",
       "kind": "lua",
-      "source": "-- Generate a small dataset in Lua and publish it for other cells.\nlocal out = {}\nfor i = 1, 12 do\n  local v = 20 + 10 * math.sin(i / 2)   -- a gentle wave\n  out[i] = string.format(\"%.1f\", v)\nend\n\nprint(\"readings = \" .. table.concat(out, \", \"))\nprint('__NB_SET__ {\"key\":\"readings\",\"value\":[' .. table.concat(out, \",\") .. ']}')"
+      "source": "-- Snakes and Ladders: 5000 one-player games on the classic board.\nmath.randomseed(12)\n\nlocal ladders = { [1] = 38, [4] = 14, [9] = 31, [21] = 42, [28] = 84, [36] = 44, [51] = 67, [71] = 91, [80] = 100 }\nlocal snakes = { [16] = 6, [47] = 26, [49] = 11, [56] = 53, [62] = 19, [64] = 60, [87] = 24, [93] = 73, [95] = 75, [98] = 78 }\n\nlocal GAMES = 5000\nlocal gamesByTurns = {}            -- gamesByTurns[n] = how many games took n turns\nlocal landings = {}\nfor square = 1, 100 do landings[square] = 0 end\n\nlocal total, shortest, longest = 0, math.huge, 0\nfor game = 1, GAMES do\n  local square, turns = 0, 0\n  while square < 100 do\n    turns = turns + 1\n    local roll = math.random(1, 6)\n    if square + roll <= 100 then   -- a roll that would pass 100 means staying put\n      square = square + roll\n      square = ladders[square] or snakes[square] or square\n    end\n    landings[square] = landings[square] + 1\n  end\n  gamesByTurns[turns] = (gamesByTurns[turns] or 0) + 1\n  total = total + turns\n  shortest = math.min(shortest, turns)\n  longest = math.max(longest, turns)\nend\n\nprint(string.format(\"%d games played\", GAMES))\nprint(string.format(\"Average: %.1f turns\", total / GAMES))\nprint(string.format(\"Shortest: %d turns\", shortest))\nprint(string.format(\"Longest: %d turns\", longest))\n\n-- Publish the results as JSON, one __NB_SET__ line each.\nlocal turnsJson = {}\nfor n = shortest, longest do\n  if gamesByTurns[n] then\n    turnsJson[#turnsJson + 1] = string.format('{\"turns\":%d,\"games\":%d}', n, gamesByTurns[n])\n  end\nend\nprint('__NB_SET__ {\"key\":\"turns\",\"value\":[' .. table.concat(turnsJson, \",\") .. ']}')\nprint('__NB_SET__ {\"key\":\"landings\",\"value\":[' .. table.concat(landings, \",\") .. ']}')\n\nlocal board = {}\nfor from = 1, 100 do\n  if ladders[from] then board[#board + 1] = string.format('{\"from\":%d,\"to\":%d,\"kind\":\"ladder\"}', from, ladders[from]) end\n  if snakes[from] then board[#board + 1] = string.format('{\"from\":%d,\"to\":%d,\"kind\":\"snake\"}', from, snakes[from]) end\nend\nprint('__NB_SET__ {\"key\":\"board\",\"value\":[' .. table.concat(board, \",\") .. ']}')",
+      "metadata": {
+        "ai": {
+          "prompt": "Simulate Snakes and Ladders on the classic 100-square board. Ladders (bottom to top): 1 to 38, 4 to 14, 9 to 31, 21 to 42, 28 to 84, 36 to 44, 51 to 67, 71 to 91, 80 to 100. Snakes (head to tail): 16 to 6, 47 to 26, 49 to 11, 56 to 53, 62 to 19, 64 to 60, 87 to 24, 93 to 73, 95 to 75, 98 to 78. Use math.randomseed(12). Play 5000 one-player games: start off the board at 0, roll one die each turn and move forward; if the move would go past 100, stay put for that turn; after moving, a ladder bottom takes you to its top and a snake head takes you to its tail. For each game record the number of turns to reach 100, and count every square a turn ends on (after any snake or ladder). Print the average, shortest and longest number of turns. Then publish three values, each on its own line in the form __NB_SET__ {\"key\": ..., \"value\": ...} with valid JSON: \"turns\", a list of objects {\"turns\": n, \"games\": count} for every turn count that happened, sorted by turns; \"landings\", a list of 100 numbers where item i is how often square i+1 was landed on; and \"board\", a list of objects {\"from\": square, \"to\": square, \"kind\": \"ladder\" or \"snake\"} for every ladder and snake.",
+          "kind": "lua",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "38b0c2b9",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
     },
     {
-      "id": "c-t12-js01",
-      "kind": "js",
-      "source": "// Consume the Lua data and compute stats\nconst data = nb.get('readings');\nconst min = Math.min(...data);\nconst max = Math.max(...data);\nconst avg = data.reduce((a, b) => a + b, 0) / data.length;\n\nconsole.log(`Lua produced ${data.length} readings`);\nconsole.log(`min=${min}  max=${max}  avg=${avg.toFixed(2)}`);\n\n// JS can write back to nb (it's a two-way cell)\nnb.set('stats', { min, max, avg });\nreturn { count: data.length, min, max, avg: +avg.toFixed(2) };"
-    },
-    {
-      "id": "c-t12-py01",
-      "kind": "py",
-      "source": "# Python can read the same Lua-produced data\nreadings = nb[\"readings\"]\nprint(\"from Python, first 3 readings:\", readings[:3])\nprint(\"max reading:\", max(readings))"
-    },
-    {
-      "id": "c-t12-md02",
+      "id": "c-t12-chart-md",
       "kind": "md",
-      "source": "## One-way street\n\nLua (like C and Rust) is **emit-only**: it can publish values with `__NB_SET__`, but it can't read `nb` back. To feed data *into* a Lua computation, bake it into the Lua source, or prepare it in a JS/Python cell first. **JS and Python are the two-way cells** — they can both `get` and `set`."
+      "source": "## 2. JavaScript charts how long games take\n\nThe JavaScript cell reads `nb.turns` and returns a Vega-Lite chart: bars for how many games took each number of turns, and a red line at the average. A JavaScript cell can read anything Lua published, as long as Lua has run first."
+    },
+    {
+      "id": "c-t12-chart",
+      "kind": "js",
+      "source": "// How many games took each number of turns, with the average marked in red.\nconst turns = nb.get('turns') ?? [];\nconst games = turns.reduce((sum, t) => sum + t.games, 0);\nconst average = games ? turns.reduce((sum, t) => sum + t.turns * t.games, 0) / games : 0;\n\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  title: 'How many turns does a game take?',\n  width: 620,\n  height: 260,\n  layer: [\n    {\n      data: { values: turns },\n      mark: { type: 'bar', color: '#60a5fa' },\n      encoding: {\n        x: { field: 'turns', type: 'quantitative', title: 'Turns to finish' },\n        y: { field: 'games', type: 'quantitative', title: 'Games' },\n        tooltip: [{ field: 'turns', title: 'Turns' }, { field: 'games', title: 'Games' }],\n      },\n    },\n    {\n      data: { values: [{ average }] },\n      mark: { type: 'rule', color: '#dc2626', strokeWidth: 2 },\n      encoding: { x: { field: 'average', type: 'quantitative' } },\n    },\n    {\n      data: { values: [{ average }] },\n      mark: { type: 'text', color: '#dc2626', align: 'left', dx: 6, fontWeight: 'bold' },\n      encoding: {\n        x: { field: 'average', type: 'quantitative' },\n        y: { value: 12 },\n        text: { value: `Average: ${average.toFixed(1)} turns` },\n      },\n    },\n  ],\n};",
+      "metadata": {
+        "ai": {
+          "prompt": "Return a Vega-Lite chart from nb.get(\"turns\"), a list of {turns, games}: a bar chart with turns on the x axis and games on the y axis, bars in a calm blue, and a red vertical rule at the average number of turns (weight each turn count by its games when averaging) labelled with that average to one decimal place. Add tooltips. Title it \"How many turns does a game take?\". Make it 620 wide and 260 tall.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "6170a8b3",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-t12-stats-md",
+      "kind": "md",
+      "source": "## 3. Python works out the odds\n\nPython reads the same three values. It counts through the games in order to find the turn count that half of them beat (the median), and the one that 9 in 10 beat. Then it stores its findings as `nb.odds` for the board below. Python can read *and* write `nb`; Lua can only write."
+    },
+    {
+      "id": "c-t12-stats",
+      "kind": "py",
+      "source": "turns = nb[\"turns\"]          # [{\"turns\": n, \"games\": count}], sorted by turns\nlandings = nb[\"landings\"]    # item i is how often square i+1 was landed on\nboard = nb[\"board\"]          # [{\"from\", \"to\", \"kind\"}]\n\ngames = sum(t[\"games\"] for t in turns)\n\ndef turns_for_share(share):\n    \"\"\"The fewest turns within which `share` of all games had finished.\"\"\"\n    finished = 0\n    for t in turns:\n        finished += t[\"games\"]\n        if finished >= share * games:\n            return t[\"turns\"]\n\nmedian = turns_for_share(0.5)\nninety = turns_for_share(0.9)\nwithin_20 = 100 * sum(t[\"games\"] for t in turns if t[\"turns\"] <= 20) / games\n\n# Is a busy square the top of a ladder or the tail of a snake?\nends = {b[\"to\"]: b for b in board}\ndef note_for(square):\n    end = ends.get(square)\n    if not end:\n        return \"\"\n    return f\"top of the ladder from {end['from']}\" if end[\"kind\"] == \"ladder\" else f\"tail of the snake from {end['from']}\"\n\nbusiest = sorted(range(1, 101), key=lambda square: -landings[square - 1])[:5]\ntop_squares = [{\"square\": s, \"count\": landings[s - 1], \"note\": note_for(s)} for s in busiest]\n\nprint(f\"Half the games finish within {median} turns.\")\nprint(f\"9 games in 10 finish within {ninety} turns.\")\nprint(f\"{within_20:.0f}% of games are over within 20 turns.\")\nprint()\nprint(\"The squares players land on most:\")\nfor s in top_squares:\n    extra = f\"  ({s['note']})\" if s[\"note\"] else \"\"\n    print(f\"  square {s['square']:>3}: {s['count']:,} times{extra}\")\n\nnb[\"odds\"] = {\n    \"median\": median,\n    \"ninety_percent\": ninety,\n    \"within_20_percent\": round(within_20, 1),\n    \"top_squares\": top_squares,\n}",
+      "metadata": {
+        "ai": {
+          "prompt": "Read nb[\"turns\"] (a list of {\"turns\", \"games\"}), nb[\"landings\"] (100 counts, item i for square i+1) and nb[\"board\"] (a list of {\"from\", \"to\", \"kind\"}). Work out: the median number of turns; the number of turns within which 90% of games finish; the percentage of games finished within 20 turns; and the five most-landed squares, each with its count and, if that square is the end of a ladder or a snake (its \"to\" square), say so. Print these as clear sentences for a beginner. Store them as nb[\"odds\"], a dict with keys median, ninety_percent, within_20_percent and top_squares (a list of {\"square\", \"count\", \"note\"}).",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "f28fbfba",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-t12-board-md",
+      "kind": "md",
+      "source": "## 4. An HTML cell draws the board\n\nThe board colours each square by how often it's landed on, draws the snakes and ladders from `nb.board`, and shows Python's odds alongside. Hover a square for its count, and press **Play one game** to watch a single game.\n\nWhich squares glow brightest? Python's list above says whether they're the ends of ladders or snakes. Square 99 is busy for a different reason: from there you need exactly a 1."
+    },
+    {
+      "id": "c-t12-board",
+      "kind": "html",
+      "source": "<style>\n  html, body { margin: 0; background: #0b0f19; color: #e2e8f0; font: 14px/1.5 system-ui, sans-serif; }\n  .wrap { display: flex; gap: 22px; padding: 16px 20px; align-items: flex-start; }\n  .board { position: relative; }\n  canvas { display: block; border-radius: 8px; }\n  #tip { position: absolute; pointer-events: none; background: #f8fafc; color: #0f172a; font-size: 12px; padding: 3px 8px; border-radius: 6px; display: none; white-space: nowrap; }\n  .side { width: 300px; }\n  h3 { margin: 0 0 8px; font-size: 15px; color: #f8fafc; }\n  .key { height: 14px; border-radius: 7px; background: linear-gradient(90deg, #172554, #0d9488, #facc15); }\n  .key-labels { display: flex; justify-content: space-between; color: #94a3b8; font-size: 12px; margin-bottom: 14px; }\n  .odds p { margin: 4px 0; }\n  .odds b { color: #facc15; }\n  button { margin-top: 16px; background: #22c55e; color: #052e16; border: 0; border-radius: 8px; padding: 9px 16px; font: 700 14px system-ui, sans-serif; cursor: pointer; }\n  button:disabled { opacity: 0.5; cursor: default; }\n  #play-status { margin-top: 10px; min-height: 44px; color: #cbd5e1; }\n</style>\n<div class=\"wrap\">\n  <div class=\"board\">\n    <canvas id=\"board\" width=\"520\" height=\"520\"></canvas>\n    <div id=\"tip\"></div>\n  </div>\n  <div class=\"side\">\n    <h3>How often each square is landed on</h3>\n    <div class=\"key\"></div>\n    <div class=\"key-labels\"><span>rarely</span><span>most often</span></div>\n    <div class=\"odds\" id=\"odds\"></div>\n    <button id=\"play\">Play one game</button>\n    <div id=\"play-status\"></div>\n  </div>\n</div>\n<script>\n  const S = 52;\n  const canvas = document.getElementById('board');\n  const ctx = canvas.getContext('2d');\n  let landings = [], links = [], token = 0;\n\n  // Square 1 is bottom left; rows zigzag, so 11 sits above 10.\n  function corner(square) {\n    const i = square - 1, row = Math.floor(i / 10);\n    const col = row % 2 === 0 ? i % 10 : 9 - (i % 10);\n    return { x: col * S, y: (9 - row) * S };\n  }\n  const centre = (square) => { const c = corner(square); return { x: c.x + S / 2, y: c.y + S / 2 }; };\n\n  // Deep blue for rarely, through teal, to bright yellow for most often.\n  function heat(t) {\n    const stops = [[23, 37, 84], [13, 148, 136], [250, 204, 21]];\n    const at = Math.min(1, Math.max(0, t)) * 2, i = Math.min(1, Math.floor(at)), f = at - i;\n    const [a, b] = [stops[i], stops[i + 1]];\n    return 'rgb(' + a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(',') + ')';\n  }\n\n  function drawLadder(from, to) {\n    const a = centre(from), b = centre(to);\n    const len = Math.hypot(b.x - a.x, b.y - a.y), nx = -(b.y - a.y) / len * 7, ny = (b.x - a.x) / len * 7;\n    ctx.strokeStyle = '#b45309';\n    ctx.lineWidth = 3;\n    for (const side of [1, -1]) {\n      ctx.beginPath(); ctx.moveTo(a.x + nx * side, a.y + ny * side); ctx.lineTo(b.x + nx * side, b.y + ny * side); ctx.stroke();\n    }\n    ctx.lineWidth = 2;\n    for (let d = 10; d < len - 4; d += 14) {\n      const px = a.x + (b.x - a.x) * d / len, py = a.y + (b.y - a.y) * d / len;\n      ctx.beginPath(); ctx.moveTo(px + nx, py + ny); ctx.lineTo(px - nx, py - ny); ctx.stroke();\n    }\n  }\n\n  function drawSnake(from, to) {\n    const head = centre(from), tail = centre(to);\n    const len = Math.hypot(tail.x - head.x, tail.y - head.y);\n    const nx = -(tail.y - head.y) / len, ny = (tail.x - head.x) / len;\n    const waves = Math.max(1.5, len / 90);\n    ctx.lineCap = 'round';\n    for (const [width, colour] of [[10, '#14532d'], [7, '#22c55e']]) {\n      ctx.strokeStyle = colour;\n      ctx.lineWidth = width;\n      ctx.beginPath();\n      for (let s = 0; s <= 1.0001; s += 0.02) {\n        const wiggle = Math.sin(s * Math.PI * 2 * waves) * 9 * (1 - s * 0.6);\n        const x = head.x + (tail.x - head.x) * s + nx * wiggle, y = head.y + (tail.y - head.y) * s + ny * wiggle;\n        s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);\n      }\n      ctx.stroke();\n    }\n    ctx.fillStyle = '#16a34a';\n    ctx.beginPath(); ctx.arc(head.x, head.y, 8, 0, Math.PI * 2); ctx.fill();\n    ctx.fillStyle = '#fff';\n    for (const side of [-1, 1]) { ctx.beginPath(); ctx.arc(head.x + side * 3.5, head.y - 2, 2, 0, Math.PI * 2); ctx.fill(); }\n  }\n\n  function draw() {\n    const max = Math.max(1, ...landings), min = Math.min(...(landings.length ? landings : [0]));\n    for (let square = 1; square <= 100; square++) {\n      const { x, y } = corner(square);\n      const count = landings[square - 1] || 0;\n      ctx.fillStyle = landings.length ? heat((count - min) / (max - min || 1)) : '#1e293b';\n      ctx.fillRect(x, y, S, S);\n      ctx.strokeStyle = 'rgba(11, 15, 25, 0.6)';\n      ctx.lineWidth = 1;\n      ctx.strokeRect(x + 0.5, y + 0.5, S - 1, S - 1);\n      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';\n      ctx.font = '600 11px system-ui, sans-serif';\n      ctx.fillText(square, x + 4, y + 13);\n    }\n    for (const link of links) if (link.kind === 'ladder') drawLadder(link.from, link.to);\n    for (const link of links) if (link.kind === 'snake') drawSnake(link.from, link.to);\n    if (token > 0) {\n      const c = centre(token);\n      ctx.fillStyle = '#fff';\n      ctx.strokeStyle = '#0f172a';\n      ctx.lineWidth = 3;\n      ctx.beginPath(); ctx.arc(c.x, c.y + 6, 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();\n    }\n  }\n\n  function showOdds() {\n    const odds = nb.get('odds', null);\n    document.getElementById('odds').innerHTML = odds\n      ? '<p>Half of games finish within <b>' + odds.median + '</b> turns.</p><p>9 in 10 finish within <b>' + odds.ninety_percent + '</b> turns.</p>'\n      : '<p style=\"color:#94a3b8\">Run the Python cell above to add the odds here.</p>';\n  }\n\n  function refresh() {\n    landings = nb.get('landings', []);\n    links = nb.get('board', []);\n    showOdds();\n    draw();\n  }\n\n  // Hover a square to see its number and how often it was landed on.\n  const tip = document.getElementById('tip');\n  canvas.addEventListener('mousemove', (event) => {\n    const box = canvas.getBoundingClientRect();\n    const col = Math.floor((event.clientX - box.left) / S), rowFromTop = Math.floor((event.clientY - box.top) / S);\n    if (col < 0 || col > 9 || rowFromTop < 0 || rowFromTop > 9) { tip.style.display = 'none'; return; }\n    const row = 9 - rowFromTop;\n    const square = row * 10 + (row % 2 === 0 ? col : 9 - col) + 1;\n    tip.textContent = 'Square ' + square + ': landed on ' + (landings[square - 1] || 0).toLocaleString() + ' times';\n    tip.style.left = (event.clientX - box.left + 12) + 'px';\n    tip.style.top = (event.clientY - box.top - 26) + 'px';\n    tip.style.display = 'block';\n  });\n  canvas.addEventListener('mouseleave', () => { tip.style.display = 'none'; });\n\n  // Play one game, about three rolls a second.\n  const status = document.getElementById('play-status');\n  const button = document.getElementById('play');\n  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\n  button.addEventListener('click', async () => {\n    button.disabled = true;\n    token = 0;\n    let turns = 0;\n    const jump = Object.fromEntries(links.map((link) => [link.from, link]));\n    while (token < 100) {\n      turns++;\n      const roll = 1 + Math.floor(Math.random() * 6);\n      if (token + roll > 100) {\n        status.textContent = 'Turn ' + turns + ': rolled ' + roll + ', too far, so stay on ' + token;\n      } else {\n        token += roll;\n        status.textContent = 'Turn ' + turns + ': rolled ' + roll + ', to square ' + token;\n        draw();\n        const link = jump[token];\n        if (link) {\n          await wait(450);\n          status.textContent += link.kind === 'ladder' ? ', up the ladder to ' + link.to : ', down the snake to ' + link.to;\n          token = link.to;\n        }\n      }\n      draw();\n      await wait(330);\n    }\n    status.textContent = 'Finished in ' + turns + ' turns!';\n    button.disabled = false;\n  });\n\n  refresh();\n  nb.onChange(refresh);\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 560,
+          "scale": 1
+        },
+        "ai": {
+          "prompt": "Draw a Snakes and Ladders board from nb.get(\"landings\", []) (100 counts, item i for square i+1), nb.get(\"board\", []) (a list of {from, to, kind}) and nb.get(\"odds\", null). Lay out squares 1 to 100 in a 10 by 10 grid, 52 pixels each, with square 1 at the bottom left and each row running the opposite way to the one below it (the usual zigzag), and number every square. Colour each square on a scale from deep blue (rarely landed on) to bright yellow (most landed on). Draw ladders as two brown rails with rungs, and snakes as thick green wavy curves with a head, from square centre to square centre. Hovering a square shows its number and count. Beside the board show a small key for the colours and, if odds is set, its median and ninety_percent values as \"Half of games finish within N turns\" and \"9 in 10 finish within N turns\". Add a \"Play one game\" button that moves a white token from square 0 one die roll at a time (about 3 rolls a second), shows the last roll, follows ladders and snakes with a short pause, never goes past 100, and counts turns until it reaches 100. Redraw everything with nb.onChange. Dark background, light text.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "0aef35b2",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-t12-oneway",
+      "kind": "md",
+      "source": "## A one-way street\n\nLua (like C and Rust) **publishes** to `nb` but can't **read** it. JavaScript and Python can do both.\n\nSo to change what Lua does, change the Lua itself:\n\n- **Edit it:** set `GAMES` to `20000`, or delete `[87] = 24,` from `snakes`, then **Run all**.\n- **Or ask the AI:** press **✨** on the Lua cell and add *\"Use two dice instead of one\"* to its prompt, then **Replace cell** and **Run all**.\n\nEither way the chart, the odds and the board all follow, because they read whatever Lua last published."
+    },
+    {
+      "id": "c-t12-try",
+      "kind": "md",
+      "source": "## Try this\n\n- Give the board a ladder from 50 to 99 by adding `[50] = 99,` to `ladders`. Does the average game get shorter?\n- Change `math.randomseed(12)` to another number. How much do the odds move between runs of 5,000 games?\n- Ask the AI for a new cell with **⚡ AI Generate New Cell**: *\"A Python cell that estimates how many turns each snake adds on average, and draws a matplotlib bar chart.\"*\n\n**Next:** explore the **Games** and **Simulations** examples in the **Library**, or the **AI** tutorials to build your own by asking. In the DevTools Hub, tutorials **13** to **16** add Java, Go and Clojure."
     }
   ],
   "createdAt": "2026-06-07T00:00:00.000Z",
-  "updatedAt": "2026-06-07T00:00:00.000Z"
+  "updatedAt": "2026-10-29T12:00:00.000Z"
 }

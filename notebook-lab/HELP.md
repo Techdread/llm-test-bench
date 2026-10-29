@@ -22,7 +22,7 @@ folder).
 Long notebooks stay navigable with two independent collapse controls in each cell header:
 
 - **Fold cell** — the **chevron on the left** of the header collapses the whole cell to a single-line preview so you can scan the cells above and below. Click the chevron (or the preview strip) to expand it again.
-- **Collapse code, keep output** — the **`</>` button** (shown on **HTML**, **Chart**, **JS**, and **Python** cells) hides just the source editor while leaving the rendered visualisation or output on screen. HTML and Chart cells collapse their code **automatically after a successful run**, so the result leads; toggle the `</>` button once and that cell keeps whatever you chose.
+- **Hide code, keep output** — the **`</>` button** (on every cell with an output: HTML, Chart, JS, Python, C, Lua and the rest) hides just the source editor while leaving the rendered visualisation or output on screen. HTML and Chart cells collapse their code **automatically after a successful run**, so the result leads; toggle the `</>` button once and that cell keeps whatever you chose. The choice is **saved with the notebook**, and **Export** folds that cell's code behind a **Show code** link, so a report leads with its results.
 
 Both are view-only — folding never changes or saves the notebook.
 
@@ -68,6 +68,7 @@ return `
 ## Sharing values between cells — the `nb` object
 
 - **JS:**  `nb.set('result', 42)`,  `nb.get('result')`,  `nb.keys()`,  `nb.has('x')`.
+  `nb.get` and `nb.set` trade copies: changing a list you got from `nb.get` changes nothing shared until you `nb.set` it back.
 - **Python:**  `nb["result"] = 42`,  `nb["result"]`,  `nb.keys()`,  `nb.get("x")`.
 
 Values must be JSON-serialisable (numbers, strings, arrays, plain objects). The **Variables** sidebar shows the current contents.
@@ -170,7 +171,8 @@ HTML, UI controls, and the compiled-language cells where they genuinely help.
    returned draft against this choice instead of trusting prompt wording alone.
 4. Choose **Create a new notebook** or **Append**. Append is useful for a
    follow-up such as adding Kepler's third law to an existing Solar System
-   notebook; the model receives bounded context from the current cells.
+   notebook; the model receives bounded context from the current cells and the
+   current values in `nb`, so the new cells can build on them.
 5. Enable **Search web for current sources** when the work needs current or
    authoritative facts. This requires a Brave Search key in Settings.
 6. Click **Generate draft**. The model response streams in, then Notebook Lab
@@ -192,8 +194,11 @@ JavaScript cell that reads `nb` and returns a Vega-Lite spec.
 
 ### Generate or explain one cell
 
-- **⚡ Generate new cell** button at the bottom inserts a fresh AI-generated cell. You can also click the wand icon in any cell's header to regenerate that cell.
-- **🛠 AI Fix** (screwdriver-and-wrench icon) becomes available when a cell has a runtime/compiler error, or when a Chart/UI cell contains invalid JSON. It sends the source, captured diagnostic, recent output, and preceding-cell context to the AI selected in the toolbar, then replaces the failing source. Run the cell again to verify the repair; Notebook Lab does not auto-run repaired code because cells may have side effects.
+New here? Tutorials **AI 1** and **AI 2** in the Library show how to build a whole notebook from prompts, without writing code.
+
+- **⚡ Generate new cell** button at the bottom inserts a fresh AI-generated cell. You can also click the wand icon in any cell's header to regenerate that cell. The prompt is saved with the cell, so the wand reopens it for **Replace cell** or **Generate copy**.
+- **What the model sees:** the last few cells above (source and output), and the **current values in `nb`** (names, shapes and short previews), so a prompt can say *"draw nb.sprite"* and the model knows what that data looks like.
+- **🛠 AI Fix** (screwdriver-and-wrench icon) becomes available when a cell has a runtime/compiler error, or when a Chart/UI cell contains invalid JSON. It sends the source, captured diagnostic, recent output, preceding-cell context, and the current `nb` values to the AI selected in the toolbar, then replaces the failing source. Run the cell again to verify the repair; Notebook Lab does not auto-run repaired code because cells may have side effects.
 - **💬 Explain** (comment icon) generates a Markdown explanation cell below the current cell.
 
 Pick a model in the toolbar (any OpenRouter-compatible model or a local LM Studio model). The first time you use AI, you'll be prompted for an API key.
@@ -208,8 +213,8 @@ installed login rather than an API key. Run the hub with `python3 serve.py
 ## Saving & export
 
 - **💾 Save** writes the notebook to `<data-root>/notebook-lab/notebooks/<id>.json`.
-- **📂 Open** lists saved notebooks, the bundled **Tutorials**, and the **Examples** library (data structures, search, OOP, simulations, games, 3D visualisation, APIs, and an **Interactive Controls** gallery — with language badges). Tutorials and examples open as a fresh notebook — save to keep your edits without overwriting the original.
-- **⬇ Export** produces a standalone HTML file that links to nothing — markdown and Vega charts are rendered at export time and baked in, so the file works from anywhere (Downloads, email, a USB stick) with no network. Markdown, HTML frames, charts, images and saved outputs all render; code cells are displayed but not re-executed.
+- **📖 Library** lists saved notebooks, the bundled **Tutorials**, and the **Examples** library (data structures, search, OOP, simulations, games, 3D visualisation, APIs, and an **Interactive Controls** gallery — with language badges). Tutorials and examples open as a fresh notebook — save to keep your edits without overwriting the original.
+- **⬇ Export** produces a standalone HTML file that links to nothing — markdown and Vega charts are rendered at export time and baked in, so the file works from anywhere (Downloads, email, a USB stick) with no network. Markdown, HTML frames, charts, images and saved outputs all render, including HTML a cell returned; code cells are displayed but not re-executed. Code you hid with `</>` is folded behind **Show code**.
 - The export opens in **whichever theme the app is wearing**, and carries its own light/dark switch in the top-right corner — the reader's choice is remembered for next time they open the file.
 - Exported **UI cells are live controls**, not a JSON dump. They carry the notebook variables as they stood at export time, and drive the HTML cells in the same document over the notebook bridge — so a slider still steers the sketch in the exported file, and an HTML cell's `nb.set()` still moves the controls back.
 

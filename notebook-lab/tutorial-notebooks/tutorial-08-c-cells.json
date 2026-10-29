@@ -1,27 +1,70 @@
 {
+  "id": "tutorial-08-c-cells",
   "title": "08 C Cells",
   "cells": [
     {
-      "id": "c-t08-md01",
+      "id": "c-t08-intro",
       "kind": "md",
-      "source": "# 08 C Cells\n\nC cells run small single-file programs through JSCPP, a browser-side C interpreter. Use `printf` or `puts` for output.\n\nRun the C cell below, then run the JavaScript cell to read the value it publishes into the notebook bridge."
+      "source": "# 08 C Cells\n\nC is the language underneath almost everything: operating systems, games consoles, and Python itself, which is written in C. It works close to the machine, with numbers of fixed sizes, raw bits and memory addresses.\n\nHere, C cells run in your browser through a small C interpreter. Three things to know:\n\n- **Output is `printf`.** Whatever a C program prints appears under the cell.\n- **C can publish to `nb`, but can't read it.** A printed line starting with `__NB_SET__` puts a value into `nb` for other cells. To change what a C program does, change the numbers in its code and run it again.\n- **Keep programs small.** The interpreter is slow next to real C, and the page waits while it runs.\n\nPress **Run all** to start."
     },
     {
-      "id": "c-t08-c01",
+      "id": "c-t08-table-md",
+      "kind": "md",
+      "source": "## 1. The first program in the book\n\n*The C Programming Language* (1978), the book that made C famous, starts with a table like this one. It also shows C's best-known trap: **dividing two whole numbers gives a whole number**, so `5 / 9` is `0`, not `0.555…`."
+    },
+    {
+      "id": "c-t08-table",
       "kind": "c",
-      "source": "#include <stdio.h>\n\nint main() {\n  int total = 0;\n  for (int i = 1; i <= 10; i++) {\n    total += i;\n  }\n  printf(\"Sum 1..10 = %d\\n\", total);\n  printf(\"__NB_SET__ {\\\"key\\\":\\\"c_total\\\",\\\"value\\\":%d}\\n\", total);\n  return 0;\n}"
+      "source": "#include <stdio.h>\n\nint main() {\n  int fahr;\n\n  printf(\"Fahrenheit  Celsius  using 5 / 9\\n\");\n  for (fahr = 0; fahr <= 100; fahr += 20) {\n    double celsius = (5.0 / 9.0) * (fahr - 32);   /* 5.0 has a decimal point, so this works */\n    int broken = 5 / 9 * (fahr - 32);              /* 5 / 9 is 0 in whole numbers, so this is always 0 */\n    printf(\"%10d %8.1f %8d\\n\", fahr, celsius, broken);\n  }\n\n  /* Every C type has a fixed size, counted in bytes (8 bits each). */\n  printf(\"\\nA char is %d byte\\n\", (int)sizeof(char));\n  printf(\"An int is %d bytes\\n\", (int)sizeof(int));\n  printf(\"A double is %d bytes\\n\", (int)sizeof(double));\n  return 0;\n}"
     },
     {
-      "id": "c-t08-js01",
-      "kind": "js",
-      "source": "const total = nb.get('c_total');\nconsole.log(`C stored c_total = ${total}`);\nreturn { c_total: total, doubled: total * 2 };"
-    },
-    {
-      "id": "c-t08-md02",
+      "id": "c-t08-printf",
       "kind": "md",
-      "source": "## Notes\n\n- C support is intentionally small and educational, not a full native compiler.\n- `__NB_SET__` marker lines are consumed by Notebook Lab and do not appear in normal output when parsed successfully."
+      "source": "> **Reading `printf`.** `%d` prints a whole number, `%8.1f` a decimal number 8 characters wide with 1 decimal place, and `\\n` starts a new line. The widths are what line the columns up."
+    },
+    {
+      "id": "c-t08-bits-md",
+      "kind": "md",
+      "source": "## 2. Bits\n\nAn `int` is 32 bits, and C lets you work on them one at a time. A classic use is **flags**: one number that stores lots of yes/no answers, one per bit. Here's a pizza order."
+    },
+    {
+      "id": "c-t08-bits",
+      "kind": "c",
+      "source": "#include <stdio.h>\n\n/* Each topping gets its own bit. */\n#define CHEESE    1   /* 0001 */\n#define TOMATO    2   /* 0010 */\n#define MUSHROOM  4   /* 0100 */\n#define PINEAPPLE 8   /* 1000 */\n\nvoid show(const char *step, int order) {\n  int bit;\n  printf(\"%-22s \", step);\n  for (bit = 3; bit >= 0; bit--) printf(\"%d\", (order >> bit) & 1);   /* >> moves a bit to the end */\n  printf(\" = %2d   pineapple:%s\\n\", order, (order & PINEAPPLE) ? \"yes\" : \"no\");\n}\n\nint main() {\n  int order = CHEESE | TOMATO;          /* |  switches bits on  */\n  show(\"cheese and tomato\", order);\n  order = order | PINEAPPLE;\n  show(\"add pineapple\", order);\n  order = order & ~TOMATO;              /* & ~ switches one off */\n  show(\"hold the tomato\", order);\n  order = order ^ MUSHROOM;             /* ^  flips a bit       */\n  show(\"flip mushroom\", order);\n  return 0;\n}"
+    },
+    {
+      "id": "c-t08-ca-md",
+      "kind": "md",
+      "source": "## 3. A whole pattern from one tiny rule\n\nThis program is a **cellular automaton**. It starts with a row of cells, one of them switched on. Each new row is worked out from the row above: a cell looks at itself and its two neighbours, and that pattern of three looks up its answer in the bits of one number, the **rule**. Rule 30 is famous for making something that looks random from almost nothing.\n\nThe C program prints the rows into `nb.ca_rows`, and the HTML cell after it draws them.\n\n> **Publishing from C.** The `__NB_SET__` line must be valid JSON, all on one line, so the quotes inside it are written `\\\"` in C."
+    },
+    {
+      "id": "c-t08-rule",
+      "kind": "c",
+      "source": "#include <stdio.h>\n\n#define RULE  30    /* try 90, 110 or 150 */\n#define WIDTH 63\n#define STEPS 32\n\nint main() {\n  int cells[WIDTH];\n  int next[WIDTH];\n  int i, step;\n\n  for (i = 0; i < WIDTH; i++) cells[i] = 0;   /* C doesn't clear memory for you */\n  cells[WIDTH / 2] = 1;\n\n  printf(\"__NB_SET__ {\\\"key\\\":\\\"ca_rule\\\",\\\"value\\\":%d}\\n\", RULE);\n  printf(\"__NB_SET__ {\\\"key\\\":\\\"ca_rows\\\",\\\"value\\\":[\");\n  for (step = 0; step < STEPS; step++) {\n    printf(step ? \",\\\"\" : \"\\\"\");\n    for (i = 0; i < WIDTH; i++) printf(\"%c\", cells[i] ? '#' : '.');\n    printf(\"\\\"\");\n\n    for (i = 0; i < WIDTH; i++) {\n      int left = cells[(i + WIDTH - 1) % WIDTH];\n      int right = cells[(i + 1) % WIDTH];\n      int pattern = left * 4 + cells[i] * 2 + right;   /* three cells make a number 0 to 7 */\n      next[i] = (RULE >> pattern) & 1;                 /* that bit of RULE is the answer   */\n    }\n    for (i = 0; i < WIDTH; i++) cells[i] = next[i];\n  }\n  printf(\"]}\\n\");\n\n  printf(\"Rule %d: %d rows of %d cells sent to nb.ca_rows\\n\", RULE, STEPS, WIDTH);\n  return 0;\n}"
+    },
+    {
+      "id": "c-t08-draw",
+      "kind": "html",
+      "source": "<!-- Draws the rows the C program published, and the rule's eight cases. -->\n<style>\n  html, body { margin: 0; height: 100%; background: #020617; }\n  body { font: 14px/1.45 system-ui, sans-serif; color: #e2e8f0; padding: 16px 20px; box-sizing: border-box; }\n  .panel { background: #0f172a; border-radius: 12px; padding: 14px 18px; }\n  .rule { display: flex; gap: 14px; align-items: flex-end; margin-bottom: 12px; flex-wrap: wrap; }\n  .case { display: grid; grid-template-columns: repeat(3, 12px); gap: 2px; justify-items: center; }\n  .case span { width: 12px; height: 12px; border-radius: 2px; background: #1e293b; }\n  .case span.on { background: #e2e8f0; }\n  .case span.out { grid-column: 2; margin-top: 3px; }\n  .case span.out.on { background: #38bdf8; }\n  .title { margin-right: 6px; color: #94a3b8; }\n  .title b { color: #f8fafc; font-size: 16px; }\n  .key { color: #64748b; font-size: 12px; margin-left: 6px; }\n  canvas { display: block; border-radius: 8px; }\n</style>\n<div class=\"panel\">\n  <div class=\"rule\" id=\"rule\"></div>\n  <canvas id=\"grid\"></canvas>\n</div>\n<script>\n  const SIZE = 13;\n\n  function draw() {\n    const rows = nb.get('ca_rows', []);\n    const rule = Number(nb.get('ca_rule', 30));\n    const ruleBox = document.getElementById('rule');\n    const canvas = document.getElementById('grid');\n    if (!rows.length) {\n      ruleBox.textContent = 'Run the C cell above to make a pattern.';\n      canvas.width = canvas.height = 0;\n      return;\n    }\n\n    // The rule's eight cases: three cells above, and the cell they make below.\n    let cases = '<div class=\"title\">Rule <b>' + rule + '</b></div>';\n    for (let pattern = 7; pattern >= 0; pattern--) {\n      const bits = [4, 2, 1].map((b) => (pattern & b ? 'on' : '')).map((c) => '<span class=\"' + c + '\"></span>').join('');\n      const out = (rule >> pattern) & 1 ? 'out on' : 'out';\n      cases += '<div class=\"case\">' + bits + '<span class=\"' + out + '\"></span></div>';\n    }\n    ruleBox.innerHTML = cases + '<div class=\"key\">each: three cells above,<br>and the cell they make below</div>';\n\n    canvas.width = rows[0].length * SIZE;\n    canvas.height = rows.length * SIZE;\n    const ctx = canvas.getContext('2d');\n    ctx.fillStyle = '#020617';\n    ctx.fillRect(0, 0, canvas.width, canvas.height);\n    rows.forEach((row, y) => {\n      ctx.fillStyle = 'hsl(' + (200 + y * 4) + ', 85%, 62%)';   // a little colour shift per row\n      for (let x = 0; x < row.length; x++) {\n        if (row[x] === '#') ctx.fillRect(x * SIZE + 1, y * SIZE + 1, SIZE - 2, SIZE - 2);\n      }\n    });\n  }\n\n  draw();\n  nb.onChange(draw);\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 520,
+          "scale": 1
+        }
+      }
+    },
+    {
+      "id": "c-t08-limits",
+      "kind": "md",
+      "source": "## C here, and C on a real computer\n\nThe interpreter covers the everyday parts of C, but not all of it. If a program that looks right won't run, check this list.\n\n| Works | Doesn't work here |\n| --- | --- |\n| `printf`, `if`, loops, functions, recursion | `struct` (use separate arrays instead) |\n| Arrays, including 2D arrays like `int grid[8][8]` | Arrays of strings, and copying text into `char` arrays |\n| Pointers: `*p`, `&x`, passing `&x` to a function | Reading `nb` or files, or typing input |\n| Bits: `&`, `\\|`, `^`, `~`, `<<`, `>>` | Big loops: millions of steps take far too long |\n| `#define`, and `math.h` (`sqrt`, `sin`, `pow`) | Dividing negative numbers (`-7 / 2` gives -4 here, -3 in real C) |\n\nOne difference works in your favour: if an `int` overflows (goes past about 2.1 billion), this interpreter stops with an error saying so. Real C carries on silently with a wrong number, which is one of the classic causes of bugs."
+    },
+    {
+      "id": "c-t08-next",
+      "kind": "md",
+      "source": "## Try this\n\n- **Another rule.** Change `RULE` to `90` (a triangle pattern), `110` or `150`, run the C cell, and the drawing below it updates by itself. With 256 rules there are plenty to explore.\n- **Fix the table.** Make the third column right by changing `5 / 9` to `5.0 / 9`. Why does that one change fix it?\n- **One more topping.** Add `#define OLIVES 16`, then add olives to the order. The order needs 5 bits now, so change `bit = 3` to `bit = 4` in `show`.\n\n**Next:** tutorial **10** covers every kind of control, and **11** introduces Lua, another small language that publishes to `nb` the same way. Both are in the **Library**."
     }
   ],
   "createdAt": "2026-04-24T00:00:00.000Z",
-  "updatedAt": "2026-04-24T00:00:00.000Z"
+  "updatedAt": "2026-10-29T12:00:00.000Z"
 }

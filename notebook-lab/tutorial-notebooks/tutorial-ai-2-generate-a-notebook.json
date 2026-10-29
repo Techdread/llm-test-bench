@@ -1,0 +1,81 @@
+{
+  "id": "tutorial-ai-2-generate-a-notebook",
+  "title": "AI 2 Generate a Whole Notebook",
+  "cells": [
+    {
+      "id": "c-ai2-intro",
+      "kind": "md",
+      "source": "# AI 2 Generate a Whole Notebook\n\nTutorial **AI 1** built a notebook one prompt at a time. **Generate notebook** goes further: one prompt, and the model plans and writes every cell, with the data, charts, controls and explanations wired together through `nb`.\n\nIt's the purple **wand** button in the toolbar, next to **Library**."
+    },
+    {
+      "id": "c-ai2-how",
+      "kind": "md",
+      "source": "## How it works\n\n1. **Describe the whole notebook** in the big box: what it's about, who it's for, where the data comes from, what to show and what should be interactive.\n2. **Languages:** leave it on **Auto**, or pick the languages it may use.\n3. **Visual output:** a chart, a Python plot, an interactive HTML view, a network graph, none, or **Auto**.\n4. **Create a new notebook**, or **Append** the new cells to the one you have open.\n5. Press **Generate draft**. The model writes a plan, and every cell is checked: wrong cell kinds, broken JSON, invalid charts or controls, and languages you didn't allow are all rejected.\n6. **Review the plan**, then press **Open generated notebook** (or **Append cells**). Nothing in your notebook changes until you do. Not happy? Change the prompt and press **Regenerate draft**.\n\nThen press **Run all**. Each generated cell remembers the prompt, so **✨** works on it too."
+    },
+    {
+      "id": "c-ai2-craft",
+      "kind": "md",
+      "source": "## What makes a good notebook prompt\n\nA short prompt gets a short, generic notebook. Compare:\n\n> **Weak:** *make something about planets*\n\n> **Strong:** *For a class of 12-year-olds, compare the planets of the Solar System. A Python cell holds real values for each planet (distance from the Sun, diameter, gravity, length of a year) and stores them in nb as \"planets\". Then: a Vega-Lite chart of diameter against distance; a dropdown to pick a planet and a slider for the reader's age and weight; and a live HTML card showing what they'd weigh there and how old they'd be in that planet's years. Explain each step in a short Markdown cell, in friendly language.*\n\nThe strong one answers six questions:\n\n| Question | In the example |\n| --- | --- |\n| **Who is it for?** | a class of 12-year-olds |\n| **What's the goal?** | compare the planets |\n| **Where's the data?** | real values, in a Python cell |\n| **What's shared, and what's it called?** | stored in nb as \"planets\" |\n| **What do we see?** | a chart and a live card |\n| **What can the reader change?** | a dropdown and a slider |\n\nThe builder below asks those questions for you."
+    },
+    {
+      "id": "c-ai2-builder-md",
+      "kind": "md",
+      "source": "## A prompt builder\n\nFill this in, and the cell under it writes the prompt. Then select it, copy it, and paste it into **Generate notebook**.\n\nThese two cells were generated from prompts too: press **✨** on either to see how."
+    },
+    {
+      "id": "c-ai2-controls",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Prompt builder\",\n  \"description\": \"Answer the questions, and the cell below writes your prompt.\",\n  \"width\": 900,\n  \"height\": 222,\n  \"controls\": [\n    { \"type\": \"text\", \"label\": \"Topic\", \"bind\": \"recipe_topic\", \"default\": \"the planets of the Solar System\", \"placeholder\": \"What is the notebook about?\", \"x\": 0, \"y\": 0, \"width\": 280, \"height\": 64 },\n    {\n      \"type\": \"select\", \"label\": \"Who it is for\", \"bind\": \"recipe_audience\", \"default\": \"a class of 12-year-olds\",\n      \"options\": [\"myself\", \"a class of 12-year-olds\", \"my team at work\", \"complete beginners\"],\n      \"x\": 310, \"y\": 0, \"width\": 280, \"height\": 64\n    },\n    {\n      \"type\": \"select\", \"label\": \"Where the data comes from\", \"bind\": \"recipe_data\", \"default\": \"real facts the model knows\",\n      \"options\": [\"realistic made-up data\", \"real facts the model knows\", \"a live public API that needs no key\"],\n      \"x\": 620, \"y\": 0, \"width\": 280, \"height\": 64\n    },\n    { \"type\": \"checkbox\", \"label\": \"A chart\", \"bind\": \"recipe_chart\", \"default\": true, \"x\": 0, \"y\": 86, \"width\": 280, \"height\": 42 },\n    { \"type\": \"checkbox\", \"label\": \"Sliders or other controls\", \"bind\": \"recipe_controls\", \"default\": true, \"x\": 310, \"y\": 86, \"width\": 280, \"height\": 42 },\n    { \"type\": \"checkbox\", \"label\": \"A live interactive view\", \"bind\": \"recipe_live\", \"default\": true, \"x\": 620, \"y\": 86, \"width\": 280, \"height\": 42 },\n    { \"type\": \"checkbox\", \"label\": \"A short quiz at the end\", \"bind\": \"recipe_quiz\", \"default\": false, \"x\": 0, \"y\": 152, \"width\": 280, \"height\": 42 },\n    { \"type\": \"checkbox\", \"label\": \"Explain each step\", \"bind\": \"recipe_explain\", \"default\": true, \"x\": 310, \"y\": 152, \"width\": 280, \"height\": 42 },\n    {\n      \"type\": \"select\", \"label\": \"Languages\", \"bind\": \"recipe_languages\", \"default\": \"any\",\n      \"options\": [\"any\", \"Python and JavaScript\", \"JavaScript only\"],\n      \"x\": 620, \"y\": 138, \"width\": 280, \"height\": 64\n    }\n  ]\n}",
+      "metadata": {
+        "ai": {
+          "prompt": "Controls for building a notebook prompt, in a form 900 pixels wide, laid out in tidy rows of three controls each 280 pixels wide. Row 1: a text box \"Topic\" bound to recipe_topic (default \"the planets of the Solar System\"); a dropdown \"Who it is for\" bound to recipe_audience with options \"myself\", \"a class of 12-year-olds\", \"my team at work\" and \"complete beginners\" (default \"a class of 12-year-olds\"); a dropdown \"Where the data comes from\" bound to recipe_data with options \"realistic made-up data\", \"real facts the model knows\" and \"a live public API that needs no key\" (default \"real facts the model knows\"). Row 2: checkboxes \"A chart\" bound to recipe_chart (default true), \"Sliders or other controls\" bound to recipe_controls (default true) and \"A live interactive view\" bound to recipe_live (default true). Row 3: checkboxes \"A short quiz at the end\" bound to recipe_quiz (default false) and \"Explain each step\" bound to recipe_explain (default true), and a dropdown \"Languages\" bound to recipe_languages with options \"any\", \"Python and JavaScript\" and \"JavaScript only\" (default \"any\").",
+          "kind": "ui",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "87339448",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ai2-prompt",
+      "kind": "html",
+      "source": "<style>\n  html, body { margin: 0; background: #020617; color: #e2e8f0; font: 15px/1.5 system-ui, sans-serif; }\n  .card { margin: 16px 20px; background: #0f172a; border-radius: 12px; padding: 16px 20px; }\n  h2 { margin: 0 0 10px; font-size: 18px; color: #f8fafc; }\n  #prompt { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px 16px; font-size: 16px; line-height: 1.6; color: #f1f5f9; min-height: 120px; user-select: text; }\n  .row { display: flex; align-items: center; gap: 14px; margin-top: 12px; }\n  button { background: #2563eb; color: #fff; border: 0; border-radius: 8px; padding: 8px 16px; font: 600 14px system-ui, sans-serif; cursor: pointer; }\n  button:hover { background: #1d4ed8; }\n  .muted { color: #94a3b8; font-size: 13px; }\n</style>\n<div class=\"card\">\n  <h2>Your prompt</h2>\n  <div id=\"prompt\"></div>\n  <div class=\"row\">\n    <button id=\"select\">Select all</button>\n    <span class=\"muted\">Then press Ctrl+C (Cmd+C on a Mac) to copy it.</span>\n    <span class=\"muted\" id=\"words\" style=\"margin-left:auto\"></span>\n  </div>\n</div>\n<script>\n  const DATA = {\n    'realistic made-up data': 'Make up realistic data in a code cell and store it in nb under clear names.',\n    'real facts the model knows': 'Use real facts you know, set up in a code cell and stored in nb under clear names.',\n    'a live public API that needs no key': 'Fetch live data from a free public API that needs no key, say which one, and store it in nb under clear names.',\n  };\n  const LANGUAGES = {\n    'Python and JavaScript': 'Use Python and JavaScript cells for the code.',\n    'JavaScript only': 'Use JavaScript for all the code.',\n  };\n\n  // \"a, b and c\"\n  const list = (items) => items.length < 2 ? items.join('') : items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];\n\n  function build() {\n    const topic = String(nb.get('recipe_topic', 'the planets of the Solar System')).trim() || 'a topic of your choice';\n    const audience = nb.get('recipe_audience', 'a class of 12-year-olds');\n    const controls = nb.get('recipe_controls', true);\n    const live = nb.get('recipe_live', true);\n\n    const parts = ['For ' + audience + ', build a notebook about ' + topic + '.'];\n    parts.push(DATA[nb.get('recipe_data', 'real facts the model knows')] || '');\n    const include = [];\n    if (nb.get('recipe_chart', true)) include.push('a chart');\n    if (controls) include.push('sliders or dropdowns that change what is shown');\n    if (live) include.push(controls ? 'a live HTML view that redraws as they change' : 'a live, interactive HTML view');\n    if (include.length) parts.push('Include ' + list(include) + '.');\n    if (nb.get('recipe_quiz', false)) parts.push('Finish with a short quiz of three to five questions about it.');\n    if (nb.get('recipe_explain', true)) parts.push('Explain each step in a short Markdown cell.');\n    const language = LANGUAGES[nb.get('recipe_languages', 'any')];\n    if (language) parts.push(language);\n\n    const text = parts.filter(Boolean).join(' ');\n    document.getElementById('prompt').textContent = text;\n    document.getElementById('words').textContent = text.split(/\\s+/).length + ' words';\n  }\n\n  // The clipboard is blocked in this cell, so select the text for the reader to copy.\n  document.getElementById('select').addEventListener('click', () => {\n    const range = document.createRange();\n    range.selectNodeContents(document.getElementById('prompt'));\n    const selection = window.getSelection();\n    selection.removeAllRanges();\n    selection.addRange(range);\n  });\n\n  build();\n  nb.onChange(build);\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 310,
+          "scale": 1
+        },
+        "ai": {
+          "prompt": "Build a notebook prompt from the controls and show it, live. Read these with nb.get and defaults: recipe_topic (\"the planets of the Solar System\"), recipe_audience (\"a class of 12-year-olds\"), recipe_data (\"real facts the model knows\"), recipe_chart (true), recipe_controls (true), recipe_live (true), recipe_quiz (false), recipe_explain (true), recipe_languages (\"any\"). Write a clear prompt in plain sentences, like: \"For a class of 12-year-olds, build a notebook about the planets of the Solar System. Use real facts you know, set up in a code cell and stored in nb under clear names. Include a chart, sliders or dropdowns that change what is shown, and a live HTML view that redraws as they move. Explain each step in a short Markdown cell.\" Begin with \"For \" followed by the audience exactly as chosen (the choices already include any \"a\", giving \"For a class of 12-year-olds\" or \"For myself\"). Only include the parts whose checkboxes are on; for the data source, phrase \"a live public API that needs no key\" as \"fetch live data from a free public API that needs no key, and say which one\"; mention the language choice unless it is \"any\". Show it in a large, readable box under the heading \"Your prompt\", with a word count, and a \"Select all\" button that selects the prompt text. The clipboard is blocked in this cell, so under the button say \"Then press Ctrl+C (Cmd+C on a Mac) to copy it.\" Redraw with nb.onChange. Dark background and light text.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "bb92c7cb",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ai2-examples",
+      "kind": "md",
+      "source": "## Prompts to try\n\nCopy one into **Generate notebook** as it is, or change it to suit you.\n\n**A party planner**\n> Plan a pizza party. Sliders for the number of guests, slices each person eats and the price of a pizza, and a checkbox for a vegetarian option. A live HTML card shows how many pizzas to order, the total cost and the cost per guest, and a chart compares three pizza sizes for value. Store the choices in nb with clear names.\n\n**How sorting works**\n> Teach sorting to beginners. An HTML cell shows 30 bars of random heights being sorted step by step, with buttons for bubble sort, insertion sort and quicksort, a speed slider, and counters for comparisons and swaps. Add a short Markdown explanation of each method, and a chart comparing how many steps each took.\n\n**Weather where I live**\n> Fetch a 7-day forecast from the free Open-Meteo API (no key needed) for a city typed into a text box, using its geocoding API to find the city. Show a chart of daily highs and lows and rain, and a live HTML card with today's weather and a suggestion of what to wear.\n\n**A tiny game**\n> Make a simple browser game in an HTML cell: catch falling fruit in a basket with the arrow keys, with a score and three lives. Add controls for the falling speed and the basket size, and keep the high score in nb."
+    },
+    {
+      "id": "c-ai2-after",
+      "kind": "md",
+      "source": "## After it's generated\n\n- **Run all**, then read it top to bottom. Check the numbers make sense: models can be confidently wrong about facts.\n- **Something failed?** Press **🔧 AI Fix** on that cell.\n- **Change one cell:** press **✨**. It starts with the whole notebook's prompt; replace that with what *this* cell should do (*\"Make the chart a bar chart, sorted biggest first\"*) and press **Replace cell**.\n- **Add more:** open **Generate notebook** again and choose **Append** (*\"Add a quiz with five questions about the data above\"*).\n- **Keep it:** **Save**, or **Export** it as one HTML file (tutorial **07**).\n\n**Next:** the numbered tutorials from **02** explain what's going on underneath: how cells share data, live HTML, charts and controls. Knowing that helps you write better prompts. They're all in the **Library**."
+    }
+  ],
+  "createdAt": "2026-10-29T12:00:00.000Z",
+  "updatedAt": "2026-10-29T12:00:00.000Z"
+}

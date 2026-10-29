@@ -9,6 +9,7 @@ import { UiCellRenderer } from './UiCellRenderer.js';
 import { isCellModifiedSinceAi } from '../services/cellMetadata.js';
 import { cellRepairDiagnostic } from '../services/cellRepair.js';
 import { kindAvailable } from '../services/edition.js';
+import { canHideCode, savedHideCode } from '../services/codeVisibility.js';
 
 let markedLoadPromise = null;
 let markedMod = null;
@@ -91,14 +92,17 @@ export function Cell({
   onAiGenerate,
   onAiFix,
   onHtmlPreviewChange,
+  onHideCodeChange,
   selectedUiControlIndex,
   onSelectUiControl,
 }) {
   const [mdEditing, setMdEditing] = useState(!cell.source);
   const [collapsed, setCollapsed] = useState(false);
-  const [codeCollapsed, setCodeCollapsed] = useState(false);
+  const [codeCollapsed, setCodeCollapsed] = useState(() => savedHideCode(cell) === true);
   const [uiRawEditing, setUiRawEditing] = useState(false);
-  const [uiDesignerMode, setUiDesignerMode] = useState(true);
+  // Start in input mode: design mode turns a drag on a control into a move,
+  // so a slider would shift around instead of changing its value.
+  const [uiDesignerMode, setUiDesignerMode] = useState(false);
   const [renderedMd, setRenderedMd] = useState('');
   const aiMetadata = cell.metadata?.ai || null;
   const aiModified = isCellModifiedSinceAi(cell);
@@ -123,14 +127,26 @@ export function Cell({
   // Cells that keep a separate output can hide the source editor while leaving
   // the result on screen — offered for the visual kinds and for JS/Python
   // (which often draw to a canvas or return a chart).
-  const canCollapseCode = cell.kind === 'html' || cell.kind === 'chart' || cell.kind === 'js' || cell.kind === 'py';
+  const canCollapseCode = canHideCode(cell.kind);
   // Only the always-visual kinds auto-hide their code after a clean run.
   const autoCollapseCode = cell.kind === 'html' || cell.kind === 'chart';
 
-  // Marks a manual code-fold toggle so we stop auto-collapsing after a run and
-  // respect the user's choice.
-  const userToggledCode = useRef(false);
-  const setCodeCollapsedByUser = (value) => { userToggledCode.current = true; setCodeCollapsed(value); };
+  // A manual code-fold toggle is saved on the cell (and honoured by exports),
+  // and stops the auto-collapse after a run from overriding the user's choice.
+  const userToggledCode = useRef(savedHideCode(cell) !== undefined);
+  const setCodeCollapsedByUser = (value) => {
+    userToggledCode.current = true;
+    setCodeCollapsed(value);
+    onHideCodeChange?.(value);
+  };
+  // A notebook reopened with the same cell ids keeps this component, so follow
+  // the saved choice when it changes underneath us.
+  const savedChoice = savedHideCode(cell);
+  useEffect(() => {
+    if (savedChoice === undefined) return;
+    userToggledCode.current = true;
+    setCodeCollapsed(savedChoice);
+  }, [savedChoice]);
 
   // After a run finishes cleanly, collapse a visual cell's code so the output
   // leads — unless the user has taken manual control of this cell's fold.
@@ -193,7 +209,7 @@ export function Cell({
           ${canCollapseCode && html`
             <button
               class=${`btn-icon ${codeCollapsed ? 'active' : ''}`}
-              title=${codeCollapsed ? 'Show code' : 'Collapse code (keep output)'}
+              title=${codeCollapsed ? 'Show code' : 'Hide code, keep the output (saved with the notebook; exports fold it away)'}
               onClick=${() => setCodeCollapsedByUser(!codeCollapsed)}
             >
               <i class="fa-solid fa-code"></i>

@@ -84,6 +84,10 @@ export function Toolbar({
       </div>
       <div class="toolbar-right">
         <${CodingAgentActivity} appId="notebook-lab" />
+        <button class="btn btn-library notebook-library-button" onClick=${onOpen} title="Notebook library: tutorials, examples and your saved notebooks">
+          <i class="fa-solid fa-book-open"></i>
+          <span class="btn-label">Library</span>
+        </button>
         <button class="btn btn-generate notebook-generate-button" onClick=${onGenerateNotebook} disabled=${isBusy} title="Generate a complete multi-cell notebook from one prompt">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
           <span class="btn-label">Generate notebook</span>
@@ -99,7 +103,6 @@ export function Toolbar({
         <${RecordVideoButton} ...${recordingProps} />
         <div class="toolbar-divider"></div>
         <button class="btn-icon" onClick=${onNew} title="New notebook"><i class="fa-solid fa-file"></i></button>
-        <button class="btn-icon" onClick=${onOpen} title="Open notebook"><i class="fa-solid fa-folder-open"></i></button>
         <button class="btn-icon" onClick=${onSave} title="Save notebook"><i class="fa-solid fa-floppy-disk"></i></button>
         <button class="btn-icon" onClick=${onExportHtml} title="Export standalone HTML"><i class="fa-solid fa-download"></i></button>
         ${!webEdition && html`

@@ -118,19 +118,26 @@ export function parseUiDefinition(source) {
   try {
     const parsed = JSON.parse(source);
     const controls = Array.isArray(parsed.controls) ? parsed.controls : [];
-    return {
-      definition: {
-        title: parsed.title || '',
-        description: parsed.description || '',
-        width: Number.isFinite(Number(parsed.width)) ? Number(parsed.width) : DEFAULT_FORM_WIDTH,
-        height: Number.isFinite(Number(parsed.height)) ? Number(parsed.height) : DEFAULT_FORM_HEIGHT,
-        controls: controls.map((control, index) => ({
-          ...defaultGeometry(control.type || 'text', index),
-          ...control,
-        })),
-      },
-      error: null,
+    const hasWidth = Number.isFinite(Number(parsed.width));
+    const hasHeight = Number.isFinite(Number(parsed.height));
+    const definition = {
+      title: parsed.title || '',
+      description: parsed.description || '',
+      width: hasWidth ? Number(parsed.width) : DEFAULT_FORM_WIDTH,
+      height: hasHeight ? Number(parsed.height) : DEFAULT_FORM_HEIGHT,
+      controls: controls.map((control, index) => ({
+        ...defaultGeometry(control.type || 'text', index),
+        ...control,
+      })),
     };
+    // A form that doesn't give its own size grows to fit its controls, instead
+    // of clipping everything past the default 720×160 box.
+    if (!hasWidth || !hasHeight) {
+      const fitted = growToFit(definition);
+      if (!hasWidth) definition.width = fitted.width;
+      if (!hasHeight) definition.height = fitted.height;
+    }
+    return { definition, error: null };
   } catch (e) {
     return { definition: defaultDefinition(), error: e.message || String(e) };
   }

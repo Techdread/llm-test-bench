@@ -3,6 +3,7 @@
 
 import { html } from 'htm/preact';
 import { CellEditor as SharedCellEditor } from '../../shared/components/CellEditor.js';
+import { checkJsCell } from '../services/jsCellSyntax.js';
 
 export function CellEditor({ source, onChange, kind, theme, onRun }) {
   return html`
@@ -11,6 +12,7 @@ export function CellEditor({ source, onChange, kind, theme, onRun }) {
       onChange=${onChange}
       kind=${kind}
       theme=${theme}
+      checkSyntax=${kind === 'js' ? checkJsCell : undefined}
       onRun=${onRun}
       className="cell-editor-ace"
     />
