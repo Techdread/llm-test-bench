@@ -88,8 +88,8 @@ export async function executeCell(cell, options = {}) {
     );
   } else if (SWAPPABLE_KINDS.has(kind)) {
     const timeout = getBackend(kind) === 'debian' ? DEBIAN_VM_TIMEOUT : options.timeoutMs;
-    // C (xcc, <nb.h>) and Clojure (Scittle, nb/get and nb/set) read and write nb;
-    // the Debian backends ignore this.
+    // C (xcc, <nb.h>) and Clojure (nb/get and nb/set, on either backend) read
+    // and write nb; the other backends ignore this.
     const nb = kind === 'c' || kind === 'clojure' ? { snapshot: nbBridge.snapshot, set: nbBridge.setValue } : undefined;
     result = runResultToNotebookResult(
       await runSystemLanguage(kind, cell.source || '', { timeout, onStatus: options.onStatus, nb })
@@ -200,7 +200,7 @@ export function runResultToNotebookResult(result) {
   return {
     ok,
     outputs,
-    error: ok ? null : (result.stderr || result.compileLog || 'Execution failed'),
+    error: ok ? null : leadWithPrinted(stdout, result.stderr || result.compileLog || 'Execution failed'),
     metadata: {
       language: result.language,
       runtimeKind: result.runtimeKind,
@@ -208,6 +208,16 @@ export function runResultToNotebookResult(result) {
       durationMs: result.durationMs,
     },
   };
+}
+
+// A failed cell shows only its error, so the error starts with what the program
+// printed before it failed. The browser runners (xcc, Scittle) already put it
+// there; the Debian ones (Java, Go, Clojure on the JVM, …) report it separately.
+const squash = (text) => text.replace(/\s+/g, ' ').trim();
+function leadWithPrinted(printed, problem) {
+  const before = squash(printed);
+  if (!before || squash(problem).startsWith(before)) return problem;
+  return `${printed.replace(/\n+$/, '')}\n${problem}`;
 }
 
 function applyNbMarkers(stdout) {

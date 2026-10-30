@@ -93,11 +93,12 @@ function writeFileLines(text, path) {
 }
 
 /** The shell script compileAndRun types into the guest. Pure, for tests. */
-export function buildRunScript({ nonce, source, stdin = '', srcName, compileCmd, runCmd }) {
+export function buildRunScript({ nonce, source, stdin = '', srcName, compileCmd, runCmd, files = [] }) {
   return `M=${nonce}\n` +
     `cd /tmp\n` +
     `export LC_ALL=C.UTF-8\n` +                // else the JVM prints £, é, … as '?'
     writeFileLines(source, srcName) +
+    files.map((file) => writeFileLines(file.text, file.name)).join('') +
     writeFileLines(stdin, '.in') +
     `rm -f prog .out .rerr\n` +                 // no stale output if the compile fails
     `${compileCmd} 2> .cerr; CC=$?\n` +
@@ -111,18 +112,19 @@ export function buildRunScript({ nonce, source, stdin = '', srcName, compileCmd,
 
 // Compile a program with a real toolchain and run it. Language-agnostic: the
 // caller supplies the source filename, the compile command (writing the binary
-// to ./prog), and the run command. Each output stream is emitted as a single
+// to ./prog), the run command, and any other `files` ({ name, text }) the run
+// needs beside the source. Each output stream is emitted as a single
 // base64 line tagged with a per-call marker — base64 has no spaces/newlines, so
 // the captured value is immune to tty command-echo, shell prompts and CRLF.
 export async function compileAndRun({
   source, stdin = '', srcName = 'main.c', compileCmd = 'gcc -O0 main.c -o prog',
-  runCmd = './prog', onStatus, timeoutMs = 240000,
+  runCmd = './prog', onStatus, timeoutMs = 240000, files = [],
 }) {
   const vm = await ensureVm(onStatus);
   onStatus?.({ phase: 'running' });
 
   const nonce = 'PFR' + Math.random().toString(36).slice(2, 10);
-  const script = buildRunScript({ nonce, source, stdin, srcName, compileCmd, runCmd });
+  const script = buildRunScript({ nonce, source, stdin, srcName, compileCmd, runCmd, files });
 
   const startLen = vm.serial.length;
   vm.emulator.serial0_send(script);

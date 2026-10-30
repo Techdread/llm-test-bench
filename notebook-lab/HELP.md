@@ -162,7 +162,7 @@ use **Hard reset this tab** when you also want to release the active runtime.
 | **Py**   | Pyodide — version-locked package cache, two-way `nb`, last value + figure capture. | Real `python3` 3.11. Stdlib only. Emit-only `nb` (writes turn into `__NB_SET__`; reads raise). |
 | **Rust** | Rust Playground (remote API, needs internet, no stdin). | Real `rustc`, offline. Compiles take tens of seconds under emulation. |
 | **C**    | xcc — a real C compiler built for WebAssembly: fast, offline, two-way `nb` through `<nb.h>`. (JSCPP, the older interpreter, can still be picked.) | Real `gcc` / `g++` — full C99/C++17 with proper diagnostics. |
-| **Clojure** | Scittle — ClojureScript interpreted in the browser: instant, offline, two-way `nb`, no Java interop. | Real Clojure 1.11 on OpenJDK — Java libraries, about a minute a cell, emit-only `nb`. Code is saved as `.cljc`, so `#?(:clj … :cljs …)` lets one cell suit both. |
+| **Clojure** | Scittle — ClojureScript interpreted in the browser: instant, offline, two-way `nb`, no Java interop. | Real Clojure 1.11 on OpenJDK — Java libraries, about a minute a cell. The same `nb/get` and `nb/set`: reads see `nb` as it was when the cell started, and whole numbers arrive as integers, so `(/ 3 2)` is the ratio `3/2`. Code is saved as `.cljc`, so `#?(:clj … :cljs …)` lets one cell suit both. |
 
 All Debian backends share **one** v86 guest. The first cell that needs it boots Debian (~30 s); after that every Debian-backed language reuses the same VM instantly.
 

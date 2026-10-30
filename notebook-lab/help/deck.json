@@ -3,7 +3,7 @@
   "title": "Notebook Lab",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-10-30T16:25:01.897Z",
+  "generatedAt": "2026-10-30T23:16:35.998Z",
   "slides": [
     {
       "kind": "title",
@@ -79,7 +79,7 @@
     {
       "kind": "text",
       "title": "Runtime backends (Python / Rust / C / Clojure) (cont.)",
-      "html": "<table>\n<thead>\n<tr>\n<th>Cell</th>\n<th>Default (WASM / remote)</th>\n<th>Alternative (Debian Linux in v86)</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><strong>Py</strong></td>\n<td>Pyodide — version-locked package cache, two-way <code>nb</code>, last value + figure capture.</td>\n<td>Real <code>python3</code> 3.11. Stdlib only. Emit-only <code>nb</code> (writes turn into <code>__NB_SET__</code>; reads raise).</td>\n</tr>\n<tr>\n<td><strong>Rust</strong></td>\n<td>Rust Playground (remote API, needs internet, no stdin).</td>\n<td>Real <code>rustc</code>, offline. Compiles take tens of seconds under emulation.</td>\n</tr>\n<tr>\n<td><strong>C</strong></td>\n<td>xcc — a real C compiler built for WebAssembly: fast, offline, two-way <code>nb</code> through <code>&lt;nb.h&gt;</code>. (JSCPP, the older interpreter, can still be picked.)</td>\n<td>Real <code>gcc</code> / <code>g++</code> — full C99/C++17 with proper diagnostics.</td>\n</tr>\n<tr>\n<td><strong>Clojure</strong></td>\n<td>Scittle — ClojureScript interpreted in the browser: instant, offline, two-way <code>nb</code>, no Java interop.</td>\n<td>Real Clojure 1.11 on OpenJDK — Java libraries, about a minute a cell, emit-only <code>nb</code>. Code is saved as <code>.cljc</code>, so <code>#?(:clj … :cljs …)</code> lets one cell suit both.</td>\n</tr>\n</tbody></table>"
+      "html": "<table>\n<thead>\n<tr>\n<th>Cell</th>\n<th>Default (WASM / remote)</th>\n<th>Alternative (Debian Linux in v86)</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><strong>Py</strong></td>\n<td>Pyodide — version-locked package cache, two-way <code>nb</code>, last value + figure capture.</td>\n<td>Real <code>python3</code> 3.11. Stdlib only. Emit-only <code>nb</code> (writes turn into <code>__NB_SET__</code>; reads raise).</td>\n</tr>\n<tr>\n<td><strong>Rust</strong></td>\n<td>Rust Playground (remote API, needs internet, no stdin).</td>\n<td>Real <code>rustc</code>, offline. Compiles take tens of seconds under emulation.</td>\n</tr>\n<tr>\n<td><strong>C</strong></td>\n<td>xcc — a real C compiler built for WebAssembly: fast, offline, two-way <code>nb</code> through <code>&lt;nb.h&gt;</code>. (JSCPP, the older interpreter, can still be picked.)</td>\n<td>Real <code>gcc</code> / <code>g++</code> — full C99/C++17 with proper diagnostics.</td>\n</tr>\n<tr>\n<td><strong>Clojure</strong></td>\n<td>Scittle — ClojureScript interpreted in the browser: instant, offline, two-way <code>nb</code>, no Java interop.</td>\n<td>Real Clojure 1.11 on OpenJDK — Java libraries, about a minute a cell. The same <code>nb/get</code> and <code>nb/set</code>: reads see <code>nb</code> as it was when the cell started, and whole numbers arrive as integers, so <code>(/ 3 2)</code> is the ratio <code>3/2</code>. Code is saved as <code>.cljc</code>, so <code>#?(:clj … :cljs …)</code> lets one cell suit both.</td>\n</tr>\n</tbody></table>"
     },
     {
       "kind": "text",
