@@ -60,9 +60,9 @@
     {
       "id": "c-t10-next",
       "kind": "md",
-      "source": "## Try this\n\n- **Change everything.** Turn the lights off, try three eyes, a crown and a sleepy mood, and give it a lot of snacks.\n- **Add a control.** In the Form Editor, add a slider bound to `creature_size`. Two controls bound to the same name stay in step with each other.\n- **Save and reopen.** Press **Save** in the toolbar, then open the notebook again from the Library's **My notebooks**. Your creature is just as you left it.\n\n**Next:** tutorial **11** introduces Lua, a small, fast language that also publishes to `nb`. It's in the **Library**."
+      "source": "## Try this\n\n- **Change everything.** Turn the lights off, try three eyes, a crown and a sleepy mood, and give it a lot of snacks.\n- **Add a control.** In the Form Editor, add a slider bound to `creature_size`. Two controls bound to the same name stay in step with each other.\n- **Teach it a trick.** Press **✨** on the creature cell and ask: *\"Make it blink every few seconds.\"* The model sees the cell's code, so it adds the blink and keeps everything else.\n- **Save and reopen.** Press **Save** in the toolbar, then open the notebook again from the Library's **My notebooks**. Your creature is just as you left it.\n\n**Next:** tutorial **11** introduces Lua, a small, fast language that also publishes to `nb`. It's in the **Library**."
     }
   ],
   "createdAt": "2026-04-24T00:00:00.000Z",
-  "updatedAt": "2026-10-29T12:00:00.000Z"
+  "updatedAt": "2026-10-30T12:00:00.000Z"
 }

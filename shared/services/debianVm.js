@@ -79,6 +79,36 @@ async function boot(onStatus) {
 const b64 = (s) => btoa(unescape(encodeURIComponent(s)));
 const fromB64 = (s) => { try { return decodeURIComponent(escape(atob(s))); } catch { try { return atob(s); } catch { return ''; } } };
 
+// The guest's tty drops anything past ~4 KB on one line, so a file is typed in
+// as base64 chunks appended to a scratch file, then decoded in one go. A single
+// `echo <base64>` line silently wrote nothing for sources over about 3 KB.
+const TTY_CHUNK = 2400;
+
+function writeFileLines(text, path) {
+  const tmp = `${path}.b64`;
+  const chunks = b64(text).match(new RegExp(`.{1,${TTY_CHUNK}}`, 'g')) || [];
+  return `: > ${tmp}\n`
+    + chunks.map((chunk) => `echo ${chunk} >> ${tmp}\n`).join('')
+    + `base64 -d ${tmp} > ${path}; rm -f ${tmp}\n`;
+}
+
+/** The shell script compileAndRun types into the guest. Pure, for tests. */
+export function buildRunScript({ nonce, source, stdin = '', srcName, compileCmd, runCmd }) {
+  return `M=${nonce}\n` +
+    `cd /tmp\n` +
+    `export LC_ALL=C.UTF-8\n` +                // else the JVM prints £, é, … as '?'
+    writeFileLines(source, srcName) +
+    writeFileLines(stdin, '.in') +
+    `rm -f prog .out .rerr\n` +                 // no stale output if the compile fails
+    `${compileCmd} 2> .cerr; CC=$?\n` +
+    `if [ $CC -eq 0 ]; then ${runCmd} < .in > .out 2> .rerr; RC=$?; else RC=$CC; fi\n` +
+    `echo "\${M}O=$(base64 -w0 .out 2>/dev/null)"\n` +
+    `echo "\${M}C=$(base64 -w0 .cerr 2>/dev/null)"\n` +
+    `echo "\${M}E=$(base64 -w0 .rerr 2>/dev/null)"\n` +
+    `echo "\${M}R=$RC"\n` +
+    `echo "\${M}Z"\n`;
+}
+
 // Compile a program with a real toolchain and run it. Language-agnostic: the
 // caller supplies the source filename, the compile command (writing the binary
 // to ./prog), and the run command. Each output stream is emitted as a single
@@ -92,19 +122,7 @@ export async function compileAndRun({
   onStatus?.({ phase: 'running' });
 
   const nonce = 'PFR' + Math.random().toString(36).slice(2, 10);
-  const script =
-    `M=${nonce}\n` +
-    `cd /tmp\n` +
-    `echo ${b64(source)} | base64 -d > ${srcName}\n` +
-    `echo ${b64(stdin)} | base64 -d > .in\n` +
-    `rm -f prog .out .rerr\n` +                 // no stale output if the compile fails
-    `${compileCmd} 2> .cerr; CC=$?\n` +
-    `if [ $CC -eq 0 ]; then ${runCmd} < .in > .out 2> .rerr; RC=$?; else RC=$CC; fi\n` +
-    `echo "\${M}O=$(base64 -w0 .out 2>/dev/null)"\n` +
-    `echo "\${M}C=$(base64 -w0 .cerr 2>/dev/null)"\n` +
-    `echo "\${M}E=$(base64 -w0 .rerr 2>/dev/null)"\n` +
-    `echo "\${M}R=$RC"\n` +
-    `echo "\${M}Z"\n`;
+  const script = buildRunScript({ nonce, source, stdin, srcName, compileCmd, runCmd });
 
   const startLen = vm.serial.length;
   vm.emulator.serial0_send(script);

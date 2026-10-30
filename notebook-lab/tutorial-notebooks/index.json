@@ -37,7 +37,7 @@
   {
     "file": "tutorial-02-sharing-data-between-cells.json",
     "title": "02 Sharing Data Between Cells",
-    "description": "A shopping basket passed through JavaScript, Python, a chart, controls, a live HTML receipt and Lua, with the habits that keep shared `nb` values in step."
+    "description": "A shopping basket passed through JavaScript, Python, a chart, controls, a live HTML receipt and Lua, plus a budget planner built from a prompt that reads `nb`."
   },
   {
     "file": "tutorial-03-python-to-javascript-to-html.json",

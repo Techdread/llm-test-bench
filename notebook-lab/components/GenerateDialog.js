@@ -30,6 +30,7 @@ export function GenerateDialog({
   title,
   hasSavedPrompt,
   isModified,
+  codeKind = '',
   onClose,
   onGenerate,
   onClearMetadata,
@@ -69,6 +70,14 @@ export function GenerateDialog({
                 ${isModified
                   ? 'This cell has been edited since the prompt last generated it.'
                   : 'This prompt is saved with the cell.'}
+              </div>
+            `}
+            ${codeKind && html`
+              <div class="ai-prompt-status">
+                <i class="fa-solid fa-pen-to-square"></i>
+                ${kind === codeKind
+                  ? 'The model sees what\'s in this cell, so you can ask for a change, like "make the bars green".'
+                  : 'Changing the kind starts the cell from scratch: the model won\'t see what\'s in it now.'}
               </div>
             `}
             ${searchOffered && html`<div style=${{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>

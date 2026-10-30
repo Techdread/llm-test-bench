@@ -107,10 +107,29 @@ function priorCellsContext(contextCells = []) {
   return `\n\nPrior notebook context (truncated):\n${trimmed}\n`;
 }
 
-/** The user prompt for writing one cell: recent cells, nb values, any web research, then the task. */
-export function cellUserPrompt({ prompt, contextCells, variables, searchContext } = {}) {
+// Plenty for any hand-sized cell; a pasted dataset is cut rather than flooding the prompt.
+const MAX_CURRENT_SOURCE = 20000;
+
+/**
+ * The cell's existing code, when a prompt rewrites a cell that already has some.
+ * Without it the model saw only the cells above, so "make the bars green" on a
+ * hand-written cell threw the cell away and wrote a new one from scratch.
+ */
+export function currentCellText(source) {
+  const text = String(source || '');
+  if (!text.trim()) return '';
+  const cut = text.length > MAX_CURRENT_SOURCE ? `${text.slice(0, MAX_CURRENT_SOURCE)}\n… (cut)` : text;
+  return 'The cell already contains the code below. If the task asks for a change, edit this code and keep '
+    + 'everything the task does not mention, including its comments and layout. If the task asks for something '
+    + `different, replace it. Either way, return the complete new cell.\n<<<CURRENT CELL\n${cut}\nCURRENT CELL>>>`;
+}
+
+/** The user prompt for writing one cell: recent cells, nb values, any web research, the cell's own code, then the task. */
+export function cellUserPrompt({ prompt, contextCells, variables, searchContext, currentSource } = {}) {
   const variablesText = describeNotebookVariables(variables);
   const variablesBlock = variablesText ? `\n\n${variablesText}\n` : '';
   const searchBlock = searchContext ? `\n\n${searchContext}\n` : '';
-  return `${priorCellsContext(contextCells)}${variablesBlock}${searchBlock}\nTask: ${prompt}`;
+  const current = currentCellText(currentSource);
+  const currentBlock = current ? `\n\n${current}\n` : '';
+  return `${priorCellsContext(contextCells)}${variablesBlock}${searchBlock}${currentBlock}\nTask: ${prompt}`;
 }

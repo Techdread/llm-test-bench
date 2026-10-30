@@ -3,7 +3,7 @@ import {
   buildNotebookGenerationUserPrompt,
 } from './notebookGeneration.js';
 import { buildCellRepairPrompt, cellRepairDiagnostic } from './cellRepair.js';
-import { describeNotebookVariables, HTML_NB_BRIDGE_GUIDE, JS_RETURN_GUIDE, UI_CONTROL_GUIDE } from './generationContext.js';
+import { currentCellText, describeNotebookVariables, HTML_NB_BRIDGE_GUIDE, JS_RETURN_GUIDE, UI_CONTROL_GUIDE } from './generationContext.js';
 
 const EXTENSION = {
   md: 'md', js: 'js', py: 'py', c: 'c', rust: 'rs', lua: 'lua', java: 'java',
@@ -32,7 +32,7 @@ export function notebookAgentOutputFile(kind) {
   return `cell.${extension}`;
 }
 
-export function buildNotebookAgentTask({ kind, prompt, contextCells = [], variables, searchContext = '' } = {}) {
+export function buildNotebookAgentTask({ kind, prompt, contextCells = [], variables, searchContext = '', currentSource = '' } = {}) {
   const request = String(prompt || '').trim();
   if (!request) throw new Error('A cell prompt is required');
   const outputFile = notebookAgentOutputFile(kind);
@@ -44,12 +44,13 @@ export function buildNotebookAgentTask({ kind, prompt, contextCells = [], variab
 
   const research = String(searchContext || '').trim();
   const variablesText = describeNotebookVariables(variables);
+  const current = currentCellText(currentSource);
 
   return `You are writing one ${kind} cell for Notebook Lab.
 
 TASK
 ${request}
-${context ? `\nNOTEBOOK CONTEXT\n${context}\n` : ''}${variablesText ? `\nNOTEBOOK VARIABLES\n${variablesText}\n` : ''}${research ? `\nWEB RESEARCH SUPPLIED BY THE USER\n${research}\n` : ''}
+${context ? `\nNOTEBOOK CONTEXT\n${context}\n` : ''}${variablesText ? `\nNOTEBOOK VARIABLES\n${variablesText}\n` : ''}${research ? `\nWEB RESEARCH SUPPLIED BY THE USER\n${research}\n` : ''}${current ? `\nTHIS CELL NOW\n${current}\n` : ''}
 CELL CONTRACT
 ${GUIDANCE[kind]}
 

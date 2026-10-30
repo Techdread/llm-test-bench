@@ -71,9 +71,9 @@ export function stripFences(text) {
  * @param {{kind:string, prompt:string, contextCells?:Array, providerId:string, modelId:string, searchContext?:string, onChunk?:Function}} opts
  * @returns {Promise<string>}
  */
-export async function generateCell({ kind, prompt, contextCells, variables, providerId, modelId, searchContext, onChunk }) {
+export async function generateCell({ kind, prompt, contextCells, variables, currentSource, providerId, modelId, searchContext, onChunk }) {
   const systemPrompt = `${cellSystemPrompt(kind)}${buildActiveModelContext(providerId, modelId)}`;
-  const userPrompt = cellUserPrompt({ prompt, contextCells, variables, searchContext });
+  const userPrompt = cellUserPrompt({ prompt, contextCells, variables, searchContext, currentSource });
   let full = '';
   await streamChat({
     providerId,

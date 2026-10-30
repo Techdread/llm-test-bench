@@ -197,6 +197,7 @@ JavaScript cell that reads `nb` and returns a Vega-Lite spec.
 New here? Tutorials **AI 1** and **AI 2** in the Library show how to build a whole notebook from prompts, without writing code.
 
 - **⚡ Generate new cell** button at the bottom inserts a fresh AI-generated cell. You can also click the wand icon in any cell's header to regenerate that cell. The prompt is saved with the cell, so the wand reopens it for **Replace cell** or **Generate copy**.
+- **Ask for a change:** when the wand opens on a cell that already has code, the model sees that code and is told to change just what you ask, so *"make the bars green"* edits the cell instead of starting it again. This works on cells you wrote yourself, too. (Switching the cell to another kind starts it from scratch.)
 - **What the model sees:** the last few cells above (source and output), and the **current values in `nb`** (names, shapes and short previews), so a prompt can say *"draw nb.sprite"* and the model knows what that data looks like.
 - **🛠 AI Fix** (screwdriver-and-wrench icon) becomes available when a cell has a runtime/compiler error, or when a Chart/UI cell contains invalid JSON. It sends the source, captured diagnostic, recent output, preceding-cell context, and the current `nb` values to the AI selected in the toolbar, then replaces the failing source. Run the cell again to verify the repair; Notebook Lab does not auto-run repaired code because cells may have side effects.
 - **💬 Explain** (comment icon) generates a Markdown explanation cell below the current cell.

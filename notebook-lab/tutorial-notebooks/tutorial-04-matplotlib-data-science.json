@@ -10,7 +10,7 @@
     {
       "id": "c-t04-weather",
       "kind": "py",
-      "source": "import numpy as np\n\n# A year of made-up weather. The random generator is seeded, so everyone\n# gets the same year. Change the seed to get a different one.\nrng = np.random.default_rng(seed=31)\nday = np.arange(365)                                   # 0 is 1 January\n\n# NumPy works on whole arrays at once: no loops needed.\nseason = -np.cos(2 * np.pi * (day - 15) / 365)         # -1 in mid-January, +1 in mid-July\ntemp = np.round(14 + 9 * season + rng.normal(0, 2.5, 365), 1)     # daily high, °C\nwet = rng.random(365) < 0.45 - 0.2 * season                        # rain is likelier in winter\nrain = np.round(np.where(wet, rng.gamma(1.4, 3.5, 365), 0), 1)     # mm\n\nprint(f\"{len(day)} days, with highs from {temp.min()}°C to {temp.max()}°C\")\nprint(f\"It rained on {wet.sum()} days, {rain.sum():.0f} mm in all\")"
+      "source": "import numpy as np\n\n# A year of made-up weather. The random generator is seeded, so everyone\n# gets the same year. A different seed gives a different year.\nrng = np.random.default_rng(seed=31)\nday = np.arange(365)                                   # 0 is 1 January\n\n# NumPy works on whole arrays at once: no loops needed.\nseason = -np.cos(2 * np.pi * (day - 15) / 365)         # -1 in mid-January, +1 in mid-July\ntemp = np.round(14 + 9 * season + rng.normal(0, 2.5, 365), 1)     # daily high, °C\nwet = rng.random(365) < 0.45 - 0.2 * season                        # rain is likelier in winter\nrain = np.round(np.where(wet, rng.gamma(1.4, 3.5, 365), 0), 1)     # mm\n\nprint(f\"{len(day)} days, with highs from {temp.min()}°C to {temp.max()}°C\")\nprint(f\"It rained on {wet.sum()} days, {rain.sum():.0f} mm in all\")"
     },
     {
       "id": "c-t04-picnic",
@@ -45,9 +45,9 @@
     {
       "id": "c-t04-next",
       "kind": "md",
-      "source": "## Try this\n\n- **A different year.** Change `seed=31` in the first Python cell, then press **Run all**. Does the best month change?\n- **Your own picnic rules.** In the second Python cell, allow a little drizzle with `rain < 2`, or a cooler day with `temp >= 16`. Re-run from there down.\n- **A fourth panel.** Change `plt.subplots(1, 3, …)` to `(1, 4, …)` and add `fourth.scatter(temp, rain, s=6)` to see whether hot days are dry ones. You'll need to add `fourth` to the names on the left too.\n- **New colours.** In the calendar chart, try `scheme: 'viridis'`.\n\n**Next:** tutorial **05** fetches live earthquake data and analyses it, and **07** puts every cell type together into a report. Both are in the **Library**."
+      "source": "## Try this\n\nEach of these is a prompt. Press **✨** on a cell and ask for a change: the model sees the cell's code, so it changes just what you ask. Or use **⚡ AI Generate New Cell** at the bottom to add a new cell.\n\n- **A different year.** ✨ on the first Python cell: *\"Use seed 7 instead of 31.\"* Then press **Run all**. Does the best month change?\n- **Your own picnic rules.** ✨ on the second Python cell: *\"Allow a little drizzle: count days with under 2 mm of rain as dry enough.\"* Then run it and the cells below it.\n- **A fourth panel.** ✨ on the three-panel chart: *\"Add a fourth panel, a scatter of each day's high against its rain, to see whether hot days are dry ones.\"*\n- **New colours.** ✨ on the calendar chart: *\"Use the viridis colour scheme.\"*\n\n**Next:** tutorial **05** fetches live earthquake data and analyses it, and **07** puts every cell type together into a report. Both are in the **Library**."
     }
   ],
   "createdAt": "2026-04-18T21:00:00.000Z",
-  "updatedAt": "2026-10-29T12:00:00.000Z"
+  "updatedAt": "2026-10-30T12:00:00.000Z"
 }

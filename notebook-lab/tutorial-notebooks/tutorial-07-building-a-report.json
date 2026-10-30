@@ -81,9 +81,9 @@
     {
       "id": "c-t07-next",
       "kind": "md",
-      "source": "## Try this\n\n- **A different fair.** Change the seed in `random.Random(2026)` and press **Run all**. The findings, charts and forecast all follow, and the recommendation still reads true (or doesn't, which is worth noticing).\n- **Add a stall.** Add `'Ice cream': dict(price=2.00, cost=0.60, per_hour=10, heat=0.2, stock=None)` to `stalls` and give it a colour in `colours`.\n- **Export it** and open the file. Drag the sliders there too.\n\n**Next:** tutorial **08** runs C programs, and **10** covers every kind of control. Both are in the **Library**."
+      "source": "## Try this\n\nEach of these is a prompt. Press **✨** on a cell and ask for a change: the model sees the cell's code, so it changes just what you ask. Or use **⚡ AI Generate New Cell** at the bottom to add a new cell.\n\n- **A different fair.** ✨ on the first Python cell (the till): *\"Use seed 7 instead of 2026.\"* Then press **Run all**. The findings, charts and forecast all follow, and the recommendation still reads true (or doesn't, which is worth noticing).\n- **Add a stall.** ✨ on the same cell: *\"Add an ice-cream stall: £2.00 each, 60p to make, about 10 sales an hour and more on hot days, with no stock limit. Give it a colour.\"* Then press **Run all**.\n- **Export it** and open the file. Drag the sliders there too.\n\n**Next:** tutorial **08** runs C programs, and **10** covers every kind of control. Both are in the **Library**."
     }
   ],
   "createdAt": "2026-04-18T21:00:00.000Z",
-  "updatedAt": "2026-10-29T12:00:00.000Z"
+  "updatedAt": "2026-10-30T12:00:00.000Z"
 }

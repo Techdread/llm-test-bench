@@ -45,9 +45,9 @@
     {
       "id": "c-t05-next",
       "kind": "md",
-      "source": "## Try this\n\n- **A different feed.** Change `2.5_week` in the first cell to `4.5_week` (the big ones), `all_day` (every quake today, mostly tiny) or `significant_month`. Then press **Run all**.\n- **Your own question.** Add a Python cell under the analysis that answers \"how many were within 1,000 km of the equator?\" with `(quakes['lat'].abs() < 9).sum()`.\n- **Filter the map.** In the map cell, change `points` to `points.filter((p) => p.mag >= 4.5)`.\n\n**Next:** tutorial **06** builds whole mini-apps in HTML cells, and **07** brings every cell type together into a report. Both are in the **Library**."
+      "source": "## Try this\n\nEach of these is a prompt. Press **✨** on a cell and ask for a change: the model sees the cell's code, so it changes just what you ask. Or use **⚡ AI Generate New Cell** at the bottom to add a new cell.\n\n- **A different feed.** ✨ on the first cell: *\"Use the 4.5_week feed instead.\"* That's the big ones; `all_day` is every quake today (mostly tiny) and `significant_month` the month's most important. Then press **Run all**.\n- **Your own question.** New Python cell under the analysis: *\"How many of the earthquakes in nb.map_points were within 1,000 km of the equator?\"*\n- **Filter the map.** ✨ on the map cell: *\"Only show earthquakes of magnitude 4.5 or more.\"*\n\n**Next:** tutorial **06** builds whole mini-apps in HTML cells, and **07** brings every cell type together into a report. Both are in the **Library**."
     }
   ],
   "createdAt": "2026-04-18T21:00:00.000Z",
-  "updatedAt": "2026-10-29T12:00:00.000Z"
+  "updatedAt": "2026-10-30T12:00:00.000Z"
 }

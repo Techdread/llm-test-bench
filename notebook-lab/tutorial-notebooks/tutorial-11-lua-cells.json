@@ -10,7 +10,7 @@
     {
       "id": "c-t11-map-md",
       "kind": "md",
-      "source": "## 1. Lua makes a dungeon\n\nThe cell below starts with a 40 × 24 grid of walls, carves out 8 rooms, joins them with corridors, then drops in a start `@`, an exit `E` and 6 coins `$`. Open its code with **</>** and follow along:\n\n- **`math.randomseed(7)`** fixes the random numbers, so you get the same dungeon every run. Change the 7 and you get a new one.\n- **`grid[y][x]`** is a table of tables: one table per row, one entry per tile. Lua lists count from **1**.\n- **`clashes(a, b)`** checks two rooms don't overlap or touch, and the `while` loop keeps trying random spots until 8 rooms fit.\n- **Corridors** go across from one room's centre, then up or down to the next room's. That's the \"L\" shape.\n- **The last line** builds a JSON list of the 24 rows with `table.concat` and prints it after `__NB_SET__`, which puts it in `nb.dungeon`."
+      "source": "## 1. Lua makes a dungeon\n\nThe cell below starts with a 40 × 24 grid of walls, carves out 8 rooms, joins them with corridors, then drops in a start `@`, an exit `E` and 6 coins `$`. Open its code with **</>** and follow along:\n\n- **`math.randomseed(7)`** fixes the random numbers, so you get the same dungeon every run. A different seed gives a different dungeon.\n- **`grid[y][x]`** is a table of tables: one table per row, one entry per tile. Lua lists count from **1**.\n- **`clashes(a, b)`** checks two rooms don't overlap or touch, and the `while` loop keeps trying random spots until 8 rooms fit.\n- **Corridors** go across from one room's centre, then up or down to the next room's. That's the \"L\" shape.\n- **The last line** builds a JSON list of the 24 rows with `table.concat` and prints it after `__NB_SET__`, which puts it in `nb.dungeon`."
     },
     {
       "id": "c-t11-map",
@@ -92,9 +92,9 @@
     {
       "id": "c-t11-try",
       "kind": "md",
-      "source": "## Try this\n\n**Change the Lua:**\n\n- Change `math.randomseed(7)` to another number and run the Lua cell. The game and the route check pick up the new dungeon.\n- Set `ROOMS` to `12` or `COINS` to `10`.\n- Break something on purpose, such as `for i = 1 5 do` (a missing comma), to see how Lua reports errors.\n\n**Or ask the AI:** press **✨** on a cell, add to its prompt, and **Replace cell**:\n\n- Lua cell: *\"Add 4 goblins \"g\" on random floor tiles.\"*\n- Game cell: *\"Draw \"g\" as red goblins that step towards the player every second move, and end the game if they catch the player.\"*\n\n**Next:** tutorial **12** passes data from Lua to JavaScript and Python. It's in the **Library**."
+      "source": "## Try this\n\nEach of these is a prompt. Press **✨** on a cell to open its saved prompt, change it or add to it, and press **Replace cell**. The model sees the cell's current code too, so it changes just what you ask.\n\n- **A new dungeon.** Lua cell: change *\"math.randomseed(7)\"* in the prompt to another number. Run it, and the game and the route check pick up the new dungeon.\n- **A bigger dungeon.** Lua cell: change *\"8 non-overlapping\"* to 12 and *\"6 coins\"* to 10.\n- **Goblins.** Lua cell, add: *\"Add 4 goblins \"g\" on random floor tiles.\"* Then the game cell, add: *\"Draw \"g\" as red goblins that step towards the player every second move, and end the game if they catch the player.\"*\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the Lua cell and ask how `clashes` keeps the rooms apart.\n\n**Next:** tutorial **12** passes data from Lua to JavaScript and Python. It's in the **Library**."
     }
   ],
   "createdAt": "2026-06-07T00:00:00.000Z",
-  "updatedAt": "2026-10-29T12:00:00.000Z"
+  "updatedAt": "2026-10-30T12:00:00.000Z"
 }

@@ -33,9 +33,9 @@
 
     <ul class="case-facts" aria-label="Key numbers">
       <li><strong>6</strong>languages in the browser: JS, Python, C, Lua, HTML and Markdown</li>
-      <li><strong>56</strong>tutorials and worked examples bundled</li>
+      <li><strong>62</strong>tutorials and worked examples bundled</li>
       <li><strong>11</strong>control types for building live interfaces</li>
-      <li><strong>99</strong>unit tests, plus a headless run of every example</li>
+      <li><strong>124</strong>unit tests, plus a headless run of every example</li>
     </ul>
 
     <figure class="case-figure">
@@ -61,7 +61,20 @@
     </div>
 
     <h2>Where the model helps</h2>
-    <p><strong>Generate</strong> writes one cell from a description, with the notebook so far as context. <strong>Generate notebook</strong> plans and writes a complete teaching sequence. <strong>Fix</strong> lights up on a cell that failed: the model gets the source, the error and the recent output and returns a corrected cell. <strong>Explain</strong> turns a cell into a plain-language Markdown note. Every AI-written cell remembers its prompt and a hash of what was generated, so the editor can show when you have changed it since.</p>
+    <p><strong>Generate</strong> writes one cell from a description. The model sees the cells before it, the current values in <code>nb</code> (names, shapes and short previews) and, when it rewrites a cell, that cell&rsquo;s own code, so <em>&ldquo;make the bars green&rdquo;</em> edits the cell instead of starting it again. <strong>Generate notebook</strong> plans and writes a complete teaching sequence. <strong>Fix</strong> lights up on a cell that failed: the model gets the source, the error and the recent output and returns a corrected cell. <strong>Explain</strong> turns a cell into a plain-language Markdown note. Every AI-written cell remembers its prompt and a hash of what was generated, so the editor can show when you have changed it since.</p>
+
+    <h2>Built from prompts</h2>
+    <p>Six tutorials show what a model can build when the person only describes what they want. Every code cell in them was written by an AI model, and each one keeps its prompt, so you can open it, change a sentence and generate it again.</p>
+    <figure class="case-figure">
+      <img src="notebook-lab-card-ai3.webp" width="1440" height="900" loading="lazy" alt="Notebook Lab running its 3D solar system tutorial: a controls cell with Follow set to Saturn, and below it a three.js scene, written by an AI model from a prompt, flying alongside Saturn and its rings.">
+      <figcaption>The solar system tutorial. Three prompts made it: one for the planet data, one for the controls, one for the three.js scene that reads them.</figcaption>
+    </figure>
+    <ul class="case-lessons">
+      <li><a href="notebook-lab/?tutorial=tutorial-ai-3-solar-system.json"><strong>A 3D solar system</strong></a>: every planet where it is today, spinning on its tilted axis, with a camera that follows the one you pick.</li>
+      <li><a href="notebook-lab/?tutorial=tutorial-ai-4-gravity-courier.json"><strong>A game from two prompts</strong></a>: an original arcade game about flying parcels between planets.</li>
+      <li><a href="notebook-lab/?tutorial=tutorial-ai-5-ecosystem.json"><strong>A living ecosystem</strong></a>: grass, rabbits and foxes on a grid, with the boom-and-bust cycles of real predator and prey.</li>
+      <li><a href="notebook-lab/?tutorial=tutorial-ai-6-research-with-search.json"><strong>Research with search</strong></a>: has your city got warmer? Sourced figures, decades of daily temperatures, and warming stripes.</li>
+    </ul>
 
     <h2>Try these</h2>
     <ul class="case-lessons">

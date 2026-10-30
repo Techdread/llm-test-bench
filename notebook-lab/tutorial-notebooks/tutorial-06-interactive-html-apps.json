@@ -105,9 +105,9 @@
     {
       "id": "c-t06-next",
       "kind": "md",
-      "source": "## Try this\n\n- **A new harmony.** In the palette cell, add `square: [90, 270]` to `HARMONIES` and run it again.\n- **A bigger jump.** In the animation, change the `110` in `lift` to `160`, or speed up the hop by raising `1.4`.\n- **Your own sprite.** Clear the editor, draw something new, then press **Save** in the toolbar. Reopen the notebook later and it'll still be there.\n\n**Next:** tutorial **07** brings every cell type together into a report, and **10** covers every kind of control. Both are in the **Library**."
+      "source": "## Try this\n\nEach of these is a prompt. Press **✨** on a cell and ask for a change: the model sees the cell's code, so it changes just what you ask. Or use **⚡ AI Generate New Cell** at the bottom to add a new cell.\n\n- **A new harmony.** ✨ on the palette picker: *\"Add a 'square' harmony, using the hues 90° and 270° round the colour wheel.\"*\n- **A bigger jump.** ✨ on the animation: *\"Make the sprite jump higher and hop faster.\"*\n- **Your own sprite.** Clear the editor, draw something new, then press **Save** in the toolbar. Reopen the notebook later and it'll still be there.\n\n**Next:** tutorial **07** brings every cell type together into a report, and **10** covers every kind of control. Both are in the **Library**."
     }
   ],
   "createdAt": "2026-04-18T21:00:00.000Z",
-  "updatedAt": "2026-10-29T12:00:00.000Z"
+  "updatedAt": "2026-10-30T12:00:00.000Z"
 }

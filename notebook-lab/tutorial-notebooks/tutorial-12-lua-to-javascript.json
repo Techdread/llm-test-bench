@@ -111,14 +111,14 @@
     {
       "id": "c-t12-oneway",
       "kind": "md",
-      "source": "## A one-way street\n\nLua (like C and Rust) **publishes** to `nb` but can't **read** it. JavaScript and Python can do both.\n\nSo to change what Lua does, change the Lua itself:\n\n- **Edit it:** set `GAMES` to `20000`, or delete `[87] = 24,` from `snakes`, then **Run all**.\n- **Or ask the AI:** press **✨** on the Lua cell and add *\"Use two dice instead of one\"* to its prompt, then **Replace cell** and **Run all**.\n\nEither way the chart, the odds and the board all follow, because they read whatever Lua last published."
+      "source": "## A one-way street\n\nLua (like C and Rust) **publishes** to `nb` but can't **read** it. JavaScript and Python can do both.\n\nSo to change what Lua does, change the Lua itself. Press **✨** on the Lua cell and edit its saved prompt: change *\"Play 5000\"* to 20000, take *\"87 to 24\"* out of the snakes, or add *\"Use two dice instead of one\"*. Then press **Replace cell** and **Run all**.\n\nThe chart, the odds and the board all follow, because they read whatever Lua last published."
     },
     {
       "id": "c-t12-try",
       "kind": "md",
-      "source": "## Try this\n\n- Give the board a ladder from 50 to 99 by adding `[50] = 99,` to `ladders`. Does the average game get shorter?\n- Change `math.randomseed(12)` to another number. How much do the odds move between runs of 5,000 games?\n- Ask the AI for a new cell with **⚡ AI Generate New Cell**: *\"A Python cell that estimates how many turns each snake adds on average, and draws a matplotlib bar chart.\"*\n\n**Next:** explore the **Games** and **Simulations** examples in the **Library**, or the **AI** tutorials to build your own by asking. In the DevTools Hub, tutorials **13** to **16** add Java, Go and Clojure."
+      "source": "## Try this\n\nEach of these is a prompt. Press **✨** on a cell to change its saved prompt and **Replace cell**, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **A shortcut.** In the Lua cell's prompt, add *\"50 to 99\"* to the ladders. Does the average game get shorter?\n- **Luck.** In the Lua cell's prompt, change *\"math.randomseed(12)\"* to another number. How much do the odds move between runs of 5,000 games?\n- **A new question.** New Python cell: *\"Estimate how many turns each snake adds on average, and draw a matplotlib bar chart.\"*\n\n**Next:** explore the **Games** and **Simulations** examples in the **Library**, or the **AI** tutorials to build your own by asking. In the DevTools Hub, tutorials **13** to **16** add Java, Go and Clojure."
     }
   ],
   "createdAt": "2026-06-07T00:00:00.000Z",
-  "updatedAt": "2026-10-29T12:00:00.000Z"
+  "updatedAt": "2026-10-30T12:00:00.000Z"
 }

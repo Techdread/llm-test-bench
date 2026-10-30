@@ -541,6 +541,7 @@ function App() {
       initialUseWebSearch: !!ai?.useWebSearch,
       hasSavedPrompt: !!ai?.prompt,
       isModified: isCellModifiedSinceAi(cell),
+      codeKind: String(cell.source || '').trim() ? cell.kind : '',
       title: ai?.prompt ? `Regenerate cell [${cell.kind}]` : `Generate into cell [${cell.kind}]`,
     });
   }, [notebook.cells, agentRun]);
@@ -582,6 +583,10 @@ function App() {
       let targetId;
       let ctxCells;
       let previousAi = null;
+      // A prompt aimed at an existing cell edits its code rather than starting
+      // blank, as long as it stays the same kind of cell.
+      const sourceCell = genDialog.mode === 'new' ? null : notebook.cells.find(c => c.id === genDialog.cellId);
+      const currentSource = sourceCell && sourceCell.kind === kind ? sourceCell.source || '' : '';
       if (genDialog.mode === 'new' || target === 'copy') {
         const newCell = { ...freshCell(kind), source: '' };
         targetId = newCell.id;
@@ -610,7 +615,7 @@ function App() {
         const completed = await agentRun.start({
           agentId: selectedAgentId,
           modelId: agentModels[selectedAgentId] || '',
-          task: buildNotebookAgentTask({ kind, prompt, contextCells: ctxCells, variables: nbBridge.snapshot(), searchContext }),
+          task: buildNotebookAgentTask({ kind, prompt, contextCells: ctxCells, variables: nbBridge.snapshot(), searchContext, currentSource }),
           outputFile: notebookAgentOutputFile(kind),
           onOutput: (content) => updateCell(targetId, {
             kind, source: openrouter.stripFences(content), outputs: null, error: null,
@@ -638,6 +643,7 @@ function App() {
           prompt,
           contextCells: ctxCells,
           variables: nbBridge.snapshot(),
+          currentSource,
           providerId: selectedProviderId,
           modelId: selectedModelId,
           searchContext,
@@ -1324,6 +1330,7 @@ function App() {
         title=${genDialog.title}
         hasSavedPrompt=${genDialog.hasSavedPrompt}
         isModified=${genDialog.isModified}
+        codeKind=${genDialog.codeKind}
         onClose=${() => !genBusy && (setGenDialog(null), setGenSearchStatus(''))}
         onGenerate=${handleGenerate}
         onClearMetadata=${handleClearAiMetadata}

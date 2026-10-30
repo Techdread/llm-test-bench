@@ -24,7 +24,7 @@
     {
       "id": "c-t03-habits",
       "kind": "md",
-      "source": "## Two habits for HTML built from data\n\n- **Escape the text.** One destination is called `Market St & 5th <Interchange>`. Pasted straight into HTML, the browser reads `<Interchange>` as a tag and it vanishes from the board. `esc()` swaps `&`, `<`, `>` and `\"` for codes that show as plain text. Try it: change `${esc(d.destination)}` to `${d.destination}` and run the cell again.\n- **If you set a background, set a text colour too.** Returned HTML borrows the notebook's text colour, so a plain table matches the light or dark theme. In dark mode that colour is pale grey, which disappears on a white card. The board sets both its background and its colours, so it looks the same in either theme."
+      "source": "## Two habits for HTML built from data\n\n- **Escape the text.** One destination is called `Market St & 5th <Interchange>`. Pasted straight into HTML, the browser reads `<Interchange>` as a tag and it vanishes from the board. `esc()` swaps `&`, `<`, `>` and `\"` for codes that show as plain text. Press the speech bubble (**Explain this cell**) on the JavaScript board and ask what would go wrong without `esc()`.\n- **If you set a background, set a text colour too.** Returned HTML borrows the notebook's text colour, so a plain table matches the light or dark theme. In dark mode that colour is pale grey, which disappears on a white card. The board sets both its background and its colours, so it looks the same in either theme."
     },
     {
       "id": "c-t03-controls",
@@ -56,9 +56,9 @@
     {
       "id": "c-t03-next",
       "kind": "md",
-      "source": "## Try this\n\n- **Add a bus.** Add a line to `arrivals` in the Python cell, such as `('X3', 'Airport', '08:40', '08:55'),` and run that cell. Which outputs change by themselves, and which wait for you to run them?\n- **Restyle the board.** Change the amber `#fbbf24` in either board to green `#4ade80` for an old-school terminal look.\n- **Make your own view.** Add a JavaScript cell that returns a `<table>` built from `nb.get('route_delays')`. Leave out the colours and it follows the notebook's light or dark theme.\n\n**Next:** tutorial **04** draws charts with matplotlib in Python, and **06** builds whole mini-apps in HTML cells. Both are in the **Library**."
+      "source": "## Try this\n\nEach of these is a prompt. Press **✨** on a cell and ask for a change: the model sees the cell's code, so it changes just what you ask. Or use **⚡ AI Generate New Cell** at the bottom to add a new cell.\n\n- **Add a bus.** ✨ on the Python cell: *\"Add an X3 to the Airport, due at 08:40, that arrives at 08:55.\"* Run that cell. Which outputs change by themselves, and which wait for you to run them?\n- **Restyle the board.** ✨ on either board: *\"Make the amber green, for an old-school terminal look.\"*\n- **Make your own view.** New JavaScript cell: *\"Return a plain table of nb.route_delays with no colours of its own, so it follows the notebook's light or dark theme.\"*\n\n**Next:** tutorial **04** draws charts with matplotlib in Python, and **06** builds whole mini-apps in HTML cells. Both are in the **Library**."
     }
   ],
   "createdAt": "2026-04-18T19:35:37.853724Z",
-  "updatedAt": "2026-10-29T12:00:00.000Z"
+  "updatedAt": "2026-10-30T12:00:00.000Z"
 }

@@ -76,7 +76,7 @@ You don't have to write code: describe what you want and a model writes the cell
 
 Pick a model in the toolbar first. Use **🔑** for an OpenRouter key, or the server icon to connect a model running on your own computer (LM Studio or any OpenAI-compatible server). The site's **Settings** page explains both.
 
-- **⚡ Generate new cell** (at the bottom) writes a new cell from a description. The model sees the cells above and the current values in `nb`. The wand in a cell header reopens a cell's saved prompt so you can change it and regenerate.
+- **⚡ Generate new cell** (at the bottom) writes a new cell from a description. The model sees the cells above and the current values in `nb`. The wand in a cell header reopens a cell's saved prompt so you can change it and regenerate. On a cell that already has code, the model sees that code too, so you can ask for a change (*"make the bars green"*) and it edits the cell rather than starting again.
 - **🛠 AI Fix** lights up when a cell fails, or when a Chart or UI cell has invalid JSON. The model receives the source, the error, recent output and the values in `nb`, and replaces the cell. Run it again to check; repaired code is never run automatically.
 - **💬 Explain** adds a Markdown cell explaining the one above it.
 

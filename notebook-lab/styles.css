@@ -282,6 +282,10 @@
   overflow: auto;
 }
 
+/* vega-embed makes its element inline-block, which shrinks a `width: "container"`
+   chart to 0 pixels wide. Fill the output instead. */
+.vega-chart.fit-x { display: block; width: 100%; }
+
 .cell-output.output-error {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.08);

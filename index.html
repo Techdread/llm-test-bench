@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Peter Edwards — browser-based tools that put language models to work: agentic game and WebXR builders, a 3D asset studio, LLM evaluation benches and developer tools. Open source, local-first, runs in your browser.">
+  <meta name="description" content="Peter Edwards — browser-based tools that put language models to work: an AI notebook that builds analyses, simulations and games from prompts, agentic game and WebXR builders, a 3D asset studio, LLM evaluation benches and developer tools. Open source, local-first, runs in your browser.">
   <title>Peter Edwards — AI tooling &amp; browser apps</title>
   <link rel="canonical" href="https://neuroviz.uk/">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -13,7 +13,7 @@
   <meta property="og:site_name" content="Peter Edwards">
   <meta property="og:url" content="https://neuroviz.uk/">
   <meta property="og:title" content="Peter Edwards — AI tooling &amp; browser apps">
-  <meta property="og:description" content="Agentic game and WebXR builders, a 3D asset studio, LLM evaluation benches and developer tools — all running in the browser.">
+  <meta property="og:description" content="An AI notebook that builds from prompts, agentic game and WebXR builders, a 3D asset studio, LLM evaluation benches and developer tools — all running in the browser.">
   <meta property="og:image" content="https://neuroviz.uk/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -55,9 +55,10 @@
       <div class="hero-copy-col">
         <p class="eyebrow">Portfolio &middot; AI tooling &amp; browser apps</p>
         <h1><span class="l">I build tools that</span><span class="l">put language models</span><span class="l l3">to real work.</span></h1>
-        <p class="hero-copy">Agentic builders that write whole games and VR worlds, a studio that turns photos into rigged 3D assets, and benches that measure what models actually produce. Every project here is live &mdash; open one and try it with your own model.</p>
+        <p class="hero-copy">A notebook where a model writes the code while you steer, agentic builders that write whole games and VR worlds, a studio that turns photos into rigged 3D assets, and benches that measure what models actually produce. Every project here is live &mdash; open one and try it with your own model.</p>
         <div class="hero-actions">
-          <a class="button primary" href="#projects">Explore the projects</a>
+          <a class="button primary" href="notebook-lab/">Open Notebook Lab</a>
+          <a class="button" href="#projects">Explore the projects</a>
           <a class="button" href="#about">About me</a>
           <a class="text-link" href="settings.html">Connect a model <span aria-hidden="true">&rarr;</span></a>
         </div>
@@ -95,6 +96,33 @@
           <h2 id="projects-title">Projects</h2>
         </div>
         <p>Twelve projects from DevTools Hub, a workbench of 220+ browser apps I design, build and use daily. Each one below is the real app, running from this site.</p>
+      </div>
+
+      <div class="project-group" aria-labelledby="group-notebooks">
+        <div class="group-heading">
+          <h3 id="group-notebooks">Start here</h3>
+          <p>The project I use most, for research and for teaching: a notebook where a model writes the cells and you steer.</p>
+        </div>
+        <div class="project-grid featured">
+          <article class="project-card accent-pink wide">
+            <div class="card-body">
+            <div class="card-kicker"><span class="dot"></span> AI-built notebooks</div>
+            <h4>Notebook Lab</h4>
+            <p>Describe what you want and a model writes the cell: an analysis in Python, a live chart, a 3D scene, a game. Every cell, whether JavaScript, Python, C, Lua, HTML or live controls, shares one set of variables, so drag a slider and everything that reads it follows. Ask for a change and the model edits the cell; if one fails, it reads the error and fixes it. 62 notebooks to start from, including a 3D solar system, an arcade game and a living ecosystem, each built from a few prompts.</p>
+            <ul class="skills">
+              <li>Prompt-built cells that see your data</li>
+              <li>Python &amp; NumPy via WebAssembly</li>
+              <li>Cross-language shared state</li>
+            </ul>
+            <div class="card-links">
+              <a class="card-link" href="notebook-lab/">Open Notebook Lab <span aria-hidden="true">&rarr;</span></a>
+              <a class="card-link secondary" href="notebook-lab/?tutorial=tutorial-ai-3-solar-system.json">The solar system</a>
+              <a class="card-link secondary" href="work-notebook-lab.html">How it&rsquo;s built</a>
+            </div>
+            </div>
+            <img class="card-shot" src="notebook-lab-card-ai3.webp" width="1440" height="900" loading="lazy" alt="Notebook Lab running its 3D solar system tutorial: a controls cell with Follow set to Saturn, and below it a three.js scene, written by an AI model from a prompt, flying alongside Saturn and its rings.">
+          </article>
+        </div>
       </div>
 
       <div class="project-group" aria-labelledby="group-agentic">
@@ -161,32 +189,6 @@
               <a class="card-link" href="code-morph-lab-v3/">Open Code Morph Lab <span aria-hidden="true">&rarr;</span></a>
               <a class="card-link secondary" href="work-code-morph.html">How it&rsquo;s built</a>
             </div>
-          </article>
-        </div>
-      </div>
-
-      <div class="project-group" aria-labelledby="group-notebooks">
-        <div class="group-heading">
-          <h3 id="group-notebooks">Interactive computing</h3>
-          <p>Code, data, controls and charts in one document, with a model that writes and repairs the cells.</p>
-        </div>
-        <div class="project-grid featured">
-          <article class="project-card accent-pink wide">
-            <div class="card-body">
-            <div class="card-kicker"><span class="dot"></span> Polyglot notebooks</div>
-            <h4>Notebook Lab</h4>
-            <p>A notebook where JavaScript, Python, C, Lua, HTML and live controls share one set of variables: drag a slider and a Python result, a chart and a canvas all update. A model can write any cell, build a whole notebook from one request, or fix a cell that failed. 56 tutorials and examples, from data structures to flocking simulations, all running in your browser.</p>
-            <ul class="skills">
-              <li>Python &amp; NumPy via WebAssembly</li>
-              <li>Cross-language shared state</li>
-              <li>Validated AI notebook generation</li>
-            </ul>
-            <div class="card-links">
-              <a class="card-link" href="notebook-lab/">Open Notebook Lab <span aria-hidden="true">&rarr;</span></a>
-              <a class="card-link secondary" href="work-notebook-lab.html">How it&rsquo;s built</a>
-            </div>
-            </div>
-            <img class="card-shot" src="notebook-lab-card.webp" width="1440" height="900" loading="lazy" alt="Notebook Lab running the boids example: four sliders in a controls cell steer a flock drawn live in an HTML cell, with the shared variables listed beside it.">
           </article>
         </div>
       </div>

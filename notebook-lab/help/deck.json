@@ -3,7 +3,7 @@
   "title": "Notebook Lab",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-10-29T21:47:11.768Z",
+  "generatedAt": "2026-10-30T10:59:30.859Z",
   "slides": [
     {
       "kind": "title",
@@ -94,7 +94,7 @@
     {
       "kind": "text",
       "title": "AI cells (cont.)",
-      "html": "<ul>\n<li><strong>⚡ Generate new cell</strong> button at the bottom inserts a fresh AI-generated cell. You can also click the wand icon in any cell&#39;s header to regenerate that cell. The prompt is saved with the cell, so the wand reopens it for <strong>Replace cell</strong> or <strong>Generate copy</strong>.</li>\n<li><strong>What the model sees:</strong> the last few cells above (source and output), and the <strong>current values in <code>nb</code></strong> (names, shapes and short previews), so a prompt can say <em>&quot;draw nb.sprite&quot;</em> and the model knows what that data looks like.</li>\n<li><strong>🛠 AI Fix</strong> (screwdriver-and-wrench icon) becomes available when a cell has a runtime/compiler error, or when a Chart/UI cell contains invalid JSON. It sends the source, captured diagnostic, recent output, preceding-cell context, and the current <code>nb</code> values to the AI selected in the toolbar, then replaces the failing source. Run the cell again to verify the repair; Notebook Lab does not auto-run repaired code because cells may have side effects.</li>\n<li><strong>💬 Explain</strong> (comment icon) generates a Markdown explanation cell below the current cell.</li>\n</ul>"
+      "html": "<ul>\n<li><strong>⚡ Generate new cell</strong> button at the bottom inserts a fresh AI-generated cell. You can also click the wand icon in any cell&#39;s header to regenerate that cell. The prompt is saved with the cell, so the wand reopens it for <strong>Replace cell</strong> or <strong>Generate copy</strong>.</li>\n<li><strong>Ask for a change:</strong> when the wand opens on a cell that already has code, the model sees that code and is told to change just what you ask, so <em>&quot;make the bars green&quot;</em> edits the cell instead of starting it again. This works on cells you wrote yourself, too. (Switching the cell to another kind starts it from scratch.)</li>\n<li><strong>What the model sees:</strong> the last few cells above (source and output), and the <strong>current values in <code>nb</code></strong> (names, shapes and short previews), so a prompt can say <em>&quot;draw nb.sprite&quot;</em> and the model knows what that data looks like.</li>\n<li><strong>🛠 AI Fix</strong> (screwdriver-and-wrench icon) becomes available when a cell has a runtime/compiler error, or when a Chart/UI cell contains invalid JSON. It sends the source, captured diagnostic, recent output, preceding-cell context, and the current <code>nb</code> values to the AI selected in the toolbar, then replaces the failing source. Run the cell again to verify the repair; Notebook Lab does not auto-run repaired code because cells may have side effects.</li>\n<li><strong>💬 Explain</strong> (comment icon) generates a Markdown explanation cell below the current cell.</li>\n</ul>"
     },
     {
       "kind": "text",
