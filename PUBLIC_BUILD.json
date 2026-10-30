@@ -7,7 +7,7 @@
     "suggestedPreviewHost": "neuroviz.uk",
     "repositoryUrl": "https://github.com/Techdread/llm-test-bench"
   },
-  "generatedAt": "2026-10-30T15:21:18.484Z",
+  "generatedAt": "2026-10-30T16:32:21.376Z",
   "apps": [
     {
       "source": "prompt-gallery",
@@ -70,7 +70,7 @@
       "title": "AST Explorer & Refactor Lab"
     }
   ],
-  "sharedModuleCount": 127,
+  "sharedModuleCount": 129,
   "hostedLimitations": [
     "Local CLI agents require the private/local serve.py bridge and are not part of this static distribution.",
     "Cross-app handoffs run only to apps published in this build (e.g. Prompt Gallery → Code Morph Lab); Bugfix handoffs are disabled.",

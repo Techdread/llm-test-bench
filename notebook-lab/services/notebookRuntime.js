@@ -14,12 +14,12 @@ export const RUNNABLE_KINDS = new Set(['md', 'js', 'py', 'c', 'rust', 'lua', 'sq
 // Cell kinds that always run in the Debian guest (v86) — they boot the VM on
 // first use (~30s) and compile under emulation, so they need a far larger
 // ceiling than the wasm/remote runners.
-const DEBIAN_VM_KINDS = new Set(['java', 'go', 'clojure']);
+const DEBIAN_VM_KINDS = new Set(['java', 'go']);
 const DEBIAN_VM_TIMEOUT = 600000;
 
 // Languages whose backend can be swapped via the toolbar runtimes dialog —
 // when Debian is the active backend they need the long timeout too.
-const SWAPPABLE_KINDS = new Set(['c', 'rust', 'py', 'scala']);
+const SWAPPABLE_KINDS = new Set(['c', 'rust', 'py', 'scala', 'clojure']);
 
 export function isRunnableKind(kind) {
   return RUNNABLE_KINDS.has(kind);
@@ -88,8 +88,9 @@ export async function executeCell(cell, options = {}) {
     );
   } else if (SWAPPABLE_KINDS.has(kind)) {
     const timeout = getBackend(kind) === 'debian' ? DEBIAN_VM_TIMEOUT : options.timeoutMs;
-    // C compiled by xcc reads and writes nb through <nb.h> (other backends ignore this).
-    const nb = kind === 'c' ? { snapshot: nbBridge.snapshot, set: nbBridge.setValue } : undefined;
+    // C (xcc, <nb.h>) and Clojure (Scittle, nb/get and nb/set) read and write nb;
+    // the Debian backends ignore this.
+    const nb = kind === 'c' || kind === 'clojure' ? { snapshot: nbBridge.snapshot, set: nbBridge.setValue } : undefined;
     result = runResultToNotebookResult(
       await runSystemLanguage(kind, cell.source || '', { timeout, onStatus: options.onStatus, nb })
     );

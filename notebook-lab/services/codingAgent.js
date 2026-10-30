@@ -3,7 +3,7 @@ import {
   buildNotebookGenerationUserPrompt,
 } from './notebookGeneration.js';
 import { buildCellRepairPrompt, cellRepairDiagnostic } from './cellRepair.js';
-import { C_GUIDE, currentCellText, describeNotebookVariables, HTML_NB_BRIDGE_GUIDE, JS_RETURN_GUIDE, LUA_NB_GUIDE, SQL_GUIDE, UI_CONTROL_GUIDE } from './generationContext.js';
+import { C_GUIDE, CLOJURE_GUIDE, currentCellText, describeNotebookVariables, HTML_NB_BRIDGE_GUIDE, JS_RETURN_GUIDE, LUA_NB_GUIDE, SQL_GUIDE, UI_CONTROL_GUIDE } from './generationContext.js';
 
 const EXTENSION = {
   md: 'md', js: 'js', py: 'py', c: 'c', rust: 'rs', lua: 'lua', sql: 'sql', java: 'java',
@@ -20,7 +20,7 @@ const GUIDANCE = {
   java: 'Write a complete Java program with one public class and public static void main(String[] args).',
   go: 'Write a complete Go program in package main with func main(), using the standard library only.',
   scala: 'Write a complete Scala 2.11-compatible program with an executable Main object.',
-  clojure: 'Write a complete Clojure 1.11 program using the core library only.',
+  clojure: 'Write a complete Clojure program. ' + CLOJURE_GUIDE,
   html: 'Write a complete HTML fragment for a sandboxed iframe. Inline its CSS and JavaScript; omit outer html/head tags and repository-relative dependencies. ' + HTML_NB_BRIDGE_GUIDE,
   ui: 'Write one JSON object for a Notebook Lab UI cell with title, optional description, and controls. Supported control types: label, text, textarea, number, checkbox, select, radio, slider, color, date, button. Bound inputs use a bind key and defaults. ' + UI_CONTROL_GUIDE,
   chart: 'Write one valid Vega-Lite JSON specification.',

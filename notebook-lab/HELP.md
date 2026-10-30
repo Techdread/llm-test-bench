@@ -40,7 +40,7 @@ Both are view-only — folding never changes or saves the notebook.
 | **Java** | Single-file Java via real OpenJDK (`javac`/`java`) in a Debian VM (v86). One public class with `main`. The VM boots on first run (~30 s) and compiles are slow under emulation. |
 | **Go**   | Single-file Go via the real `go` toolchain in the Debian VM. `package main` + `func main()`, standard library only. |
 | **Scala** | Single-file Scala 2.11 via real `scalac` in the Debian VM. |
-| **Clojure** | Single-file Clojure 1.11 on the JVM in the Debian VM. Core library only (no deps.edn/Leiningen). |
+| **Clojure** | Clojure in your browser via Scittle (ClojureScript, the version of Clojure that runs on JavaScript): starts at once, works offline, two-way `nb`. No Java libraries; `format` and `printf` behave as in Java. A program still running after 10 seconds is stopped. Real Clojure 1.11 on the JVM can be picked in the Runtime Center. |
 | **HTML** | Renders source into a sandboxed iframe. Inline CSS/JS supported. The preview defaults to a full-HD viewport and stores per-cell viewport/scale changes for saved notebooks and HTML export. |
 | **UI**   | Form-edited controls: text, textarea, number, slider, checkbox, select, radio, color, date, button, plus **label** (static caption) and **readout** (live value display). Controls bind to `nb` variables and can still be edited as raw JSON. |
 | **Chart**| Paste a [Vega-Lite](https://vega.github.io/vega-lite/) JSON spec to render a chart. |
@@ -73,6 +73,7 @@ return `
 - **Python:**  `nb["result"] = 42`,  `nb["result"]`,  `nb.keys()`,  `nb.get("x")`.
 - **C:**  `#include <nb.h>`, then `nb_get_number("key", fallback)`, `nb_get_int`, `nb_get_string(key, buf, size)`, `nb_get_doubles(key, out, max)` and `nb_get_ints` to read, a matching `nb_set_…` for each to share, and `nb_get_json` / `nb_set_json` for anything else. C sees `nb` as it was when the cell started; its changes are shared when it finishes.
 - **Lua:**  `nb.set('result', 42)`,  `nb.get('result', default)`,  `nb.keys()`,  `nb.has('x')`. Values arrive as plain Lua tables: lists count from 1, and `null` becomes `nil`. A table that is a sequence goes back as a list.
+- **Clojure:**  `(nb/set :result 42)`,  `(nb/get :result default)`,  `(nb/keys)`,  `(nb/has? :x)`. Values arrive as Clojure data with keyword keys; maps go back as objects and keywords as text.
 
 Values must be JSON-serialisable (numbers, strings, arrays, plain objects). The **Variables** sidebar shows the current contents.
 
@@ -121,7 +122,7 @@ draw(nb.all());
 HTML cells can also load vendored libraries with root-relative URLs, e.g.
 `<script src="/shared/lib/three/0.128.0/build/three.min.js"></script>` — see the 3D Visualisation examples.
 
-## Runtime backends (Python / Rust / C)
+## Runtime backends (Python / Rust / C / Clojure)
 
 The **⚙ Runtime Center** shows every currently open Notebook Lab tab, the
 notebook loaded in each, cell/output/variable counts, an estimate of retained
@@ -135,7 +136,7 @@ workers, chart views, sandboxed frames, and the Debian VM. **Reset all tabs**
 does the same for every Notebook Lab tab currently reporting in the Runtime
 Center. Neither action deletes notebooks saved to disk.
 
-The same dialog also selects language backends. Three languages can run in
+The same dialog also selects language backends. Four languages can run in
 more than one place; the choice is global and persists across sessions.
 
 ### Python package cache
@@ -161,6 +162,7 @@ use **Hard reset this tab** when you also want to release the active runtime.
 | **Py**   | Pyodide — version-locked package cache, two-way `nb`, last value + figure capture. | Real `python3` 3.11. Stdlib only. Emit-only `nb` (writes turn into `__NB_SET__`; reads raise). |
 | **Rust** | Rust Playground (remote API, needs internet, no stdin). | Real `rustc`, offline. Compiles take tens of seconds under emulation. |
 | **C**    | xcc — a real C compiler built for WebAssembly: fast, offline, two-way `nb` through `<nb.h>`. (JSCPP, the older interpreter, can still be picked.) | Real `gcc` / `g++` — full C99/C++17 with proper diagnostics. |
+| **Clojure** | Scittle — ClojureScript interpreted in the browser: instant, offline, two-way `nb`, no Java interop. | Real Clojure 1.11 on OpenJDK — Java libraries, about a minute a cell, emit-only `nb`. Code is saved as `.cljc`, so `#?(:clj … :cljs …)` lets one cell suit both. |
 
 All Debian backends share **one** v86 guest. The first cell that needs it boots Debian (~30 s); after that every Debian-backed language reuses the same VM instantly.
 

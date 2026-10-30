@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="How Notebook Lab works: a polyglot notebook where JavaScript, Python, C, Lua, HTML and live controls share one set of variables, and a model writes, repairs and explains cells, all in the browser.">
+  <meta name="description" content="How Notebook Lab works: a polyglot notebook where JavaScript, Python, C, Lua, Clojure, SQL, HTML and live controls share one set of variables, and a model writes, repairs and explains cells, all in the browser.">
   <title>Notebook Lab · How it's built · Peter Edwards</title>
   <link rel="canonical" href="https://neuroviz.uk/work-notebook-lab">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -32,10 +32,10 @@
     </div>
 
     <ul class="case-facts" aria-label="Key numbers">
-      <li><strong>6</strong>languages in the browser: JS, Python, C, Lua, HTML and Markdown</li>
-      <li><strong>62</strong>tutorials and worked examples bundled</li>
+      <li><strong>8</strong>languages in the browser: JS, Python, C, Lua, Clojure, SQL, HTML and Markdown</li>
+      <li><strong>67</strong>tutorials and worked examples bundled</li>
       <li><strong>11</strong>control types for building live interfaces</li>
-      <li><strong>124</strong>unit tests, plus a headless run of every example</li>
+      <li><strong>151</strong>unit tests, plus a headless run of every example</li>
     </ul>
 
     <figure class="case-figure">
@@ -47,7 +47,8 @@
     <ol class="pipeline">
       <li><strong>Python</strong>Runs in Pyodide (CPython compiled to WebAssembly), with NumPy, pandas and matplotlib. Writes <code>nb["key"] = value</code>.</li>
       <li><strong>JavaScript</strong>Reads <code>nb.get("key")</code>, and returning a Vega-Lite spec renders an interactive chart.</li>
-      <li><strong>C and Lua</strong>Full programs that publish results by printing a tagged line: <code>__NB_SET__ {"key":…}</code>.</li>
+      <li><strong>C, Lua and Clojure</strong>Full programs that read and share variables too: <code>nb_get_number("key", 0)</code> in C, <code>nb.get("key")</code> in Lua, <code>(nb/get :key)</code> in Clojure. C is compiled in the browser by xcc, a real C compiler built for WebAssembly; Clojure runs on Scittle.</li>
+      <li><strong>SQL</strong>SQLite in WebAssembly. Every list of rows in the notebook is a table, and a query&rsquo;s result can be saved back as one.</li>
       <li><strong>Controls</strong>Sliders, pickers and buttons declared as JSON and bound to variables. A visual designer edits the layout.</li>
       <li><strong>HTML</strong>Sandboxed frames that receive every change over a message bridge, so a canvas can redraw while a slider moves.</li>
     </ol>
@@ -92,7 +93,7 @@
     </ul>
 
     <h2>The full version</h2>
-    <p>The private workbench version adds Java, Go, Scala and Clojure, compiled with their real toolchains inside a Debian Linux system emulated in the browser, plus Rust. That system image is close to a gigabyte, too large for a static website, so this edition leaves those languages out and shows only the notebooks that run here.</p>
+    <p>The private workbench version adds Java, Go and Scala, built with their real toolchains inside a Debian Linux system emulated in the browser, plus Rust. The same system can also run C with gcc and Clojure on the JVM. That system image is close to a gigabyte, too large for a static website, so this edition leaves those languages out and shows only the notebooks that run here.</p>
 
     <h2>More write-ups</h2>
     <div class="case-next">

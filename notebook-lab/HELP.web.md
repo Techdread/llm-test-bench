@@ -1,8 +1,8 @@
 # Notebook Lab
 
-A notebook in your browser whose cells can be Markdown, JavaScript, Python, C, Lua, HTML, live controls or charts. Values flow between cells through a shared `nb` object, and any cell can be written for you by a model. Everything runs on your own computer; nothing you type is sent anywhere unless you use the AI features or run a cell that fetches from the web.
+A notebook in your browser whose cells can be Markdown, JavaScript, Python, C, Lua, Clojure, SQL, HTML, live controls or charts. Values flow between cells through a shared `nb` object, and any cell can be written for you by a model. Everything runs on your own computer; nothing you type is sent anywhere unless you use the AI features or run a cell that fetches from the web.
 
-This is the web edition. The full Notebook Lab also runs Java, Go, Scala, Clojure and Rust; those cells need software that cannot be served from a website, so they are not offered here.
+This is the web edition. The full Notebook Lab also runs Java, Go, Scala and Rust; those cells need software that cannot be served from a website, so they are not offered here.
 
 ## Getting started
 
@@ -29,6 +29,7 @@ Folding only changes the view; it never edits the notebook.
 | **Py**   | Python 3.12 via Pyodide (WebAssembly). NumPy, pandas, Matplotlib and SymPy are included and load the first time a cell imports them. The first Python run takes a few seconds while the runtime starts. |
 | **C**    | Single-file C programs, compiled in your browser to WebAssembly: structs, pointers, `malloc` and the standard library, at close to native speed. `printf` for output; `#include <nb.h>` to read and share `nb`. |
 | **Lua**  | Lua 5.4 programs via WebAssembly. Use `print` for output. Reads and writes `nb`. |
+| **Clojure** | Clojure in your browser via Scittle (ClojureScript). `println` for output, reads and writes `nb`. No Java libraries; `format` and `printf` behave as in Java. |
 | **SQL**  | SQLite queries. Every list of rows in `nb` is a table, and a `-- save as: key` comment saves the result to `nb`. |
 | **HTML** | Renders into a sandboxed frame. Inline CSS and JavaScript work, and the frame gets its own `nb` object (below). |
 | **UI**   | Controls (text, number, slider, checkbox, select, radio, colour, date, button, label and readout) bound to `nb` variables, laid out with a visual designer. |
@@ -40,6 +41,7 @@ Folding only changes the view; it never edits the notebook.
   `nb.get` and `nb.set` trade copies: changing a list you got from `nb.get` changes nothing shared until you `nb.set` it back.
 - **Python:** `nb["result"] = 42`, `nb["result"]`, `nb.keys()`, `nb.get("x")`.
 - **Lua:** `nb.set('result', 42)`, `nb.get('result', default)`, `nb.keys()`, `nb.has('x')`. Values arrive as plain Lua tables (lists count from 1).
+- **Clojure:** `(nb/set :result 42)`, `(nb/get :result default)`, `(nb/keys)`, `(nb/has? :x)`. Values arrive as Clojure data with keyword keys.
 - **SQL:** a list of rows in `nb` is a table of the same name. Add `-- save as: key` to save the last result to `nb.key`. Tables you create stay until you open another notebook.
 - **C:** `#include <nb.h>`, then `nb_get_number("key", fallback)`, `nb_get_doubles(key, out, max)`, `nb_set_number("key", value)` and friends (tutorial 08 lists them). Printing a marker line also sets a variable:
 
@@ -122,7 +124,7 @@ Generation is strict on purpose: unknown cell kinds, malformed JSON, invalid cha
 
 - **Python is slow to start**: the first run loads the Python runtime (a few seconds), and a package's first import loads that package.
 - **"not included in the web edition"**: that Python package is not served by this site. NumPy, pandas, Matplotlib and SymPy are.
-- **A Java, Go, Scala, Clojure or Rust cell will not run**: those languages need the full Notebook Lab.
+- **A Java, Go, Scala or Rust cell will not run**: those languages need the full Notebook Lab.
 - **`nb["x"]` raises `KeyError`**: set the key in an earlier cell first, or use `nb.get("x", default)`.
 - **Chart is blank**: check the JSON starts with `{` and has no trailing commas.
 - **AI buttons are disabled**: choose a model in the toolbar first.

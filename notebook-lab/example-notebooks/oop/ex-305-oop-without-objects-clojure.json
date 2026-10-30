@@ -1,0 +1,37 @@
+{
+  "title": "OOP Without Objects (Clojure)",
+  "cells": [
+    {
+      "id": "c-ex305-md01",
+      "kind": "md",
+      "source": "# OOP Without Objects\n\nThe shapes problem again (see *Shapes in Three Type Systems*), but in a language that rejects the bundle-state-with-behaviour premise. Clojure splits the two:\n\n- **Records** hold data. Immutable, comparable by value.\n- **Protocols** hold behaviour. Like interfaces, but you can extend them to types you don't own — even years later.\n- **Multimethods** dispatch on *anything*, not just the type of the first argument.\n\n**Heads-up:** Clojure runs here as ClojureScript in your browser, so it starts instantly. In the DevTools Hub you can switch Clojure to the real JVM (Runtime center); this code works on both, using `#?(:clj … :cljs …)` where the two differ."
+    },
+    {
+      "id": "c-ex305-clojure01",
+      "kind": "clojure",
+      "source": "(require '[clojure.string :as str])\n\n(defprotocol Shape\n  (area [s])\n  (perimeter [s]))\n\n(defrecord Circle [r]\n  Shape\n  (area [_] (* Math/PI r r))\n  (perimeter [_] (* 2 Math/PI r)))\n\n(defrecord Rect [w h]\n  Shape\n  (area [_] (* w h))\n  (perimeter [_] (* 2 (+ w h))))\n\n(defrecord Triangle [a b c]\n  Shape\n  (area [_]\n    (let [s (/ (+ a b c) 2)]\n      (Math/sqrt (* s (- s a) (- s b) (- s c)))))\n  (perimeter [_] (+ a b c)))\n\n(def shapes [(->Circle 2) (->Rect 3 4) (->Triangle 3 4 5)])\n\n(doseq [s shapes]\n  (println (format \"%-25s area=%8.4f  perimeter=%8.4f\"\n                   (pr-str s) (double (area s)) (double (perimeter s)))))\n\n;; Records are VALUES: equal by content, no identity headaches.\n(println \"value equality:\" (= (->Rect 3 4) (->Rect 3 4)))\n\n;; Protocols extend to types you don't own - here, plain strings\n;; (area = the string's length, just to make the point):\n(extend-protocol Shape\n  #?(:clj String :cljs string)\n  (area [s] (count s))\n  (perimeter [s] (* 2 (count s))))\n(println \"a string can be a Shape now:\" (area \"hello\"))\n\n(def json\n  (str/join \",\"\n    (map (fn [s]\n           (format \"{\\\"name\\\":\\\"%s\\\",\\\"area\\\":%.4f}\"\n                   (-> s type str (str/split #\"\\.\") last str/lower-case)\n                   (double (area s))))\n         shapes)))\n(println (str \"__NB_SET__ {\\\"key\\\":\\\"areas_clj\\\",\\\"value\\\":[\" json \"]}\"))"
+    },
+    {
+      "id": "c-ex305-md02",
+      "kind": "md",
+      "source": "## Multimethods: dispatch on anything\n\nProtocols dispatch on the type of the first argument — same as Java. Multimethods dispatch on **any function of the arguments**, which covers cases OOP handles awkwardly (visitor pattern, double dispatch):"
+    },
+    {
+      "id": "c-ex305-clojure02",
+      "kind": "clojure",
+      "source": ";; Dispatch on a KEY in a plain map - no records needed at all.\n(defmulti describe :terrain)\n\n(defmethod describe :mountain [m]\n  (str \"climb \" (:name m) \" at \" (:height m) \"m\"))\n(defmethod describe :river [m]\n  (str \"cross \" (:name m) \", \" (:length m) \"km long\"))\n(defmethod describe :default [m]\n  (str \"wander around \" (:name m)))\n\n(doseq [place [{:terrain :mountain :name \"Ben Nevis\" :height 1345}\n               {:terrain :river    :name \"the Severn\" :length 354}\n               {:terrain :swamp    :name \"the marshes\"}]]\n  (println (describe place)))\n\n;; Double dispatch: collision handling by BOTH types - a pain with\n;; classes and visitors, one line per case here.\n(defmulti collide (fn [a b] [(:kind a) (:kind b)]))\n(defmethod collide [:asteroid :ship] [_ _] \"ship takes hull damage\")\n(defmethod collide [:ship :ship]     [_ _] \"both ships bounce\")\n(defmethod collide :default          [_ _] \"nothing happens\")\n\n(println (collide {:kind :asteroid} {:kind :ship}))\n(println (collide {:kind :ship} {:kind :ship}))\n(println (collide {:kind :asteroid} {:kind :asteroid}))"
+    },
+    {
+      "id": "c-ex305-js01",
+      "kind": "js",
+      "source": "// Check Clojure's areas against the other shape notebooks (if you ran them).\nconst clj = nb.get('areas_clj');\nif (!clj) return 'Run the first Clojure cell (the slow one) first.';\n\nconsole.log('clojure computed:', clj.map(s => s.name + '=' + s.area).join('  '));\n\nconst java = nb.get('areas_java');\nif (java) {\n  const agree = clj.every(c => {\n    const j = java.find(x => x.name === c.name);\n    return j && Math.abs(j.area - c.area) < 1e-3;\n  });\n  console.log('matches the Java notebook results:', agree);\n}\nreturn clj;"
+    },
+    {
+      "id": "c-ex305-md03",
+      "kind": "md",
+      "source": "## The point\n\nJava asks \"what class is this object?\" Clojure asks \"what function handles this value?\" — polymorphism becomes a lookup table you can extend from outside, and since records never mutate, the classic OOP puzzles about shared mutable state simply don't come up.\n\n## Try this\n\n- Add a `scale` method to the `Shape` protocol. Records are immutable — return a *new* record with `(->Circle (* 2 r))` or `(update s :r * 2)`.\n- Extend `Shape` to numbers as well (`#?(:clj Number :cljs number)`): treat a number as the side of a square.\n- Add a `[:ship :asteroid]` collision method — note you had to be explicit; multimethods don't assume symmetry."
+    }
+  ],
+  "createdAt": "2026-07-09T00:00:00.000Z",
+  "updatedAt": "2026-07-09T00:00:00.000Z"
+}

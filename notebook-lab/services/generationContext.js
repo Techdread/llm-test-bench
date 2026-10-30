@@ -37,6 +37,14 @@ export const SQL_GUIDE = 'SQL cells run SQLite in the browser. Every nb value th
   + 'To save the last result to nb as a list of objects, add a comment line exactly like: -- save as: key_name. '
   + 'SQLite features such as window functions, strftime and json_extract work.';
 
+/** How a Clojure cell runs (Scittle, ClojureScript in the browser) and reaches nb. */
+export const CLOJURE_GUIDE = 'Clojure cells run ClojureScript in the browser (Scittle, the Small Clojure Interpreter). '
+  + 'Core Clojure works as usual (maps, vectors, ->>, group-by, frequencies, reduce, reductions, loop/recur), but there is no '
+  + 'Java interop (no java.util.Random, Double/parseDouble or other Java classes) and no big integers (no +\' or *\'): use '
+  + 'parse-double and parse-long, js/Math for maths, and a small seeded generator written in Clojure when results must repeat. '
+  + 'format and printf are provided and follow Java (%d needs a whole number). Read notebook variables with (nb/get :key default), which returns Clojure data with keyword keys, '
+  + 'and share values with (nb/set :key value); (nb/has? :key) and (nb/keys) also work. Print with println.';
+
 /** The UI-cell options beyond the basic control list. */
 export const UI_CONTROL_GUIDE = 'Also available: a "readout" control that displays a bound value; '
   + 'buttons with "action": "increment" (adds 1 to bind), "toggle" (flips bind), or a "set" object of fixed values; '
@@ -101,7 +109,7 @@ const KIND_GUIDANCE = {
   java: 'Respond with a complete single-file Java program: one public class containing `public static void main(String[] args)`. It compiles with real OpenJDK (javac) and runs in a Debian VM. Use System.out.println for output. To set a notebook variable, print a line exactly like: __NB_SET__ {"key":"answer","value":42}',
   go: 'Respond with a complete single-file Go program in `package main` with `func main()`. It builds with the real Go toolchain in a Debian VM (standard library only, no external modules). Use the fmt package for output. To set a notebook variable, print a line exactly like: __NB_SET__ {"key":"answer","value":42}',
   scala: 'Respond with a complete single-file Scala 2.11-compatible program with `object Main { def main(args: Array[String]): Unit = ... }` or `object Main extends App`. It runs with real scalac in the browser-hosted Debian VM. Use println for output. To set a notebook variable, print a line exactly like: __NB_SET__ {"key":"answer","value":42}',
-  clojure: 'Respond with a complete single-file Clojure program (Clojure 1.11, core library only — no deps.edn/Leiningen). It runs on the JVM in a Debian VM. Use (println ...) for output. To set a notebook variable, print a line exactly like: __NB_SET__ {"key":"answer","value":42}',
+  clojure: 'Respond with a complete Clojure program. ' + CLOJURE_GUIDE,
   html: 'Respond with a complete HTML fragment that will render inside a sandboxed iframe. Inline all CSS/JS. Do not include <html> or <head> tags. ' + HTML_NB_BRIDGE_GUIDE,
   ui: 'Respond with a single JSON object for a Notebook Lab UI cell. Shape: {"title":"...","description":"...","controls":[...]}. Supported control types: label, text, textarea, number, checkbox, select, radio, slider, color, date, button. Bind input controls with a "bind" key so they write to notebook variables. Include defaults for bound inputs. Select/radio options may be strings or {"label","value"} objects. ' + UI_CONTROL_GUIDE + ' No commentary, no code fences.',
   chart: 'Respond with a single Vega-Lite JSON spec (starting with `{`). No commentary, no code fences.',

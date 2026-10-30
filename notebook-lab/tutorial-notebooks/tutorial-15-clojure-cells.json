@@ -1,0 +1,175 @@
+{
+  "id": "tutorial-15-clojure-cells",
+  "title": "15 Clojure Cells",
+  "state": {
+    "bikes_hour": 9
+  },
+  "cells": [
+    {
+      "id": "c-t15-intro",
+      "kind": "md",
+      "source": "# 15 Clojure Cells\n\n**Clojure** is a modern Lisp. A Clojure program is built from plain data (maps, vectors and lists) and small functions that transform it, and data never changes in place. Nubank, one of the world's largest digital banks, is built on it.\n\nThis notebook runs a bike-hire scheme for a week. Clojure invents the journeys, then answers questions about them in a few lines each: when do people ride, which routes are popular, and which stations run out of bikes?\n\nHow Clojure cells run here:\n\n- **In your browser.** Cells run on **Scittle**, a Clojure interpreter for ClojureScript, the version of Clojure that runs on JavaScript. They start at once, nothing is sent anywhere, and they work on the website too.\n- **Clojure reads and shares `nb`.** `(nb/set :key value)` shares a value with the other cells (section 2), and `(nb/get :key)` reads one (section 5).\n- **Nearly all of Clojure, but no Java.** ClojureScript can't use Java's libraries, so things like `java.util.Random` or `System/nanoTime` won't work. `format` and `printf` are provided and work as they do in Java.\n- **Real Clojure on Java is still in the hub.** In the full DevTools Hub, the **⚙ Runtime Center** can switch Clojure cells to Clojure 1.11 on OpenJDK, in the hub's Linux VM. It takes about a minute a cell and can only share `nb`, not read it, so this notebook uses the browser.\n\nA program still running after 10 seconds is stopped.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it.\n\nPress **Run all** to start."
+    },
+    {
+      "id": "c-t15-basics-md",
+      "kind": "md",
+      "source": "## 1. Reading Clojure\n\n> A first Clojure program for a beginner, about bike-hire journeys: six journeys as a vector of maps with :from, :to, :minutes and :rider. Print how many there are and the total minutes, show that a keyword works as a function, use ->> to work out the members' average ride, show frequencies and group-by, and show that assoc returns a new map while the original stays the same. Comment each idea.\n\nClojure looks strange at first, but there are only a few rules. Open the cell's code with **</>**:\n\n- **`(count journeys)`**. Every call is in brackets, function first: `(+ 1 2)` is 3, and `(reduce + (map :minutes journeys))` adds up the minutes.\n- **`{:from \"Riverside\" :minutes 14}`** is a map, and `[...]` is a vector. Keywords like `:minutes` name the fields, and work as functions too: `(:from trip)` reads a trip's `:from`.\n- **`->>`** threads the data through each step from top to bottom: keep the members, take their minutes, average them. `#(= :member (:rider %))` is a small anonymous function, and `%` is its argument.\n- **`frequencies`** counts things and **`group-by`** sorts them into piles. Questions about data are often just one of these.\n- **`assoc`** \"changes\" a map by making a new one. The original is untouched, so no other part of the program can be surprised by a change."
+    },
+    {
+      "id": "c-t15-basics",
+      "kind": "clojure",
+      "source": ";; Data in Clojure is plain maps {} and vectors [], written out like this.\n;; :from, :minutes and :rider are keywords, Clojure's usual names for map keys.\n(def journeys\n  [{:from \"Riverside\"  :to \"University\"     :minutes 14 :rider :member}\n   {:from \"Old Town\"   :to \"Station Square\" :minutes 9  :rider :member}\n   {:from \"Park Gates\" :to \"Park Gates\"     :minutes 41 :rider :casual}\n   {:from \"Riverside\"  :to \"Market Hall\"    :minutes 12 :rider :member}\n   {:from \"Stadium\"    :to \"Old Town\"       :minutes 23 :rider :casual}\n   {:from \"Riverside\"  :to \"University\"     :minutes 15 :rider :member}])\n\n;; Every call is a list: the function comes first, then its arguments.\n(println \"Journeys:\" (count journeys))\n(println \"Total minutes:\" (reduce + (map :minutes journeys)))\n\n;; A keyword is also a function that looks itself up in a map:\n(println \"First journey starts at\" (:from (first journeys)))\n\n;; ->> passes the data through each step in turn, top to bottom.\n(println \"Members' average ride:\"\n         (->> journeys\n              (filter #(= :member (:rider %)))\n              (map :minutes)\n              (#(/ (reduce + %) (count %)))\n              double)\n         \"minutes\")\n\n;; frequencies counts things; group-by sorts them into piles.\n(println \"Journeys from each station:\" (frequencies (map :from journeys)))\n(println \"Riders by type:\" (update-vals (group-by :rider journeys) count))\n\n;; Nothing changes in place. assoc makes a NEW map, and the old one is untouched.\n(let [trip   (first journeys)\n      longer (assoc trip :minutes 99)]\n  (println \"new map:\" (:minutes longer) \"minutes, original still:\" (:minutes trip) \"minutes\"))",
+      "metadata": {
+        "ai": {
+          "prompt": "A first Clojure program for a beginner, about bike-hire journeys: six journeys as a vector of maps with :from, :to, :minutes and :rider. Print how many there are and the total minutes, show that a keyword works as a function, use ->> to work out the members' average ride, show frequencies and group-by, and show that assoc returns a new map while the original stays the same. Comment each idea.",
+          "kind": "clojure",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "714be083",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-t15-week-md",
+      "kind": "md",
+      "source": "## 2. A week of journeys\n\n> In Clojure, make up a week of bike hire across 8 stations: three where people live (Riverside, Old Town, Park Gates), four where they work (University, Station Square, Hospital, Market Hall), and a Stadium. Use a small seeded random generator written in Clojure (Park–Miller, seed 2026), so every run makes the same week. Journeys start from 6:00 to 22:00, with commuter peaks at 7–8 and 17–18 on weekdays and a midday hump at weekends. On weekdays 80% of journeys are commutes, home to work in the morning and work to home in the evening; the rest go between any two stations. Members ride for 6 to 20 minutes, casual riders for 10 to 39. Then answer with pipelines: journeys per hour on an average weekday and weekend day, the top 5 routes, the average ride for members and casual riders, and the bikes at each station hour by hour through Monday if every station starts with 20. Print the answers, and share them with nb/set: :bikes_hourly (a list of {hour, day_type, journeys}), :bikes_routes, and :bikes_monday ({stations, hours, stock}, where stock maps each station to its bikes at every hour from 6:00 to 23:00).\n\nSix journeys were a warm-up; this cell makes a whole week. In its code:\n\n- **`next-int`** is a small random generator, written in Clojure. Each number is worked out from the one before, starting from the seed 2026, so every run makes the same week. `swap!` updates `seed`, an *atom*: Clojure's box for the rare value that does change.\n- **`(for [day days, hour (range 6 23), ...] ...)`** builds every journey of the week in one expression.\n- **`(juxt :from :to)`** turns each journey into a `[from to]` pair, so `frequencies` can count the routes.\n- **`reductions`** is the key to the station board. `reduce` gives only the final answer; `reductions` gives every step along the way, which is exactly the number of bikes at each station, hour by hour.\n- **`nb/set`** shares the answers with the rest of the notebook. Maps become plain objects and keywords become text, so the JavaScript chart and the HTML board below can read them."
+    },
+    {
+      "id": "c-t15-week",
+      "kind": "clojure",
+      "source": ";; ── A made-up week of bike hire ────────────────────────────────────────────\n(def homes [\"Riverside\" \"Old Town\" \"Park Gates\"])\n(def work [\"University\" \"Station Square\" \"Hospital\" \"Market Hall\"])\n(def stations (conj (into homes work) \"Stadium\"))\n(def days [\"Mon\" \"Tue\" \"Wed\" \"Thu\" \"Fri\" \"Sat\" \"Sun\"])\n\n;; A small seeded random generator (Park–Miller): each number comes from the\n;; one before, so the same seed makes the same week on every run.\n(def seed (atom 2026))\n(defn next-int [n]\n  (quot (* n (swap! seed #(mod (* % 48271) 2147483647))) 2147483647))\n(defn pick [xs] (nth xs (next-int (count xs))))\n(defn chance? [p] (< (next-int 1000000) (* p 1000000)))\n\n(defn weekend? [day] (#{\"Sat\" \"Sun\"} day))\n\n;; Roughly how many journeys start in each hour.\n(defn demand [day hour]\n  (if (weekend? day)\n    (cond (<= 11 hour 16) 22, (<= 9 hour 19) 12, :else 4)\n    (cond (#{7 8} hour) 40, (#{17 18} hour) 38, (#{9 16} hour) 19, (<= 10 hour 15) 10, :else 5)))\n\n(defn journey [day hour]\n  (let [commute (and (not (weekend? day)) (chance? 0.8))\n        [from to] (cond\n                    (and commute (<= 7 hour 9))   [(pick homes) (pick work)]\n                    (and commute (<= 16 hour 18)) [(pick work) (pick homes)]\n                    :else                         [(pick stations) (pick stations)])\n        rider (if (chance? (if commute 0.85 0.4)) :member :casual)]\n    {:day day :hour hour :from from :to to :rider rider\n     :minutes (if (= rider :member) (+ 6 (next-int 15)) (+ 10 (next-int 30)))}))\n\n;; `for` builds every journey of the week; vec makes it happen now, in order.\n(def week\n  (vec (for [day days, hour (range 6 23), _ (range (+ (demand day hour) (- (next-int 7) 3)))]\n         (journey day hour))))\n\n;; ── Questions, each answered with a pipeline ───────────────────────────────\n(defn average [xs] (/ (reduce + xs) (double (count xs))))\n\n(def hourly\n  (for [day-type [\"weekday\" \"weekend\"]\n        :let [day-count (if (= day-type \"weekday\") 5 2)\n              trips (filter #(= (boolean (weekend? (:day %))) (= day-type \"weekend\")) week)\n              per-hour (frequencies (map :hour trips))]\n        hour (range 6 23)]\n    {:hour hour :day_type day-type :journeys (/ (get per-hour hour 0) (double day-count))}))\n\n(def top-routes\n  (->> week\n       (remove #(= (:from %) (:to %)))\n       (map (juxt :from :to))\n       frequencies\n       (sort-by val >)\n       (take 5)))\n\n(def ride-minutes\n  (update-vals (group-by :rider week) #(average (map :minutes %))))\n\n;; Bikes at each station through Monday: everyone starts with 20, each journey\n;; takes one bike away from where it starts and leaves it where it ends.\n(def monday\n  (let [trips (filter #(= \"Mon\" (:day %)) week)]\n    (reductions\n      (fn [stock hour]\n        (reduce (fn [s {:keys [from to]}] (-> s (update from dec) (update to inc)))\n                stock\n                (filter #(= hour (:hour %)) trips)))\n      (zipmap stations (repeat 20))\n      (range 6 23))))\n\n(println (count week) \"journeys in the week.\")\n(doseq [day-type [\"weekday\" \"weekend\"]]\n  (let [busiest (apply max-key :journeys (filter #(= day-type (:day_type %)) hourly))]\n    (println (format \"Busiest %s hour: %d:00, with %.0f journeys on an average day\" day-type (:hour busiest) (:journeys busiest)))))\n(println \"Top routes:\")\n(doseq [[[from to] n] top-routes] (println (format \"  %-15s → %-15s %d\" from to n)))\n(println (format \"Average ride: members %.1f min, casual riders %.1f min\" (:member ride-minutes) (:casual ride-minutes)))\n(println \"Lowest stock on Monday:\")\n(doseq [station stations]\n  (let [low (apply min (map #(get % station) monday))]\n    (println (format \"  %-15s %3d%s\" station low (if (neg? low) \"  ← ran out\" \"\")))))\n\n;; ── Share with the rest of the notebook ────────────────────────────────────\n;; nb/set turns Clojure data into plain data: maps become objects, keywords text.\n(nb/set :bikes_hourly hourly)\n(nb/set :bikes_routes (for [[[from to] n] top-routes] {:from from :to to :journeys n}))\n(nb/set :bikes_monday {:stations stations\n                       :hours (range 6 24)\n                       :stock (into {} (for [s stations] [s (map #(get % s) monday)]))})",
+      "metadata": {
+        "ai": {
+          "prompt": "In Clojure, make up a week of bike hire across 8 stations: three where people live (Riverside, Old Town, Park Gates), four where they work (University, Station Square, Hospital, Market Hall), and a Stadium. Use a small seeded random generator written in Clojure (Park–Miller, seed 2026), so every run makes the same week. Journeys start from 6:00 to 22:00, with commuter peaks at 7–8 and 17–18 on weekdays and a midday hump at weekends. On weekdays 80% of journeys are commutes, home to work in the morning and work to home in the evening; the rest go between any two stations. Members ride for 6 to 20 minutes, casual riders for 10 to 39. Then answer with pipelines: journeys per hour on an average weekday and weekend day, the top 5 routes, the average ride for members and casual riders, and the bikes at each station hour by hour through Monday if every station starts with 20. Print the answers, and share them with nb/set: :bikes_hourly (a list of {hour, day_type, journeys}), :bikes_routes, and :bikes_monday ({stations, hours, stock}, where stock maps each station to its bikes at every hour from 6:00 to 23:00).",
+          "kind": "clojure",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-30T21:00:00.000Z",
+          "generatedSourceHash": "35faa299",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-t15-board-md",
+      "kind": "md",
+      "source": "## 3. Monday at the stations\n\n> Controls, 900 pixels wide: a label explaining to drag through Monday, and that every station starts with 20 bikes; and a slider \"Time\" bound to bikes_hour, 6 to 23, step 1, suffix \":00\", default 9."
+    },
+    {
+      "id": "c-t15-controls",
+      "kind": "ui",
+      "source": "{\n  \"title\": \"Monday at the stations\",\n  \"width\": 900,\n  \"height\": 120,\n  \"controls\": [\n    { \"type\": \"label\", \"label\": \"How it works\", \"text\": \"Drag through Monday. Every station starts the day with 20 bikes; the board shows how many are left at each hour.\", \"x\": 0, \"y\": 0, \"width\": 900, \"height\": 44 },\n    { \"type\": \"slider\", \"label\": \"Time\", \"bind\": \"bikes_hour\", \"default\": 9, \"min\": 6, \"max\": 23, \"step\": 1, \"suffix\": \":00\", \"x\": 0, \"y\": 54, \"width\": 520, \"height\": 64 }\n  ]\n}",
+      "metadata": {
+        "ai": {
+          "prompt": "Controls, 900 pixels wide: a label explaining to drag through Monday, and that every station starts with 20 bikes; and a slider \"Time\" bound to bikes_hour, 6 to 23, step 1, suffix \":00\", default 9.",
+          "kind": "ui",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "4b37873d",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-t15-board-cell-md",
+      "kind": "md",
+      "source": "> A live station board for nb.bikes_monday at the hour in nb.bikes_hour: a card per station (marked homes, work or leisure) with the number of bikes left, outlined in red with \"ran out: N riders found no bike\" when the stock is zero or below, and in amber with \"filling up: few free docks\" at 35 or more, plus a sparkline of the station's whole day with a dot at the chosen hour. Four cards to a row, dark theme, redraw whenever nb changes."
+    },
+    {
+      "id": "c-t15-board",
+      "kind": "html",
+      "source": "<style>\n  html, body { margin: 0; background: #020617; }\n  body { font: 14px/1.45 system-ui, sans-serif; color: #cbd5e1; padding: 14px 18px; box-sizing: border-box; }\n  h2 { margin: 0 0 10px; font-size: 18px; color: #f8fafc; }\n  h2 span { color: #94a3b8; font-weight: 400; font-size: 14px; margin-left: 8px; }\n  .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }\n  .station { background: #0f172a; border: 1px solid #1e293b; border-radius: 10px; padding: 10px 12px; }\n  .station.empty { border-color: #ef4444; background: #1f0a0a; }\n  .station.full { border-color: #f59e0b; }\n  .name { font-weight: 600; color: #e2e8f0; }\n  .kind { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: .06em; }\n  .count { font-size: 28px; font-weight: 700; color: #f8fafc; font-variant-numeric: tabular-nums; }\n  .empty .count { color: #f87171; }\n  .note { font-size: 12px; color: #f87171; min-height: 18px; }\n  .full .note { color: #fbbf24; }\n  svg { display: block; width: 100%; height: 34px; margin-top: 4px; }\n  .msg { color: #94a3b8; padding: 30px 0; }\n</style>\n<div id=\"app\"><p class=\"msg\">Run the Clojure week cell above first.</p></div>\n<script>\n  const HOMES = ['Riverside', 'Old Town', 'Park Gates'];\n  const WORK = ['University', 'Station Square', 'Hospital', 'Market Hall'];\n\n  function sparkline(series, index) {\n    const max = Math.max(40, ...series);\n    const min = Math.min(0, ...series);\n    const x = (i) => (i / (series.length - 1)) * 200;\n    const y = (v) => 32 - ((v - min) / (max - min)) * 30;\n    const points = series.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');\n    return `<svg viewBox=\"0 0 200 34\" preserveAspectRatio=\"none\">\n      <line x1=\"0\" x2=\"200\" y1=\"${y(0)}\" y2=\"${y(0)}\" stroke=\"#7f1d1d\" stroke-dasharray=\"3 3\" />\n      <polyline points=\"${points}\" fill=\"none\" stroke=\"#38bdf8\" stroke-width=\"1.5\" />\n      <circle cx=\"${x(index)}\" cy=\"${y(series[index])}\" r=\"3.5\" fill=\"#fbbf24\" />\n    </svg>`;\n  }\n\n  function draw() {\n    const data = nb.get('bikes_monday');\n    if (!data) return;\n    const hour = Math.min(23, Math.max(6, Math.round(Number(nb.get('bikes_hour', 9)) || 9)));\n    const index = data.hours.indexOf(hour);\n    const cards = data.stations.map((station) => {\n      const series = data.stock[station];\n      const bikes = series[index];\n      const state = bikes <= 0 ? 'empty' : bikes >= 35 ? 'full' : '';\n      const note = bikes < 0 ? `ran out: ${-bikes} rider${bikes === -1 ? '' : 's'} found no bike`\n        : bikes === 0 ? 'no bikes left'\n        : bikes >= 35 ? 'filling up: few free docks' : '';\n      const kind = HOMES.includes(station) ? 'homes' : WORK.includes(station) ? 'work' : 'leisure';\n      return `<div class=\"station ${state}\">\n        <div class=\"kind\">${kind}</div>\n        <div class=\"name\">${station}</div>\n        <div class=\"count\">${Math.max(0, bikes)}</div>\n        <div class=\"note\">${note}</div>\n        ${sparkline(series, index)}\n      </div>`;\n    }).join('');\n    document.getElementById('app').innerHTML = `<h2>Monday, ${hour}:00 <span>bikes at each station · line = the whole day, dot = now</span></h2><div class=\"board\">${cards}</div>`;\n  }\n\n  draw();\n  nb.onChange(draw);\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 400,
+          "scale": 1
+        },
+        "ai": {
+          "prompt": "A live station board for nb.bikes_monday at the hour in nb.bikes_hour: a card per station (marked homes, work or leisure) with the number of bikes left, outlined in red with \"ran out: N riders found no bike\" when the stock is zero or below, and in amber with \"filling up: few free docks\" at 35 or more, plus a sparkline of the station's whole day with a dot at the chosen hour. Four cards to a row, dark theme, redraw whenever nb changes.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "2df45505",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-t15-chart-md",
+      "kind": "md",
+      "source": "## 4. When people ride\n\n> Return a Vega-Lite line chart of nb.bikes_hourly: journeys starting each hour, one line for weekdays (blue) and one for weekends (orange), with hours labelled like 8:00, and tooltips."
+    },
+    {
+      "id": "c-t15-chart",
+      "kind": "js",
+      "source": "const hourly = nb.get('bikes_hourly');\nif (!hourly) return 'Run the Clojure week cell above first.';\n\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  title: 'Journeys starting each hour, on an average day',\n  width: 'container',\n  height: 240,\n  data: { values: hourly },\n  mark: { type: 'line', point: true, strokeWidth: 2.5, interpolate: 'monotone' },\n  encoding: {\n    x: { field: 'hour', type: 'quantitative', title: 'Hour of the day', scale: { domain: [6, 22] }, axis: { tickCount: 16, labelExpr: \"datum.value + ':00'\" } },\n    y: { field: 'journeys', type: 'quantitative', title: 'Journeys' },\n    color: { field: 'day_type', type: 'nominal', title: null, scale: { domain: ['weekday', 'weekend'], range: ['#2563eb', '#f97316'] } },\n    tooltip: [\n      { field: 'day_type', title: 'Day' },\n      { field: 'hour', title: 'Hour' },\n      { field: 'journeys', title: 'Journeys', format: '.1f' },\n    ],\n  },\n};",
+      "metadata": {
+        "ai": {
+          "prompt": "Return a Vega-Lite line chart of nb.bikes_hourly: journeys starting each hour, one line for weekdays (blue) and one for weekends (orange), with hours labelled like 8:00, and tooltips.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-29T12:00:00.000Z",
+          "updatedAt": "2026-10-29T12:00:00.000Z",
+          "generatedSourceHash": "6e498a74",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-t15-reads-md",
+      "kind": "md",
+      "source": "## 5. Clojure reads `nb` too\n\n> In Clojure, read nb.bikes_monday and the hour on the slider (nb.bikes_hour, default 9) with nb/get. List the stations with fewer than 5 bikes at that hour and how many each needs to get back to 20, the stations with more than 30 and how many they have over 20, and how many bikes a van would need to move. If there is no data yet, say to run the week cell first.\n\nMove the **Time** slider in section 3, then press **▶** on this cell to run it again.\n\n- **`(nb/get :bikes_monday)`** gives back a copy of what the week cell shared, as Clojure data. Keys become keywords, so the stations arrive as `:Riverside`, and `(name station)` turns one back into text.\n- **`if-let`** runs its first branch only when the value is there, and `{:keys [hours stock]}` takes those two fields out of the map in one go."
+    },
+    {
+      "id": "c-t15-reads",
+      "kind": "clojure",
+      "source": ";; nb/get reads what other cells shared: the week cell's Monday, and the\n;; hour on the slider. Maps arrive with keyword keys, so stations are keywords.\n(if-let [{:keys [hours stock]} (nb/get :bikes_monday)]\n  (let [hour  (nb/get :bikes_hour 9)\n        now   (into {} (for [[station series] stock]\n                         [(name station) (nth series (- hour (first hours)))]))\n        short (sort-by val (filter #(< (val %) 5) now))\n        spare (sort-by val > (filter #(> (val %) 30) now))]\n    (println (str \"Monday at \" hour \":00\"))\n    (if (empty? short)\n      (println \"  Every station has at least 5 bikes. No van needed.\")\n      (do\n        (println \"  Short of bikes:\")\n        (doseq [[station n] short] (println (format \"    %-15s %3d (needs %d to get back to 20)\" station n (- 20 n))))\n        (println \"  Bikes to spare:\")\n        (doseq [[station n] spare] (println (format \"    %-15s %3d (%d over 20)\" station n (- n 20))))\n        (println (format \"  A van would need to move %d bikes.\" (reduce + (map #(- 20 (val %)) short)))))))\n  (println \"Run the Clojure week cell above first.\"))",
+      "metadata": {
+        "ai": {
+          "prompt": "In Clojure, read nb.bikes_monday and the hour on the slider (nb.bikes_hour, default 9) with nb/get. List the stations with fewer than 5 bikes at that hour and how many each needs to get back to 20, the stations with more than 30 and how many they have over 20, and how many bikes a van would need to move. If there is no data yet, say to run the week cell first.",
+          "kind": "clojure",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-30T21:00:00.000Z",
+          "updatedAt": "2026-10-30T21:00:00.000Z",
+          "generatedSourceHash": "7411e567",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-t15-results",
+      "kind": "md",
+      "source": "## What the week shows\n\n- **1,809 journeys.** On weekdays they come in two waves, 7:00 to 9:00 and 17:00 to 19:00. At weekends riding spreads over the middle of the day, about 22 journeys an hour from 11:00 to 16:00.\n- **Commuters make the top routes**: home to work and back, 54 to 67 journeys each over the week.\n- **Casual riders ride almost twice as long** as members: 24.5 minutes against 13.0.\n- **The bikes follow the commuters.** By 9:00 on Monday, Riverside and Park Gates have run out and Old Town is down to 2, while Station Square and Hospital fill past 40 and run short of free docks. Riverside stays empty all day: even the evening rush only brings it back to zero.\n\nThis is why real bike-hire schemes send vans round to move bikes back. Section 5 counts how many bikes a van would move; the *Plan the vans* prompt below works out the moves."
+    },
+    {
+      "id": "c-t15-next",
+      "kind": "md",
+      "source": "## Try this\n\nEach of these is a prompt. Press **✨** in a cell's header to change its prompt and generate it again, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **More bikes.** Press ✨ on the week cell and change *\"starts with 20\"* to *\"starts with 30\"*. Does any station still run out?\n- **Ask Clojure a question.** New Clojure cell: *\"Read nb.bikes_routes with nb/get and print each route with a bar of # characters, one per 5 journeys.\"*\n- **Plan the vans.** New Python cell: *\"Read nb.bikes_monday and work out how many bikes a van should move between stations at 6:00 so that no station runs out on Monday. Print the moves.\"* Python can read `nb`, so it can pick up where Clojure left off.\n- **Top routes.** New JavaScript cell: *\"Return a Vega-Lite bar chart of nb.bikes_routes, labelled 'from → to'.\"*\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the week cell and ask how `reductions` works.\n\n**Next:** tutorial **16** puts Java, Go and Clojure side by side on one problem."
+    }
+  ],
+  "createdAt": "2026-06-09T00:00:00.000Z",
+  "updatedAt": "2026-10-30T21:00:00.000Z"
+}

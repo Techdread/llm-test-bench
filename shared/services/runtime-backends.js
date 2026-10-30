@@ -70,6 +70,23 @@ export const BACKENDS = {
       },
     ],
   },
+  clojure: {
+    default: 'scittle',
+    options: [
+      {
+        id: 'scittle',
+        label: 'Scittle (browser)',
+        desc: 'ClojureScript in your browser (the Small Clojure Interpreter): starts ' +
+              'instantly, reads and writes nb with nb/get and nb/set. No Java interop.',
+      },
+      {
+        id: 'debian',
+        label: 'Debian Linux (Clojure on the JVM)',
+        desc: 'Real Clojure 1.11 on OpenJDK in the v86 Debian guest: Java interop ' +
+              'works, but each cell takes about a minute and can only publish to nb.',
+      },
+    ],
+  },
 };
 
 let cache = null;

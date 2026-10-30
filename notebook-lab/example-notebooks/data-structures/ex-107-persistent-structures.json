@@ -1,0 +1,42 @@
+{
+  "title": "Persistent Structures & Structural Sharing",
+  "cells": [
+    {
+      "id": "c-ex107-md01",
+      "kind": "md",
+      "source": "# Persistent Structures & Structural Sharing\n\n\"Immutable\" sounds expensive — surely changing one value means copying the whole structure? **No.** Persistent structures copy only the *path* from the root to the change and **share everything else** with the old version. Both versions stay fully usable forever.\n\nThe Clojure cell (ClojureScript, running in your browser) builds a binary search tree where every node carries a unique allocation id. Then it \"inserts\" a value, which really builds a *new* tree. Because the ids never lie, we can see exactly which nodes the two trees share — and the JS cell below draws it."
+    },
+    {
+      "id": "c-ex107-clojure01",
+      "kind": "clojure",
+      "source": "(require '[clojure.string :as str])\n\n;; Every allocated node gets a unique id - that is our proof of sharing.\n(def counter (atom 0))\n(defn node [v l r] {:id (swap! counter inc) :val v :left l :right r})\n\n;; Path copying: the branch we walk is rebuilt (new ids), the branch we\n;; don't walk is REUSED (same map, same id).\n(defn insert [t v]\n  (cond\n    (nil? t)       (node v nil nil)\n    (< v (:val t)) (node (:val t) (insert (:left t) v) (:right t))\n    (> v (:val t)) (node (:val t) (:left t) (insert (:right t) v))\n    :else          t))\n\n(defn build [vals] (reduce insert nil vals))\n\n(defn collect [t]\n  (when t\n    (concat [{:id (:id t) :val (:val t)\n              :left (when (:left t) (:id (:left t)))\n              :right (when (:right t) (:id (:right t)))}]\n            (collect (:left t))\n            (collect (:right t)))))\n\n(def tree-a (build [50 30 70 20 40 60 80 35 45]))\n(def before @counter)\n(def tree-b (insert tree-a 42))\n(def allocated (- @counter before))\n\n(def ids-a (set (map :id (collect tree-a))))\n(def ids-b (set (map :id (collect tree-b))))\n(def shared (count (filter ids-a ids-b)))\n\n(println \"tree A:\" (count ids-a) \"nodes\")\n(println \"insert 42 allocated only\" allocated \"new nodes (the root-to-leaf path)\")\n(println \"tree B:\" (count ids-b) \"nodes,\" shared \"of them SHARED with tree A\")\n(println \"tree A still intact:\" (count (collect tree-a)) \"nodes, untouched\")\n\n(defn node-json [n]\n  (format \"{\\\"id\\\":%d,\\\"val\\\":%d,\\\"left\\\":%s,\\\"right\\\":%s}\"\n          (:id n) (:val n)\n          (or (:left n) \"null\") (or (:right n) \"null\")))\n(defn tree-json [t]\n  (str \"{\\\"root\\\":\" (:id t) \",\\\"nodes\\\":[\"\n       (str/join \",\" (map node-json (collect t))) \"]}\"))\n\n(println (str \"__NB_SET__ {\\\"key\\\":\\\"pbst\\\",\\\"value\\\":{\\\"a\\\":\" (tree-json tree-a)\n              \",\\\"b\\\":\" (tree-json tree-b) \"}}\"))"
+    },
+    {
+      "id": "c-ex107-md02",
+      "kind": "md",
+      "source": "## Seeing the sharing\n\nThe JS cell renders both trees as SVG. **Grey nodes appear in both trees — they are literally the same objects.** Only the amber path (plus the new leaf) was allocated by the insert."
+    },
+    {
+      "id": "c-ex107-js01",
+      "kind": "js",
+      "source": "// Draw tree A and tree B side by side. A node id present in both trees\n// is the SAME object - drawn grey. Nodes only in B are the copied path.\nconst pbst = nb.get('pbst');\nif (!pbst) return 'Run the Clojure cell first.';\n\nconst idsA = new Set(pbst.a.nodes.map(n => n.id));\n\nfunction layout(tree) {\n  const byId = {};\n  tree.nodes.forEach(n => { byId[n.id] = n; });\n  let x = 0;\n  const pos = {};\n  (function walk(id, depth) {\n    if (id == null) return;\n    const n = byId[id];\n    walk(n.left, depth + 1);\n    pos[id] = { x: x++, y: depth };\n    walk(n.right, depth + 1);\n  })(tree.root, 0);\n  return { byId, pos, slots: x };\n}\n\nfunction render(tree, title, shared) {\n  const { byId, pos, slots } = layout(tree);\n  const W = 440, H = 300, PAD = 30;\n  const px = id => PAD + (W - 2 * PAD) * (pos[id].x / Math.max(1, slots - 1));\n  const py = id => PAD + 52 * pos[id].y;\n  const parts = [];\n  parts.push('<text x=\"' + (W / 2) + '\" y=\"16\" text-anchor=\"middle\" font-size=\"13\" fill=\"#94a3b8\">' + title + '</text>');\n  for (const n of tree.nodes) {\n    for (const kid of [n.left, n.right]) {\n      if (kid == null) continue;\n      parts.push('<line x1=\"' + px(n.id) + '\" y1=\"' + py(n.id) + '\" x2=\"' + px(kid) +\n        '\" y2=\"' + py(kid) + '\" stroke=\"#475569\" stroke-width=\"1.5\"/>');\n    }\n  }\n  for (const n of tree.nodes) {\n    const isShared = shared && idsA.has(n.id);\n    const fill = shared ? (isShared ? '#334155' : '#b45309') : '#334155';\n    const ring = shared && !isShared ? '#fbbf24' : '#64748b';\n    parts.push('<circle cx=\"' + px(n.id) + '\" cy=\"' + py(n.id) + '\" r=\"15\" fill=\"' + fill +\n      '\" stroke=\"' + ring + '\" stroke-width=\"2\"/>');\n    parts.push('<text x=\"' + px(n.id) + '\" y=\"' + (py(n.id) + 4) +\n      '\" text-anchor=\"middle\" font-size=\"11\" fill=\"#f8fafc\">' + n.val + '</text>');\n    parts.push('<text x=\"' + px(n.id) + '\" y=\"' + (py(n.id) + 27) +\n      '\" text-anchor=\"middle\" font-size=\"8\" fill=\"#64748b\">#' + n.id + '</text>');\n  }\n  return '<svg width=\"' + W + '\" height=\"' + H + '\" style=\"background:#0f172a;border-radius:8px\">' +\n    parts.join('') + '</svg>';\n}\n\nconst newInB = pbst.b.nodes.filter(n => !idsA.has(n.id)).length;\nconsole.log('tree B has', pbst.b.nodes.length, 'nodes,', newInB, 'newly allocated (amber),',\n  pbst.b.nodes.length - newInB, 'shared (grey)');\n\nreturn '<div style=\"display:flex;gap:14px;flex-wrap:wrap\">' +\n  render(pbst.a, 'tree A - before insert', false) +\n  render(pbst.b, 'tree B - after (insert 42), amber = new', true) +\n  '</div>';"
+    },
+    {
+      "id": "c-ex107-md03",
+      "kind": "md",
+      "source": "## This is how Clojure's own collections work\n\nThe toy BST copies an O(log n) path per update. Clojure's built-in vectors and maps do exactly the same trick on 32-way trees, so the path is ~log₃₂ n — 4 hops for a million entries:"
+    },
+    {
+      "id": "c-ex107-clojure02",
+      "kind": "clojure",
+      "source": ";; The built-ins do the same trick at scale. One assoc into a 100k-entry\n;; vector reuses almost everything - including the untouched tail objects.\n(def big (vec (range 100000)))\n\n;; A clock in nanoseconds: the JVM has one built in, the browser counts in milliseconds.\n(defn now-ns [] #?(:clj (System/nanoTime) :cljs (* 1e6 (js/performance.now))))\n\n(def t0 (now-ns))\n(def big2 (assoc big 50000 :changed))\n(def micros (/ (- (now-ns) t0) 1000.0))\n\n(println (format \"assoc into 100k-entry vector: %.1f microseconds\" micros))\n(println \"original untouched:\" (= 50000 (big 50000)))\n(println \"new version changed:\" (= :changed (big2 50000)))\n;; identical? is Java ==, pointer equality: the last element of both\n;; vectors is the very same object.\n(println \"tail object shared:  \" (identical? (peek big) (peek big2)))"
+    },
+    {
+      "id": "c-ex107-md04",
+      "kind": "md",
+      "source": "## Try this\n\n- Insert `65` instead of `42` in the first Clojure cell — the copied path runs down the *right* side; count the amber nodes.\n- Insert a value already present (`40`) — path copying short-circuits: **zero** new nodes; the drawing shows two identical grey trees.\n- Chain three inserts (`(-> tree-a (insert 42) (insert 5) (insert 99))`) and check how the allocation count grows — still O(log n) each.\n- In the JS cell, colour nodes by *how many* trees reference them, keeping every intermediate version of the chained insert."
+    }
+  ],
+  "createdAt": "2026-07-10T00:00:00.000Z",
+  "updatedAt": "2026-07-10T00:00:00.000Z"
+}

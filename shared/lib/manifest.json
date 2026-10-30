@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-30T15:21:17.416Z",
+  "generatedAt": "2026-10-30T16:32:20.181Z",
   "root": "shared/lib",
   "notes": [
     "Minimal vendored runtime set for the LLM Test Bench public distribution."
@@ -229,6 +229,14 @@
           "git:https://github.com/tyfkda/xcc@631e318432aeaaf72d6d2dfc93085766934314a2",
           "patch:tools/patches/xcc-notebook-lab.patch",
           "build:tools/vendor-xcc.mjs"
+        ]
+      }
+    },
+    "scittle": {
+      "0.8.33": {
+        "path": "scittle/0.8.33",
+        "sources": [
+          "npm:scittle@0.8.33"
         ]
       }
     }

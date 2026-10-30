@@ -83,5 +83,10 @@
     "file": "tutorial-12-lua-to-javascript.json",
     "title": "12 Lua ↔ JavaScript",
     "description": "Lua plays 5,000 games of Snakes and Ladders; JavaScript charts them, Python works out the odds, and a live board shows where players land."
+  },
+  {
+    "file": "tutorial-15-clojure-cells.json",
+    "title": "15 Clojure Cells",
+    "description": "A week of bike hire analysed in Clojure, in the browser: when people ride, the top routes, and which stations run out of bikes."
   }
 ]

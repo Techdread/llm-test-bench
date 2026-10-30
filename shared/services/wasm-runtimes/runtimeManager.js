@@ -14,6 +14,7 @@ import { runLua } from './lua.js';
 import { runJava } from './java.js';
 import { runGo } from './go.js';
 import { runClojure } from './clojure.js';
+import { runClojureScittle } from './clojure-scittle.js';
 import { runScalaDebian } from './scala.js';
 import { getBackend, BACKENDS } from '../runtime-backends.js';
 
@@ -28,7 +29,7 @@ const RUNNERS = {
   java:    { debian: runJava },
   go:      { debian: runGo },
   scala:   { debian: runScalaDebian },
-  clojure: { debian: runClojure },
+  clojure: { scittle: runClojureScittle, debian: runClojure },
 };
 
 const DEFAULT_TIMEOUT = 10000;
@@ -117,5 +118,6 @@ function getRuntimeKind(language, backend) {
   if (backend === 'remote') return 'remote';
   if (backend === 'wasm')   return 'wasm';
   if (backend === 'xcc')    return 'wasm (xcc)';
+  if (backend === 'scittle') return 'browser (Scittle)';
   return 'unknown';
 }

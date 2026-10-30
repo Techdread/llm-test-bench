@@ -3,6 +3,7 @@
 import { hashSource } from './cellMetadata.js';
 import {
   C_GUIDE,
+  CLOJURE_GUIDE,
   HTML_NB_BRIDGE_GUIDE,
   JS_RETURN_GUIDE,
   LUA_NB_GUIDE,
@@ -239,9 +240,9 @@ function notebookContext(currentNotebook) {
   return `\n\nCURRENT NOTEBOOK\nTitle: ${currentNotebook.title || 'Untitled'}\n${cells}`;
 }
 
-// Compiled languages that can publish to nb but not read it. C (xcc) and Lua
-// run in the page and read nb too, so they have their own rules.
-const COMPILED_KIND_LABELS = { rust: 'Rust', java: 'Java', go: 'Go', scala: 'Scala', clojure: 'Clojure' };
+// Compiled languages that can publish to nb but not read it. C (xcc), Lua and
+// Clojure (Scittle) run in the page and read nb too, so they have their own rules.
+const COMPILED_KIND_LABELS = { rust: 'Rust', java: 'Java', go: 'Go', scala: 'Scala' };
 
 // `unavailable` lists cell kinds this edition cannot run (the public web
 // edition passes services/edition.js's list); they are left out of the schema
@@ -255,6 +256,7 @@ export function buildNotebookGenerationSystemPrompt({ unavailable = [] } = {}) {
     compiled.length && `- ${compiled.join('/')} cells are complete executable programs. They can publish data by printing __NB_SET__ {"key":"name","value":...} but cannot read notebook state.`,
     !blocked.has('c') && `- C cells are complete single-file programs with main(). ${C_GUIDE}`,
     !blocked.has('lua') && `- Lua cells are complete Lua 5.4 programs. ${LUA_NB_GUIDE}`,
+    !blocked.has('clojure') && `- ${CLOJURE_GUIDE}`,
     `- Use SQL cells to filter, join, group and rank data that earlier cells put in nb. ${SQL_GUIDE}`,
   ].filter(Boolean).join('\n');
   const unavailableRule = blocked.size

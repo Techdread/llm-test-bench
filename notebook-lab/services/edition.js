@@ -1,19 +1,19 @@
 // What the public web edition of Notebook Lab leaves out.
 //
 // The private hub runs every cell kind. The public site (neuroviz.uk) is a
-// static host: Java, Go, Scala and Clojure compile inside the Debian v86 guest,
+// static host: Java, Go and Scala compile inside the Debian v86 guest,
 // whose disk image cannot be served from it, and Rust runs by posting the code
 // to play.rust-lang.org, a third-party request the site promises not to make.
 // One list drives every place that offers or runs a cell kind, and the public
 // builder (tools/build-public-mvp.mjs) imports it to drop bundled notebooks
-// that use any of these kinds.
+// that use any of these kinds. Clojure runs in the browser (Scittle), so it stays.
 //
 // DOM-free: the document is injectable, so node tests and the builder can
 // call it. Without a document this reports the private hub.
 
 import { isPublicDistribution } from '../../shared/services/distribution.js';
 
-export const PUBLIC_UNAVAILABLE_KINDS = Object.freeze(['rust', 'java', 'go', 'scala', 'clojure']);
+export const PUBLIC_UNAVAILABLE_KINDS = Object.freeze(['rust', 'java', 'go', 'scala']);
 
 /** Notebook opened on a first visit to the public edition (no draft, no link). */
 export const PUBLIC_START_TUTORIAL = 'tutorial-01-notebook-basics.json';
@@ -37,7 +37,7 @@ export function availableKindOptions(options, key = 'kind', documentRef = global
 }
 
 export function unavailableKindMessage(kind) {
-  return `${kind} cells need the full Notebook Lab: the web edition runs JavaScript, Python, C, Lua, HTML, controls and charts in your browser.`;
+  return `${kind} cells need the full Notebook Lab: the web edition runs JavaScript, Python, C, Lua, Clojure, SQL, HTML, controls and charts in your browser.`;
 }
 
 /** Cell kinds a notebook uses (markdown included). */

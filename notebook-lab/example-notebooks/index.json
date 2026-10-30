@@ -58,6 +58,22 @@
     "addedAt": "2026-07-09"
   },
   {
+    "file": "data-structures/ex-107-persistent-structures.json",
+    "id": "ex-107",
+    "title": "Persistent Structures & Structural Sharing",
+    "description": "Clojure builds a persistent BST by path copying — insert into a 9-node tree and only 5 nodes are new. A JS cell draws both versions with the shared nodes highlighted.",
+    "category": "data-structures",
+    "langs": [
+      "clojure",
+      "js"
+    ],
+    "features": [
+      "browser",
+      "nb-emit"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
     "file": "search/ex-201-binary-search-log-n.json",
     "id": "ex-201",
     "title": "Binary Search & the Shape of O(log n)",
@@ -106,6 +122,22 @@
     "addedAt": "2026-07-09"
   },
   {
+    "file": "search/ex-206-word-ladder-bidirectional.json",
+    "id": "ex-206",
+    "title": "Word Ladder (Bidirectional BFS)",
+    "description": "Clojure climbs from \"cold\" to \"warm\" one letter at a time, then races one-way BFS against bidirectional BFS — the frontier chart shows why meeting in the middle wins.",
+    "category": "search",
+    "langs": [
+      "clojure",
+      "js"
+    ],
+    "features": [
+      "browser",
+      "nb-emit"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
     "file": "search/ex-207-binary-search-the-answer.json",
     "id": "ex-207",
     "title": "Binary Search *on the Answer* (C)",
@@ -134,6 +166,22 @@
       "nb-html-bridge"
     ],
     "addedAt": "2026-07-10"
+  },
+  {
+    "file": "oop/ex-305-oop-without-objects-clojure.json",
+    "id": "ex-305",
+    "title": "OOP Without Objects (Clojure)",
+    "description": "Records, protocols and multimethods solve the shapes problem with no classes and no mutation — polymorphism as a table lookup.",
+    "category": "oop",
+    "langs": [
+      "clojure",
+      "js"
+    ],
+    "features": [
+      "browser",
+      "nb-emit"
+    ],
+    "addedAt": "2026-07-09"
   },
   {
     "file": "oop/ex-306-design-patterns-that-survive.json",
@@ -280,6 +328,22 @@
     "features": [
       "nb-html-bridge",
       "interactive"
+    ],
+    "addedAt": "2026-07-10"
+  },
+  {
+    "file": "games/ex-504-text-adventure-engine.json",
+    "id": "ex-504",
+    "title": "Text Adventure Engine",
+    "description": "A whole adventure game as one Clojure data structure and one pure function — a scripted playthrough proves it, and JS typesets the transcript.",
+    "category": "games",
+    "langs": [
+      "clojure",
+      "js"
+    ],
+    "features": [
+      "browser",
+      "nb-emit"
     ],
     "addedAt": "2026-07-10"
   },
