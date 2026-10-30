@@ -28,7 +28,8 @@ Folding only changes the view; it never edits the notebook.
 | **JS**   | JavaScript. `console.log` output is captured, top-level `await` works, and whatever you `return` is shown. Return a Vega-Lite spec to draw a chart, or a string of HTML to render it. |
 | **Py**   | Python 3.12 via Pyodide (WebAssembly). NumPy, pandas, Matplotlib and SymPy are included and load the first time a cell imports them. The first Python run takes a few seconds while the runtime starts. |
 | **C**    | Small single-file C programs, interpreted in the browser. Use `printf` / `puts` for output. |
-| **Lua**  | Lua 5.4 programs via WebAssembly. Use `print` for output. |
+| **Lua**  | Lua 5.4 programs via WebAssembly. Use `print` for output. Reads and writes `nb`. |
+| **SQL**  | SQLite queries. Every list of rows in `nb` is a table, and a `-- save as: key` comment saves the result to `nb`. |
 | **HTML** | Renders into a sandboxed frame. Inline CSS and JavaScript work, and the frame gets its own `nb` object (below). |
 | **UI**   | Controls (text, number, slider, checkbox, select, radio, colour, date, button, label and readout) bound to `nb` variables, laid out with a visual designer. |
 | **Chart**| A [Vega-Lite](https://vega.github.io/vega-lite/) JSON spec, rendered as an interactive chart. |
@@ -38,7 +39,9 @@ Folding only changes the view; it never edits the notebook.
 - **JS:** `nb.set('result', 42)`, `nb.get('result')`, `nb.keys()`, `nb.has('x')`.
   `nb.get` and `nb.set` trade copies: changing a list you got from `nb.get` changes nothing shared until you `nb.set` it back.
 - **Python:** `nb["result"] = 42`, `nb["result"]`, `nb.keys()`, `nb.get("x")`.
-- **C and Lua:** print a marker line to set a variable:
+- **Lua:** `nb.set('result', 42)`, `nb.get('result', default)`, `nb.keys()`, `nb.has('x')`. Values arrive as plain Lua tables (lists count from 1).
+- **SQL:** a list of rows in `nb` is a table of the same name. Add `-- save as: key` to save the last result to `nb.key`. Tables you create stay until you open another notebook.
+- **C:** print a marker line to set a variable:
 
 ```text
 __NB_SET__ {"key":"answer","value":42}

@@ -12,6 +12,7 @@ const ADD_KINDS = [
   { kind: 'c', label: 'C', icon: 'fa-code' },
   { kind: 'rust', label: 'Rust', icon: 'fa-code' },
   { kind: 'lua', label: 'Lua', icon: 'fa-moon' },
+  { kind: 'sql', label: 'SQL', icon: 'fa-database' },
   { kind: 'java', label: 'Java', icon: 'fa-brands fa-java' },
   { kind: 'go', label: 'Go', icon: 'fa-code' },
   { kind: 'scala', label: 'Scala', icon: 'fa-code' },

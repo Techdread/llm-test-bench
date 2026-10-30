@@ -40,6 +40,7 @@ const MODES = {
   cpp: 'ace/mode/c_cpp',
   rust: 'ace/mode/rust',
   lua: 'ace/mode/lua',
+  sql: 'ace/mode/sql',
   java: 'ace/mode/java',
   go: 'ace/mode/golang',
   golang: 'ace/mode/golang',

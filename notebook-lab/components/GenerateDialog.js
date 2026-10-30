@@ -14,6 +14,7 @@ const KINDS = [
   { value: 'c', label: 'C' },
   { value: 'rust', label: 'Rust' },
   { value: 'lua', label: 'Lua' },
+  { value: 'sql', label: 'SQL' },
   { value: 'java', label: 'Java' },
   { value: 'go', label: 'Go' },
   { value: 'scala', label: 'Scala' },

@@ -152,3 +152,23 @@ export function applyUiDefaults(source, bridge) {
   }
   return applied;
 }
+
+/** Phones narrower than this, and than the form, get the controls in one column. */
+export const STACK_CONTROLS_BELOW = 640;
+
+/**
+ * Whether a UI cell should drop its pixel layout and stack its controls. A form
+ * laid out for 620+ pixels scrolled sideways on a phone, hiding controls off to
+ * the right. The designer always keeps the real layout, since it edits x and y.
+ */
+export function shouldStackControls({ availableWidth = 0, formWidth = 0, designer = false } = {}) {
+  return !designer && availableWidth > 0 && availableWidth < STACK_CONTROLS_BELOW && availableWidth < formWidth;
+}
+
+/** Control indices in reading order (top to bottom, then left to right), for the stacked layout. */
+export function readingOrder(controls = []) {
+  return controls
+    .map((control, index) => ({ index, y: Number(control?.y) || 0, x: Number(control?.x) || 0 }))
+    .sort((a, b) => a.y - b.y || a.x - b.x || a.index - b.index)
+    .map((entry) => entry.index);
+}

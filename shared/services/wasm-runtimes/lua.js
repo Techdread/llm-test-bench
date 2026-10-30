@@ -27,6 +27,8 @@ export async function createLuaEngine() {
  * @param {object} [options]
  * @param {string} [options.stdin]
  * @param {boolean} [options.interactiveInput]
+ * @param {(lua: object) => Promise<void>|void} [options.prepare]  runs on the engine
+ *   just before the code, e.g. to install globals (Notebook Lab's `nb`)
  */
 export async function runLua(code, options = {}) {
   const lua = await createLuaEngine();
@@ -47,6 +49,7 @@ export async function runLua(code, options = {}) {
       stdout += args.map((a) => String(a)).join('');
     });
     await installLuaStdin(lua, stdin);
+    if (options.prepare) await options.prepare(lua);
     await lua.doString(code);
   } catch (err) {
     runSucceeded = false;

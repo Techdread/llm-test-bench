@@ -24,7 +24,7 @@ async function ensureMarked() {
 
 const KIND_OPTIONS = [
   ['md', 'Markdown'], ['js', 'JavaScript'], ['py', 'Python'], ['c', 'C'], ['rust', 'Rust'],
-  ['lua', 'Lua'], ['java', 'Java'], ['go', 'Go'], ['scala', 'Scala'], ['clojure', 'Clojure'],
+  ['lua', 'Lua'], ['sql', 'SQL'], ['java', 'Java'], ['go', 'Go'], ['scala', 'Scala'], ['clojure', 'Clojure'],
   ['html', 'HTML'], ['ui', 'UI Controls'], ['chart', 'Chart (Vega)'],
 ];
 
@@ -35,6 +35,7 @@ const KIND_LABELS = {
   c: 'C',
   rust: 'Rust',
   lua: 'Lua',
+  sql: 'SQL',
   java: 'Java',
   go: 'Go',
   scala: 'Scala',
@@ -123,7 +124,7 @@ export function Cell({
     }
   }, [cell.kind]);
 
-  const canRun = cell.kind === 'js' || cell.kind === 'py' || cell.kind === 'c' || cell.kind === 'rust' || cell.kind === 'lua' || cell.kind === 'java' || cell.kind === 'go' || cell.kind === 'scala' || cell.kind === 'clojure' || cell.kind === 'md';
+  const canRun = cell.kind === 'js' || cell.kind === 'py' || cell.kind === 'c' || cell.kind === 'rust' || cell.kind === 'lua' || cell.kind === 'sql' || cell.kind === 'java' || cell.kind === 'go' || cell.kind === 'scala' || cell.kind === 'clojure' || cell.kind === 'md';
   // Cells that keep a separate output can hide the source editor while leaving
   // the result on screen — offered for the visual kinds and for JS/Python
   // (which often draw to a canvas or return a chart).
@@ -327,8 +328,8 @@ export function Cell({
       />
 
       ${cell.kind === 'md' && !mdEditing && html`
-        <div style="padding:4px 12px; font-size:11px; color:var(--text-secondary);">
-          Double-click to edit
+        <div class="cell-md-hint">
+          <span class="hint-mouse">Double-click to edit</span><span class="hint-touch">Double-tap to edit</span>
         </div>
       `}
       ${cell.kind === 'md' && mdEditing && html`

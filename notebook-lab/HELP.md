@@ -35,7 +35,8 @@ Both are view-only — folding never changes or saves the notebook.
 | **Py**   | Python via Pyodide. NumPy, pandas, Matplotlib and SymPy ship locally; other locked packages such as SciPy download into the data-root cache automatically on first import. Pyodide loads on first run — the initial load can take 10–30 s. |
 | **C**    | Small single-file C programs via JSCPP. Use `printf` / `puts` for output. |
 | **Rust** | Small single-file Rust programs via the public Rust Playground API. Use `println!` for output. Requires network access. |
-| **Lua**  | Small single-file Lua 5.4 programs via Wasmoon (WebAssembly). Use `print` for output. Runs fully offline. |
+| **Lua**  | Small single-file Lua 5.4 programs via Wasmoon (WebAssembly). Use `print` for output. Two-way `nb`. Runs fully offline. |
+| **SQL**  | SQLite queries via sql.js (WebAssembly). Lists of rows in `nb` are tables; `-- save as: key` saves a result. See *SQL cells* below. |
 | **Java** | Single-file Java via real OpenJDK (`javac`/`java`) in a Debian VM (v86). One public class with `main`. The VM boots on first run (~30 s) and compiles are slow under emulation. |
 | **Go**   | Single-file Go via the real `go` toolchain in the Debian VM. `package main` + `func main()`, standard library only. |
 | **Scala** | Single-file Scala 2.11 via real `scalac` in the Debian VM. |
@@ -70,6 +71,7 @@ return `
 - **JS:**  `nb.set('result', 42)`,  `nb.get('result')`,  `nb.keys()`,  `nb.has('x')`.
   `nb.get` and `nb.set` trade copies: changing a list you got from `nb.get` changes nothing shared until you `nb.set` it back.
 - **Python:**  `nb["result"] = 42`,  `nb["result"]`,  `nb.keys()`,  `nb.get("x")`.
+- **Lua:**  `nb.set('result', 42)`,  `nb.get('result', default)`,  `nb.keys()`,  `nb.has('x')`. Values arrive as plain Lua tables: lists count from 1, and `null` becomes `nil`. A table that is a sequence goes back as a list.
 
 Values must be JSON-serialisable (numbers, strings, arrays, plain objects). The **Variables** sidebar shows the current contents.
 
@@ -82,11 +84,22 @@ Control values are **typed and formatted** for you:
 - `slider` and `readout` format their display with `"precision"` (decimal places), `"prefix"` and `"suffix"` — the stored value stays the raw number.
 - A `button` can `"action": "increment"` (counter), `"toggle"` (boolean), or the default `"set"` (writes its `value`, or a fresh timestamp if none). Use `"set": { … }` to write several variables at once (e.g. a Reset button).
 
-For C and Rust cells, direct `nb` bindings are not available. To set a notebook variable from stdout, print a marker line:
+For C, Rust and the Linux-VM languages, direct `nb` bindings are not available. To set a notebook variable from stdout, print a marker line:
 
 ```text
 __NB_SET__ {"key":"answer","value":42}
 ```
+
+## SQL cells
+
+A SQL cell runs SQLite in your browser (sql.js, WebAssembly), against one database that lasts while the page is open:
+
+- **`nb` values are tables.** Before each SQL cell runs, every list of rows in `nb` (a list of objects, like `nb.basket`) becomes a table of the same name: its keys are the columns, and nested values are stored as JSON text. A list of plain values becomes a table with one column called `value`.
+- **Your own tables stay.** Tables made with `CREATE TABLE` are still there for the next SQL cell. A table named after an `nb` value is rebuilt from `nb` each run, so don't reuse those names for your own.
+- **Results show as tables.** Every statement that returns rows gets its own table (the first 500 rows are shown).
+- **Save a result to `nb`.** Add a comment line `-- save as: key` and the last result is saved as `nb.key`, a list of rows, which any later cell can use, including another SQL cell, where it's a table too.
+
+Opening another notebook starts a fresh database.
 
 ## HTML cells and `nb`
 

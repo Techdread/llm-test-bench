@@ -3,10 +3,10 @@ import {
   buildNotebookGenerationUserPrompt,
 } from './notebookGeneration.js';
 import { buildCellRepairPrompt, cellRepairDiagnostic } from './cellRepair.js';
-import { currentCellText, describeNotebookVariables, HTML_NB_BRIDGE_GUIDE, JS_RETURN_GUIDE, UI_CONTROL_GUIDE } from './generationContext.js';
+import { currentCellText, describeNotebookVariables, HTML_NB_BRIDGE_GUIDE, JS_RETURN_GUIDE, LUA_NB_GUIDE, SQL_GUIDE, UI_CONTROL_GUIDE } from './generationContext.js';
 
 const EXTENSION = {
-  md: 'md', js: 'js', py: 'py', c: 'c', rust: 'rs', lua: 'lua', java: 'java',
+  md: 'md', js: 'js', py: 'py', c: 'c', rust: 'rs', lua: 'lua', sql: 'sql', java: 'java',
   go: 'go', scala: 'scala', clojure: 'clj', html: 'html', ui: 'json', chart: 'json',
 };
 
@@ -16,7 +16,7 @@ const GUIDANCE = {
   py: 'Write one Python snippet runnable in Pyodide. numpy and matplotlib are preloaded. Use nb["key"] to share notebook values and print visible results.',
   c: 'Write a complete single-file C program with main(), compatible with common standard headers.',
   rust: 'Write a complete single-file Rust program with fn main() and the standard library only.',
-  lua: 'Write a complete Lua 5.4 program using the standard library only.',
+  lua: 'Write a complete Lua 5.4 program using the standard library only. ' + LUA_NB_GUIDE,
   java: 'Write a complete Java program with one public class and public static void main(String[] args).',
   go: 'Write a complete Go program in package main with func main(), using the standard library only.',
   scala: 'Write a complete Scala 2.11-compatible program with an executable Main object.',
@@ -24,6 +24,7 @@ const GUIDANCE = {
   html: 'Write a complete HTML fragment for a sandboxed iframe. Inline its CSS and JavaScript; omit outer html/head tags and repository-relative dependencies. ' + HTML_NB_BRIDGE_GUIDE,
   ui: 'Write one JSON object for a Notebook Lab UI cell with title, optional description, and controls. Supported control types: label, text, textarea, number, checkbox, select, radio, slider, color, date, button. Bound inputs use a bind key and defaults. ' + UI_CONTROL_GUIDE,
   chart: 'Write one valid Vega-Lite JSON specification.',
+  sql: 'Write SQLite SQL, with -- comments explaining each step. ' + SQL_GUIDE,
 };
 
 export function notebookAgentOutputFile(kind) {

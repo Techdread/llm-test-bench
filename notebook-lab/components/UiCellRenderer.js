@@ -12,6 +12,8 @@ import {
   optionValue,
   optionLabel,
   applyUiDefaults,
+  readingOrder,
+  shouldStackControls,
 } from '../services/uiCellModel.js';
 
 const GRID_SIZE = 20;
@@ -283,6 +285,23 @@ export function UiCellRenderer({ source, designer = false, selectedIndex = -1, o
 
   useEffect(() => nbBridge.subscribe(setVars), []);
 
+  // How much room the cell has, so a phone can stack the controls.
+  const wrapRef = useRef(null);
+  const [availableWidth, setAvailableWidth] = useState(0);
+  useEffect(() => {
+    const node = wrapRef.current;
+    if (!node) return undefined;
+    const measure = () => setAvailableWidth(node.clientWidth);
+    measure();
+    if (!window.ResizeObserver) {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   // Seed defaults on first render too, so an on-screen UI cell primes nb even
   // before it (or its downstream cells) is run. The runtime does the same on
   // a headless / Run-All pass.
@@ -420,9 +439,11 @@ export function UiCellRenderer({ source, designer = false, selectedIndex = -1, o
   };
 
   const hasHeader = !!(definition.title || definition.description);
+  const stacked = shouldStackControls({ availableWidth, formWidth: definition.width, designer });
+  const order = stacked ? readingOrder(definition.controls) : definition.controls.map((_, index) => index);
 
   return html`
-    <div class=${`ui-cell-rendered ui-cell-absolute ${designer ? 'ui-cell-has-designer' : ''}`}>
+    <div ref=${wrapRef} class=${`ui-cell-rendered ui-cell-absolute ${designer ? 'ui-cell-has-designer' : ''} ${stacked ? 'ui-cell-stacked' : ''}`}>
       ${hasHeader && html`
         <div class="ui-cell-header">
           ${definition.title && html`<div class="ui-cell-title">${definition.title}</div>`}
@@ -431,10 +452,11 @@ export function UiCellRenderer({ source, designer = false, selectedIndex = -1, o
       `}
       <div
         class=${`ui-control-canvas ${designer ? 'ui-cell-designer' : ''}`}
-        style=${{ width: `${definition.width}px`, height: `${definition.height}px` }}
+        style=${stacked ? undefined : { width: `${definition.width}px`, height: `${definition.height}px` }}
         onClick=${designer ? () => onSelectControl && onSelectControl(Math.max(0, selectedIndex)) : undefined}
       >
-        ${definition.controls.map((control, index) => {
+        ${order.map((index) => {
+          const control = definition.controls[index];
           const inputId = `${uid}-c${index}`;
           const rendered = html`<${Control} control=${control} vars=${vars} inputId=${inputId} groupName=${inputId} />`;
           return html`
@@ -442,7 +464,7 @@ export function UiCellRenderer({ source, designer = false, selectedIndex = -1, o
               key=${inputId}
               class=${`ui-designer-control ${designer && selectedIndex === index ? 'selected' : ''}`}
               tabIndex=${designer && selectedIndex === index ? 0 : undefined}
-              style=${{
+              style=${stacked ? undefined : {
                 left: `${control.x || 0}px`,
                 top: `${control.y || 0}px`,
                 width: `${control.width || 220}px`,

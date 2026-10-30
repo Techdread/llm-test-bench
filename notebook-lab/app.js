@@ -25,6 +25,7 @@ import {
   notebookAgentOutputFile,
 } from './services/codingAgent.js';
 import * as nbBridge from './services/nbBridge.js';
+import { resetSqlDatabase } from './services/runnerSql.js';
 import { buildAiMetadata, isCellModifiedSinceAi, withAiMetadata, withoutAiMetadata } from './services/cellMetadata.js';
 import {
   buildNotebookResearchQuery,
@@ -266,6 +267,7 @@ function App() {
 
   const applyNotebook = useCallback((nextNotebook) => {
     const state = nextNotebook.state || {};
+    resetSqlDatabase();   // tables made by another notebook's SQL cells don't carry over
     nbBridge.replaceAll(state);
     setNotebook({ ...nextNotebook, state: nbBridge.snapshot() });
   }, []);

@@ -2,11 +2,14 @@ import { runJs } from './runnerJs.js';
 import { runPython } from './runnerPy.js';
 import * as nbBridge from './nbBridge.js';
 import { applyUiDefaults } from './uiCellModel.js';
+import { installLuaNb } from './luaNb.js';
+import { runSql } from './runnerSql.js';
+import { tableOutputToText } from './sqlCell.js';
 import { runSystemLanguage } from '../../shared/services/wasm-runtimes/runtimeManager.js';
 import { getBackend } from '../../shared/services/runtime-backends.js';
 import { kindAvailable, unavailableKindMessage } from './edition.js';
 
-export const RUNNABLE_KINDS = new Set(['md', 'js', 'py', 'c', 'rust', 'lua', 'java', 'go', 'scala', 'clojure']);
+export const RUNNABLE_KINDS = new Set(['md', 'js', 'py', 'c', 'rust', 'lua', 'sql', 'java', 'go', 'scala', 'clojure']);
 
 // Cell kinds that always run in the Debian guest (v86) — they boot the VM on
 // first use (~30s) and compile under emulation, so they need a far larger
@@ -28,6 +31,7 @@ export function outputsToText(outputs, error) {
   return outputs.map(o => {
     if (o.type === 'text') return o.value;
     if (o.type === 'image') return '[image]';
+    if (o.type === 'table') return tableOutputToText(o);
     if (o.type === 'value') {
       if (typeof o.value === 'string') return o.value;
       try { return JSON.stringify(o.value); } catch { return String(o.value); }
@@ -71,7 +75,18 @@ export async function executeCell(cell, options = {}) {
     } else {
       result = await runPython(cell.source || '', options.onStatus || (() => {}));
     }
-  } else if (SWAPPABLE_KINDS.has(kind) || kind === 'lua') {
+  } else if (kind === 'sql') {
+    result = await runSql(cell.source || '', nbBridge);
+  } else if (kind === 'lua') {
+    // Lua runs in this page (Wasmoon), so it gets a live, two-way `nb`.
+    result = runResultToNotebookResult(
+      await runSystemLanguage('lua', cell.source || '', {
+        timeout: options.timeoutMs,
+        onStatus: options.onStatus,
+        prepare: (lua) => installLuaNb(lua, nbBridge),
+      })
+    );
+  } else if (SWAPPABLE_KINDS.has(kind)) {
     const timeout = getBackend(kind) === 'debian' ? DEBIAN_VM_TIMEOUT : options.timeoutMs;
     result = runResultToNotebookResult(
       await runSystemLanguage(kind, cell.source || '', { timeout, onStatus: options.onStatus })

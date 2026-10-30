@@ -5,7 +5,7 @@
     {
       "id": "c-t05-intro",
       "kind": "md",
-      "source": "# 05 Live API → Analysis → Visualization\n\nEverything so far used data made up inside the notebook. This one asks a real server for real data: **every earthquake of magnitude 2.5 or more in the past week**, from the US Geological Survey (USGS). It's free and needs no key.\n\n| Step | Cell | Does |\n| --- | --- | --- |\n| **Fetch** | JavaScript | asks the USGS for the latest feed and puts it in `nb` |\n| **Analyse** | Python + pandas | tidies the data and counts it up |\n| **Show** | JavaScript | a world map, two charts and a table |\n\nThe feed changes every few minutes, so your numbers won't match anyone else's. Press **Run all** to start. The Python cell takes a few seconds the first time while pandas loads."
+      "source": "# 05 Live API → Analysis → Visualization\n\nEverything so far used data made up inside the notebook. This one asks a real server for real data: **every earthquake of magnitude 2.5 or more in the past week**, from the US Geological Survey (USGS). It's free and needs no key.\n\n| Step | Cell | Does |\n| --- | --- | --- |\n| **Fetch** | JavaScript | asks the USGS for the latest feed and puts it in `nb` |\n| **Analyse** | Python + pandas | tidies the data and counts it up |\n| **Show** | JavaScript | a world map, two charts and a table |\n| **Ask** | SQL | groups the earthquakes by how deep they started |\n\nThe feed changes every few minutes, so your numbers won't match anyone else's. Press **Run all** to start. The Python cell takes a few seconds the first time while pandas loads."
     },
     {
       "id": "c-t05-fetch",
@@ -38,6 +38,30 @@
       "source": "// The five strongest, as an HTML table. It sets its own colours (tutorial 03's habit)\n// and escapes the place names, which come from someone else's server.\nconst strongest = nb.get('strongest') ?? [];\nconst esc = (text) => String(text).replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' })[c]);\n\nfunction ago(ms) {\n  const hours = Math.round((Date.now() - ms) / 3600000);\n  if (hours < 1) return 'within the hour';\n  return hours < 48 ? `${hours} hours ago` : `${Math.round(hours / 24)} days ago`;\n}\nconst badge = (mag) => (mag >= 6 ? '#e11d48' : mag >= 5 ? '#f97316' : '#ca8a04');\n\nconst rows = strongest.map((q) => `\n  <tr>\n    <td><span class=\"mag\" style=\"background:${badge(q.mag)}\">${q.mag.toFixed(1)}</span></td>\n    <td class=\"place\">${esc(q.place)}</td>\n    <td class=\"dim\">${Math.round(q.depth)} km down</td>\n    <td class=\"dim\">${ago(q.time)}</td>\n  </tr>`).join('');\n\nreturn `\n<style>\n  .card { background: #0f172a; color: #e2e8f0; font: 14px/1.5 system-ui, sans-serif; border-radius: 12px; padding: 14px 18px; }\n  h3 { margin: 0 0 8px; font-size: 15px; color: #f8fafc; }\n  table { width: 100%; border-collapse: collapse; }\n  td { padding: 6px 14px 6px 0; border-top: 1px solid #1e293b; }\n  .mag { display: inline-block; min-width: 34px; text-align: center; color: #fff; font-weight: 700; border-radius: 999px; padding: 1px 8px; }\n  .place { width: 100%; }\n  .dim { color: #94a3b8; white-space: nowrap; }\n  .foot { color: #64748b; font-size: 12px; margin-top: 8px; }\n</style>\n<div class=\"card\">\n  <h3>The five strongest this week</h3>\n  <table>${rows}</table>\n  <div class=\"foot\">Source: USGS. Each step up in magnitude means about 32 times more energy released.</div>\n</div>`;"
     },
     {
+      "id": "c-t05-sql-md",
+      "kind": "md",
+      "source": "## Ask it in SQL\n\nSome questions are easiest to ask in **SQL**, the language databases speak. A SQL cell can query any list of rows in `nb` as a table: here `map_points`, the list the Python cell saved, has one row per earthquake.\n\n> Using the map_points table (one row per earthquake, with mag, depth and depth_class), count the earthquakes in each depth class, with their average and strongest magnitude and their average depth, most common class first. Save the result as depth_summary.\n\nThe `-- save as: depth_summary` line puts the result in `nb.depth_summary`, as a list of rows that any later cell can use. In another SQL cell it's a table too."
+    },
+    {
+      "id": "c-t05-sql",
+      "kind": "sql",
+      "source": "-- How deep do the week's earthquakes start, and are the deep ones stronger?\n-- map_points is the list of earthquakes the Python cell saved in nb.\n-- save as: depth_summary\nSELECT\n  depth_class AS depth,\n  COUNT(*) AS quakes,\n  ROUND(AVG(mag), 2) AS average_magnitude,\n  MAX(mag) AS strongest,\n  ROUND(AVG(depth)) AS average_depth_km\nFROM map_points\nGROUP BY depth_class\nORDER BY quakes DESC;",
+      "metadata": {
+        "ai": {
+          "prompt": "Using the map_points table (one row per earthquake, with mag, depth and depth_class), count the earthquakes in each depth class, with their average and strongest magnitude and their average depth, most common class first. Save the result as depth_summary.",
+          "kind": "sql",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-30T18:00:00.000Z",
+          "updatedAt": "2026-10-30T18:00:00.000Z",
+          "generatedSourceHash": "1ac67288",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
       "id": "c-t05-habits",
       "kind": "md",
       "source": "## Habits for live data\n\n- **Expect it to fail sometimes.** No internet, a busy server or a changed address all break a fetch. The first cell catches the error and says what to do, instead of leaving a confusing message further down.\n- **Not every site lets a browser ask.** A server has to allow requests from web pages (this is called CORS). The USGS does; many sites don't. If a fetch fails with a CORS error, the server is saying no, and changing your code won't fix it.\n- **Don't ask too often.** This feed updates every minute or so. Re-running every few seconds just loads the server.\n- **Keep keys out of notebooks.** This feed needs no key. If an API does, don't paste it into a notebook you'll share."
@@ -45,9 +69,9 @@
     {
       "id": "c-t05-next",
       "kind": "md",
-      "source": "## Try this\n\nEach of these is a prompt. Press **✨** on a cell and ask for a change: the model sees the cell's code, so it changes just what you ask. Or use **⚡ AI Generate New Cell** at the bottom to add a new cell.\n\n- **A different feed.** ✨ on the first cell: *\"Use the 4.5_week feed instead.\"* That's the big ones; `all_day` is every quake today (mostly tiny) and `significant_month` the month's most important. Then press **Run all**.\n- **Your own question.** New Python cell under the analysis: *\"How many of the earthquakes in nb.map_points were within 1,000 km of the equator?\"*\n- **Filter the map.** ✨ on the map cell: *\"Only show earthquakes of magnitude 4.5 or more.\"*\n\n**Next:** tutorial **06** builds whole mini-apps in HTML cells, and **07** brings every cell type together into a report. Both are in the **Library**."
+      "source": "## Try this\n\nEach of these is a prompt. Press **✨** on a cell and ask for a change: the model sees the cell's code, so it changes just what you ask. Or use **⚡ AI Generate New Cell** at the bottom to add a new cell.\n\n- **A different feed.** ✨ on the first cell: *\"Use the 4.5_week feed instead.\"* That's the big ones; `all_day` is every quake today (mostly tiny) and `significant_month` the month's most important. Then press **Run all**.\n- **Your own question.** New Python cell under the analysis: *\"How many of the earthquakes in nb.map_points were within 1,000 km of the equator?\"*\n- **Ask in SQL.** New SQL cell: *\"For each whole magnitude (3, 4, 5 and up), how many earthquakes were there, and how deep did they start on average?\"*\n- **Filter the map.** ✨ on the map cell: *\"Only show earthquakes of magnitude 4.5 or more.\"*\n\n**Next:** tutorial **06** builds whole mini-apps in HTML cells, and **07** brings every cell type together into a report. Both are in the **Library**."
     }
   ],
   "createdAt": "2026-04-18T21:00:00.000Z",
-  "updatedAt": "2026-10-30T12:00:00.000Z"
+  "updatedAt": "2026-10-30T18:00:00.000Z"
 }

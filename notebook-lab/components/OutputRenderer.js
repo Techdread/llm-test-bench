@@ -2,7 +2,7 @@
 
 import { html } from 'htm/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { HTML_PREVIEW_DEFAULTS, normaliseHtmlPreview } from '../services/htmlPreview.js';
+import { HTML_PREVIEW_DEFAULTS, htmlFrameLayout, normaliseHtmlPreview, sizeReportOverflows } from '../services/htmlPreview.js';
 import * as nbBridge from '../services/nbBridge.js';
 import { buildHtmlCellSrcdoc, HTML_NB_BRIDGE_MARKER, toJsonSafe } from '../services/htmlNbBridge.js';
 import {
@@ -50,14 +50,26 @@ function formatValue(v) {
 function HtmlFrame({ source, preview, onPreviewChange }) {
   const ref = useRef(null);
   const shellRef = useRef(null);
-  const [fitScale, setFitScale] = useState(1);
+  const [shellWidth, setShellWidth] = useState(0);
+  // Set once the frame, shown at the phone's width, reports wider content.
+  const [overflows, setOverflows] = useState(false);
+  const [contentHeight, setContentHeight] = useState(0);   // reported at the phone's width
+  const [preferDesktop, setPreferDesktop] = useState(false);
   const settings = normaliseHtmlPreview(preview);
-  const displayScale = fitScale * settings.scale;
-  const displayHeight = Math.max(1, Math.ceil(settings.height * displayScale));
+  const layout = htmlFrameLayout({ shellWidth, settings, overflows, preferDesktop, contentHeight });
+  const displayScale = layout.scale;
+  const shellWidthRef = useRef(0);
+  shellWidthRef.current = shellWidth;
 
+  // Load the document only once the shell has been measured, so a cell that
+  // sizes itself on load sees the width it will actually have: a phone's, not
+  // the desktop design's.
+  const measured = shellWidth > 0;
   useEffect(() => {
-    if (ref.current) ref.current.srcdoc = buildHtmlCellSrcdoc(source, nbBridge.snapshot());
-  }, [source]);
+    setOverflows(false);
+    setContentHeight(0);
+    if (measured && ref.current) ref.current.srcdoc = buildHtmlCellSrcdoc(source, nbBridge.snapshot());
+  }, [source, measured]);
 
   // Relay nb state into the sandboxed document and accept nb.set writes back.
   // A single-key change is posted as a lightweight `patch` so a slider drag
@@ -79,6 +91,14 @@ function HtmlFrame({ source, preview, onPreviewChange }) {
       const win = ref.current?.contentWindow;
       if (!win || e.source !== win) return;
       const d = e.data;
+      if (d && d[HTML_NB_BRIDGE_MARKER] === 'size') {
+        if (sizeReportOverflows(d, shellWidthRef.current)) setOverflows(true);
+        // Only grows, so content that fills the frame can't make it creep taller.
+        else if (Math.abs(d.viewport - shellWidthRef.current) <= 2 && Number.isFinite(d.height)) {
+          setContentHeight((h) => Math.max(h, Math.round(d.height)));
+        }
+        return;
+      }
       if (!d || d[HTML_NB_BRIDGE_MARKER] !== 'set' || typeof d.key !== 'string') return;
       try {
         nbBridge.setValue(d.key, toJsonSafe(d.value));
@@ -95,10 +115,7 @@ function HtmlFrame({ source, preview, onPreviewChange }) {
     const node = shellRef.current;
     if (!node) return;
 
-    const updateFit = () => {
-      const availableWidth = Math.max(1, node.clientWidth);
-      setFitScale(Math.min(1, availableWidth / settings.width));
-    };
+    const updateFit = () => setShellWidth(node.clientWidth);   // 0 while hidden
 
     updateFit();
     if (!window.ResizeObserver) {
@@ -114,8 +131,11 @@ function HtmlFrame({ source, preview, onPreviewChange }) {
     onPreviewChange?.(normaliseHtmlPreview({ ...settings, ...patch }));
   }
 
+  const percent = Math.round(displayScale * 100);
+  // The toolbar is hidden, not removed, on a phone: dropping it shifted the
+  // children and Preact rebuilt the iframe without its srcdoc (a blank frame).
   return html`
-    <div class="html-preview-toolbar">
+    <div class="html-preview-toolbar" hidden=${layout.phone}>
       <span>Viewport</span>
       <input
         type="number"
@@ -163,7 +183,7 @@ function HtmlFrame({ source, preview, onPreviewChange }) {
       role="region"
       aria-label="HTML cell preview"
       style=${{
-        height: `${displayHeight}px`,
+        height: `${layout.shellHeight}px`,
       }}
     >
       <iframe
@@ -176,16 +196,28 @@ function HtmlFrame({ source, preview, onPreviewChange }) {
           if (win) win.postMessage({ [HTML_NB_BRIDGE_MARKER]: 'update', values: nbBridge.snapshot() }, '*');
         }}
         style=${{
-          width: `${settings.width}px`,
-          height: `${settings.height}px`,
-          transform: `scale(${displayScale})`,
+          width: `${layout.frameWidth}px`,
+          height: `${layout.frameHeight}px`,
+          transform: layout.native ? 'none' : `scale(${displayScale})`,
         }}
       ></iframe>
     </div>
-    <div class="html-preview-status">
-      Rendering ${settings.width}x${settings.height} at ${Math.round(displayScale * 100)}%
-      ${settings.scale !== 1 ? ` (${Math.round(settings.scale * 100)}% user scale)` : ''}
-    </div>
+    ${layout.phone
+      ? html`<div class="html-preview-status html-preview-status-phone">
+          <span>${layout.native
+            ? 'Fitted to your screen'
+            : layout.overflows && !preferDesktop
+              ? `Wider than your screen, so shown at ${percent}%`
+              : `Desktop layout at ${percent}%`}</span>
+          ${(layout.native || preferDesktop) && html`
+            <button class="btn btn-small" onClick=${() => setPreferDesktop(!preferDesktop)}>
+              ${preferDesktop ? 'Fit to screen' : 'Desktop layout'}
+            </button>`}
+        </div>`
+      : html`<div class="html-preview-status">
+          Rendering ${settings.width}x${settings.height} at ${percent}%
+          ${settings.scale !== 1 ? ` (${Math.round(settings.scale * 100)}% user scale)` : ''}
+        </div>`}
   `;
 }
 
@@ -290,6 +322,23 @@ function VegaChart({ spec }) {
   return html`<div class="vega-chart" ref=${ref}></div>`;
 }
 
+/** A SQL result set, drawn as a table in the notebook's own styles. */
+function ResultTable({ output }) {
+  const shown = output.rows.length;
+  const cellClass = (v) => (v === null ? 'null' : typeof v === 'number' ? 'num' : '');
+  return html`
+    <div class="output-table-wrap" tabindex="0" role="region" aria-label="Query result">
+      <table class="output-table">
+        <thead><tr>${output.columns.map((c) => html`<th scope="col">${c}</th>`)}</tr></thead>
+        <tbody>${output.rows.map((row) => html`<tr>${row.map((v) => html`<td class=${cellClass(v)}>${v === null ? 'NULL' : String(v)}</td>`)}</tr>`)}</tbody>
+      </table>
+    </div>
+    <div class="output-table-note">
+      ${output.total === 1 ? '1 row' : `${output.total} rows`}${output.total > shown ? `, showing the first ${shown}` : ''}
+    </div>
+  `;
+}
+
 export function OutputRenderer({ outputs, error, hidden, kind, source, metadata, onHtmlPreviewChange }) {
   if (hidden) return null;
   if (kind === 'html') {
@@ -319,6 +368,9 @@ export function OutputRenderer({ outputs, error, hidden, kind, source, metadata,
       ${outputs.map((o, i) => {
         if (o.type === 'image') {
           return html`<img key=${i} src=${`data:${o.mime || 'image/png'};base64,${o.data}`} />`;
+        }
+        if (o.type === 'table') {
+          return html`<${ResultTable} key=${i} output=${o} />`;
         }
         if (o.type === 'text') {
           if (looksLikeBase64Image(o.value)) {

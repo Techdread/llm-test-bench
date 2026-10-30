@@ -152,6 +152,7 @@
 .cell-kind-badge.kind-html { background: #ec4899; color: white; }
 .cell-kind-badge.kind-ui { background: #7c3aed; color: white; }
 .cell-kind-badge.kind-chart { background: #10b981; color: white; }
+.cell-kind-badge.kind-sql { background: #0e7490; color: white; }
 
 .cell-header-right {
   display: flex;
@@ -282,6 +283,16 @@
   overflow: auto;
 }
 
+/* SQL results (output type "table"). */
+.output-table-wrap { overflow: auto; max-height: 360px; margin: 2px 0 4px; white-space: normal; }
+.output-table { border-collapse: collapse; font: 13px/1.4 system-ui, sans-serif; color: var(--text-primary); }
+.output-table th,
+.output-table td { padding: 4px 10px; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
+.output-table th { position: sticky; top: 0; background: var(--bg-secondary); font-weight: 600; }
+.output-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.output-table td.null { color: var(--text-secondary); font-style: italic; }
+.output-table-note { font: 12px system-ui, sans-serif; color: var(--text-secondary); margin-bottom: 6px; white-space: normal; }
+
 /* vega-embed makes its element inline-block, which shrinks a `width: "container"`
    chart to 0 pixels wide. Fill the output instead. */
 .vega-chart.fit-x { display: block; width: 100%; }
@@ -363,6 +374,8 @@
 .cell-output:has(.html-value-output) {
   max-height: none;
 }
+
+.html-preview-toolbar[hidden] { display: none; }
 
 .html-preview-toolbar {
   display: flex;
@@ -2339,4 +2352,76 @@
     border-top: 1px solid var(--border-color);
     max-height: 70vh;
   }
+}
+
+/* The "double-click to edit" note under a Markdown cell, worded for the pointer in use. */
+.cell-md-hint { padding: 4px 12px; font-size: 11px; color: var(--text-secondary); }
+.cell-md-hint .hint-touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .cell-md-hint .hint-mouse { display: none; }
+  .cell-md-hint .hint-touch { display: inline; }
+}
+
+/* Phones, part 2. The cell header's ten buttons ran off the right edge (the
+   cell clips overflow), so ✨, Explain and the rest were unreachable; tap
+   targets were 22 px; and the add-cell bar wrapped into a tall block between
+   every pair of cells. */
+@media (max-width: 620px) {
+  .cell-list { margin: 0; }
+  .cell-md-hint { font-size: 12px; }
+  .cell-md-rendered code { font-size: 0.95em; }
+
+  .cell-header { flex-wrap: wrap; row-gap: 2px; padding: 4px 6px; }
+  .cell-header-left { flex: 1 1 auto; min-width: 0; }
+  .cell-kind-badge { display: none; }              /* the kind menu already names it */
+  .cell-kind-select { min-height: 40px; font-size: 14px; }
+  /* One row of buttons under the kind menu; swipe it sideways for the rest.
+     Run, code, fix and ✨ come first, so they're always in view. */
+  .cell-header-right {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .cell-header-right .btn-icon,
+  .cell-fold-btn { flex: 0 0 auto; min-width: 40px; min-height: 40px; font-size: 15px; }
+
+  .add-cell-row {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    opacity: 0.85;
+    padding: 2px 0 4px;
+    scrollbar-width: none;
+  }
+  .add-cell-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 36px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .html-preview-status-phone {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .html-preview-status-phone .btn { min-height: 36px; }
+
+  /* UI cells that are wider than the screen stack their controls (UiCellRenderer). */
+  .ui-cell-stacked .ui-control-canvas {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 10px 12px;
+    overflow: visible;
+  }
+  .ui-cell-stacked .ui-designer-control { position: static; width: auto; height: auto; }
+  .ui-cell-stacked .ui-control input[type="range"] { min-height: 32px; }
+  .ui-cell-stacked .ui-control .btn { min-height: 40px; }
 }

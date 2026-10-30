@@ -193,6 +193,11 @@ async function renderOutputs(cell, theme) {
       } catch (error) {
         rendered.push(`<div class="c-error">Chart could not be rendered: ${esc(error.message || String(error))}</div>`);
       }
+    } else if (output.type === 'table') {
+      const cell = (v) => `<td${typeof v === 'number' ? ' class="num"' : ''}>${v === null ? '<i>NULL</i>' : esc(String(v))}</td>`;
+      rendered.push(`<div class="c-table"><table><thead><tr>${output.columns.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead>`
+        + `<tbody>${output.rows.map((row) => `<tr>${row.map(cell).join('')}</tr>`).join('')}</tbody></table>`
+        + `<p>${output.total} row${output.total === 1 ? '' : 's'}${output.total > output.rows.length ? `, first ${output.rows.length} shown` : ''}</p></div>`);
     } else if (output.type === 'value' && looksLikeHtml(output.value)) {
       rendered.push(exportValueFrame(output.value, theme));
     } else if (output.type === 'value') {
@@ -356,6 +361,11 @@ h1 { margin: 0; }
 /* Vega bakes its axis/label colours into the SVG at export time, so the chart
    keeps a light card of its own rather than turning illegible in dark mode. */
 .c-chart { padding: 10px; overflow: auto; }
+.c-table { overflow: auto; max-height: 420px; }
+.c-table table { border-collapse: collapse; font: 13px/1.4 system-ui, sans-serif; }
+.c-table th, .c-table td { padding: 4px 10px; border-bottom: 1px solid var(--border-color); text-align: left; white-space: nowrap; }
+.c-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.c-table p { margin: 4px 0 0; font-size: 12px; color: var(--text-secondary); }
 .c-chart svg { background: #ffffff; border-radius: 6px; }
 img { max-width: 100%; }
 pre { white-space: pre-wrap; word-break: break-word; }

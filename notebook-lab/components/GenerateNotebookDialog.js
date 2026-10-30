@@ -6,7 +6,7 @@ import { useDialogDismiss } from './useDialogDismiss.js';
 import { availableKindOptions, isWebEdition } from '../services/edition.js';
 
 const KIND_LABELS = {
-  md: 'Markdown', js: 'JavaScript', py: 'Python', c: 'C', rust: 'Rust', lua: 'Lua',
+  md: 'Markdown', js: 'JavaScript', py: 'Python', c: 'C', rust: 'Rust', lua: 'Lua', sql: 'SQL',
   java: 'Java', go: 'Go', scala: 'Scala', clojure: 'Clojure', html: 'HTML', ui: 'Controls', chart: 'Vega-Lite',
 };
 
@@ -22,6 +22,7 @@ const LANGUAGE_OPTIONS = [
   { value: 'c', label: 'C' },
   { value: 'rust', label: 'Rust' },
   { value: 'lua', label: 'Lua' },
+  { value: 'sql', label: 'SQL' },
   { value: 'java', label: 'Java' },
   { value: 'go', label: 'Go' },
   { value: 'scala', label: 'Scala' },

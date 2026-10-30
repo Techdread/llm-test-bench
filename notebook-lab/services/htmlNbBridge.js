@@ -10,6 +10,9 @@
 //   nb.onChange(cb)  — cb(values) fires whenever notebook state changes
 //   nb.set(key, val) — posts the write up to the app (JSON values only)
 //
+// It also posts `{__nbHtmlBridge:'size', width, height, viewport}` after loading
+// and on resize, so the page can tell whether the content fits a phone's width.
+//
 // The parent side (OutputRenderer's HtmlFrame) relays bridge changes down as
 // `{__nbHtmlBridge:'update'}` (full snapshot) or `{__nbHtmlBridge:'patch'}`
 // (one key changed — the common case, e.g. a slider drag) messages, and
@@ -38,6 +41,19 @@ export function buildBootstrapScript(snapshot) {
       try { listeners[i](window.nb.all()); } catch (err) { /* keep other listeners alive */ }
     }
   }
+  // Tell the page how wide the content really is, so a phone can show the cell
+  // at its own width when it fits, and shrink it only when it doesn't.
+  function reportSize() {
+    var doc = document.documentElement;
+    var width = Math.max(doc.scrollWidth, document.body ? document.body.scrollWidth : 0);
+    parent.postMessage({ ${HTML_NB_BRIDGE_MARKER}: 'size', width: width, height: doc.scrollHeight, viewport: window.innerWidth }, '*');
+  }
+  window.addEventListener('load', function () {
+    reportSize();
+    setTimeout(reportSize, 400);
+    setTimeout(reportSize, 1500);
+  });
+  window.addEventListener('resize', function () { setTimeout(reportSize, 150); });
   window.addEventListener('message', function (e) {
     var d = e.data;
     if (!d) return;
