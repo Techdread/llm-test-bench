@@ -17,7 +17,7 @@ The projects in this repository are MIT licensed, but the vendored runtime files
 | sql.js | 1.10.3 | MIT | https://github.com/sql-js/sql.js |
 | JSCPP | 2.0.9 | MIT | https://github.com/felixhao28/JSCPP |
 | xcc (C compiler, built for WebAssembly) | 0.1.13 at 631e318, with `xcc-notebook-lab.patch` | MIT | https://github.com/tyfkda/xcc |
-| Wasmoon (Lua 5.4 for WebAssembly) | 1.16.0 | MIT | https://github.com/ceifa/wasmoon |
+| Wasmoon (Lua 5.4 for WebAssembly; bundles Lua 5.4.5, MIT, Lua.org, PUC-Rio) | 1.16.0 | MIT | https://github.com/ceifa/wasmoon |
 | Scittle (Clojure in the browser; bundles ClojureScript, SCI and the Google Closure Library) | 0.8.33 | EPL-1.0 (Closure Library: Apache-2.0). Source code: see the upstream link | https://github.com/babashka/scittle |
 | Acorn, acorn-walk, acorn-loose | 8.11.3, 8.3.2, 8.4.0 | MIT | https://github.com/acornjs/acorn |
 | three.js | 0.185.1 and 0.128.0 (`three.min.js` only) | MIT | https://github.com/mrdoob/three.js |

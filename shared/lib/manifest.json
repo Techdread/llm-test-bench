@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-30T16:32:20.181Z",
+  "generatedAt": "2026-10-30T17:45:19.978Z",
   "root": "shared/lib",
   "notes": [
     "Minimal vendored runtime set for the LLM Test Bench public distribution."
@@ -181,7 +181,8 @@
         "path": "wasmoon/1.16.0",
         "sources": [
           "https://cdn.jsdelivr.net/npm/wasmoon@1.16.0/+esm",
-          "https://cdn.jsdelivr.net/npm/wasmoon@1.16.0/dist/glue.wasm"
+          "https://cdn.jsdelivr.net/npm/wasmoon@1.16.0/dist/glue.wasm",
+          "https://cdn.jsdelivr.net/npm/wasmoon@1.16.0/LICENSE"
         ]
       }
     },
