@@ -27,7 +27,7 @@ Folding only changes the view; it never edits the notebook.
 | **MD**   | Markdown. Double-click to edit, press *Done* (or Shift+Enter) to render. |
 | **JS**   | JavaScript. `console.log` output is captured, top-level `await` works, and whatever you `return` is shown. Return a Vega-Lite spec to draw a chart, or a string of HTML to render it. |
 | **Py**   | Python 3.12 via Pyodide (WebAssembly). NumPy, pandas, Matplotlib and SymPy are included and load the first time a cell imports them. The first Python run takes a few seconds while the runtime starts. |
-| **C**    | Small single-file C programs, interpreted in the browser. Use `printf` / `puts` for output. |
+| **C**    | Single-file C programs, compiled in your browser to WebAssembly: structs, pointers, `malloc` and the standard library, at close to native speed. `printf` for output; `#include <nb.h>` to read and share `nb`. |
 | **Lua**  | Lua 5.4 programs via WebAssembly. Use `print` for output. Reads and writes `nb`. |
 | **SQL**  | SQLite queries. Every list of rows in `nb` is a table, and a `-- save as: key` comment saves the result to `nb`. |
 | **HTML** | Renders into a sandboxed frame. Inline CSS and JavaScript work, and the frame gets its own `nb` object (below). |
@@ -41,7 +41,7 @@ Folding only changes the view; it never edits the notebook.
 - **Python:** `nb["result"] = 42`, `nb["result"]`, `nb.keys()`, `nb.get("x")`.
 - **Lua:** `nb.set('result', 42)`, `nb.get('result', default)`, `nb.keys()`, `nb.has('x')`. Values arrive as plain Lua tables (lists count from 1).
 - **SQL:** a list of rows in `nb` is a table of the same name. Add `-- save as: key` to save the last result to `nb.key`. Tables you create stay until you open another notebook.
-- **C:** print a marker line to set a variable:
+- **C:** `#include <nb.h>`, then `nb_get_number("key", fallback)`, `nb_get_doubles(key, out, max)`, `nb_set_number("key", value)` and friends (tutorial 08 lists them). Printing a marker line also sets a variable:
 
 ```text
 __NB_SET__ {"key":"answer","value":42}

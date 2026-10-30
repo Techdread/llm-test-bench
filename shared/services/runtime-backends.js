@@ -47,13 +47,20 @@ export const BACKENDS = {
     ],
   },
   c: {
-    default: 'wasm',
+    default: 'xcc',
     options: [
       {
+        id: 'xcc',
+        label: 'xcc (browser, WebAssembly)',
+        desc: 'A real C compiler (xcc) built for WebAssembly: structs, pointers, ' +
+              'malloc and the standard library, at native-like speed, offline. ' +
+              'C cells can read and write nb through <nb.h>.',
+      },
+      {
         id: 'wasm',
-        label: 'JSCPP (browser)',
-        desc: 'Small JS-based C/C++ interpreter. Instant; limited language ' +
-              'coverage; no system headers beyond a basic subset.',
+        label: 'JSCPP (browser, older)',
+        desc: 'Small JS-based C/C++ interpreter. Instant to start but slow; no ' +
+              'struct, limited headers. Kept for older notebooks.',
       },
       {
         id: 'debian',

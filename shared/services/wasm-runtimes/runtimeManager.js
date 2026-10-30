@@ -5,6 +5,7 @@
 // Single-backend languages run the only runner they have.
 
 import { runC } from './c.js';
+import { runCXcc } from './c-xcc.js';
 import { runCDebian } from './c-debian.js';
 import { runRust } from './rust.js';
 import { runRustDebian } from './rust-debian.js';
@@ -20,7 +21,7 @@ import { getBackend, BACKENDS } from '../runtime-backends.js';
 // Pyodide stays inside notebook-lab's own runnerPy (it integrates the nb
 // bridge + matplotlib figure capture, which the manager doesn't know about).
 const RUNNERS = {
-  c:       { wasm:   runC,        debian: runCDebian },
+  c:       { xcc:    runCXcc,     wasm:   runC,      debian: runCDebian },
   rust:    { remote: runRust,     debian: runRustDebian },
   py:      {                      debian: runPythonDebian },
   lua:     { wasm:   runLua },
@@ -115,5 +116,6 @@ function getRuntimeKind(language, backend) {
   if (backend === 'debian') return 'native (Debian/v86)';
   if (backend === 'remote') return 'remote';
   if (backend === 'wasm')   return 'wasm';
+  if (backend === 'xcc')    return 'wasm (xcc)';
   return 'unknown';
 }

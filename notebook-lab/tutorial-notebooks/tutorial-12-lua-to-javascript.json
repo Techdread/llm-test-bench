@@ -111,7 +111,7 @@
     {
       "id": "c-t12-oneway",
       "kind": "md",
-      "source": "## Lua reads `nb` too\n\nLua cells share `nb` both ways, like JavaScript: `nb.get(key, default)` hands over a copy as plain Lua tables (lists count from 1, just like the squares), and `nb.set(key, value)` shares one back. The cell below reads what the simulation and Python found:\n\n> Read nb.landings (100 counts, item i for square i) and nb.odds. Add up the landings on each row of ten squares, print a text bar chart of the rows from the top row down with # characters (each # is 2% of all landings) and the share as a percentage, then say which row is busiest and quote Python's median from nb.odds as \"half of all games take N turns or fewer\". Save the row totals as nb.row_landings. Stop with a clear error if the simulation has not run.\n\nThe simulation cell publishes the older way, by printing `__NB_SET__` lines, which is all C and Rust cells can do. Both work.\n\nTo change the simulation itself, press **✨** on it and edit its saved prompt: change *\"Play 5000\"* to 20000, take *\"87 to 24\"* out of the snakes, or add *\"Use two dice instead of one\"*. Then press **Replace cell** and **Run all**. The chart, the odds, the board and the rows all follow."
+      "source": "## Lua reads `nb` too\n\nLua cells share `nb` both ways, like JavaScript: `nb.get(key, default)` hands over a copy as plain Lua tables (lists count from 1, just like the squares), and `nb.set(key, value)` shares one back. The cell below reads what the simulation and Python found:\n\n> Read nb.landings (100 counts, item i for square i) and nb.odds. Add up the landings on each row of ten squares, print a text bar chart of the rows from the top row down with # characters (each # is 2% of all landings) and the share as a percentage, then say which row is busiest and quote Python's median from nb.odds as \"half of all games take N turns or fewer\". Save the row totals as nb.row_landings. Stop with a clear error if the simulation has not run.\n\nThe simulation cell publishes the older way, by printing `__NB_SET__` lines, which is all Rust, Java and Go cells can do. Both work.\n\nTo change the simulation itself, press **✨** on it and edit its saved prompt: change *\"Play 5000\"* to 20000, take *\"87 to 24\"* out of the snakes, or add *\"Use two dice instead of one\"*. Then press **Replace cell** and **Run all**. The chart, the odds, the board and the rows all follow."
     },
     {
       "id": "c-t12-rows",
@@ -139,5 +139,5 @@
     }
   ],
   "createdAt": "2026-06-07T00:00:00.000Z",
-  "updatedAt": "2026-10-30T18:00:00.000Z"
+  "updatedAt": "2026-10-30T20:00:00.000Z"
 }

@@ -16,6 +16,8 @@ The projects in this repository are MIT licensed, but the vendored runtime files
 | Pyodide | 0.25.0, 0.25.1 | MPL-2.0 (bundled Python packages keep their own licences) | https://github.com/pyodide/pyodide |
 | sql.js | 1.10.3 | MIT | https://github.com/sql-js/sql.js |
 | JSCPP | 2.0.9 | MIT | https://github.com/felixhao28/JSCPP |
+| xcc (C compiler, built for WebAssembly) | 0.1.13 at 631e318, with `xcc-notebook-lab.patch` | MIT | https://github.com/tyfkda/xcc |
+| Wasmoon (Lua 5.4 for WebAssembly) | 1.16.0 | MIT | https://github.com/ceifa/wasmoon |
 | Acorn, acorn-walk, acorn-loose | 8.11.3, 8.3.2, 8.4.0 | MIT | https://github.com/acornjs/acorn |
 | three.js | 0.185.1 and 0.128.0 (`three.min.js` only) | MIT | https://github.com/mrdoob/three.js |
 | fflate | 0.8.2 | MIT | https://github.com/101arrowz/fflate |

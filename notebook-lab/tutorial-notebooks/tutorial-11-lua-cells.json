@@ -5,7 +5,7 @@
     {
       "id": "c-t11-intro",
       "kind": "md",
-      "source": "# 11 Lua Cells\n\n**Lua** is a small, fast language built to live inside other programs. Games use it most: Roblox's Luau grew out of it, and World of Warcraft, Factorio and many others use it for add-ons and mods. Here it runs offline in your browser.\n\nThis notebook builds a small dungeon game in three cells, and shows you how to read the Lua that makes it:\n\n1. **Lua** generates the dungeon and publishes it to `nb`.\n2. An **HTML cell** turns it into a game you can play.\n3. **JavaScript** checks the dungeon can be finished.\n\nLua cells share `nb` both ways: `nb.get(key, default)` reads a value and `nb.set(key, value)` shares one, as in JavaScript. The dungeon cell publishes the older way, by printing a line that starts with `__NB_SET__`, which is how C and Rust cells do it. Tutorial **12** shows a Lua cell reading `nb`.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it. The **AI** tutorials in the Library are all about building that way.\n\nPress **Run all**, then click the map and play."
+      "source": "# 11 Lua Cells\n\n**Lua** is a small, fast language built to live inside other programs. Games use it most: Roblox's Luau grew out of it, and World of Warcraft, Factorio and many others use it for add-ons and mods. Here it runs offline in your browser.\n\nThis notebook builds a small dungeon game in three cells, and shows you how to read the Lua that makes it:\n\n1. **Lua** generates the dungeon and publishes it to `nb`.\n2. An **HTML cell** turns it into a game you can play.\n3. **JavaScript** checks the dungeon can be finished.\n\nLua cells share `nb` both ways: `nb.get(key, default)` reads a value and `nb.set(key, value)` shares one, as in JavaScript. The dungeon cell publishes the older way, by printing a line that starts with `__NB_SET__`, which is how Rust cells do it. Tutorial **12** shows a Lua cell reading `nb`.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it. The **AI** tutorials in the Library are all about building that way.\n\nPress **Run all**, then click the map and play."
     },
     {
       "id": "c-t11-map-md",
@@ -96,5 +96,5 @@
     }
   ],
   "createdAt": "2026-06-07T00:00:00.000Z",
-  "updatedAt": "2026-10-30T18:00:00.000Z"
+  "updatedAt": "2026-10-30T20:00:00.000Z"
 }

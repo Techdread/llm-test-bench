@@ -2,7 +2,7 @@
 
 import { hashSource } from './cellMetadata.js';
 import {
-  C_INTERPRETER_GUIDE,
+  C_GUIDE,
   HTML_NB_BRIDGE_GUIDE,
   JS_RETURN_GUIDE,
   LUA_NB_GUIDE,
@@ -239,9 +239,9 @@ function notebookContext(currentNotebook) {
   return `\n\nCURRENT NOTEBOOK\nTitle: ${currentNotebook.title || 'Untitled'}\n${cells}`;
 }
 
-// Compiled languages that can publish to nb but not read it. Lua runs in the
-// page and reads nb too, so it has its own rule.
-const COMPILED_KIND_LABELS = { c: 'C', rust: 'Rust', java: 'Java', go: 'Go', scala: 'Scala', clojure: 'Clojure' };
+// Compiled languages that can publish to nb but not read it. C (xcc) and Lua
+// run in the page and read nb too, so they have their own rules.
+const COMPILED_KIND_LABELS = { rust: 'Rust', java: 'Java', go: 'Go', scala: 'Scala', clojure: 'Clojure' };
 
 // `unavailable` lists cell kinds this edition cannot run (the public web
 // edition passes services/edition.js's list); they are left out of the schema
@@ -250,6 +250,13 @@ export function buildNotebookGenerationSystemPrompt({ unavailable = [] } = {}) {
   const blocked = new Set(unavailable);
   const kinds = [...SUPPORTED_NOTEBOOK_KINDS].filter(kind => !blocked.has(kind));
   const compiled = Object.keys(COMPILED_KIND_LABELS).filter(kind => !blocked.has(kind)).map(kind => COMPILED_KIND_LABELS[kind]);
+  // One rule per language family, skipping any this edition cannot run.
+  const languageRules = [
+    compiled.length && `- ${compiled.join('/')} cells are complete executable programs. They can publish data by printing __NB_SET__ {"key":"name","value":...} but cannot read notebook state.`,
+    !blocked.has('c') && `- C cells are complete single-file programs with main(). ${C_GUIDE}`,
+    !blocked.has('lua') && `- Lua cells are complete Lua 5.4 programs. ${LUA_NB_GUIDE}`,
+    `- Use SQL cells to filter, join, group and rank data that earlier cells put in nb. ${SQL_GUIDE}`,
+  ].filter(Boolean).join('\n');
   const unavailableRule = blocked.size
     ? `\n- This edition cannot run ${[...blocked].join(', ')} cells. Never emit those kinds.`
     : '';
@@ -280,7 +287,7 @@ Notebook design rules:
 - HTML cells are complete fragments rendered in a sandboxed iframe. Inline CSS and JavaScript, omit html/head wrappers, and do not reference repository-relative files. ${HTML_NB_BRIDGE_GUIDE}
 - UI cells contain one strict JSON object with title, description, and a controls array. Controls may be label, text, textarea, number, checkbox, select, radio, slider, color, date, or button. Bind each input with "bind": "key" and give it a "default"; later cells read the value with nb.get / nb["key"]. ${UI_CONTROL_GUIDE}
 - To make a notebook interactive, put a UI cell before the cells that use its values; an HTML cell that redraws from nb.onChange updates live as the controls move, while code cells use the new values when they are run again.
-- ${compiled.join('/')} cells are complete executable programs. They can publish data by printing __NB_SET__ {"key":"name","value":...} but cannot read notebook state.${blocked.has('lua') ? '' : `\n- Lua cells are complete Lua 5.4 programs. ${LUA_NB_GUIDE}`}\n- Use SQL cells to filter, join, group and rank data that earlier cells put in nb. ${SQL_GUIDE}${blocked.has('c') ? '' : `\n- ${C_INTERPRETER_GUIDE}`}
+${languageRules}
 - Make every source string complete and executable. JSON-escape newlines, quotes, and backslashes correctly.
 - When live network data may fail because of CORS or availability, explain that limitation and include a small attributed fallback sample so the notebook remains demonstrable.
 - Clearly separate retrieved facts, assumptions, and calculated results. Do not fabricate outputs that have not been computed.${unavailableRule}`;

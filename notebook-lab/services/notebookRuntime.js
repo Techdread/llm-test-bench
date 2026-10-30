@@ -88,8 +88,10 @@ export async function executeCell(cell, options = {}) {
     );
   } else if (SWAPPABLE_KINDS.has(kind)) {
     const timeout = getBackend(kind) === 'debian' ? DEBIAN_VM_TIMEOUT : options.timeoutMs;
+    // C compiled by xcc reads and writes nb through <nb.h> (other backends ignore this).
+    const nb = kind === 'c' ? { snapshot: nbBridge.snapshot, set: nbBridge.setValue } : undefined;
     result = runResultToNotebookResult(
-      await runSystemLanguage(kind, cell.source || '', { timeout, onStatus: options.onStatus })
+      await runSystemLanguage(kind, cell.source || '', { timeout, onStatus: options.onStatus, nb })
     );
   } else if (DEBIAN_VM_KINDS.has(kind)) {
     result = runResultToNotebookResult(

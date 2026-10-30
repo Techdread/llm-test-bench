@@ -4,7 +4,7 @@
     {
       "id": "c-ex401-md01",
       "kind": "md",
-      "source": "# Game of Life, Compiled\n\nConway's rules fit in a sentence — a live cell survives with 2 or 3 neighbours, a dead cell is born with exactly 3 — and yet the system is Turing-complete. This notebook splits the work the way real pipelines do:\n\n- **C** (in-browser JSCPP interpreter, no VM needed) runs the automaton over a 40×28 world seeded with an **r-pentomino** plus a sprinkle of deterministic soup, packing each generation into hex strings.\n- **HTML** plays the recorded frames back on a canvas with a scrub bar — the renderer never computes a single generation itself.\n\nThe compute cell takes a couple of seconds: JSCPP is an interpreter, and honest work is being done."
+      "source": "# Game of Life, Compiled\n\nConway's rules fit in a sentence — a live cell survives with 2 or 3 neighbours, a dead cell is born with exactly 3 — and yet the system is Turing-complete. This notebook splits the work the way real pipelines do:\n\n- **C** (compiled in your browser to WebAssembly, no VM needed) runs the automaton over a 40×28 world seeded with an **r-pentomino** plus a sprinkle of deterministic soup, packing each generation into hex strings.\n- **HTML** plays the recorded frames back on a canvas with a scrub bar — the renderer never computes a single generation itself.\n\nThe compute cell takes a few milliseconds: C here is compiled, not interpreted."
     },
     {
       "id": "c-ex401-c01",
@@ -26,7 +26,7 @@
     {
       "id": "c-ex401-md02",
       "kind": "md",
-      "source": "## What to look for\n\n- The **r-pentomino** in the centre: five cells that take over a thousand generations to settle in an infinite world. Watch it throw off gliders in the first 40.\n- Bright cells were just born, ghosts just died — the change fronts are where all the action is; stable blocks and beehives go quiet.\n- The border is a hard dead wall, so behaviour near edges differs from the infinite plane. That's a modelling decision, not a bug — and it's visible.\n\n## Try this\n\n- Replace the r-pentomino with a **glider gun**: search the pattern coordinates online, paste them in, re-run — the playback picks it up automatically.\n- Make the world toroidal (wrap neighbours with modulo) and compare the r-pentomino's fate.\n- Change the birth rule to `n == 3 || n == 6` (HighLife) — same code, alien ecology.\n- Raise `gens` to 80 — runtime roughly doubles (the interpreter is doing every cell honestly), the JSON grows linearly."
+      "source": "## What to look for\n\n- The **r-pentomino** in the centre: five cells that take over a thousand generations to settle in an infinite world. Watch it throw off gliders in the first 40.\n- Bright cells were just born, ghosts just died — the change fronts are where all the action is; stable blocks and beehives go quiet.\n- The border is a hard dead wall, so behaviour near edges differs from the infinite plane. That's a modelling decision, not a bug — and it's visible.\n\n## Try this\n\n- Replace the r-pentomino with a **glider gun**: search the pattern coordinates online, paste them in, re-run — the playback picks it up automatically.\n- Make the world toroidal (wrap neighbours with modulo) and compare the r-pentomino's fate.\n- Change the birth rule to `n == 3 || n == 6` (HighLife) — same code, alien ecology.\n- Raise `gens` to 80 — still near-instant; the JSON grows linearly."
     }
   ],
   "createdAt": "2026-07-10T00:00:00.000Z",

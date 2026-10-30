@@ -3,7 +3,7 @@ import {
   buildNotebookGenerationUserPrompt,
 } from './notebookGeneration.js';
 import { buildCellRepairPrompt, cellRepairDiagnostic } from './cellRepair.js';
-import { currentCellText, describeNotebookVariables, HTML_NB_BRIDGE_GUIDE, JS_RETURN_GUIDE, LUA_NB_GUIDE, SQL_GUIDE, UI_CONTROL_GUIDE } from './generationContext.js';
+import { C_GUIDE, currentCellText, describeNotebookVariables, HTML_NB_BRIDGE_GUIDE, JS_RETURN_GUIDE, LUA_NB_GUIDE, SQL_GUIDE, UI_CONTROL_GUIDE } from './generationContext.js';
 
 const EXTENSION = {
   md: 'md', js: 'js', py: 'py', c: 'c', rust: 'rs', lua: 'lua', sql: 'sql', java: 'java',
@@ -14,7 +14,7 @@ const GUIDANCE = {
   md: 'Write Markdown only.',
   js: 'Write one JavaScript snippet. Top-level await is allowed. Use nb.set(key, value), nb.get(key), and console.log for notebook data and output. ' + JS_RETURN_GUIDE,
   py: 'Write one Python snippet runnable in Pyodide. numpy and matplotlib are preloaded. Use nb["key"] to share notebook values and print visible results.',
-  c: 'Write a complete single-file C program with main(), compatible with common standard headers.',
+  c: 'Write a complete single-file C program with main(). ' + C_GUIDE,
   rust: 'Write a complete single-file Rust program with fn main() and the standard library only.',
   lua: 'Write a complete Lua 5.4 program using the standard library only. ' + LUA_NB_GUIDE,
   java: 'Write a complete Java program with one public class and public static void main(String[] args).',

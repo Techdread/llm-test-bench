@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-30T14:09:01.811Z",
+  "generatedAt": "2026-10-30T15:21:17.416Z",
   "root": "shared/lib",
   "notes": [
     "Minimal vendored runtime set for the LLM Test Bench public distribution."
@@ -219,6 +219,16 @@
           "Solver code MIT (c) Scott Petrovic; core assets CC0. Notices in the version folder.",
           "TypeScript solvers transpiled upstream-side to ES2022; bare 'three' specifiers rewritten to the vendored three path because module Workers ignore import maps.",
           "assets/human-base-animations.glb carries all 87 base clips with the upstream example mesh removed."
+        ]
+      }
+    },
+    "xcc": {
+      "0.1.13-631e318": {
+        "path": "xcc/0.1.13-631e318",
+        "sources": [
+          "git:https://github.com/tyfkda/xcc@631e318432aeaaf72d6d2dfc93085766934314a2",
+          "patch:tools/patches/xcc-notebook-lab.patch",
+          "build:tools/vendor-xcc.mjs"
         ]
       }
     }

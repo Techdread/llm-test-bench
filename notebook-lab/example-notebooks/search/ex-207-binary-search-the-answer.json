@@ -4,7 +4,7 @@
     {
       "id": "c-ex207-md01",
       "kind": "md",
-      "source": "# Binary Search *on the Answer*\n\nBinary search doesn't need an array — it needs a **monotonic yes/no question**. Here the question is:\n\n> \"Can we pick 4 of these 14 shelf positions for wifi routers so that every pair is at least *d* metres apart?\"\n\nIf it works for some *d*, it works for every smaller *d* — the answers look like `yes yes yes ... no no no`. So we binary-search *d* itself: the classic \"aggressive cows\" trick that turns optimisation into feasibility.\n\nThe C cell runs instantly in the in-browser interpreter (JSCPP) — no VM required. The greedy feasibility check (\"always place at the first position far enough from the last router\") is what makes each probe cheap."
+      "source": "# Binary Search *on the Answer*\n\nBinary search doesn't need an array — it needs a **monotonic yes/no question**. Here the question is:\n\n> \"Can we pick 4 of these 14 shelf positions for wifi routers so that every pair is at least *d* metres apart?\"\n\nIf it works for some *d*, it works for every smaller *d* — the answers look like `yes yes yes ... no no no`. So we binary-search *d* itself: the classic \"aggressive cows\" trick that turns optimisation into feasibility.\n\nThe C cell is compiled in your browser (xcc, to WebAssembly) and runs instantly — no VM required. The greedy feasibility check (\"always place at the first position far enough from the last router\") is what makes each probe cheap."
     },
     {
       "id": "c-ex207-c01",

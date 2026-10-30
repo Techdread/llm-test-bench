@@ -9,7 +9,7 @@
     {
       "id": "c-t02-intro",
       "kind": "md",
-      "source": "# 02 Sharing Data Between Cells\n\nEvery cell in a notebook can read and write one shared store called `nb`. Think of it as a set of named boxes. One cell puts a value in a box, and any other cell can take a look. This notebook passes a shopping basket around, from JavaScript to Python to a chart, a slider, a live receipt and a Lua cell.\n\n| Cell | Read a value | Write a value |\n| --- | --- | --- |\n| **JavaScript** | `nb.get('basket')` | `nb.set('basket', value)` |\n| **Python** | `nb['basket']` or `nb.get('basket', [])` | `nb['basket'] = value` |\n| **HTML** | `nb.get('basket')`, plus `nb.onChange(fn)` to redraw | `nb.set('basket', value)` |\n| **Controls** | show the current value | `\"bind\": \"discount_pct\"` |\n| **Lua** | `nb.get('basket', {})` | `nb.set('shop_hours', value)` |\n| **C** | can't read | print `__NB_SET__ {\"key\": \"…\", \"value\": …}` |\n\nPress **Run all**, then open the **Variables** panel on the right to watch the boxes fill up."
+      "source": "# 02 Sharing Data Between Cells\n\nEvery cell in a notebook can read and write one shared store called `nb`. Think of it as a set of named boxes. One cell puts a value in a box, and any other cell can take a look. This notebook passes a shopping basket around, from JavaScript to Python to a chart, a slider, a live receipt and a Lua cell.\n\n| Cell | Read a value | Write a value |\n| --- | --- | --- |\n| **JavaScript** | `nb.get('basket')` | `nb.set('basket', value)` |\n| **Python** | `nb['basket']` or `nb.get('basket', [])` | `nb['basket'] = value` |\n| **HTML** | `nb.get('basket')`, plus `nb.onChange(fn)` to redraw | `nb.set('basket', value)` |\n| **Controls** | show the current value | `\"bind\": \"discount_pct\"` |\n| **Lua** | `nb.get('basket', {})` | `nb.set('shop_hours', value)` |\n| **C** | `nb_get_number(\"discount_pct\", 0)`, with `#include <nb.h>` | `nb_set_number(\"total\", value)` |\n| **Rust, Java, Go** (hub) | can't read | print `__NB_SET__ {\"key\": \"…\", \"value\": …}` |\n\nPress **Run all**, then open the **Variables** panel on the right to watch the boxes fill up."
     },
     {
       "id": "c-t02-basket",
@@ -89,5 +89,5 @@
     }
   ],
   "createdAt": "2026-04-18T19:35:37.853724Z",
-  "updatedAt": "2026-10-30T18:00:00.000Z"
+  "updatedAt": "2026-10-30T20:00:00.000Z"
 }

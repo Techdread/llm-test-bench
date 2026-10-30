@@ -43,10 +43,13 @@ export const UI_CONTROL_GUIDE = 'Also available: a "readout" control that displa
   + 'sliders and numbers take min, max and step, and sliders may add "prefix", "suffix" or "precision". '
   + 'Each control may give x, y, width and height in pixels; when they are omitted, controls are laid out three to a row.';
 
-/** What the default C runner (a small interpreter) can't do. */
-export const C_INTERPRETER_GUIDE = 'By default C runs in a small interpreter, not a full compiler: '
-  + 'avoid struct and arrays of strings (use parallel arrays of numbers), keep integer arithmetic inside the int range (overflow is an error), '
-  + 'and print with %d, %f and %s (no %ld).';
+/** How C cells are compiled (xcc, to WebAssembly) and reach the notebook (<nb.h>). */
+export const C_GUIDE = 'C cells are compiled to WebAssembly by xcc: C11 with structs, pointers, malloc and the standard library '
+  + '(stdio.h, stdlib.h, string.h, math.h, time.h, ctype.h, stdint.h). long is 32 bits there, so use long long for big integers. '
+  + 'To read and share notebook variables, #include <nb.h>: nb_get_number(key, fallback), nb_get_int(key, fallback), '
+  + 'nb_get_string(key, buf, size), nb_get_doubles(key, out, max) and nb_get_ints(key, out, max) (these return the full length, or -1), '
+  + 'nb_get_json(key, buf, size) and nb_has(key); then nb_set_number, nb_set_int, nb_set_string, nb_set_doubles(key, values, count), '
+  + 'nb_set_ints and nb_set_json(key, json). Reads see nb as it was when the cell started; writes are shared when it ends.';
 
 function shapeOf(value) {
   if (value === null || value === undefined) return 'empty';
@@ -92,7 +95,7 @@ const KIND_GUIDANCE = {
   md: 'Respond with Markdown only. No code fences around the outer Markdown.',
   js: 'Respond with a single JavaScript snippet. Use top-level await if needed. You may call `nb.set(key, value)` and `nb.get(key)` to share values between cells. Use `console.log` for output. ' + JS_RETURN_GUIDE,
   py: 'Respond with a single Python snippet runnable in Pyodide. matplotlib/numpy are available via `await micropip.install("numpy")` style setup only if needed (numpy/matplotlib are preloaded). Use `nb["key"] = value` / `nb["key"]` to share values with other cells. Print results you want to see.',
-  c: 'Respond with a complete single-file C program with a main() function. Use printf/puts for output. Use only common standard headers such as stdio.h, stdlib.h, string.h, and math.h. ' + C_INTERPRETER_GUIDE + ' To set a notebook variable, print a line exactly like: __NB_SET__ {"key":"answer","value":42}',
+  c: 'Respond with a complete single-file C program with a main() function. Use printf/puts for output. ' + C_GUIDE,
   rust: 'Respond with a complete single-file Rust program with fn main(). Use println! for output and only the Rust standard library. This runs through remote Rust Playground execution. To set a notebook variable, print a line exactly like: __NB_SET__ {"key":"answer","value":42}',
   lua: 'Respond with a complete single-file Lua 5.4 program. Use print for output. It runs offline via the Wasmoon WebAssembly runtime (standard Lua only — no LuaJIT, no external rocks). ' + LUA_NB_GUIDE,
   java: 'Respond with a complete single-file Java program: one public class containing `public static void main(String[] args)`. It compiles with real OpenJDK (javac) and runs in a Debian VM. Use System.out.println for output. To set a notebook variable, print a line exactly like: __NB_SET__ {"key":"answer","value":42}',

@@ -33,7 +33,7 @@ Both are view-only — folding never changes or saves the notebook.
 | **MD**   | Markdown. Double-click to edit, press *Done* (or Shift+Enter) to render. |
 | **JS**   | JavaScript. `console.log` captures output. Top-level `await` is supported. Last expression value is shown — **return a string of HTML and it renders as HTML** (see below). |
 | **Py**   | Python via Pyodide. NumPy, pandas, Matplotlib and SymPy ship locally; other locked packages such as SciPy download into the data-root cache automatically on first import. Pyodide loads on first run — the initial load can take 10–30 s. |
-| **C**    | Small single-file C programs via JSCPP. Use `printf` / `puts` for output. |
+| **C**    | Single-file C11 programs, compiled in your browser by xcc (WebAssembly): structs, pointers, `malloc` and the standard library, at close to native speed. `printf` for output; `#include <nb.h>` to read and share `nb`. A program still running after 10 seconds is stopped. |
 | **Rust** | Small single-file Rust programs via the public Rust Playground API. Use `println!` for output. Requires network access. |
 | **Lua**  | Small single-file Lua 5.4 programs via Wasmoon (WebAssembly). Use `print` for output. Two-way `nb`. Runs fully offline. |
 | **SQL**  | SQLite queries via sql.js (WebAssembly). Lists of rows in `nb` are tables; `-- save as: key` saves a result. See *SQL cells* below. |
@@ -71,6 +71,7 @@ return `
 - **JS:**  `nb.set('result', 42)`,  `nb.get('result')`,  `nb.keys()`,  `nb.has('x')`.
   `nb.get` and `nb.set` trade copies: changing a list you got from `nb.get` changes nothing shared until you `nb.set` it back.
 - **Python:**  `nb["result"] = 42`,  `nb["result"]`,  `nb.keys()`,  `nb.get("x")`.
+- **C:**  `#include <nb.h>`, then `nb_get_number("key", fallback)`, `nb_get_int`, `nb_get_string(key, buf, size)`, `nb_get_doubles(key, out, max)` and `nb_get_ints` to read, a matching `nb_set_…` for each to share, and `nb_get_json` / `nb_set_json` for anything else. C sees `nb` as it was when the cell started; its changes are shared when it finishes.
 - **Lua:**  `nb.set('result', 42)`,  `nb.get('result', default)`,  `nb.keys()`,  `nb.has('x')`. Values arrive as plain Lua tables: lists count from 1, and `null` becomes `nil`. A table that is a sequence goes back as a list.
 
 Values must be JSON-serialisable (numbers, strings, arrays, plain objects). The **Variables** sidebar shows the current contents.
@@ -84,7 +85,7 @@ Control values are **typed and formatted** for you:
 - `slider` and `readout` format their display with `"precision"` (decimal places), `"prefix"` and `"suffix"` — the stored value stays the raw number.
 - A `button` can `"action": "increment"` (counter), `"toggle"` (boolean), or the default `"set"` (writes its `value`, or a fresh timestamp if none). Use `"set": { … }` to write several variables at once (e.g. a Reset button).
 
-For C, Rust and the Linux-VM languages, direct `nb` bindings are not available. To set a notebook variable from stdout, print a marker line:
+For Rust and the Linux-VM languages, direct `nb` bindings are not available. To set a notebook variable from stdout, print a marker line:
 
 ```text
 __NB_SET__ {"key":"answer","value":42}
@@ -159,7 +160,7 @@ use **Hard reset this tab** when you also want to release the active runtime.
 |------|-------------------------|-----------------------------------|
 | **Py**   | Pyodide — version-locked package cache, two-way `nb`, last value + figure capture. | Real `python3` 3.11. Stdlib only. Emit-only `nb` (writes turn into `__NB_SET__`; reads raise). |
 | **Rust** | Rust Playground (remote API, needs internet, no stdin). | Real `rustc`, offline. Compiles take tens of seconds under emulation. |
-| **C**    | JSCPP — instant, limited language coverage. | Real `gcc` / `g++` — full C99/C++17 with proper diagnostics. |
+| **C**    | xcc — a real C compiler built for WebAssembly: fast, offline, two-way `nb` through `<nb.h>`. (JSCPP, the older interpreter, can still be picked.) | Real `gcc` / `g++` — full C99/C++17 with proper diagnostics. |
 
 All Debian backends share **one** v86 guest. The first cell that needs it boots Debian (~30 s); after that every Debian-backed language reuses the same VM instantly.
 
