@@ -7,17 +7,55 @@
     {
       "id": "c-ex204-md01",
       "kind": "md",
-      "source": "# Mini Full-Text Search Engine\n\nThe heart of every text search engine in ~50 lines of Python:\n\n1. **Tokenise** each document into lowercase words.\n2. Score each word per document with **TF-IDF**: frequent *in this document*, rare *across documents*.\n3. Rank documents by **cosine similarity** between the query vector and each document vector.\n\nThe Python cell reads its query from the notebook variable `query` (bound to the text box below), so the loop is: type → re-run the Python cell → results update."
+      "source": "# Mini Full-Text Search Engine\n\nThe heart of every text search engine, in about 50 lines of Python:\n\n1. **Split** each document into lowercase words.\n2. **Weight** each word in each document with **TF-IDF**: high when the word is common *in that document* but rare *across all of them*.\n3. **Rank** the documents by how closely their weights point the same way as the query's (**cosine similarity**).\n\nHow the cells run:\n\n- **Python runs in your browser** (Pyodide). The first Python cell takes a few seconds to load it; nothing is sent anywhere.\n- **Python reads the query from `nb`.** The text box below is bound to `query`. Type a new query, then press **▶** on the engine cell; the results page updates by itself.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it.\n\nPress **Run all**."
+    },
+    {
+      "id": "c-ex204-md02",
+      "kind": "md",
+      "source": "## 1. The engine\n\n> In Python, build a tiny full-text search engine over 12 short geography documents (a title and one sentence each, about volcanoes, reefs, deserts, glaciers, the monsoon, sea ice, dunes, hotspots, rainforest and tsunamis): split them into lowercase words, weight the words with TF-IDF, scale each document's vector to length 1, and rank the documents by cosine similarity with the query. Read the query from nb.get(\"query\") (default \"volcano island\"), print the top 5 with their scores, and save nb[\"search_results\"] (title, score to 3 places, and the first 110 characters as a snippet) and nb[\"search_query_echo\"].\n\n- **TF** (term frequency) is how much of a document a word makes up. **IDF** (inverse document frequency) is `log(N / df)`, where *df* is how many of the *N* documents contain the word. A word in every document gets an IDF of 0 and counts for nothing.\n- **`vectorize`** turns words into a dictionary of weights and scales it to length 1, so a long document doesn't win just by being long.\n- **`search`** multiplies the query's weights by each document's and adds them up. Only words the two share count."
     },
     {
       "id": "c-ex204-py01",
       "kind": "py",
-      "source": "import math\nimport re\n\nDOCS = {\n    \"Krakatoa\":        \"The volcano island of Krakatoa erupted with a blast heard thousands of miles away, and the eruption reshaped the entire island.\",\n    \"Reef life\":       \"A coral reef teems with fish, anemones and slow-growing coral colonies that build limestone over centuries in warm shallow water.\",\n    \"Sahara winds\":    \"Hot desert wind lifts sand from the Sahara and carries fine dust across the ocean, feeding distant rainforest soils.\",\n    \"Iceland\":         \"Iceland is a volcanic island where glaciers sit beside active volcano systems, and eruptions can melt glacial ice into floods.\",\n    \"Alpine glaciers\": \"A glacier grinds slowly down the alpine valley, carving rock and leaving moraines as the ice retreats each summer.\",\n    \"Pacific atolls\":  \"An atoll forms when a volcanic island sinks below the sea, leaving a ring of coral reef around a calm lagoon.\",\n    \"Monsoon\":         \"The monsoon wind reverses with the seasons, bringing months of heavy rain that flood rivers and fill reservoirs.\",\n    \"Sea ice\":         \"Polar sea ice grows in winter darkness and shrinks each summer, and its bright surface reflects sunlight back into space.\",\n    \"Dune fields\":     \"Wind builds desert dunes grain by grain, and the largest dune fields sing with a low hum as sand avalanches down their faces.\",\n    \"Hotspot chains\":  \"A volcanic hotspot stays put while the plate drifts over it, stamping out a chain of islands like Hawaii, oldest at one end.\",\n    \"Rainforest\":      \"A tropical rainforest recycles its own rain: trees pump water skyward, clouds form, and the forest waters itself.\",\n    \"Tsunami\":         \"An undersea earthquake or a collapsing volcano can push a tsunami across the ocean at the speed of a jet aircraft.\",\n}\n\ndef tokenize(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n# Document frequency: in how many docs does each word appear?\ndoc_tokens = {title: tokenize(text) for title, text in DOCS.items()}\ndf = {}\nfor tokens in doc_tokens.values():\n    for w in set(tokens):\n        df[w] = df.get(w, 0) + 1\n\nN = len(DOCS)\ndef idf(w):\n    return math.log(N / df[w]) if w in df else 0.0\n\n# TF-IDF vector per document (sparse dicts), pre-normalised.\ndef vectorize(tokens):\n    tf = {}\n    for w in tokens:\n        tf[w] = tf.get(w, 0) + 1\n    vec = {w: (count / len(tokens)) * idf(w) for w, count in tf.items()}\n    norm = math.sqrt(sum(v * v for v in vec.values())) or 1.0\n    return {w: v / norm for w, v in vec.items()}\n\ndoc_vecs = {title: vectorize(tokens) for title, tokens in doc_tokens.items()}\n\ndef search(query, top=5):\n    qvec = vectorize(tokenize(query))\n    scored = []\n    for title, dvec in doc_vecs.items():\n        score = sum(qvec.get(w, 0) * dvec.get(w, 0) for w in qvec)\n        if score > 0:\n            scored.append((score, title))\n    scored.sort(reverse=True)\n    return scored[:top]\n\nquery = nb.get(\"query\") or \"volcano island\"\nresults = search(query)\n\nprint(f'query: \"{query}\"')\nif not results:\n    print(\"no matches - every query word is either absent or in every document\")\nfor score, title in results:\n    print(f\"  {score:.3f}  {title}\")\n\nnb[\"search_results\"] = [\n    {\"title\": t, \"score\": round(s, 3), \"snippet\": DOCS[t][:110] + \"...\"}\n    for s, t in results\n]\nnb[\"search_query_echo\"] = query"
+      "source": "import math\nimport re\n\nDOCS = {\n    \"Krakatoa\":        \"The volcano island of Krakatoa erupted with a blast heard thousands of miles away, and the eruption reshaped the entire island.\",\n    \"Reef life\":       \"A coral reef teems with fish, anemones and slow-growing coral colonies that build limestone over centuries in warm shallow water.\",\n    \"Sahara winds\":    \"Hot desert wind lifts sand from the Sahara and carries fine dust across the ocean, feeding distant rainforest soils.\",\n    \"Iceland\":         \"Iceland is a volcanic island where glaciers sit beside active volcano systems, and eruptions can melt glacial ice into floods.\",\n    \"Alpine glaciers\": \"A glacier grinds slowly down the alpine valley, carving rock and leaving moraines as the ice retreats each summer.\",\n    \"Pacific atolls\":  \"An atoll forms when a volcanic island sinks below the sea, leaving a ring of coral reef around a calm lagoon.\",\n    \"Monsoon\":         \"The monsoon wind reverses with the seasons, bringing months of heavy rain that flood rivers and fill reservoirs.\",\n    \"Sea ice\":         \"Polar sea ice grows in winter darkness and shrinks each summer, and its bright surface reflects sunlight back into space.\",\n    \"Dune fields\":     \"Wind builds desert dunes grain by grain, and the largest dune fields sing with a low hum as sand avalanches down their faces.\",\n    \"Hotspot chains\":  \"A volcanic hotspot stays put while the plate drifts over it, stamping out a chain of islands like Hawaii, oldest at one end.\",\n    \"Rainforest\":      \"A tropical rainforest recycles its own rain: trees pump water skyward, clouds form, and the forest waters itself.\",\n    \"Tsunami\":         \"An undersea earthquake or a collapsing volcano can push a tsunami across the ocean at the speed of a jet aircraft.\",\n}\n\ndef tokenize(text):\n    return re.findall(r\"[a-z]+\", text.lower())\n\n# Document frequency: in how many docs does each word appear?\ndoc_tokens = {title: tokenize(text) for title, text in DOCS.items()}\ndf = {}\nfor tokens in doc_tokens.values():\n    for w in set(tokens):\n        df[w] = df.get(w, 0) + 1\n\nN = len(DOCS)\ndef idf(w):\n    return math.log(N / df[w]) if w in df else 0.0\n\n# TF-IDF vector per document (sparse dicts), pre-normalised.\ndef vectorize(tokens):\n    tf = {}\n    for w in tokens:\n        tf[w] = tf.get(w, 0) + 1\n    vec = {w: (count / len(tokens)) * idf(w) for w, count in tf.items()}\n    norm = math.sqrt(sum(v * v for v in vec.values())) or 1.0\n    return {w: v / norm for w, v in vec.items()}\n\ndoc_vecs = {title: vectorize(tokens) for title, tokens in doc_tokens.items()}\n\ndef search(query, top=5):\n    qvec = vectorize(tokenize(query))\n    scored = []\n    for title, dvec in doc_vecs.items():\n        score = sum(qvec.get(w, 0) * dvec.get(w, 0) for w in qvec)\n        if score > 0:\n            scored.append((score, title))\n    scored.sort(reverse=True)\n    return scored[:top]\n\nquery = nb.get(\"query\") or \"volcano island\"\nresults = search(query)\n\nprint(f'query: \"{query}\"')\nif not results:\n    print(\"no matches - every query word is either absent or in every document\")\nfor score, title in results:\n    print(f\"  {score:.3f}  {title}\")\n\nnb[\"search_results\"] = [\n    {\"title\": t, \"score\": round(s, 3), \"snippet\": DOCS[t][:110] + \"...\"}\n    for s, t in results\n]\nnb[\"search_query_echo\"] = query",
+      "metadata": {
+        "ai": {
+          "prompt": "In Python, build a tiny full-text search engine over 12 short geography documents (a title and one sentence each, about volcanoes, reefs, deserts, glaciers, the monsoon, sea ice, dunes, hotspots, rainforest and tsunamis): split them into lowercase words, weight the words with TF-IDF, scale each document's vector to length 1, and rank the documents by cosine similarity with the query. Read the query from nb.get(\"query\") (default \"volcano island\"), print the top 5 with their scores, and save nb[\"search_results\"] (title, score to 3 places, and the first 110 characters as a snippet) and nb[\"search_query_echo\"].",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "a0ea0835",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex204-md03",
+      "kind": "md",
+      "source": "## 2. Ask it something\n\n> Controls, 900 pixels wide: a text box \"Query\" bound to query, default \"volcano island\", with the placeholder \"e.g. glacier, coral reef, desert wind\".\n\n> Show nb.search_results as result cards: the title, the score on the right in small purple monospace, a purple bar as wide as the score is against the best one, and the snippet in grey. Above them say how many results there are for the query in nb.search_query_echo, and show \"No matches.\" when there are none. Redraw whenever nb changes. Dark theme.\n\nType a query, then press **▶** on the engine cell above."
     },
     {
       "id": "c-ex204-ui01",
       "kind": "ui",
-      "source": "{\n  \"width\": 900,\n  \"height\": 110,\n  \"controls\": [\n    {\n      \"type\": \"text\",\n      \"label\": \"Query\",\n      \"bind\": \"query\",\n      \"default\": \"volcano island\",\n      \"placeholder\": \"e.g. glacier, coral reef, desert wind\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 560,\n      \"height\": 80\n    }\n  ]\n}"
+      "source": "{\n  \"width\": 900,\n  \"height\": 110,\n  \"controls\": [\n    {\n      \"type\": \"text\",\n      \"label\": \"Query\",\n      \"bind\": \"query\",\n      \"default\": \"volcano island\",\n      \"placeholder\": \"e.g. glacier, coral reef, desert wind\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 560,\n      \"height\": 80\n    }\n  ]\n}",
+      "metadata": {
+        "ai": {
+          "prompt": "Controls, 900 pixels wide: a text box \"Query\" bound to query, default \"volcano island\", with the placeholder \"e.g. glacier, coral reef, desert wind\".",
+          "kind": "ui",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "e0689bf0",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
     },
     {
       "id": "c-ex204-html01",
@@ -28,15 +66,51 @@
           "width": 960,
           "height": 460,
           "scale": 1
+        },
+        "ai": {
+          "prompt": "Show nb.search_results as result cards: the title, the score on the right in small purple monospace, a purple bar as wide as the score is against the best one, and the snippet in grey. Above them say how many results there are for the query in nb.search_query_echo, and show \"No matches.\" when there are none. Redraw whenever nb changes. Dark theme.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "5b7409b8",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
         }
       }
     },
     {
-      "id": "c-ex204-md02",
+      "id": "c-ex204-md04",
       "kind": "md",
-      "source": "## Why IDF matters\n\nTry the query `the ocean` — \"the\" appears in almost every document, so its IDF ≈ 0 and it contributes nothing; \"ocean\" decides the ranking alone. That one `log(N/df)` factor is what separates a search engine from string matching.\n\n## Try this\n\n- Query `glacier volcano` — Iceland should win because it is the only doc scoring on *both* words. Cosine similarity rewards covering more of the query.\n- Add a document of your own to `DOCS` and find a query that ranks it first.\n- Implement a **stop-word list** (skip `the`, `a`, `and` in `tokenize`) and check which rankings change (barely any — IDF was already doing that job).\n- Stretch: add naive **stemming** (strip trailing `s`) so `islands` matches `island`."
+      "source": "## 3. Why that order?\n\n> In Python, using the search engine above, explain the top result for the current query (nb.get(\"query\")): for each query word, print how many documents contain it, its IDF, its weight in the query and in the top document, and what it adds to the score, then the total, which should match the score above. Then print the five most common words with their IDF, and how many words appear in only one document.\n\nA ranking is just arithmetic, so it can explain itself. Run this after any query to see which words earned the top result its place."
+    },
+    {
+      "id": "c-ex204-py02",
+      "kind": "py",
+      "source": "query = nb.get(\"query\") or \"volcano island\"\nresults = search(query)\n\nif not results:\n    print(f'no results for \"{query}\", so nothing to explain')\nelse:\n    score, title = results[0]\n    qvec = vectorize(tokenize(query))\n    dvec = doc_vecs[title]\n    print(f'why \"{title}\" tops \"{query}\" (score {score:.3f})\\n')\n    print(f\"{'word':<12}{'docs':>5}{'idf':>7}{'query':>8}{'doc':>8}{'adds':>8}\")\n    total = 0.0\n    for w in sorted(qvec, key=lambda w: -qvec[w] * dvec.get(w, 0)):\n        adds = qvec[w] * dvec.get(w, 0)\n        total += adds\n        print(f\"{w:<12}{df.get(w, 0):>5}{idf(w):>7.3f}{qvec[w]:>8.3f}{dvec.get(w, 0):>8.3f}{adds:>8.3f}\")\n    print(f\"{'total':<40}{total:>8.3f}\")\n\ncommon = sorted(df, key=lambda w: -df[w])[:5]\nprint(\"\\nmost common words:\", \", \".join(f\"{w} (in {df[w]}, idf {idf(w):.2f})\" for w in common))\nprint(f\"words in only one document: {sum(1 for w in df if df[w] == 1)} of {len(df)}\")",
+      "metadata": {
+        "ai": {
+          "prompt": "In Python, using the search engine above, explain the top result for the current query (nb.get(\"query\")): for each query word, print how many documents contain it, its IDF, its weight in the query and in the top document, and what it adds to the score, then the total, which should match the score above. Then print the five most common words with their IDF, and how many words appear in only one document.",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "7f89027d",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex204-md05",
+      "kind": "md",
+      "source": "## What the run shows\n\n- **\"volcano island\" ranks Krakatoa first** (0.336), then Iceland (0.209). The explainer shows why: Krakatoa says \"island\" twice. *Hotspot chains*, about a chain of volcanic islands, scores nothing at all, because it says \"volcanic\" and \"islands\", and to this engine those are different words.\n- **The same gap trips up `glacier volcano`.** Iceland has glaciers *and* a volcano, but it comes only 4th: it says \"glaciers\", not \"glacier\". *Alpine glaciers* wins (0.252) on the one exact word.\n- **IDF quietly ignores filler words.** \"and\", \"the\" and \"a\" are each in 9 of the 12 documents, so their IDF is only 0.29, while \"ocean\" (in 2) gets 1.79. For `the ocean`, \"ocean\" earns 0.204 of the top result's 0.214.\n- **Most words are rare.** 131 of the 164 different words appear in only one document, which is what lets a single word pick out a document.\n\n## Try this\n\nEach of these is a prompt. Press **✨** in a cell's header to change its prompt and generate it again, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **Word endings.** Press ✨ on the engine cell and add: *\"Strip a trailing s from every word, and turn 'volcanic' into 'volcano', so different forms of a word match.\"* Search `volcano island` again: does *Hotspot chains* appear now?\n- **Your own document.** Press ✨ on the engine cell and add: *\"Add a 13th document about a place you know\"*, then find a query that ranks it first.\n- **Phrases.** New Python cell: *\"Using the search engine above, give an extra 0.1 to documents that contain the whole query as a phrase, and compare the rankings for 'coral reef' with and without it.\"*\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the engine cell and ask why the vectors are scaled to length 1.\n\n**Next:** the *Word Ladder* treats words as a map and searches it in Clojure."
     }
   ],
   "createdAt": "2026-07-09T00:00:00.000Z",
-  "updatedAt": "2026-07-09T00:00:00.000Z"
+  "updatedAt": "2026-10-31T00:00:00.000Z"
 }

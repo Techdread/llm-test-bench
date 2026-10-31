@@ -8,17 +8,55 @@
     {
       "id": "c-ex203-md01",
       "kind": "md",
-      "source": "# A* Pathfinding Playground\n\nA* finds cheapest paths by expanding the node with the smallest **f = g + w·h**, where g is the cost so far and h is a heuristic guess of the cost remaining. The weight w is the interesting dial:\n\n- **w = 0** — the heuristic is ignored: this *is* Dijkstra. Thorough, expands everywhere.\n- **w = 1** — classic A*. With an admissible h, still optimal but far fewer expansions.\n- **w > 1** — greedy. Rushes at the goal, expands very little, may return a worse path.\n\nRun the JS cell to generate terrain, then drag the slider — the map re-searches **live**, no re-running needed."
+      "source": "# A* Pathfinding Playground\n\n**A\\*** (\"A star\") finds the cheapest route across a map. Each step it carries on from the square with the smallest **f = g + w × h**:\n\n- **g** is what the route to that square has cost so far;\n- **h** is a guess at the cost still to go: here, the distance to the goal as if every square cost 1;\n- **w** is how much to trust the guess, and it's the dial in this notebook.\n\nAt **w = 0** the guess is ignored and A\\* becomes **Dijkstra's algorithm**: careful, but it spreads out in every direction. At **w = 1** it's classic A\\*, still sure to find the cheapest route, from fewer squares. Above 1 it turns **greedy**: it rushes at the goal, looks at very little, and may settle for a dearer route.\n\nEverything here is JavaScript, so it runs in your browser at once, on the website too.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it.\n\nPress **Run all**, then drag the slider."
+    },
+    {
+      "id": "c-ex203-md02",
+      "kind": "md",
+      "source": "## 1. The terrain\n\n> In JavaScript, make a 48 × 32 terrain map for path-finding with a seeded random generator (mulberry32), so every run makes the same map: add up 24 random round hills and turn the height into a cost of 1 to 5 per square, then drop 26 random rectangles of wall (cost 0), keeping them out of the start and goal corners. Publish nb.astar_grid = {w, h, cost, start: [1, 1], goal: [46, 30]}, set nb.astar_weight to 1 and nb.astar_diagonal to false unless they're already set, and print the size and the number of wall squares.\n\n- **`mulberry32`** is a tiny random generator. Starting it from the same seed gives the same \"random\" numbers, so everyone gets this exact map.\n- **`cost`** is one list for the whole map, row after row: square (x, y) is `cost[y * W + x]`. A cost of 0 is a wall."
     },
     {
       "id": "c-ex203-js01",
       "kind": "js",
-      "source": "// Generate a weighted grid: terrain costs 1..5 plus impassable walls (0).\n// Seeded PRNG so every run produces the same map.\nfunction mulberry32(seed) {\n  let a = seed >>> 0;\n  return function () {\n    a = (a + 0x6D2B79F5) | 0;\n    let t = Math.imul(a ^ (a >>> 15), 1 | a);\n    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;\n    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n  };\n}\n\nconst W = 48, H = 32;\nconst rand = mulberry32(20260709);\n\n// Rolling-hills terrain: sum a few random bumps, quantise to cost 1..5.\nconst bumps = Array.from({ length: 24 }, () => ({\n  x: rand() * W, y: rand() * H, r: 4 + rand() * 10, amp: rand(),\n}));\nconst cost = new Array(W * H);\nfor (let y = 0; y < H; y++) {\n  for (let x = 0; x < W; x++) {\n    let v = 0;\n    for (const b of bumps) {\n      const d = Math.hypot(x - b.x, y - b.y);\n      if (d < b.r) v += b.amp * (1 - d / b.r);\n    }\n    cost[y * W + x] = 1 + Math.min(4, Math.floor(v * 2.2));\n  }\n}\n\n// Walls: random rectangles, kept away from start and goal corners.\nlet wallCells = 0;\nfor (let i = 0; i < 26; i++) {\n  const rw = 1 + Math.floor(rand() * 4);\n  const rh = 1 + Math.floor(rand() * 4);\n  const rx = Math.floor(rand() * (W - rw));\n  const ry = Math.floor(rand() * (H - rh));\n  if (rx + rw > W - 6 && ry + rh > H - 6) continue; // keep goal corner open\n  if (rx < 6 && ry < 6) continue;                   // keep start corner open\n  for (let y = ry; y < ry + rh; y++)\n    for (let x = rx; x < rx + rw; x++) {\n      if (cost[y * W + x] !== 0) wallCells++;\n      cost[y * W + x] = 0;\n    }\n}\n\nnb.set('astar_grid', { w: W, h: H, cost, start: [1, 1], goal: [W - 2, H - 2] });\nif (!nb.has('astar_weight')) nb.set('astar_weight', 1);\nif (!nb.has('astar_diagonal')) nb.set('astar_diagonal', false);\n\nconsole.log('grid ' + W + 'x' + H + ', ' + wallCells + ' wall cells, costs 1..5');\nconsole.log('published as astar_grid - the map below updates automatically');"
+      "source": "// Generate a weighted grid: terrain costs 1..5 plus impassable walls (0).\n// Seeded PRNG so every run produces the same map.\nfunction mulberry32(seed) {\n  let a = seed >>> 0;\n  return function () {\n    a = (a + 0x6D2B79F5) | 0;\n    let t = Math.imul(a ^ (a >>> 15), 1 | a);\n    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;\n    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n  };\n}\n\nconst W = 48, H = 32;\nconst rand = mulberry32(20260709);\n\n// Rolling-hills terrain: sum a few random bumps, quantise to cost 1..5.\nconst bumps = Array.from({ length: 24 }, () => ({\n  x: rand() * W, y: rand() * H, r: 4 + rand() * 10, amp: rand(),\n}));\nconst cost = new Array(W * H);\nfor (let y = 0; y < H; y++) {\n  for (let x = 0; x < W; x++) {\n    let v = 0;\n    for (const b of bumps) {\n      const d = Math.hypot(x - b.x, y - b.y);\n      if (d < b.r) v += b.amp * (1 - d / b.r);\n    }\n    cost[y * W + x] = 1 + Math.min(4, Math.floor(v * 2.2));\n  }\n}\n\n// Walls: random rectangles, kept away from start and goal corners.\nlet wallCells = 0;\nfor (let i = 0; i < 26; i++) {\n  const rw = 1 + Math.floor(rand() * 4);\n  const rh = 1 + Math.floor(rand() * 4);\n  const rx = Math.floor(rand() * (W - rw));\n  const ry = Math.floor(rand() * (H - rh));\n  if (rx + rw > W - 6 && ry + rh > H - 6) continue; // keep goal corner open\n  if (rx < 6 && ry < 6) continue;                   // keep start corner open\n  for (let y = ry; y < ry + rh; y++)\n    for (let x = rx; x < rx + rw; x++) {\n      if (cost[y * W + x] !== 0) wallCells++;\n      cost[y * W + x] = 0;\n    }\n}\n\nnb.set('astar_grid', { w: W, h: H, cost, start: [1, 1], goal: [W - 2, H - 2] });\nif (!nb.has('astar_weight')) nb.set('astar_weight', 1);\nif (!nb.has('astar_diagonal')) nb.set('astar_diagonal', false);\n\nconsole.log('grid ' + W + 'x' + H + ', ' + wallCells + ' wall cells, costs 1..5');\nconsole.log('published as astar_grid - the map below updates automatically');",
+      "metadata": {
+        "ai": {
+          "prompt": "In JavaScript, make a 48 × 32 terrain map for path-finding with a seeded random generator (mulberry32), so every run makes the same map: add up 24 random round hills and turn the height into a cost of 1 to 5 per square, then drop 26 random rectangles of wall (cost 0), keeping them out of the start and goal corners. Publish nb.astar_grid = {w, h, cost, start: [1, 1], goal: [46, 30]}, set nb.astar_weight to 1 and nb.astar_diagonal to false unless they're already set, and print the size and the number of wall squares.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "0ed68ef0",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex203-md03",
+      "kind": "md",
+      "source": "## 2. Steer the search\n\n> Controls, 900 pixels wide: a slider \"Heuristic weight\" bound to astar_weight, 0 to 3 in steps of 0.25, default 1; and a checkbox \"Allow diagonal moves\" bound to astar_diagonal, default off.\n\n> Run A* on nb.astar_grid live, with f = g + w × h where w is nb.astar_weight, h is the Manhattan distance to the goal, or the octile distance when nb.astar_diagonal is on, and a diagonal step costs 1.41 times the square's cost. Draw the map on a canvas: terrain from dark green (cheap) to dark red (dear), walls almost black, grey over every square the search expanded, the route as a thick amber line, the start blue and the goal pink. Above it show w, the squares expanded and the route's cost and length, or \"no path found\". Redraw whenever nb changes. Dark theme.\n\nThe map searches again every time you move the slider; there's nothing to re-run.\n\n- **w = 0**: the grey \"expanded\" cloud spreads out evenly. That's Dijkstra, looking at cost alone.\n- **w = 1**: the same route cost, from fewer squares.\n- **w = 3**: a thin trail and an instant answer. Compare the route's cost with w = 1.\n- **Diagonals** switch the guess from Manhattan to octile distance, which never overestimates a diagonal walk either."
     },
     {
       "id": "c-ex203-ui01",
       "kind": "ui",
-      "source": "{\n  \"width\": 900,\n  \"height\": 130,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"Heuristic weight\",\n      \"bind\": \"astar_weight\",\n      \"default\": 1,\n      \"min\": 0,\n      \"max\": 3,\n      \"step\": 0.25,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 520,\n      \"height\": 76\n    },\n    {\n      \"type\": \"checkbox\",\n      \"label\": \"Allow diagonal moves\",\n      \"bind\": \"astar_diagonal\",\n      \"default\": false,\n      \"x\": 560,\n      \"y\": 20,\n      \"width\": 280,\n      \"height\": 44\n    }\n  ]\n}"
+      "source": "{\n  \"width\": 900,\n  \"height\": 130,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"Heuristic weight\",\n      \"bind\": \"astar_weight\",\n      \"default\": 1,\n      \"min\": 0,\n      \"max\": 3,\n      \"step\": 0.25,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 520,\n      \"height\": 76\n    },\n    {\n      \"type\": \"checkbox\",\n      \"label\": \"Allow diagonal moves\",\n      \"bind\": \"astar_diagonal\",\n      \"default\": false,\n      \"x\": 560,\n      \"y\": 20,\n      \"width\": 280,\n      \"height\": 44\n    }\n  ]\n}",
+      "metadata": {
+        "ai": {
+          "prompt": "Controls, 900 pixels wide: a slider \"Heuristic weight\" bound to astar_weight, 0 to 3 in steps of 0.25, default 1; and a checkbox \"Allow diagonal moves\" bound to astar_diagonal, default off.",
+          "kind": "ui",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "33826443",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
     },
     {
       "id": "c-ex203-html01",
@@ -29,15 +67,51 @@
           "width": 980,
           "height": 720,
           "scale": 1
+        },
+        "ai": {
+          "prompt": "Run A* on nb.astar_grid live, with f = g + w × h where w is nb.astar_weight, h is the Manhattan distance to the goal, or the octile distance when nb.astar_diagonal is on, and a diagonal step costs 1.41 times the square's cost. Draw the map on a canvas: terrain from dark green (cheap) to dark red (dear), walls almost black, grey over every square the search expanded, the route as a thick amber line, the start blue and the goal pink. Above it show w, the squares expanded and the route's cost and length, or \"no path found\". Redraw whenever nb changes. Dark theme.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "aba91981",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
         }
       }
     },
     {
-      "id": "c-ex203-md02",
+      "id": "c-ex203-md04",
       "kind": "md",
-      "source": "## What to look for\n\n- Slide **w to 0**: the grey \"expanded\" cloud floods symmetrically — Dijkstra explores by cost alone.\n- **w = 1**: same path cost from fewer expansions. The saving is modest here because varied terrain keeps the distance heuristic conservative — try the uniform-cost variant below for the dramatic version.\n- **w = 3**: tiny cloud, instant answer — but compare the path cost with w = 1. Greedy pays for its haste on expensive terrain.\n- Toggle diagonals: the heuristic switches from Manhattan to octile distance so it stays admissible.\n\n## Try this\n\n- Move the goal into a walled pocket in the JS cell (e.g. inside a rectangle) and watch \"no path found\" — A* proves absence by exhausting the open set.\n- Make the terrain uniform (`cost 1` everywhere): with w = 1 the expansion cloud becomes a tight corridor.\n- Change the heuristic to plain Euclidean distance and check whether w = 1 still matches Dijkstra's path cost."
+      "source": "## 3. The trade-off in numbers\n\n> Run A* on nb.astar_grid at every weight from 0 to 3 in steps of 0.25, exactly as the map above does (diagonal moves if nb.astar_diagonal is on), and print a table of the weight, the squares expanded and the route's cost. Return two Vega-Lite line charts, one above the other: squares expanded against the weight, and the route's cost against the weight.\n\nThe slider shows one weight at a time; this cell tries them all. Turn diagonals on or off above, then press **▶** on this cell to compare."
+    },
+    {
+      "id": "c-ex203-js02",
+      "kind": "js",
+      "source": "// A* at every weight from 0 to 3, the same search as the map above.\nconst grid = nb.get('astar_grid');\nif (!grid) return 'Run the terrain cell first.';\nconst diagonal = !!nb.get('astar_diagonal');\n\nfunction astar(weight) {\n  const { w: W, h: H, cost } = grid;\n  const [gx, gy] = grid.goal;\n  const start = grid.start[1] * W + grid.start[0];\n  const goal = gy * W + gx;\n  const g = new Array(W * H).fill(Infinity);\n  const closed = new Array(W * H).fill(false);\n  const guess = (i) => {\n    const dx = Math.abs((i % W) - gx), dy = Math.abs(((i / W) | 0) - gy);\n    return diagonal ? Math.max(dx, dy) + 0.41421 * Math.min(dx, dy) : dx + dy;\n  };\n  const steps = [[1, 0], [-1, 0], [0, 1], [0, -1]]\n    .concat(diagonal ? [[1, 1], [1, -1], [-1, 1], [-1, -1]] : []);\n\n  g[start] = 0;\n  const open = [[weight * guess(start), start]];\n  let expanded = 0;\n  while (open.length) {\n    let best = 0;                               // smallest f; the first one wins a tie, as on the map\n    for (let i = 1; i < open.length; i++) if (open[i][0] < open[best][0]) best = i;\n    const cur = open.splice(best, 1)[0][1];\n    if (closed[cur]) continue;\n    closed[cur] = true;\n    expanded++;\n    if (cur === goal) break;\n    const cx = cur % W, cy = (cur / W) | 0;\n    for (const [dx, dy] of steps) {\n      const nx = cx + dx, ny = cy + dy;\n      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;\n      const ni = ny * W + nx;\n      if (cost[ni] === 0 || closed[ni]) continue;\n      const tentative = g[cur] + cost[ni] * (dx && dy ? 1.41421 : 1);\n      if (tentative < g[ni]) {\n        g[ni] = tentative;\n        open.push([tentative + weight * guess(ni), ni]);\n      }\n    }\n  }\n  return { expanded, cost: g[goal] };\n}\n\nconst rows = [];\nfor (let w = 0; w <= 3; w += 0.25) {\n  const r = astar(w);\n  rows.push({ weight: w, expanded: r.expanded, cost: Math.round(r.cost * 100) / 100 });\n}\nconsole.log('diagonal moves: ' + (diagonal ? 'on' : 'off'));\nconsole.log('weight  expanded  route cost');\nfor (const r of rows) {\n  console.log(r.weight.toFixed(2).padStart(6) + String(r.expanded).padStart(10) + r.cost.toFixed(2).padStart(12));\n}\n\nconst line = { type: 'line', point: true, tooltip: true };\nconst x = { field: 'weight', type: 'quantitative', title: 'heuristic weight w' };\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  data: { values: rows },\n  vconcat: [\n    { width: 760, height: 150, title: 'Squares expanded', mark: line,\n      encoding: { x, y: { field: 'expanded', type: 'quantitative', title: 'squares' } } },\n    { width: 760, height: 150, title: \"The route's cost\", mark: { ...line, color: '#f59e0b' },\n      encoding: { x, y: { field: 'cost', type: 'quantitative', title: 'cost', scale: { zero: false } } } },\n  ],\n};",
+      "metadata": {
+        "ai": {
+          "prompt": "Run A* on nb.astar_grid at every weight from 0 to 3 in steps of 0.25, exactly as the map above does (diagonal moves if nb.astar_diagonal is on), and print a table of the weight, the squares expanded and the route's cost. Return two Vega-Lite line charts, one above the other: squares expanded against the weight, and the route's cost against the weight.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "9e94611f",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex203-md05",
+      "kind": "md",
+      "source": "## What the run shows\n\nWith diagonals off:\n\n- **w = 1 barely helps on this map.** Dijkstra (w = 0) expands 1,352 squares and classic A\\* 1,264, both finding the cheapest route, which costs 96. The guess counts every square as 1 when most cost more, so it guesses far too low to steer much.\n- **w = 1.5 is the sweet spot here.** It expands just 348 squares, a quarter of Dijkstra's, and still finds a route costing 96. Nothing promises that; it's this map's luck.\n- **Beyond that, haste costs.** From w = 1.75 the route costs 103 to 107, while the search shrinks to 75 squares from w = 2.5 up. It doesn't even get worse steadily: w = 1.75 settles for 107, w = 2 for 103.\n\n## Try this\n\nEach of these is a prompt. Press **✨** in a cell's header to change its prompt and generate it again, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **Walled in.** Press ✨ on the terrain cell and add: *\"Then put a ring of wall around the goal.\"* The map says \"no path found\": A\\* proves there's no route by running out of squares to try.\n- **Flat ground.** Press ✨ on the terrain cell and add: *\"Make every square cost 1, keeping the walls.\"* With w = 1 the grey cloud shrinks to a narrow band, because on flat ground the guess is nearly exact.\n- **A straighter guess.** Press ✨ on the map cell and add: *\"Use the straight-line (Euclidean) distance for h.\"* At w = 1, does it still find Dijkstra's cost?\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the map cell and ask why a weight above 1 can return a dearer route.\n\n**Next:** the *8-Puzzle Solver* uses the same f = g + h on a puzzle instead of a map."
     }
   ],
   "createdAt": "2026-07-09T00:00:00.000Z",
-  "updatedAt": "2026-07-09T00:00:00.000Z"
+  "updatedAt": "2026-10-31T00:00:00.000Z"
 }

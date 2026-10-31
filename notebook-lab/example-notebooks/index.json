@@ -77,13 +77,16 @@
     "file": "search/ex-201-binary-search-log-n.json",
     "id": "ex-201",
     "title": "Binary Search & the Shape of O(log n)",
-    "description": "Instrument binary search in Python, race it against linear scan, then use \"binary search the answer\" on a problem with no array at all.",
+    "description": "Python counts the comparisons binary search makes and races it against a linear scan, an interactive page shows each halving, then the same idea finds an answer with no list at all.",
     "category": "search",
     "langs": [
-      "py"
+      "py",
+      "html"
     ],
     "features": [
-      "matplotlib"
+      "matplotlib",
+      "interactive",
+      "prompt-built"
     ],
     "addedAt": "2026-07-09"
   },
@@ -100,7 +103,9 @@
     ],
     "features": [
       "nb-html-bridge",
-      "interactive"
+      "interactive",
+      "chart",
+      "prompt-built"
     ],
     "addedAt": "2026-07-09"
   },
@@ -117,7 +122,8 @@
     ],
     "features": [
       "nb-html-bridge",
-      "interactive"
+      "interactive",
+      "prompt-built"
     ],
     "addedAt": "2026-07-09"
   },
@@ -133,22 +139,30 @@
     ],
     "features": [
       "browser",
-      "nb-emit"
+      "nb-emit",
+      "nb-read",
+      "prompt-built"
     ],
     "addedAt": "2026-07-10"
   },
   {
     "file": "search/ex-207-binary-search-the-answer.json",
     "id": "ex-207",
-    "title": "Binary Search *on the Answer* (C)",
-    "description": "No sorted array in sight: C binary-searches the answer itself to spread 4 routers as far apart as possible, and a JS cell charts the shrinking interval.",
+    "title": "Binary Search on the Answer (C)",
+    "description": "No sorted array in sight: C binary-searches the answer itself to spread routers as far apart as possible, a JS cell charts the shrinking interval, and an SVG shelf shows where they went.",
     "category": "search",
     "langs": [
       "c",
-      "js"
+      "ui",
+      "js",
+      "html"
     ],
     "features": [
-      "nb-emit"
+      "nb-read",
+      "nb-emit",
+      "nb-html-bridge",
+      "interactive",
+      "prompt-built"
     ],
     "addedAt": "2026-07-10"
   },
@@ -827,5 +841,125 @@
       "interactive"
     ],
     "addedAt": "2026-07-11"
+  },
+  {
+    "file": "bricks/ex-901-voxel-brick-compiler.json",
+    "id": "ex-901",
+    "title": "SDF-to-Brick Compiler & Greedy Mesher",
+    "description": "C voxelizes 3D signed-distance fields onto the 5:6 brick pitch grid, carves hollow shells, and runs an alternating-axis greedy brick-merging pass (2x4 down to 1x1) to maximize seam interlocking; Three.js renders the studded ABS assembly with a live layer cut-plane.",
+    "category": "bricks",
+    "langs": [
+      "ui",
+      "c",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "three-js",
+      "ui-controls",
+      "prompt-built"
+    ],
+    "addedAt": "2026-10-31"
+  },
+  {
+    "file": "bricks/ex-902-clutch-power-structural-fem.json",
+    "id": "ex-902",
+    "title": "Clutch-Power Graph & Cantilever Stress Solver",
+    "description": "C builds a stud-to-tube connectivity graph for a cantilevered brick bridge and solves bending-moment & shear equilibrium against per-stud clutch capacity (~2.2 N); Three.js renders the 3D stress heatmap, deflected geometry, and failing stud joints.",
+    "category": "bricks",
+    "langs": [
+      "ui",
+      "c",
+      "html",
+      "js"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "three-js",
+      "ui-controls",
+      "chart",
+      "prompt-built"
+    ],
+    "addedAt": "2026-10-31"
+  },
+  {
+    "file": "bricks/ex-903-brick-gear-train-kinematics.json",
+    "id": "ex-903",
+    "title": "Brick Gear Train Kinematics",
+    "description": "C solves angular velocity, torque multiplication, mesh loss, and cycle-jam detection across a brick-built drivetrain (8T, 16T, 24T, 40T gears + crank piston); Three.js animates the meshing teeth and reciprocating piston engine live.",
+    "category": "bricks",
+    "langs": [
+      "ui",
+      "c",
+      "html",
+      "js"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "three-js",
+      "ui-controls",
+      "chart",
+      "prompt-built"
+    ],
+    "addedAt": "2026-10-31"
+  },
+  {
+    "file": "bricks/ex-904-instruction-step-planner.json",
+    "id": "ex-904",
+    "title": "Auto-Generated Building Instructions & Exploded View",
+    "description": "C builds a gravity-support and vertical-insertion dependency DAG for a brick-built space cruiser, partitions bricks into topological build steps that keep mirror pairs together, and computes disassembly vectors; Three.js renders an interactive instruction booklet with step callouts and exploded view.",
+    "category": "bricks",
+    "langs": [
+      "ui",
+      "c",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "three-js",
+      "ui-controls",
+      "prompt-built"
+    ],
+    "addedAt": "2026-10-31"
+  },
+  {
+    "file": "bricks/ex-905-ldraw-geometry-instancing-lod.json",
+    "id": "ex-905",
+    "title": "LDraw Geometry Kernel & Instanced LOD Pipeline",
+    "description": "C builds a brick-built city block and runs hidden-stud occlusion culling plus distance-based stud LOD classification; a JS cell charts the nearly 80% triangle reduction in Vega-Lite and Three.js renders the batched InstancedMesh city with an LOD debug heatmap.",
+    "category": "bricks",
+    "langs": [
+      "ui",
+      "c",
+      "js",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "three-js",
+      "ui-controls",
+      "chart",
+      "prompt-built"
+    ],
+    "addedAt": "2026-10-31"
+  },
+  {
+    "file": "bricks/ex-906-cielab-brick-mosaic-relief.json",
+    "id": "ex-906",
+    "title": "Perceptual CIELAB Brick Mosaic & 3D Stud Relief",
+    "description": "C converts procedural artwork into CIE L*a*b* perceptual colour space, quantizes to 12 brick colours with Floyd-Steinberg error diffusion, and computes plate-stack relief; Three.js renders the 3D studded brick-art board.",
+    "category": "bricks",
+    "langs": [
+      "ui",
+      "c",
+      "html"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "three-js",
+      "ui-controls",
+      "prompt-built"
+    ],
+    "addedAt": "2026-10-31"
   }
 ]

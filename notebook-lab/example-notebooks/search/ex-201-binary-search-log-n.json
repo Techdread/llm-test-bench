@@ -4,39 +4,115 @@
     {
       "id": "c-ex201-md01",
       "kind": "md",
-      "source": "# Binary Search & the Shape of O(log n)\n\nBinary search answers \"where is x in this **sorted** list?\" by halving the search space each step: a million entries need at most 20 comparisons. Below we *measure* that, then use the same halving idea on a problem that has no array in it at all."
-    },
-    {
-      "id": "c-ex201-py01",
-      "kind": "py",
-      "source": "import random\n\ndef binary_search(a, target):\n    \"\"\"Return (index or -1, comparisons used).\"\"\"\n    lo, hi = 0, len(a) - 1\n    comparisons = 0\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        comparisons += 1\n        if a[mid] == target:\n            return mid, comparisons\n        elif a[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1, comparisons\n\na = list(range(0, 200, 2))          # even numbers 0..198, sorted\nfor target in (0, 76, 198, 77):\n    idx, used = binary_search(a, target)\n    where = f\"index {idx}\" if idx >= 0 else \"not found\"\n    print(f\"search {target:3d}: {where:>11s}  ({used} comparisons, list of {len(a)})\")"
+      "source": "# Binary Search & the Shape of O(log n)\n\n**Binary search** finds a value in a **sorted** list by looking at the middle item and throwing away the half that can't hold it. Every look halves what's left, so a list of a million items needs at most 20 looks.\n\nThis notebook counts those looks, races binary search against reading the list from the start, and then uses the same halving on a question with no list in it at all.\n\nHow the cells run:\n\n- **Python runs in your browser** (Pyodide). The first Python cell takes a few seconds to load it; after that each cell is instant, and nothing is sent anywhere.\n- **The cells share their variables.** The function written in section 1 is used again in section 2, and the last cell shares its answer with the notebook as `nb[\"min_capacity\"]`.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it.\n\nPress **Run all**."
     },
     {
       "id": "c-ex201-md02",
       "kind": "md",
-      "source": "## Measuring the curve\n\nFor each size n we run 200 random successful searches and average the comparison counts — then plot against `log2(n) + 1` and against linear scan's expected `n / 2`. The log-log plot makes the difference brutal: one curve is basically flat."
+      "source": "## 1. Halving\n\n> In Python, write binary_search(a, target) that returns the target's index (or -1) and the number of comparisons it made. Try it on the even numbers 0 to 198 with the targets 0, 76, 198 and 77 (which isn't there), and print the result and comparisons for each.\n\n- **`lo` and `hi`** mark the part of the list that could still hold the target. Each comparison moves one of them past the middle, so the part halves.\n- **`(lo + hi) // 2`** is the middle; `//` divides and rounds down.\n- When `lo` passes `hi` there is nothing left to look at, and the target isn't there."
     },
     {
-      "id": "c-ex201-py02",
+      "id": "c-ex201-py01",
       "kind": "py",
-      "source": "import math\nimport random\nimport matplotlib.pyplot as plt\n\nrandom.seed(11)\nsizes = [2**k for k in range(4, 17)]        # 16 .. 65536\nmeasured = []\nfor n in sizes:\n    a = list(range(n))\n    total = 0\n    for _ in range(200):\n        target = random.randrange(n)\n        _, used = binary_search(a, target)\n        total += used\n    measured.append(total / 200)\n\nfor n, m in zip(sizes, measured):\n    print(f\"n={n:6d}  avg comparisons={m:6.2f}   log2(n)+1={math.log2(n)+1:6.2f}\")\n\nfig, ax = plt.subplots(figsize=(8, 4.5))\nax.plot(sizes, measured, \"o-\", label=\"binary search (measured)\")\nax.plot(sizes, [math.log2(n) + 1 for n in sizes], \"--\", label=\"log2(n) + 1\")\nax.plot(sizes, [n / 2 for n in sizes], \":\", label=\"linear scan n/2\")\nax.set_xscale(\"log\", base=2)\nax.set_yscale(\"log\")\nax.set_xlabel(\"list size n\")\nax.set_ylabel(\"avg comparisons\")\nax.set_title(\"Binary search vs linear scan\")\nax.legend()\nax.grid(True, alpha=0.3)\nfig.tight_layout()"
+      "source": "def binary_search(a, target):\n    \"\"\"Return (index or -1, comparisons used).\"\"\"\n    lo, hi = 0, len(a) - 1\n    comparisons = 0\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        comparisons += 1\n        if a[mid] == target:\n            return mid, comparisons\n        elif a[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1, comparisons\n\na = list(range(0, 200, 2))          # even numbers 0..198, sorted\nfor target in (0, 76, 198, 77):\n    idx, used = binary_search(a, target)\n    where = f\"index {idx}\" if idx >= 0 else \"not found\"\n    print(f\"search {target:3d}: {where:>11s}  ({used} comparisons, list of {len(a)})\")",
+      "metadata": {
+        "ai": {
+          "prompt": "In Python, write binary_search(a, target) that returns the target's index (or -1) and the number of comparisons it made. Try it on the even numbers 0 to 198 with the targets 0, 76, 198 and 77 (which isn't there), and print the result and comparisons for each.",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "2d6512e7",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
     },
     {
       "id": "c-ex201-md03",
       "kind": "md",
-      "source": "## Binary search *the answer*\n\nThe deeper trick: you don't need an array, just a **monotonic yes/no question**. Classic example — ship packages within D days, minimizing daily capacity. \"Can we do it with capacity c?\" flips from no to yes exactly once as c grows, so we can binary search c itself."
+      "source": "## 2. Watch it halve\n\n> A dark-theme page that shows binary search step by step on 32 sorted numbers laid out as cards, two rows of 16 (8 to a row on a phone), each with its position underneath. A \"Look for\" number box (starting with the 23rd card's number), and Step, Run to the end and Reset buttons. Each step outlines the middle card in amber, says in one sentence what it compared and which half it dropped, and fades the dropped cards; a found card turns green, and a number that isn't there ends with \"not in the list\". Show how many comparisons it has made and the most there can ever be for 32 cards.\n\nPress **Step** a few times, then type a number that isn't on any card."
     },
     {
-      "id": "c-ex201-py03",
-      "kind": "py",
-      "source": "weights = [21, 10, 15, 34, 8, 12, 27, 9, 18, 30, 5, 24]\ndays = 5\n\ndef days_needed(capacity):\n    \"\"\"Greedy: fill each day up to capacity, in order.\"\"\"\n    d, load = 1, 0\n    for w in weights:\n        if load + w > capacity:\n            d += 1\n            load = 0\n        load += w\n    return d\n\nlo, hi = max(weights), sum(weights)   # capacity must fit the largest item\nprint(f\"searching capacity in [{lo}, {hi}]\")\n\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    need = days_needed(mid)\n    verdict = \"enough\" if need <= days else \"too small\"\n    print(f\"  capacity {mid:3d} -> {need} days ({verdict})\")\n    if need <= days:\n        hi = mid\n    else:\n        lo = mid + 1\n\nprint(f\"\\nminimum capacity to ship in {days} days: {lo}\")\nprint(f\"check: {days_needed(lo)} days at {lo}, {days_needed(lo - 1)} days at {lo - 1}\")\nnb[\"min_capacity\"] = lo"
+      "id": "c-ex201-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; padding: 14px; background: #0f172a; color: #cbd5e1; font-family: system-ui, sans-serif; }\n  #controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; font-size: 14px; }\n  input { width: 70px; padding: 5px 8px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; color: #f8fafc; font-size: 14px; }\n  button { padding: 6px 14px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; color: #f8fafc; font-size: 14px; cursor: pointer; }\n  button:hover { background: #334155; }\n  #count { color: #94a3b8; }\n  #cards { display: grid; grid-template-columns: repeat(16, 1fr); gap: 5px; }\n  .card { padding: 7px 0 4px; text-align: center; border-radius: 6px; background: #1e40af; color: #f8fafc;\n          font: 600 15px ui-monospace, monospace; border: 2px solid transparent; transition: opacity 0.25s, background 0.25s; }\n  .card small { display: block; font: 10px system-ui, sans-serif; color: #93c5fd; margin-top: 2px; }\n  .card.out { opacity: 0.18; }\n  .card.mid { border-color: #f59e0b; background: #92400e; }\n  .card.found { border-color: #4ade80; background: #15803d; }\n  #log { margin-top: 14px; font-size: 14px; line-height: 1.65; }\n  #log b { color: #f8fafc; }\n  @media (max-width: 640px) { #cards { grid-template-columns: repeat(8, 1fr); } }\n</style>\n<div id=\"controls\">\n  <label>Look for <input id=\"target\" type=\"number\" /></label>\n  <button id=\"step\">Step</button>\n  <button id=\"run\">Run to the end</button>\n  <button id=\"reset\">Reset</button>\n  <span id=\"count\"></span>\n</div>\n<div id=\"cards\"></div>\n<div id=\"log\"></div>\n<script>\n  // 32 sorted numbers, the same every time.\n  var values = [];\n  for (var i = 0, v = 2; i < 32; i++) { v += 1 + ((i * 7 + 3) % 5); values.push(v); }\n  var most = Math.floor(Math.log2(values.length)) + 1;   // the longest a search can take\n\n  var box = document.getElementById('target');\n  box.value = values[22];\n  var lo, hi, mid, steps, found, done, lines, timer = null;\n\n  function reset() {\n    clearInterval(timer);\n    lo = 0; hi = values.length - 1; mid = -1; steps = 0; found = -1; done = false;\n    lines = ['Looking for <b>' + box.value + '</b> among all 32 cards.'];\n    draw();\n  }\n\n  function step() {\n    if (done) return;\n    var t = Number(box.value);\n    mid = (lo + hi) >> 1;\n    steps++;\n    var m = values[mid];\n    if (m === t) {\n      found = mid; done = true;\n      lines.push('Step ' + steps + ': the middle card is <b>' + m + '</b>. Found it, at position ' + mid + '.');\n    } else if (m < t) {\n      lines.push('Step ' + steps + ': the middle card is <b>' + m + '</b>, smaller than ' + t + ', so drop it and everything to its left.');\n      lo = mid + 1;\n    } else {\n      lines.push('Step ' + steps + ': the middle card is <b>' + m + '</b>, bigger than ' + t + ', so drop it and everything to its right.');\n      hi = mid - 1;\n    }\n    if (!done && lo > hi) {\n      done = true; mid = -1;\n      lines.push('No cards left: <b>' + t + '</b> is not in the list.');\n    }\n    draw();\n  }\n\n  function draw() {\n    document.getElementById('cards').innerHTML = values.map(function (value, i) {\n      var cls = 'card';\n      if (i === found) cls += ' found';\n      else if (done || i < lo || i > hi) cls += ' out';\n      else if (i === mid) cls += ' mid';\n      return '<div class=\"' + cls + '\">' + value + '<small>' + i + '</small></div>';\n    }).join('');\n    document.getElementById('count').textContent =\n      steps + ' comparison' + (steps === 1 ? '' : 's') + ' (never more than ' + most + ' for 32 cards)';\n    document.getElementById('log').innerHTML = lines.join('<br>');\n  }\n\n  document.getElementById('step').onclick = function () { clearInterval(timer); step(); };\n  document.getElementById('run').onclick = function () {\n    clearInterval(timer);\n    timer = setInterval(function () { if (done) clearInterval(timer); else step(); }, 600);\n  };\n  document.getElementById('reset').onclick = reset;\n  box.oninput = reset;\n  reset();\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 400,
+          "scale": 1
+        },
+        "ai": {
+          "prompt": "A dark-theme page that shows binary search step by step on 32 sorted numbers laid out as cards, two rows of 16 (8 to a row on a phone), each with its position underneath. A \"Look for\" number box (starting with the 23rd card's number), and Step, Run to the end and Reset buttons. Each step outlines the middle card in amber, says in one sentence what it compared and which half it dropped, and fades the dropped cards; a found card turns green, and a number that isn't there ends with \"not in the list\". Show how many comparisons it has made and the most there can ever be for 32 cards.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "f831c328",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
     },
     {
       "id": "c-ex201-md04",
       "kind": "md",
-      "source": "## Try this\n\n- Search for an **absent** value in the first cell and check the comparison count still stays ≤ log2(n) + 1.\n- In the capacity problem, change `days` to 3 and to 12 — watch the search interval and the answer move.\n- Break the greedy question's monotonicity on purpose (e.g. return `d % 3`) and see why binary search silently produces nonsense: the yes/no answers must be sorted too.\n- Classic variant: find the **first** element ≥ x (lower bound). Adapt `binary_search` to return it."
+      "source": "## 3. Measuring the curve\n\n> In Python, using binary_search from the first cell, measure the average number of comparisons for lists of 16 to 65,536 numbers (powers of two), from 200 random searches for numbers in the list (seed 11). Print each size with its average and log2(n) + 1, the most it can ever take. Plot the averages against log2(n) + 1 and a linear scan's n / 2, on log scales, with matplotlib.\n\n- **`random.seed(11)`** makes every run pick the same targets, so the numbers below don't change.\n- **Log scales** turn both curves into straight lines: binary search climbs by one comparison each time the list doubles, while the linear scan doubles too."
+    },
+    {
+      "id": "c-ex201-py02",
+      "kind": "py",
+      "source": "import math\nimport random\nimport matplotlib.pyplot as plt\n\nrandom.seed(11)\nsizes = [2**k for k in range(4, 17)]        # 16 .. 65536\nmeasured = []\nfor n in sizes:\n    a = list(range(n))\n    total = 0\n    for _ in range(200):\n        target = random.randrange(n)\n        _, used = binary_search(a, target)\n        total += used\n    measured.append(total / 200)\n\nfor n, m in zip(sizes, measured):\n    print(f\"n={n:6d}  avg comparisons={m:6.2f}   log2(n)+1={math.log2(n)+1:6.2f}\")\n\nfig, ax = plt.subplots(figsize=(8, 4.5))\nax.plot(sizes, measured, \"o-\", label=\"binary search (measured)\")\nax.plot(sizes, [math.log2(n) + 1 for n in sizes], \"--\", label=\"log2(n) + 1\")\nax.plot(sizes, [n / 2 for n in sizes], \":\", label=\"linear scan n/2\")\nax.set_xscale(\"log\", base=2)\nax.set_yscale(\"log\")\nax.set_xlabel(\"list size n\")\nax.set_ylabel(\"avg comparisons\")\nax.set_title(\"Binary search vs linear scan\")\nax.legend()\nax.grid(True, alpha=0.3)\nfig.tight_layout()",
+      "metadata": {
+        "ai": {
+          "prompt": "In Python, using binary_search from the first cell, measure the average number of comparisons for lists of 16 to 65,536 numbers (powers of two), from 200 random searches for numbers in the list (seed 11). Print each size with its average and log2(n) + 1, the most it can ever take. Plot the averages against log2(n) + 1 and a linear scan's n / 2, on log scales, with matplotlib.",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "d5e02506",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex201-md05",
+      "kind": "md",
+      "source": "## 4. Binary search *the answer*\n\n> In Python, binary-search an answer instead of a list: 12 packages weighing 21, 10, 15, 34, 8, 12, 27, 9, 18, 30, 5 and 24 kg must be shipped in order within 5 days. Write days_needed(capacity), which fills each day up to the capacity, then binary-search the smallest capacity that needs 5 days or fewer, between the heaviest package and the total. Print every capacity it tries with its days and verdict, then the answer, a check at the answer and one below it, and save the answer as nb[\"min_capacity\"].\n\nBinary search doesn't really need a list. It needs a **yes/no question whose answers are sorted**: \"can we ship in 5 days with this much space a day?\" is *no* for small capacities and *yes* for every capacity after the first yes. So the search can halve the range of capacities instead of a list.\n\n- **`hi = mid`** keeps a capacity that worked, because it might be the answer; **`lo = mid + 1`** drops one that didn't."
+    },
+    {
+      "id": "c-ex201-py03",
+      "kind": "py",
+      "source": "weights = [21, 10, 15, 34, 8, 12, 27, 9, 18, 30, 5, 24]\ndays = 5\n\ndef days_needed(capacity):\n    \"\"\"Greedy: fill each day up to capacity, in order.\"\"\"\n    d, load = 1, 0\n    for w in weights:\n        if load + w > capacity:\n            d += 1\n            load = 0\n        load += w\n    return d\n\nlo, hi = max(weights), sum(weights)   # capacity must fit the largest item\nprint(f\"searching capacity in [{lo}, {hi}]\")\n\nwhile lo < hi:\n    mid = (lo + hi) // 2\n    need = days_needed(mid)\n    verdict = \"enough\" if need <= days else \"too small\"\n    print(f\"  capacity {mid:3d} -> {need} days ({verdict})\")\n    if need <= days:\n        hi = mid\n    else:\n        lo = mid + 1\n\nprint(f\"\\nminimum capacity to ship in {days} days: {lo}\")\nprint(f\"check: {days_needed(lo)} days at {lo}, {days_needed(lo - 1)} days at {lo - 1}\")\nnb[\"min_capacity\"] = lo",
+      "metadata": {
+        "ai": {
+          "prompt": "In Python, binary-search an answer instead of a list: 12 packages weighing 21, 10, 15, 34, 8, 12, 27, 9, 18, 30, 5 and 24 kg must be shipped in order within 5 days. Write days_needed(capacity), which fills each day up to the capacity, then binary-search the smallest capacity that needs 5 days or fewer, between the heaviest package and the total. Print every capacity it tries with its days and verdict, then the answer, a check at the answer and one below it, and save the answer as nb[\"min_capacity\"].",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "generatedSourceHash": "b8329c80",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex201-md06",
+      "kind": "md",
+      "source": "## What the run shows\n\n- **Seven looks at most for 100 numbers.** Finding 0 took 6 comparisons, and 76, 198 and the missing 77 took 7 each. Seven is the most a list of 100 can ever need.\n- **The average is one or two below the worst case.** At 65,536 numbers binary search averaged 15.0 comparisons, against a worst case of 17. Reading the list from the start would average 32,768.\n- **Seven tries pin down the capacity.** The search narrowed 34 to 213 kg down to **48 kg**: 48 ships everything in 5 days, and 47 needs 6.\n\n## Try this\n\nEach of these is a prompt. Press **✨** in a cell's header to change its prompt and generate it again, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **First match.** Press ✨ on the first cell and add: *\"Also write lower_bound(a, x), which returns the position of the first item that is at least x, and try it on 77 and 250.\"* This is the version databases use to find where a range starts.\n- **Break the rule.** Press ✨ on the capacity cell and add: *\"Then search again with a broken question whose answers aren't sorted (call a capacity enough when days_needed is an even number), and print what it returns.\"* Binary search still answers, confidently and wrongly.\n- **Race the clock.** New Python cell: *\"Time binary_search against a plain for-loop on a sorted list of a million numbers, 1,000 random searches each, with time.perf_counter, and print both times.\"*\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the capacity cell and ask why it's `hi = mid` there but `hi = mid - 1` in the first cell.\n\n**Next:** *Binary Search on the Answer* does the same trick in C, placing wifi routers as far apart as possible."
     }
   ],
   "createdAt": "2026-07-09T00:00:00.000Z",
-  "updatedAt": "2026-07-09T00:00:00.000Z"
+  "updatedAt": "2026-10-31T00:00:00.000Z"
 }

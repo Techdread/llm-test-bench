@@ -1,5 +1,11 @@
 [
   {
+    "id": "bricks",
+    "label": "Bricks",
+    "icon": "fa-cubes-stacked",
+    "order": 5
+  },
+  {
     "id": "data-structures",
     "label": "Data Structures",
     "icon": "fa-sitemap",
