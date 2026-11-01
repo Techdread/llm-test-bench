@@ -217,15 +217,20 @@
     "file": "simulations/ex-401-game-of-life-compiled.json",
     "id": "ex-401",
     "title": "Game of Life, Compiled",
-    "description": "C advances 40 generations of Life and ships every frame as packed hex; an HTML cell plays them back with a scrub bar. Three rules, endless behaviour.",
+    "description": "C runs Life in a walled 40×28 world from four starting patterns and ships every frame as packed hex; an HTML cell plays them back, and a JS cell finds the generation where the world starts repeating itself.",
     "category": "simulations",
     "langs": [
       "c",
-      "html"
+      "ui",
+      "html",
+      "js"
     ],
     "features": [
+      "nb-read",
       "nb-emit",
-      "nb-html-bridge"
+      "nb-html-bridge",
+      "interactive",
+      "prompt-built"
     ],
     "addedAt": "2026-07-10"
   },
@@ -233,16 +238,18 @@
     "file": "simulations/ex-402-boids.json",
     "id": "ex-402",
     "title": "Boids — Emergent Flocking",
-    "description": "Three local rules, zero leaders: a live canvas flock whose cohesion, alignment and separation you tune with sliders while it flies.",
+    "description": "Three local rules, zero leaders: a live canvas flock tuned with sliders while it flies, and a JS cell that runs the four classic experiments and measures order, flock count and spacing.",
     "category": "simulations",
     "langs": [
       "ui",
-      "html"
+      "html",
+      "js"
     ],
     "features": [
       "nb-html-bridge",
       "interactive",
-      "animation"
+      "animation",
+      "prompt-built"
     ],
     "addedAt": "2026-07-09"
   },
@@ -250,15 +257,18 @@
     "file": "simulations/ex-403-sir-epidemic.json",
     "id": "ex-403",
     "title": "SIR Epidemic Curves",
-    "description": "The three-compartment model behind every pandemic chart you saw in 2020 — set R₀ and the infectious period with sliders, integrate with RK4, and find herd immunity where the maths says it is.",
+    "description": "The three-compartment model behind every pandemic chart of 2020: set R₀ and the infectious period with sliders, integrate with RK4 in Python, then sweep R₀ in JavaScript to see why flattening the curve cuts the peak far more than the total.",
     "category": "simulations",
     "langs": [
+      "ui",
       "py",
-      "ui"
+      "js"
     ],
     "features": [
       "matplotlib",
-      "interactive"
+      "interactive",
+      "nb-read",
+      "prompt-built"
     ],
     "addedAt": "2026-07-10"
   },
@@ -266,15 +276,17 @@
     "file": "simulations/ex-406-forest-fire-percolation.json",
     "id": "ex-406",
     "title": "Forest Fire & Percolation",
-    "description": "Lua burns forests at eight tree densities and finds the sharp threshold where fires suddenly cross the world — with a heat-map replay of the run at the critical density.",
+    "description": "Lua burns 1,050 forests at 21 tree densities and finds the sharp threshold where fires suddenly cross the world, an HTML cell replays a fire at the edge, and JavaScript estimates the critical density.",
     "category": "simulations",
     "langs": [
       "lua",
-      "html"
+      "html",
+      "js"
     ],
     "features": [
       "nb-emit",
-      "nb-html-bridge"
+      "nb-html-bridge",
+      "prompt-built"
     ],
     "addedAt": "2026-07-10"
   },
@@ -282,16 +294,18 @@
     "file": "simulations/ex-408-double-pendulum-chaos.json",
     "id": "ex-408",
     "title": "Double Pendulum & Chaos",
-    "description": "Two double pendulums start a billionth of a radian apart; Python integrates both, matplotlib shows the exponential divergence, and an HTML cell animates them drifting out of sync.",
+    "description": "Two double pendulums start a billionth of a radian apart; Python integrates both and measures the exponential divergence, an HTML cell animates them drifting apart, and JavaScript measures how much better starting data buys.",
     "category": "simulations",
     "langs": [
       "py",
-      "html"
+      "html",
+      "js"
     ],
     "features": [
       "matplotlib",
       "numpy",
-      "nb-html-bridge"
+      "nb-html-bridge",
+      "prompt-built"
     ],
     "addedAt": "2026-07-10"
   },

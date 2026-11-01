@@ -2,6 +2,7 @@
 // Promoted from wasm-code-lab; see spec 59.
 
 import { createStdinController } from './stdin.js';
+import { capOutput } from './output-cap.js';
 
 let factoryPromise = null;
 const WASMOON_URL = new URL('../../lib/wasmoon/1.16.0/index.mjs', import.meta.url).href;
@@ -132,9 +133,3 @@ end
 `);
 }
 
-function capOutput(text, maxLen = 50000) {
-  if (text.length > maxLen) {
-    return text.slice(0, maxLen) + '\n... (output truncated)';
-  }
-  return text;
-}

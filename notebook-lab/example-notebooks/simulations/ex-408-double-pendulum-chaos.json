@@ -4,12 +4,36 @@
     {
       "id": "c-ex408-md01",
       "kind": "md",
-      "source": "# Double Pendulum & Chaos\n\nA pendulum hanging from a pendulum — two joints, fully deterministic, no randomness anywhere. Yet it is the classic **chaotic** system: two copies started **10⁻⁹ radians** apart stay visually identical for a while, then abruptly disagree about everything.\n\nThat is *sensitive dependence on initial conditions*: tiny state differences grow **exponentially** (the slope of the log-divergence line below is the Lyapunov exponent). Chaos ≠ randomness — re-run the cell and you get the exact same divergence, at the exact same time."
+      "source": "# Double Pendulum & Chaos\n\nA pendulum hanging from the end of another pendulum. Two joints, fully determined by Newton's laws, no randomness anywhere. Yet it is the classic **chaotic** system: start two of them 10⁻⁹ radians apart (a billionth of a radian, far less than any ruler could measure) and they move together for a while, then suddenly disagree about everything.\n\nThat is **sensitive dependence on starting conditions**: a tiny difference grows **exponentially**, doubling again and again at a steady rate. The rate is the **Lyapunov exponent**.\n\nThe question: **if chaos is exponential, how much does better starting data buy?** If the difference doubles every third of a second, measuring the start 100 times more precisely should buy only a fixed, small amount of extra time.\n\nHow the cells run:\n\n- **Python runs in your browser** (Pyodide), integrates both pendulums, measures the exponent and plots the gap with matplotlib.\n- **HTML** animates them; **JavaScript** re-runs the pendulum from six starting gaps and times when each one splits.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it.\n\nPress **Run all**. Python takes a few seconds to load the first time."
+    },
+    {
+      "id": "c-ex408-md02",
+      "kind": "md",
+      "source": "## 1. Integrate two pendulums\n\n> In Python, integrate two double pendulums (both arms 1 m and 1 kg, g = 9.81) with RK4, time step 0.002 s, for 25 seconds. Start one at angles 2.0 and 2.4 radians, at rest, and the other 1e-9 radians further on the first angle. Every 12 steps record both pendulums' angles and the distance between their states. Estimate the Lyapunov exponent from the slope of the log distance while it grows (between 1e-8 and 0.1) and print it with the doubling time, and when the gap first passes 0.5. Publish nb.pendulum = {frames, dt, l1, l2, lyapunov, separate} and plot the distance against time on a log scale with matplotlib.\n\n- **`deriv`** holds the equations of motion for the two angles and their speeds: long, but straight from Newton's laws.\n- **RK4** with 2-millisecond steps is accurate enough that the steps add far less error than the 10⁻⁹ starting gap.\n- **The exponent is a slope.** On a log scale, exponential growth is a straight line; `np.polyfit` fits it where the gap is growing cleanly, above 10⁻⁸ and below 0.1."
     },
     {
       "id": "c-ex408-py01",
       "kind": "py",
-      "source": "import numpy as np\nimport matplotlib.pyplot as plt\n\ng, l1, l2, m1, m2 = 9.81, 1.0, 1.0, 1.0, 1.0\n\ndef deriv(s):\n    t1, w1, t2, w2 = s\n    d = t1 - t2\n    den = 2 * m1 + m2 - m2 * np.cos(2 * d)\n    a1 = (-g * (2 * m1 + m2) * np.sin(t1)\n          - m2 * g * np.sin(t1 - 2 * t2)\n          - 2 * np.sin(d) * m2 * (w2**2 * l2 + w1**2 * l1 * np.cos(d))) / (l1 * den)\n    a2 = (2 * np.sin(d) * (w1**2 * l1 * (m1 + m2)\n          + g * (m1 + m2) * np.cos(t1)\n          + w2**2 * l2 * m2 * np.cos(d))) / (l2 * den)\n    return np.array([w1, a1, w2, a2])\n\ndef rk4(s, dt):\n    k1 = deriv(s)\n    k2 = deriv(s + dt / 2 * k1)\n    k3 = deriv(s + dt / 2 * k2)\n    k4 = deriv(s + dt * k3)\n    return s + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)\n\ndt, seconds = 0.002, 25\nsteps = int(seconds / dt)\nEPS = 1e-9\n\na = np.array([2.0, 0.0, 2.4, 0.0])          # both start well away from hanging\nb = a.copy()\nb[0] += EPS                                  # ...one billionth of a radian apart\n\nframes, divergence, times = [], [], []\nfor i in range(steps):\n    a = rk4(a, dt)\n    b = rk4(b, dt)\n    if i % 12 == 0:\n        frames.append([round(float(a[0]), 4), round(float(a[2]), 4),\n                       round(float(b[0]), 4), round(float(b[2]), 4)])\n        divergence.append(float(np.sqrt(np.sum((a - b) ** 2))))\n        times.append(i * dt)\n\ndiv = np.array(divergence)\n# Estimate the Lyapunov exponent from the clean growth region.\ngrow = (div > 1e-8) & (div < 0.1)\nlam = 0.0\nif grow.sum() > 10:\n    t_fit = np.array(times)[grow]\n    lam = float(np.polyfit(t_fit, np.log(div[grow]), 1)[0])\n    print(f\"Lyapunov exponent ~ {lam:.2f} / s  (doubling every {np.log(2)/lam:.2f} s)\")\nsep = next((t for t, d in zip(times, div) if d > 0.5), None)\nif sep is not None:\n    print(f\"pendulums visibly separate after ~{sep:.0f} s (from a 1e-9 rad difference)\")\nelse:\n    print(\"no visible separation within this run - lengthen 'seconds'\")\n\nnb[\"pendulum\"] = {\"frames\": frames, \"dt\": dt * 12, \"l1\": l1, \"l2\": l2}\nprint(\"published as 'pendulum' - the animation below picks it up\")\n\nfig, ax = plt.subplots(figsize=(9, 4))\nax.semilogy(times, np.maximum(div, 1e-12), color=\"#dc2626\")\nax.set_xlabel(\"time (s)\")\nax.set_ylabel(\"state-space distance\")\nax.set_title(\"Exponential divergence from a 1e-9 rad difference\")\nax.grid(alpha=0.3)\nfig.tight_layout()"
+      "source": "import numpy as np\nimport matplotlib.pyplot as plt\n\ng, l1, l2, m1, m2 = 9.81, 1.0, 1.0, 1.0, 1.0\n\ndef deriv(s):\n    t1, w1, t2, w2 = s\n    d = t1 - t2\n    den = 2 * m1 + m2 - m2 * np.cos(2 * d)\n    a1 = (-g * (2 * m1 + m2) * np.sin(t1)\n          - m2 * g * np.sin(t1 - 2 * t2)\n          - 2 * np.sin(d) * m2 * (w2**2 * l2 + w1**2 * l1 * np.cos(d))) / (l1 * den)\n    a2 = (2 * np.sin(d) * (w1**2 * l1 * (m1 + m2)\n          + g * (m1 + m2) * np.cos(t1)\n          + w2**2 * l2 * m2 * np.cos(d))) / (l2 * den)\n    return np.array([w1, a1, w2, a2])\n\ndef rk4(s, dt):\n    k1 = deriv(s)\n    k2 = deriv(s + dt / 2 * k1)\n    k3 = deriv(s + dt / 2 * k2)\n    k4 = deriv(s + dt * k3)\n    return s + dt / 6 * (k1 + 2 * k2 + 2 * k3 + k4)\n\ndt, seconds = 0.002, 25\nsteps = int(seconds / dt)\nEPS = 1e-9\n\na = np.array([2.0, 0.0, 2.4, 0.0])          # both start well away from hanging\nb = a.copy()\nb[0] += EPS                                  # ...one billionth of a radian apart\n\nframes, divergence, times = [], [], []\nfor i in range(steps):\n    a = rk4(a, dt)\n    b = rk4(b, dt)\n    if i % 12 == 0:\n        frames.append([round(float(a[0]), 4), round(float(a[2]), 4),\n                       round(float(b[0]), 4), round(float(b[2]), 4)])\n        divergence.append(float(np.sqrt(np.sum((a - b) ** 2))))\n        times.append(i * dt)\n\ndiv = np.array(divergence)\n# Estimate the Lyapunov exponent from the clean growth region.\ngrow = (div > 1e-8) & (div < 0.1)\nlam = 0.0\nif grow.sum() > 10:\n    t_fit = np.array(times)[grow]\n    lam = float(np.polyfit(t_fit, np.log(div[grow]), 1)[0])\n    print(f\"Lyapunov exponent ~ {lam:.2f} / s  (doubling every {np.log(2)/lam:.2f} s)\")\nsep = next((t for t, d in zip(times, div) if d > 0.5), None)\nif sep is not None:\n    print(f\"pendulums visibly separate after ~{sep:.0f} s (from a 1e-9 rad difference)\")\nelse:\n    print(\"no visible separation within this run - lengthen 'seconds'\")\n\nnb[\"pendulum\"] = {\"frames\": frames, \"dt\": dt * 12, \"l1\": l1, \"l2\": l2,\n                 \"lyapunov\": lam, \"separate\": sep}\nprint(\"published as 'pendulum' - the animation below picks it up\")\n\nfig, ax = plt.subplots(figsize=(9, 4))\nax.semilogy(times, np.maximum(div, 1e-12), color=\"#dc2626\")\nax.set_xlabel(\"time (s)\")\nax.set_ylabel(\"state-space distance\")\nax.set_title(\"Exponential divergence from a 1e-9 rad difference\")\nax.grid(alpha=0.3)\nfig.tight_layout()",
+      "metadata": {
+        "ai": {
+          "prompt": "In Python, integrate two double pendulums (both arms 1 m and 1 kg, g = 9.81) with RK4, time step 0.002 s, for 25 seconds. Start one at angles 2.0 and 2.4 radians, at rest, and the other 1e-9 radians further on the first angle. Every 12 steps record both pendulums' angles and the distance between their states. Estimate the Lyapunov exponent from the slope of the log distance while it grows (between 1e-8 and 0.1) and print it with the doubling time, and when the gap first passes 0.5. Publish nb.pendulum = {frames, dt, l1, l2, lyapunov, separate} and plot the distance against time on a log scale with matplotlib.",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "b18a5612",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex408-md03",
+      "kind": "md",
+      "source": "## 2. Watch them split\n\n> Animate nb.pendulum on a canvas: both double pendulums hanging from the same pivot, the first blue and the second pink, with a fading trail behind each tip. A line above shows the time, the gap between their angles, and that they started 0.000000001 radians apart. Loop, clearing the trails each time. Dark theme.\n\nFor the first few seconds the pink pendulum hides exactly behind the blue one. The gap is there all along, too small to see, doubling every third of a second."
     },
     {
       "id": "c-ex408-html01",
@@ -20,15 +44,51 @@
           "width": 900,
           "height": 560,
           "scale": 1
+        },
+        "ai": {
+          "prompt": "Animate nb.pendulum on a canvas: both double pendulums hanging from the same pivot, the first blue and the second pink, with a fading trail behind each tip. A line above shows the time, the gap between their angles, and that they started 0.000000001 radians apart. Loop, clearing the trails each time. Dark theme.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "e3790535",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
         }
       }
     },
     {
-      "id": "c-ex408-md02",
+      "id": "c-ex408-md04",
       "kind": "md",
-      "source": "## What you just watched\n\nFor the first stretch the pink pendulum hides perfectly behind the blue one. The divergence plot shows what your eyes couldn't: the gap was there the whole time, growing by a steady factor per second — a dead-straight line on the log axis. When it reaches ~10⁻¹, the trajectories part company for good, and after that the two systems are effectively unrelated.\n\nThis is why weather forecasts have a horizon: measurement error (never zero) doubles every few days no matter how good the model is.\n\n## Try this\n\n- Drop the starting energy: `a = np.array([0.6, 0.0, 0.6, 0.0])` — at low amplitude the system is nearly regular; the divergence line goes flat. Chaos needs energy.\n- Make ε = 10⁻¹² — the animation stays in sync ~3 doublings longer, exactly as the exponent predicts.\n- Plot θ₁ vs θ₂ for one pendulum instead of the time series (phase portrait) — the chaotic band is a tangle; the regular one is a neat curve.\n- Halve `dt` and confirm the Lyapunov estimate barely moves — the chaos is in the physics, not the integrator."
+      "source": "## 3. How much does precision buy?\n\n> In JavaScript, integrate the same double pendulum with RK4 (same start, same time step) against copies started 1e-3, 1e-5, 1e-7, 1e-9, 1e-11 and 1e-13 radians away, for up to 40 seconds each, and record when the gap first passes 0.5. Print a table, the extra seconds each factor of 100 buys, and what nb.pendulum.lyapunov predicts for that (ln 100 divided by the exponent). Return a Vega-Lite chart of the separation time against the starting gap on a log scale.\n\n- **`separation(eps)`** runs the reference pendulum and one copy, step by step, until the gap passes 0.5 (when the two are visibly different) or 40 seconds pass.\n- **A straight line** on this chart means each factor of 100 in precision buys the same number of extra seconds, which is what exponential growth predicts."
+    },
+    {
+      "id": "c-ex408-js01",
+      "kind": "js",
+      "source": "// Time how long pendulums started at different tiny gaps stay together.\nconst g = 9.81, DT = 0.002, MAX_T = 40, LIMIT = 0.5;\nconst START = [2.0, 0.0, 2.4, 0.0];   // angle 1, speed 1, angle 2, speed 2\n\n// The Python cell's equations (both arms 1 m, both masses 1 kg).\nfunction deriv([t1, w1, t2, w2]) {\n  const d = t1 - t2;\n  const den = 3 - Math.cos(2 * d);\n  const a1 = (-g * 3 * Math.sin(t1) - g * Math.sin(t1 - 2 * t2)\n    - 2 * Math.sin(d) * (w2 * w2 + w1 * w1 * Math.cos(d))) / den;\n  const a2 = (2 * Math.sin(d) * (w1 * w1 * 2 + g * 2 * Math.cos(t1) + w2 * w2 * Math.cos(d))) / den;\n  return [w1, a1, w2, a2];\n}\nfunction rk4(s) {\n  const add = (a, b, h) => a.map((v, i) => v + h * b[i]);\n  const k1 = deriv(s), k2 = deriv(add(s, k1, DT / 2)), k3 = deriv(add(s, k2, DT / 2)), k4 = deriv(add(s, k3, DT));\n  return s.map((v, i) => v + DT / 6 * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]));\n}\n\nfunction separation(eps) {\n  let a = START.slice(), b = START.slice();\n  b[0] += eps;\n  for (let step = 1; step * DT <= MAX_T; step++) {\n    a = rk4(a);\n    b = rk4(b);\n    const gap = Math.sqrt(a.reduce((s, v, i) => s + (v - b[i]) ** 2, 0));\n    if (gap > LIMIT) return step * DT;\n  }\n  return null;\n}\n\nconst rows = [];\nconsole.log('starting gap   splits after');\nfor (const exp of [-3, -5, -7, -9, -11, -13]) {\n  const t = separation(10 ** exp);\n  rows.push({ gap: 10 ** exp, seconds: t });\n  console.log(('1e' + exp).padStart(12) + (t === null ? '   not within ' + MAX_T + ' s' : (t.toFixed(2) + ' s').padStart(15)));\n}\n\nconst timed = rows.filter(r => r.seconds !== null);\nif (timed.length > 1) {\n  const span = timed.at(-1).seconds - timed[0].seconds;\n  const factors = Math.log10(timed[0].gap / timed.at(-1).gap) / 2;\n  console.log('\\neach factor of 100 in precision buys ' + (span / factors).toFixed(2) + ' s on average');\n}\nconst p = nb.get('pendulum');\nif (p && p.lyapunov) {\n  console.log('the Python cell\\'s exponent, ' + p.lyapunov.toFixed(2) + ' per second, predicts ' +\n    (Math.log(100) / p.lyapunov).toFixed(2) + ' s');\n}\n\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  width: 'container',\n  height: 260,\n  title: 'A hundred times better start, a fixed few seconds more',\n  data: { values: timed },\n  mark: { type: 'line', point: { size: 70 } },\n  encoding: {\n    x: { field: 'gap', type: 'quantitative', scale: { type: 'log', reverse: true }, axis: { format: '.0e' }, title: 'starting gap (radians), smaller to the right' },\n    y: { field: 'seconds', type: 'quantitative', title: 'seconds until the pendulums split' },\n  },\n};",
+      "metadata": {
+        "ai": {
+          "prompt": "In JavaScript, integrate the same double pendulum with RK4 (same start, same time step) against copies started 1e-3, 1e-5, 1e-7, 1e-9, 1e-11 and 1e-13 radians away, for up to 40 seconds each, and record when the gap first passes 0.5. Print a table, the extra seconds each factor of 100 buys, and what nb.pendulum.lyapunov predicts for that (ln 100 divided by the exponent). Return a Vega-Lite chart of the separation time against the starting gap on a log scale.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "ad07310d",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex408-md05",
+      "kind": "md",
+      "source": "## What the run shows\n\n- **The gap doubles every 0.33 seconds.** Python measures a Lyapunov exponent of 2.07 per second, and the two pendulums visibly split after about 10 seconds, from a start one billionth of a radian apart.\n- **Better data buys a fixed few seconds.** Started 10⁻³ apart they split after 4.4 s; 10⁻⁹, after 9.7 s; 10⁻¹³, after 15.6 s. Ten billion times more precision bought 11 seconds.\n- **The two cells agree.** On average each factor of 100 bought 2.24 s; the Python cell's exponent predicts ln 100 / 2.07 = 2.22 s. The individual steps vary, from 1.4 to 3.7 s, because the gap grows in bursts as the pendulums swing, not perfectly smoothly.\n- **It isn't random.** Run the notebook again and every number above comes out the same, to the last digit. Chaos is deterministic; it's only unpredictable without perfect starting data.\n- **This is why weather forecasts have a horizon.** Errors in the measured weather double every few days, so a far better satellite network adds days to a forecast, not months.\n\n## Try this\n\nEach of these is a prompt. Press **✨** in a cell's header to change its prompt and generate it again, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **Predict, then run.** Weather forecasts double their errors every few days. If satellites measured today's weather 100 times more precisely, how many more days of forecast would that buy?\n- **Less energy.** Press ✨ on the Python cell and change the start to 0.6 and 0.6 radians. At low swings the motion is nearly regular: does the gap still grow exponentially?\n- **Phase portrait.** Press **⚡ AI Generate New Cell** and ask: *\"In Python, plot the first pendulum's angle against its speed from nb.pendulum.frames.\"* A chaotic run fills a tangle; a regular one draws a neat loop.\n- **Blame the integrator?** Press ✨ on the Python cell and halve the time step. If the exponent barely moves, the chaos is in the physics, not the arithmetic.\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the JS cell and ask why the line is straight."
     }
   ],
   "createdAt": "2026-07-10T00:00:00.000Z",
-  "updatedAt": "2026-07-10T00:00:00.000Z"
+  "updatedAt": "2026-11-01T00:00:00.000Z"
 }

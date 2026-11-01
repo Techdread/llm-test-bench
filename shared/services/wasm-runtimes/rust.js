@@ -2,6 +2,7 @@
 // This is remote compilation/execution, not local browser execution.
 
 import { normalizeStdin } from './stdin.js';
+import { capOutput } from './output-cap.js';
 
 const PLAYGROUND_URL = 'https://play.rust-lang.org/execute';
 
@@ -113,9 +114,3 @@ function splitCargoStderr(text) {
   };
 }
 
-function capOutput(text, maxLen = 50000) {
-  if (text.length > maxLen) {
-    return text.slice(0, maxLen) + '\n... (output truncated)';
-  }
-  return text;
-}

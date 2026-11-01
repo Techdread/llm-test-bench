@@ -2,6 +2,7 @@
 // This is intentionally constrained to small single-file programs.
 
 import { createStdinController } from './stdin.js';
+import { capOutput } from './output-cap.js';
 
 let jscppModule = null;
 
@@ -87,9 +88,3 @@ export async function run({ code, stdin = '', timeoutMs = 10000 } = {}) {
   };
 }
 
-function capOutput(text, maxLen = 50000) {
-  if (text.length > maxLen) {
-    return text.slice(0, maxLen) + '\n... (output truncated)';
-  }
-  return text;
-}
