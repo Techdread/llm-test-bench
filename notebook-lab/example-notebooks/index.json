@@ -3,13 +3,20 @@
     "file": "data-structures/ex-101-hash-map-from-scratch.json",
     "id": "ex-101",
     "title": "Hash Map from Scratch",
-    "description": "Build a chaining hash map in JavaScript, then measure probe lengths against theory as the load factor grows.",
+    "description": "Build a chaining hash map in JavaScript, then watch it in 3D: drag the key count, swap the hash function, switch on resizing, look up keys, and measure what each choice costs.",
     "category": "data-structures",
     "langs": [
-      "js"
+      "js",
+      "ui",
+      "html"
     ],
     "features": [
-      "vega-from-js"
+      "vega-from-js",
+      "interactive",
+      "three-js",
+      "nb-html-bridge",
+      "animation",
+      "prompt-built"
     ],
     "addedAt": "2026-07-09"
   },
@@ -17,13 +24,19 @@
     "file": "data-structures/ex-103-heaps-priority-queues.json",
     "id": "ex-103",
     "title": "Heaps & Priority Queues",
-    "description": "Implement a binary min-heap in Python, count its comparisons against the n·log n bound, and run a hospital triage queue on top of it.",
+    "description": "Build a binary min-heap in Python, then push and pop in a 3D view that shows the tree and its array moving together, measure heapsort against n·log n, and run a hospital triage queue on top.",
     "category": "data-structures",
     "langs": [
-      "py"
+      "py",
+      "html"
     ],
     "features": [
-      "matplotlib"
+      "matplotlib",
+      "three-js",
+      "nb-html-bridge",
+      "interactive",
+      "animation",
+      "prompt-built"
     ],
     "addedAt": "2026-07-09"
   },
@@ -31,14 +44,21 @@
     "file": "data-structures/ex-104-linked-lists-in-c.json",
     "id": "ex-104",
     "title": "Linked Lists in C",
-    "description": "Pointer mechanics without the segfaults: an index-based linked list in C with insert, delete and an in-place reverse, drawn by a JS cell.",
+    "description": "A linked list in C built from a node pool, recorded pointer move by pointer move: watch the arrows rewire step by step, break the reverse on purpose, and count the nodes you lose.",
     "category": "data-structures",
     "langs": [
+      "ui",
       "c",
+      "html",
       "js"
     ],
     "features": [
-      "nb-emit"
+      "nb-read",
+      "nb-emit",
+      "nb-html-bridge",
+      "interactive",
+      "animation",
+      "prompt-built"
     ],
     "addedAt": "2026-07-09"
   },
@@ -46,14 +66,19 @@
     "file": "data-structures/ex-106-stacks-queues-lua.json",
     "id": "ex-106",
     "title": "Stacks & Queues in Lua",
-    "description": "A bracket matcher on a table-stack and a print-spooler ring buffer, all in offline Lua 5.4, with results handed to JavaScript.",
+    "description": "A bracket checker on a Lua stack and a print spooler on a real ring buffer, both animated step by step, with your own text checked live, and a JS cell that asks whether round-robin is fair.",
     "category": "data-structures",
     "langs": [
       "lua",
+      "html",
       "js"
     ],
     "features": [
-      "nb-emit"
+      "nb-emit",
+      "nb-html-bridge",
+      "interactive",
+      "animation",
+      "prompt-built"
     ],
     "addedAt": "2026-07-09"
   },
@@ -61,17 +86,126 @@
     "file": "data-structures/ex-107-persistent-structures.json",
     "id": "ex-107",
     "title": "Persistent Structures & Structural Sharing",
-    "description": "Clojure builds a persistent BST by path copying — insert into a 9-node tree and only 5 nodes are new. A JS cell draws both versions with the shared nodes highlighted.",
+    "description": "Clojure builds a persistent tree by path copying; a 3D view stacks every version in its own layer so you can see new versions reach back into old nodes, insert your own values, and measure what keeping every version costs.",
     "category": "data-structures",
     "langs": [
       "clojure",
+      "html",
       "js"
     ],
     "features": [
       "browser",
-      "nb-emit"
+      "nb-emit",
+      "nb-html-bridge",
+      "three-js",
+      "interactive",
+      "prompt-built"
     ],
     "addedAt": "2026-07-10"
+  },
+  {
+    "file": "data-structures/ex-111-binary-search-tree-drawn-c.json",
+    "id": "ex-111",
+    "title": "Binary Search Tree, Drawn (C)",
+    "description": "The same notebook in C, compiled to WebAssembly in your browser: build binary search trees from four insert orders, watch every insert and search step by step, and chart how insert order decides the cost.",
+    "category": "data-structures",
+    "langs": [
+      "ui",
+      "c",
+      "html",
+      "js"
+    ],
+    "features": [
+      "nb-emit",
+      "nb-html-bridge",
+      "interactive",
+      "animation",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
+  },
+  {
+    "file": "data-structures/ex-112-tries-for-autocomplete-python.json",
+    "id": "ex-112",
+    "title": "Tries for Autocomplete (Python)",
+    "description": "The same notebook with Python in your browser: build a prefix tree over 40 words, type a prefix and watch a 3D view light the walk and fan out the completions, then measure how much the shared prefixes save.",
+    "category": "data-structures",
+    "langs": [
+      "py",
+      "ui",
+      "html",
+      "js"
+    ],
+    "features": [
+      "nb-emit",
+      "nb-html-bridge",
+      "interactive",
+      "three-js",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
+  },
+  {
+    "file": "data-structures/ex-113-ownership-lists-in-c.json",
+    "id": "ex-113",
+    "title": "Ownership & Lists in C",
+    "description": "The Rust ownership notebook done by hand in C, in your browser: malloc a linked list, copy the pointer, free it, and watch a player draw the dangling pointer that C lets you keep and Rust refuses to compile.",
+    "category": "data-structures",
+    "langs": [
+      "c",
+      "html",
+      "js"
+    ],
+    "features": [
+      "nb-emit",
+      "nb-html-bridge",
+      "animation",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
+  },
+  {
+    "file": "data-structures/ex-114-immutable-clojure.json",
+    "id": "ex-114",
+    "title": "Immutable Collections in Clojure",
+    "description": "The Scala notebook in Clojure, in your browser: prove that consing shares the old list, count words with a fold that keeps every version of the map, watch it in a player, pin an old version, and check every step.",
+    "category": "data-structures",
+    "langs": [
+      "clojure",
+      "html",
+      "js"
+    ],
+    "features": [
+      "browser",
+      "nb-emit",
+      "nb-html-bridge",
+      "interactive",
+      "animation",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
+  },
+  {
+    "file": "data-structures/ex-115-graphs-three-ways-c.json",
+    "id": "ex-115",
+    "title": "Graphs, Three Ways (C)",
+    "description": "The graphs notebook with C instead of Go, all in your browser: one network stored three ways in Python, C reads it from nb and checks it, run BFS in 3D beside the adjacency matrix, and measure the three ways at scale.",
+    "category": "data-structures",
+    "langs": [
+      "py",
+      "c",
+      "js",
+      "html"
+    ],
+    "features": [
+      "nb-read",
+      "nb-emit",
+      "nb-html-bridge",
+      "three-js",
+      "interactive",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
   },
   {
     "file": "search/ex-201-binary-search-log-n.json",

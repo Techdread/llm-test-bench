@@ -1,0 +1,94 @@
+{
+  "title": "Immutable Collections in Clojure",
+  "cells": [
+    {
+      "id": "c-ex114-md01",
+      "kind": "md",
+      "source": "# Immutable Collections in Clojure\n\nClojure's collections are **immutable**: \"changing\" one returns a new collection, and the original stays as it was, for ever. That sounds wasteful until you know the trick, **structural sharing**: the new version reuses as much of the old one as it can.\n\nThe question: **what does it look like to compute with values that never change?** The classic example is counting words with a **fold**: start with an empty map, and for each word make a new map with that word's count one higher.\n\nHow the cells run:\n\n- **Clojure runs in your browser** (Scittle), and shares its results by printing a `__NB_SET__` line.\n- **The player is an HTML cell**, and **JavaScript** checks every version.\n\n*Immutable Collections in Scala* is the same notebook in Scala, in the DevTools Hub. Both produce exactly the same versions.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it.\n\nPress **Run all**."
+    },
+    {
+      "id": "c-ex114-md02",
+      "kind": "md",
+      "source": "## 1. Share, then fold\n\n> In Clojure, show that consing onto an immutable list shares the old list (cons 1 base, then check that its rest is identical? to base), then count the words of a short text about a quick brown fox with a fold that returns a new map each step, using reductions to keep every version. Print the totals, version 5 and the top 5 words, and publish nb.fold = {lang, shared, words, versions} with a `__NB_SET__` line, each version a JSON object of word counts.\n\n- **`(cons 1 base)`** makes one new cell whose rest *is* `base`. `identical?` asks \"the same object?\", not \"equal?\".\n- **`reductions`** is a fold (`reduce`) that keeps every intermediate result: the empty map, then the map after each word.\n- **`(update acc w (fnil inc 0))`** returns a new map with one count raised (from 0 if the word is new); `acc` itself is untouched."
+    },
+    {
+      "id": "c-ex114-clojure01",
+      "kind": "clojure",
+      "source": "(require '[clojure.string :as str])\n\n;; \"Changing\" an immutable list makes a new one that SHARES the old one as its rest.\n(def base '(2 3 4))\n(def extended (cons 1 base))            ; new head, shared rest: no copying\n(println \"base     =\" base)\n(println \"extended =\" extended)\n(println \"the rest of extended is the very same object as base:\" (identical? (rest extended) base))\n\n(def text (str \"the quick brown fox jumps over the lazy dog \"\n               \"the dog barks and the fox runs over the hill\"))\n(def words (str/split text #\" \"))\n\n;; Word frequency with a fold. Each step returns a NEW map; reductions keeps every one.\n(def versions (vec (reductions (fn [acc w] (update acc w (fnil inc 0))) {} words)))\n(def counts (peek versions))\n(println (str \"total words: \" (count words) \", distinct: \" (count counts) \", versions of the map: \" (count versions)))\n(println (str \"version 5 still says: \" (str/join \", \" (map (fn [[w n]] (str w \" \" n)) (sort (versions 5))))))\n(doseq [[w n] (take 5 (sort-by (fn [[w n]] [(- n) w]) counts))]\n  (println (str \"  \" w \" \" n)))\n\n(defn map-json [m]\n  (str \"{\" (str/join \",\" (map (fn [[w n]] (str \"\\\"\" w \"\\\":\" n)) (sort m))) \"}\"))\n(println (str \"__NB_SET__ {\\\"key\\\":\\\"fold\\\",\\\"value\\\":{\\\"lang\\\":\\\"Clojure\\\",\\\"shared\\\":\" (identical? (rest extended) base)\n              \",\\\"words\\\":[\" (str/join \",\" (map #(str \"\\\"\" % \"\\\"\") words))\n              \"],\\\"versions\\\":[\" (str/join \",\" (map map-json versions)) \"]}}\"))",
+      "metadata": {
+        "ai": {
+          "prompt": "In Clojure, show that consing onto an immutable list shares the old list (cons 1 base, then check that its rest is identical? to base), then count the words of a short text about a quick brown fox with a fold that returns a new map each step, using reductions to keep every version. Print the totals, version 5 and the top 5 words, and publish nb.fold = {lang, shared, words, versions} with a __NB_SET__ line, each version a JSON object of word counts.",
+          "kind": "clojure",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "be59463d",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex114-md03",
+      "kind": "md",
+      "source": "## 2. Watch the fold\n\n> Play back the fold in nb.fold: the words in a row with the current one highlighted, and the map after each step (version k) as horizontal bars, one per word, sorted by count, the bar just changed in amber, growing smoothly. Buttons to step back, play or pause and step forward, a scrub bar, and a Pin button that keeps the version on screen beside the latest, so you can see an old version never changes. Dark theme.\n\n- **Every step makes a new map**: version k is version k − 1 with one count added. Nothing is ever changed in place.\n- **Pin a version, then play on.** The pinned map stays exactly as it was, however many versions come after it. That's what \"immutable\" buys: anyone holding an old version can trust it."
+    },
+    {
+      "id": "c-ex114-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0f172a; color: #cbd5e1; font-family: system-ui, sans-serif; }\n  #top { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; padding: 10px 14px 4px; font-size: 13px; }\n  button { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 4px 10px; font: inherit; cursor: pointer; }\n  button.main { background: #2563eb; border-color: #2563eb; color: #fff; min-width: 76px; }\n  input[type=range] { width: 200px; }\n  #words { padding: 8px 14px; font: 14px ui-monospace, monospace; line-height: 1.9; }\n  #words span { padding: 2px 5px; border-radius: 4px; color: #475569; }\n  #words span.done { color: #94a3b8; }\n  #words span.now { background: #f59e0b; color: #0f172a; font-weight: 700; }\n  #cols { display: flex; gap: 24px; padding: 0 14px 12px; flex-wrap: wrap; }\n  .col { flex: 1; min-width: 300px; }\n  .col h3 { font-size: 14px; margin: 6px 0; color: #f8fafc; font-weight: 600; }\n  .col h3 small { color: #94a3b8; font-weight: 400; }\n  .bar { display: flex; align-items: center; gap: 8px; height: 22px; font: 13px ui-monospace, monospace; }\n  .bar .w { width: 64px; text-align: right; }\n  .bar .b { height: 15px; border-radius: 3px; background: #3b82f6; transition: width 0.35s; }\n  .bar .b.hit { background: #f59e0b; }\n  .bar .n { color: #94a3b8; }\n  #pinned .b { background: #64748b; }\n</style>\n<div id=\"top\">\n  <button id=\"back\">◀</button><button id=\"play\" class=\"main\">▶ Play</button><button id=\"fwd\">▶|</button>\n  <input id=\"scrub\" type=\"range\" min=\"0\" max=\"1\" value=\"0\" /><span id=\"count\"></span>\n  <button id=\"pin\">📌 Pin this version</button>\n</div>\n<div id=\"words\">Run the cell above to fold the words.</div>\n<div id=\"cols\">\n  <div class=\"col\"><h3 id=\"nowTitle\"></h3><div id=\"now\"></div></div>\n  <div class=\"col\" id=\"pinnedCol\" style=\"display:none\"><h3 id=\"pinTitle\"></h3><div id=\"pinned\"></div></div>\n</div>\n<script>\n  var data = null, k = 0, pinned = null, playing = false, timer = null;\n  var el = function (id) { return document.getElementById(id); };\n\n  function bars(m, hit) {\n    var rows = Object.keys(m).map(function (w) { return [w, m[w]]; });\n    rows.sort(function (a, b) { return b[1] - a[1] || (a[0] < b[0] ? -1 : 1); });\n    return rows.map(function (r) {\n      return '<div class=\"bar\"><span class=\"w\">' + r[0] + '</span><span class=\"b' + (r[0] === hit ? ' hit' : '') +\n        '\" style=\"width:' + r[1] * 46 + 'px\"></span><span class=\"n\">' + r[1] + '</span></div>';\n    }).join('') || '<div class=\"bar\" style=\"color:#64748b\">(empty map)</div>';\n  }\n\n  function draw() {\n    if (!data) return;\n    var word = k > 0 ? data.words[k - 1] : null;\n    el('words').innerHTML = data.words.map(function (w, i) {\n      return '<span class=\"' + (i === k - 1 ? 'now' : i < k - 1 ? 'done' : '') + '\">' + w + '</span>';\n    }).join(' ');\n    el('nowTitle').innerHTML = 'acc, version ' + k + ' <small>' + (word ? '= version ' + (k - 1) + ' + \"' + word + '\"' : '= the empty map you start with') + '</small>';\n    el('now').innerHTML = bars(data.versions[k], word);\n    if (pinned !== null) {\n      el('pinnedCol').style.display = '';\n      el('pinTitle').innerHTML = 'version ' + pinned + ' <small>pinned: still exactly as it was</small>';\n      el('pinned').innerHTML = bars(data.versions[pinned], null);\n    }\n    el('scrub').value = k;\n    el('count').textContent = 'step ' + k + ' / ' + (data.versions.length - 1) + ' · ' + data.lang;\n    el('play').textContent = playing ? '⏸ Pause' : '▶ Play';\n  }\n\n  function play(on) {\n    playing = on; clearInterval(timer);\n    if (on) timer = setInterval(function () { if (k < data.versions.length - 1) k++; else play(false); draw(); }, 700);\n    draw();\n  }\n  el('play').addEventListener('click', function () { if (!data) return; if (k >= data.versions.length - 1) k = 0; play(!playing); });\n  el('back').addEventListener('click', function () { play(false); if (k > 0) k--; draw(); });\n  el('fwd').addEventListener('click', function () { play(false); if (data && k < data.versions.length - 1) k++; draw(); });\n  el('scrub').addEventListener('input', function () { k = +el('scrub').value; play(false); });\n  el('pin').addEventListener('click', function () { pinned = k; draw(); });\n\n  function load(d) { if (!d || d === data) return; data = d; k = 0; pinned = null; el('pinnedCol').style.display = 'none'; el('scrub').max = d.versions.length - 1; play(true); }\n  nb.onChange(function (state) { load(state.fold); });\n  load(nb.get('fold'));\n</script>\n",
+      "metadata": {
+        "htmlPreview": {
+          "width": 900,
+          "height": 560,
+          "scale": 1
+        },
+        "ai": {
+          "prompt": "Play back the fold in nb.fold: the words in a row with the current one highlighted, and the map after each step (version k) as horizontal bars, one per word, sorted by count, the bar just changed in amber, growing smoothly. Buttons to step back, play or pause and step forward, a scrub bar, and a Pin button that keeps the version on screen beside the latest, so you can see an old version never changes. Dark theme.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "9fe92403",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex114-md04",
+      "kind": "md",
+      "source": "## 3. Check every version\n\n> In JavaScript, check nb.fold: recount the words yourself and compare with the last version, check that every version is the one before plus exactly one word, and print whether the shared tail was the very same object. Print how many versions were kept and how many words version 5 still counts. Return a Vega-Lite bar chart of the 8 most frequent words.\n\nJavaScript counts the words its own way, with a plain mutable object, and then checks the immutable versions step by step."
+    },
+    {
+      "id": "c-ex114-js01",
+      "kind": "js",
+      "source": "// Recount the words independently and check every version of the fold.\nconst fold = nb.get('fold');\nif (!fold) return 'Run the cell above first.';\n\nconst mine = {};\nfor (const w of fold.words) mine[w] = (mine[w] || 0) + 1;\nconst final = fold.versions.at(-1);\nconst same = Object.keys(mine).length === Object.keys(final).length && Object.keys(mine).every(w => mine[w] === final[w]);\n\n// each version must be the one before plus exactly one word\nlet oneStep = true;\nfor (let i = 1; i < fold.versions.length; i++) {\n  const a = fold.versions[i - 1], b = fold.versions[i], w = fold.words[i - 1];\n  const changed = Object.keys(b).filter(key => b[key] !== a[key]);\n  if (changed.length !== 1 || changed[0] !== w || b[w] !== (a[w] || 0) + 1) oneStep = false;\n}\nconst sizes = fold.versions.map(v => Object.values(v).reduce((s, n) => s + n, 0));\n\nconsole.log(fold.lang + ': the shared tail is the very same object: ' + fold.shared);\nconsole.log('JavaScript recount matches the final map: ' + same);\nconsole.log('every version is the one before plus one word: ' + oneStep);\nconsole.log(fold.versions.length + ' versions kept; version 5 still counts ' + sizes[5] + ' words, the last ' + sizes.at(-1));\n\nconst top = Object.entries(final).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 8)\n  .map(([word, count]) => ({ word, count }));\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  width: 'container',\n  height: 220,\n  title: 'Most frequent words (' + fold.words.length + ' words, ' + Object.keys(final).length + ' different)',\n  data: { values: top },\n  mark: { type: 'bar', color: '#3b82f6' },\n  encoding: {\n    x: { field: 'word', type: 'nominal', sort: '-y', title: null },\n    y: { field: 'count', type: 'quantitative', axis: { tickMinStep: 1 } },\n  },\n};",
+      "metadata": {
+        "ai": {
+          "prompt": "In JavaScript, check nb.fold: recount the words yourself and compare with the last version, check that every version is the one before plus exactly one word, and print whether the shared tail was the very same object. Print how many versions were kept and how many words version 5 still counts. Return a Vega-Lite bar chart of the 8 most frequent words.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "26fafe0c",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex114-md05",
+      "kind": "md",
+      "source": "## What the run shows\n\n- **Prepending shares, it doesn't copy.** `extended` is a new list, but its tail is the very same object as `base`: the check prints *true*. Adding to the front is one new cell, whatever the length.\n- **19 words, 12 different, 20 versions of the map.** The fold made a new map for every word, plus the empty one it started from, and all 20 are still there. Version 5 still counts its 5 words (brown, fox, jumps, quick, the) after the last version has counted all 19.\n- **Every version is its predecessor plus one word.** The JavaScript check walks all 20 and finds no other change, and its own count, made by changing a plain object in place, matches the last version.\n- **the** comes first with 5, then **dog**, **fox** and **over** with 2 each; the other 8 words appear once.\n- **Immutable doesn't mean slow.** The maps share most of their structure with the version before, as the persistent tree notebook shows, so keeping all 20 costs far less than 20 copies.\n\n## Try this\n\nEach of these is a prompt. Press **✨** in a cell's header to change its prompt and generate it again, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **Predict, then pin.** Pin version 8, then play to the end. Will version 8's bars change? Watch.\n- **Leave out the small words.** Press ✨ on the Clojure cell and add: *\"Leave out the, and and over before counting.\"*\n- **Pairs of words.** Press ✨ on the Clojure cell and add: *\"Count pairs of neighbouring words instead of single words.\"*\n- **The mutable way.** Press **⚡ AI Generate New Cell** and ask: *\"In JavaScript, count the same words by changing one object in place, keeping a reference to it after 5 words, and show what that reference says at the end.\"* Compare with the pinned version.\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the Clojure cell and ask why prepending can share but appending can't."
+    }
+  ],
+  "createdAt": "2026-11-01T00:00:00.000Z",
+  "updatedAt": "2026-11-01T00:00:00.000Z"
+}

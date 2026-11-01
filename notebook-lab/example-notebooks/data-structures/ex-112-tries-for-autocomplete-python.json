@@ -1,0 +1,121 @@
+{
+  "title": "Tries for Autocomplete (Python)",
+  "state": {
+    "trie_prefix": "pro"
+  },
+  "cells": [
+    {
+      "id": "c-ex112-md01",
+      "kind": "md",
+      "source": "# Tries for Autocomplete (Python)\n\nA **trie** (a prefix tree) stores words letter by letter along shared paths. *program*, *progress* and *project* share one **p → r → o** path and only branch after it. To find every word starting with *pro*, walk three letters down and collect everything below.\n\nThe cost of that walk is the length of the prefix, **not** the number of words. That's why autocomplete boxes, spell checkers and phone keyboards are built on tries.\n\nThe question: **how much does sharing the prefixes save, and where?**\n\nHow the cells run:\n\n- **Python runs in your browser** (Pyodide; the first run takes a few seconds to load) and shares the trie through `nb`.\n- **The 3D view is an HTML cell** that follows the text box at every keystroke, and **JavaScript** checks the trie and measures the sharing.\n\n*Tries for Autocomplete* is the same notebook with real Go in the Debian VM, in the DevTools Hub. Both build the same trie.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it.\n\nPress **Run all**."
+    },
+    {
+      "id": "c-ex112-md02",
+      "kind": "md",
+      "source": "## 1. Build the trie\n\n> In Python, build a trie over these 40 words as nested dictionaries, one key per letter and \"$\": 1 marking the end of a word: program, programmer, progress, project, projector, promise, protocol, process, processor, profile, produce, product, compile, compiler, complete, complex, compute, computer, concat, concurrent, condition, console, constant, context, index, inherit, initial, inline, input, insert, inspect, instance, integer, interface, internal, interpret, parse, parser, partial and pattern. Count the nodes and the letters, print how many nodes sharing saved, and publish nb.trie = {words, tree}.\n\n- **`node.setdefault(ch, {})`** returns the child for that letter, creating it only if it isn't there yet: that's where the sharing comes from.\n- **A dictionary of dictionaries is already JSON**, so `nb[\"trie\"] = ...` hands the whole tree to the other cells as it is.\n- **`count_nodes`** adds one for each child and everything below it, skipping the `\"$\"` markers."
+    },
+    {
+      "id": "c-ex112-py01",
+      "kind": "py",
+      "source": "# A trie as nested dictionaries: one key per letter, \"$\" marks the end of a word.\nwords = [\n    \"program\", \"programmer\", \"progress\", \"project\", \"projector\", \"promise\",\n    \"protocol\", \"process\", \"processor\", \"profile\", \"produce\", \"product\",\n    \"compile\", \"compiler\", \"complete\", \"complex\", \"compute\", \"computer\",\n    \"concat\", \"concurrent\", \"condition\", \"console\", \"constant\", \"context\",\n    \"index\", \"inherit\", \"initial\", \"inline\", \"input\", \"insert\", \"inspect\",\n    \"instance\", \"integer\", \"interface\", \"internal\", \"interpret\",\n    \"parse\", \"parser\", \"partial\", \"pattern\",\n]\n\ndef insert(root, word):\n    node = root\n    for ch in word:\n        node = node.setdefault(ch, {})   # follow the branch, or grow it\n    node[\"$\"] = 1\n\ndef count_nodes(node):\n    return sum(1 + count_nodes(child) for key, child in node.items() if key != \"$\")\n\nroot = {}\nfor w in words:\n    insert(root, w)\n\nletters = sum(len(w) for w in words)\nnodes = count_nodes(root)\nprint(f\"{len(words)} words, {letters} letters typed in, only {nodes} trie nodes stored\")\nprint(f\"sharing saved {letters - nodes} nodes ({100 * (letters - nodes) / letters:.0f}%)\")\n\nnb[\"trie\"] = {\"words\": words, \"tree\": root}",
+      "metadata": {
+        "ai": {
+          "prompt": "In Python, build a trie over these 40 words as nested dictionaries, one key per letter and \"$\": 1 marking the end of a word: program, programmer, progress, project, projector, promise, protocol, process, processor, profile, produce, product, compile, compiler, complete, complex, compute, computer, concat, concurrent, condition, console, constant, context, index, inherit, initial, inline, input, insert, inspect, instance, integer, interface, internal, interpret, parse, parser, partial and pattern. Count the nodes and the letters, print how many nodes sharing saved, and publish nb.trie = {words, tree}.",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "9bf6ed7b",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex112-md03",
+      "kind": "md",
+      "source": "## 2. Type a prefix\n\n> Controls, 900 pixels wide: a text box \"Type a prefix\" bound to trie_prefix, default pro, with the placeholder e.g. pro, con, in.\n\nThe 3D view below follows every keystroke; nothing needs re-running. Try **pro**, then **proc**, then **prox**, which falls off the tree, then clear the box to see the whole tree."
+    },
+    {
+      "id": "c-ex112-ui01",
+      "kind": "ui",
+      "source": "{\n  \"width\": 900,\n  \"height\": 120,\n  \"controls\": [\n    {\n      \"type\": \"text\",\n      \"label\": \"Type a prefix\",\n      \"bind\": \"trie_prefix\",\n      \"default\": \"pro\",\n      \"placeholder\": \"e.g. pro, con, in\",\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 420,\n      \"height\": 76\n    }\n  ]\n}",
+      "metadata": {
+        "ai": {
+          "prompt": "Controls, 900 pixels wide: a text box \"Type a prefix\" bound to trie_prefix, default pro, with the placeholder e.g. pro, con, in.",
+          "kind": "ui",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "7f14651e",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex112-md04",
+      "kind": "md",
+      "source": "## 3. Walk the trie in 3D\n\n> A three.js view (shared/lib/three/0.128.0 with OrbitControls) of nb.trie.tree as a cone: the root at the top, each level lower and further out, and each branch given a slice of the circle in proportion to the words below it. Every node is a small sphere with its letter beside it, and nodes that end a word have a gold ring. As nb.trie_prefix changes, light the path it walks in amber, the part of the tree under it in cyan, and dim the rest; if the walk falls off the tree, mark where. Glide the camera towards the end of the walk, and turn slowly until someone drags. A panel shows the walk, the hops it took, and up to 24 completions, collected from the tree under the walk. Dark theme.\n\n- **Each keystroke is one hop** down one branch. Finding where *pro* ends takes 3 hops whether the trie holds 40 words or 40 million.\n- **The completions are whatever hangs below**: the cell collects every node with a `\"$\"` marker under the end of the walk, in alphabetical order.\n- **Shared prefixes are shared nodes.** All 12 *pro…* words hang from one *p → r → o* path, so most of the cone is branches near the top."
+    },
+    {
+      "id": "c-ex112-html01",
+      "kind": "html",
+      "source": "<style>\n  body { margin: 0; background: #0b1120; color: #cbd5e1; font-family: system-ui, sans-serif; overflow: hidden; }\n  #view { position: absolute; inset: 0; }\n  #panel { position: absolute; top: 10px; left: 12px; max-width: 330px; background: rgba(15, 23, 42, 0.88);\n           border: 1px solid #1e293b; border-radius: 8px; padding: 10px 12px; font-size: 13px; line-height: 1.5; }\n  #walk { font: 14px ui-monospace, monospace; margin-bottom: 6px; }\n  #walk b { color: #fbbf24; }\n  #walk .dead { color: #f87171; text-decoration: line-through; }\n  .word { display: inline-block; background: #1e293b; border: 1px solid #334155; border-radius: 5px; padding: 1px 7px; margin: 2px; font: 12px ui-monospace, monospace; }\n  .word b { color: #22d3ee; font-weight: 600; }\n  #meta { margin-top: 6px; color: #64748b; font-size: 12px; }\n  @media (max-width: 640px) { #panel { max-width: none; right: 12px; } }\n</style>\n<div id=\"view\"></div>\n<div id=\"panel\"><div id=\"walk\">Run the cell above to build the trie.</div><div id=\"list\"></div><div id=\"meta\"></div></div>\n<script src=\"/shared/lib/three/0.128.0/build/three.min.js\"></script>\n<script src=\"/shared/lib/three/0.128.0/examples/js/controls/OrbitControls.js\"></script>\n<script>\n  var RING = 2.1, DROP = 1.45;\n  var W = window.innerWidth || 960, H = window.innerHeight || 600;\n  var renderer = new THREE.WebGLRenderer({ antialias: true });\n  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));\n  renderer.setSize(W, H);\n  document.getElementById('view').appendChild(renderer.domElement);\n  var scene = new THREE.Scene();\n  scene.background = new THREE.Color(0x0b1120);\n  var camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 500);\n  var controls = new THREE.OrbitControls(camera, renderer.domElement);\n  controls.enableDamping = true;\n  controls.autoRotate = true;\n  controls.autoRotateSpeed = 0.7;\n  controls.addEventListener('start', function () { controls.autoRotate = false; });\n  scene.add(new THREE.AmbientLight(0xffffff, 0.6));\n  var sun = new THREE.DirectionalLight(0xffffff, 0.8);\n  sun.position.set(8, 20, 12);\n  scene.add(sun);\n\n  var COLOURS = { path: 0xf59e0b, under: 0x22d3ee, rest: 0x334155, root: 0xa78bfa, dead: 0xef4444 };\n  var trie = null, nodes = [], lines = null, focus = new THREE.Vector3(0, -4, 0);\n  var ballGeo = new THREE.SphereGeometry(0.3, 16, 12), ringGeo = new THREE.TorusGeometry(0.44, 0.06, 8, 24);\n\n  function letterSprite(ch) {\n    var c = document.createElement('canvas');\n    c.width = 64; c.height = 64;\n    var g = c.getContext('2d');\n    g.fillStyle = '#e2e8f0';\n    g.font = 'bold 44px system-ui, sans-serif';\n    g.textAlign = 'center'; g.textBaseline = 'middle';\n    g.fillText(ch, 32, 34);\n    var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));\n    s.scale.set(0.8, 0.8, 1);\n    s.position.set(0.5, 0.15, 0);\n    return s;\n  }\n\n  function wordsBelow(n) {\n    var count = n['$'] ? 1 : 0;\n    Object.keys(n).forEach(function (k) { if (k !== '$') count += wordsBelow(n[k]); });\n    return count;\n  }\n\n  // Cone layout: each child gets a slice of its parent's angle, sized by the words below it.\n  function layout(node, prefix, depth, a0, a1, parent) {\n    var angle = (a0 + a1) / 2, r = depth * RING;\n    var item = { prefix: prefix, node: node, depth: depth, parent: parent,\n      pos: new THREE.Vector3(Math.cos(angle) * r, -depth * DROP, Math.sin(angle) * r) };\n    nodes.push(item);\n    var keys = Object.keys(node).filter(function (k) { return k !== '$'; }).sort();\n    var total = 0;\n    keys.forEach(function (k) { total += wordsBelow(node[k]); });\n    var at = a0;\n    keys.forEach(function (k) {\n      var share = (a1 - a0) * wordsBelow(node[k]) / total;\n      layout(node[k], prefix + k, depth + 1, at, at + share, item);\n      at += share;\n    });\n  }\n\n  function build(t) {\n    nodes.forEach(function (n) { scene.remove(n.mesh); });\n    if (lines) scene.remove(lines);\n    nodes = [];\n    layout(t.tree, '', 0, 0, Math.PI * 2, null);\n    nodes.forEach(function (n) {\n      n.mesh = new THREE.Mesh(ballGeo, new THREE.MeshStandardMaterial({ color: COLOURS.rest }));\n      n.mesh.position.copy(n.pos);\n      if (n.prefix) n.mesh.add(letterSprite(n.prefix.slice(-1)));\n      if (n.node['$']) {\n        var ring = new THREE.Mesh(ringGeo, new THREE.MeshStandardMaterial({ color: 0xfbbf24 }));\n        ring.rotation.x = Math.PI / 2;\n        n.mesh.add(ring);\n      }\n      scene.add(n.mesh);\n    });\n    var pts = [], cols = [];\n    nodes.forEach(function (n) { if (n.parent) { pts.push(n.parent.pos, n.pos); cols.push(0, 0, 0, 0, 0, 0); } });\n    var g = new THREE.BufferGeometry().setFromPoints(pts);\n    g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));\n    lines = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true }));\n    scene.add(lines);\n    var deepest = Math.max.apply(null, nodes.map(function (n) { return n.depth; }));\n    camera.position.set(0, 5, deepest * RING * 1.6 / Math.min(1, W / H));\n  }\n\n  function collect(node, prefix, out) {\n    if (out.length >= 24) return;\n    if (node['$']) out.push(prefix);\n    Object.keys(node).filter(function (k) { return k !== '$'; }).sort().forEach(function (k) {\n      collect(node[k], prefix + k, out);\n    });\n  }\n\n  function highlight() {\n    if (!trie) return;\n    var raw = nb.get('trie_prefix');\n    var prefix = (typeof raw === 'string' ? raw : '').toLowerCase().trim();\n    var node = trie.tree, walked = '';\n    for (var i = 0; i < prefix.length; i++) {\n      if (!node[prefix[i]]) { node = null; break; }\n      node = node[prefix[i]];\n      walked += prefix[i];\n    }\n    var colour = new THREE.Color(), target = null;\n    nodes.forEach(function (n) {\n      var c = COLOURS.rest;\n      if (!n.prefix) c = COLOURS.root;\n      else if (walked.indexOf(n.prefix) === 0) c = (!node && n.prefix === walked) ? COLOURS.dead : COLOURS.path;\n      else if (node && n.prefix.indexOf(walked) === 0 && prefix) c = COLOURS.under;\n      else if (!prefix) c = 0x6366f1;\n      n.mesh.material.color.setHex(c);\n      n.mesh.scale.setScalar(c === COLOURS.path || c === COLOURS.dead ? 1.6 : 1);\n      if (n.prefix === walked) target = n;\n    });\n    var cols = lines.geometry.attributes.color, k = 0;\n    nodes.forEach(function (n) {\n      if (!n.parent) return;\n      colour.setHex(n.mesh.material.color.getHex() === COLOURS.rest ? 0x1e293b : n.mesh.material.color.getHex());\n      for (var e = 0; e < 2; e++) { cols.setXYZ(k++, colour.r, colour.g, colour.b); }\n    });\n    cols.needsUpdate = true;\n    focus.copy(target && walked ? target.pos : new THREE.Vector3(0, -4, 0));\n\n    var walkEl = document.getElementById('walk');\n    if (!prefix) walkEl.innerHTML = 'Type a prefix: the whole trie is shown.';\n    else if (!node) walkEl.innerHTML = 'walk: <b>' + walked + '</b><span class=\"dead\">' + prefix.slice(walked.length) +\n      '</span><br>falls off the tree after ' + walked.length + ' hop' + (walked.length === 1 ? '' : 's');\n    else walkEl.innerHTML = 'walk: <b>' + walked + '</b> &nbsp;·&nbsp; ' + walked.length + ' hop' + (walked.length === 1 ? '' : 's');\n    var out = [];\n    if (node && prefix) collect(node, walked, out);\n    document.getElementById('list').innerHTML = out.map(function (w) {\n      return '<span class=\"word\"><b>' + walked + '</b>' + w.slice(walked.length) + '</span>';\n    }).join('');\n    document.getElementById('meta').textContent = nodes.length - 1 + ' nodes for ' + trie.words.length + ' words' +\n      (node && prefix ? ' · ' + out.length + (out.length === 24 ? '+' : '') + ' completions' : '');\n  }\n\n  function load(t) {\n    if (!t || !t.tree || t === trie) return;\n    trie = t;\n    build(t);\n  }\n\n  function frame() {\n    controls.target.lerp(focus, 0.06);\n    controls.update();\n    renderer.render(scene, camera);\n    requestAnimationFrame(frame);\n  }\n\n  window.addEventListener('resize', function () {\n    W = window.innerWidth || W; H = window.innerHeight || H;\n    camera.aspect = W / H; camera.updateProjectionMatrix(); renderer.setSize(W, H);\n  });\n  nb.onChange(function (state) { load(state.trie); highlight(); });\n  load(nb.get('trie'));\n  highlight();\n  frame();\n</script>",
+      "metadata": {
+        "htmlPreview": {
+          "width": 960,
+          "height": 600,
+          "scale": 1
+        },
+        "ai": {
+          "prompt": "A three.js view (shared/lib/three/0.128.0 with OrbitControls) of nb.trie.tree as a cone: the root at the top, each level lower and further out, and each branch given a slice of the circle in proportion to the words below it. Every node is a small sphere with its letter beside it, and nodes that end a word have a gold ring. As nb.trie_prefix changes, light the path it walks in amber, the part of the tree under it in cyan, and dim the rest; if the walk falls off the tree, mark where. Glide the camera towards the end of the walk, and turn slowly until someone drags. A panel shows the walk, the hops it took, and up to 24 completions, collected from the tree under the walk. Dark theme.",
+          "kind": "html",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "0c9260d2",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex112-md05",
+      "kind": "md",
+      "source": "## 4. How much does sharing save?\n\n> In JavaScript, check nb.trie: every word in nb.trie.words must be found by walking the tree and ending on a node with \"$\", and the tree must hold no other words. Count the nodes at each depth against the letters at that position in all the words, print the totals and the saving, and the words under each first letter. Return a Vega-Lite bar chart of letters typed and nodes stored at each depth, side by side.\n\nA word list stores every letter of every word. A trie stores each **prefix** once: the first letters of words are shared by many words, the last letters by few. Counting depth by depth shows where the saving comes from."
+    },
+    {
+      "id": "c-ex112-js01",
+      "kind": "js",
+      "source": "// Check the trie holds exactly the words, then count the sharing depth by depth.\nconst trie = nb.get('trie');\nif (!trie) return 'Run the cell above that builds the trie first.';\n\nfunction contains(tree, word) {\n  let node = tree;\n  for (const ch of word) {\n    node = node[ch];\n    if (!node) return false;\n  }\n  return !!node['$'];\n}\nfunction allWords(node, prefix, out) {\n  if (node['$']) out.push(prefix);\n  for (const k of Object.keys(node)) if (k !== '$') allWords(node[k], prefix + k, out);\n  return out;\n}\n\nconst missing = trie.words.filter(w => !contains(trie.tree, w));\nconst stored = allWords(trie.tree, '', []);\nconst extra = stored.filter(w => !trie.words.includes(w));\nconsole.log('words found: ' + (trie.words.length - missing.length) + ' of ' + trie.words.length +\n  (missing.length ? ' (missing: ' + missing.join(', ') + ')' : '') + '; words in the tree that should not be: ' + extra.length);\n\n// nodes at each depth against letters at each position\nconst nodesAt = [], lettersAt = [];\n(function count(node, depth) {\n  for (const k of Object.keys(node)) {\n    if (k === '$') continue;\n    nodesAt[depth] = (nodesAt[depth] || 0) + 1;\n    count(node[k], depth + 1);\n  }\n})(trie.tree, 0);\nfor (const w of trie.words) for (let i = 0; i < w.length; i++) lettersAt[i] = (lettersAt[i] || 0) + 1;\n\nconst letters = lettersAt.reduce((a, b) => a + b, 0), nodes = nodesAt.reduce((a, b) => a + b, 0);\nconsole.log(letters + ' letters in the word list, ' + nodes + ' nodes in the trie: ' +\n  (100 * (letters - nodes) / letters).toFixed(0) + '% saved');\nconsole.log('first 3 letters: ' + lettersAt.slice(0, 3).join(', ') + ' letters, ' + nodesAt.slice(0, 3).join(', ') + ' nodes');\nconst byLetter = Object.keys(trie.tree).sort().map(k => k + ' ' + allWords(trie.tree[k], k, []).length);\nconsole.log('words per first letter: ' + byLetter.join(', '));\n\nconst rows = [];\nlettersAt.forEach((n, d) => {\n  rows.push({ position: d + 1, count: n, what: 'letters in the word list' });\n  rows.push({ position: d + 1, count: nodesAt[d] || 0, what: 'nodes in the trie' });\n});\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  width: 'container',\n  height: 260,\n  title: 'Letters typed against nodes stored, by position in the word',\n  data: { values: rows },\n  mark: 'bar',\n  encoding: {\n    x: { field: 'position', type: 'ordinal', title: 'letter position (1 = first letter)' },\n    xOffset: { field: 'what' },\n    y: { field: 'count', type: 'quantitative', title: null },\n    color: { field: 'what', type: 'nominal', title: null, scale: { range: ['#94a3b8', '#22d3ee'] } },\n  },\n};",
+      "metadata": {
+        "ai": {
+          "prompt": "In JavaScript, check nb.trie: every word in nb.trie.words must be found by walking the tree and ending on a node with \"$\", and the tree must hold no other words. Count the nodes at each depth against the letters at that position in all the words, print the totals and the saving, and the words under each first letter. Return a Vega-Lite bar chart of letters typed and nodes stored at each depth, side by side.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "31642d9c",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex112-md06",
+      "kind": "md",
+      "source": "## What the run shows\n\n- **40 words, 294 letters, 154 nodes.** Sharing prefixes saves 140 nodes, 48% of the letters. Every word is found, and the tree holds no word that isn't in the list.\n- **The saving is all at the front.** The first letters of the 40 words need only 3 nodes (c, i and p), the second letters 4, the third 12. From the 8th letter on, nodes and letters are equal: by then every word has its own branch.\n- **A walk costs one hop per letter typed.** *pro* takes 3 hops and finds 12 completions; *con* takes 3 and finds 6; *prox* falls off the tree after 3 hops, so there's nothing to suggest. Adding a thousand more words wouldn't make any of these walks longer.\n- **The completions come out sorted** for free: collecting the branches in letter order is alphabetical order.\n- **Go and Python build the same tree.** The JSON from the two notebooks is identical, key for key.\n\n## Try this\n\nEach of these is a prompt. Press **✨** in a cell's header to change its prompt and generate it again, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **Predict, then type.** How many completions does **in** have? How many hops does **interp** take? Then type them.\n- **More words.** Press ✨ on the Python cell and add *interrupt* and *parsec* to the list. The 3D view grows two new branches.\n- **Count, don't list.** Press ✨ on the Python cell and add: *\"Store in each node how many words are below it, so counting completions needs no walk.\"*\n- **A radix tree.** Press **⚡ AI Generate New Cell** and ask: *\"In JavaScript, collapse every chain of single-child nodes in nb.trie.tree into one edge labelled with the letters, and count the nodes left.\"*\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the Python cell and ask why looking up a prefix doesn't get slower as words are added."
+    }
+  ],
+  "createdAt": "2026-11-01T00:00:00.000Z",
+  "updatedAt": "2026-11-01T00:00:00.000Z"
+}
