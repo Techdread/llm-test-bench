@@ -1,5 +1,23 @@
 [
   {
+    "id": "fast-python",
+    "label": "Fast Python",
+    "icon": "fa-bolt",
+    "order": 1
+  },
+  {
+    "id": "databases",
+    "label": "Databases: SQL & Key-Value",
+    "icon": "fa-database",
+    "order": 2
+  },
+  {
+    "id": "cloud",
+    "label": "Cloud Infrastructure",
+    "icon": "fa-cloud",
+    "order": 3
+  },
+  {
     "id": "bricks",
     "label": "Bricks",
     "icon": "fa-cubes-stacked",

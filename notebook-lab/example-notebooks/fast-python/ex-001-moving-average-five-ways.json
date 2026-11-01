@@ -1,0 +1,117 @@
+{
+  "title": "One Moving Average, Five Ways",
+  "state": {
+    "fp_ticks": 1000000,
+    "fp_window": 50
+  },
+  "cells": [
+    {
+      "id": "c-ex001-md01",
+      "kind": "md",
+      "source": "# One Moving Average, Five Ways\n\nTrading systems compute rolling statistics on every tick: moving averages, volumes, volatility. The arithmetic is trivial; doing it fast is the job. This notebook computes **one moving average five ways** and times each one per tick:\n\n- pure Python, re-adding the whole window every tick;\n- pure Python with a **running sum** (add the newest price, drop the oldest);\n- **numpy**, with a cumulative sum;\n- **numpy**, with a sliding-window view;\n- **C**, compiled in your browser, with a running sum.\n\nThe question: **how much faster is \"fast Python\", and what does each speed-up cost?** Two things decide it: doing less work per tick (an *algorithm* change) and doing the work outside the Python interpreter (a *where it runs* change).\n\nHow the cells run:\n\n- **Python runs in your browser** (Pyodide, with numpy). The first run takes a few seconds to load.\n- **C runs in your browser** too: xcc compiles it to WebAssembly on the page. It reads the sliders with `#include <nb.h>`.\n- **JavaScript** puts the timings side by side.\n\nThe prices are **synthetic**: made by a formula, not market data. Timings depend on your machine and browser; the *ratios* are the lesson.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it.\n\nPress **Run all**. The Python cell takes a few seconds."
+    },
+    {
+      "id": "c-ex001-md02",
+      "kind": "md",
+      "source": "## 1. How much data?\n\n> Controls, 900 pixels wide: a slider \"Ticks\" bound to fp_ticks, 100,000 to 2,000,000 in steps of 100,000, default 1,000,000; and a slider \"Window (ticks)\" bound to fp_window, 10 to 500 in steps of 10, default 50.\n\nAfter moving a slider, press **▶** on the Python and C cells again, then on the JS cell."
+    },
+    {
+      "id": "c-ex001-ui01",
+      "kind": "ui",
+      "source": "{\n  \"width\": 900,\n  \"height\": 110,\n  \"controls\": [\n    {\n      \"type\": \"slider\",\n      \"label\": \"Ticks\",\n      \"bind\": \"fp_ticks\",\n      \"default\": 1000000,\n      \"min\": 100000,\n      \"max\": 2000000,\n      \"step\": 100000,\n      \"x\": 0,\n      \"y\": 0,\n      \"width\": 420,\n      \"height\": 76\n    },\n    {\n      \"type\": \"slider\",\n      \"label\": \"Window (ticks)\",\n      \"bind\": \"fp_window\",\n      \"default\": 50,\n      \"min\": 10,\n      \"max\": 500,\n      \"step\": 10,\n      \"x\": 450,\n      \"y\": 0,\n      \"width\": 420,\n      \"height\": 76\n    }\n  ]\n}",
+      "metadata": {
+        "ai": {
+          "prompt": "Controls, 900 pixels wide: a slider \"Ticks\" bound to fp_ticks, 100,000 to 2,000,000 in steps of 100,000, default 1,000,000; and a slider \"Window (ticks)\" bound to fp_window, 10 to 500 in steps of 10, default 50.",
+          "kind": "ui",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "60239cd4",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex001-md03",
+      "kind": "md",
+      "source": "## 2. Four ways in Python\n\n> In Python, make nb.fp_ticks synthetic prices with numpy from a formula (100 + 10 sin(i/500) + 3 sin(i/37.7) + a hash of i scaled to ±0.5) so another language can rebuild them exactly. Compute a moving average over nb.fp_window ticks four ways: a pure-Python loop that re-adds the whole window (on the first 50,000 ticks only), a pure-Python running sum, numpy cumsum differences, and numpy sliding_window_view means. Time each with perf_counter, report nanoseconds per tick and the largest difference from the sliding-window answer, and publish nb.fp_py = {n, w, results, check} and the first 3,000 prices and averages as nb.fp_sample.\n\n- **The naive loop** does *w* additions per tick, so a window of 50 costs about 50 times the work of a running sum. It only runs on the first 50,000 ticks, and its time is reported per tick so it compares fairly.\n- **The running sum** does 2 operations per tick, but each one goes through the Python interpreter: looking up names, checking types, boxing floats.\n- **`np.cumsum`** turns the whole job into a few array operations that run in compiled code, with no Python per tick at all.\n- **`sliding_window_view`** makes a view of every window without copying, then averages each one: the same work as the naive loop, but in compiled code.\n- **\"largest error\"** compares each answer with the sliding-window one. Running sums carry rounding error forward from tick to tick; watch how big it gets."
+    },
+    {
+      "id": "c-ex001-py01",
+      "kind": "py",
+      "source": "import time\nimport numpy as np\nfrom numpy.lib.stride_tricks import sliding_window_view\n\nn = int(nb.get(\"fp_ticks\") or 1_000_000)\nw = int(nb.get(\"fp_window\") or 50)\n\n# Synthetic prices, made by a formula rather than a random generator so the C cell\n# can build exactly the same series: two slow waves plus a little integer-hash \"noise\".\ni = np.arange(n, dtype=np.int64)\nprices = 100 + 10 * np.sin(i / 500) + 3 * np.sin(i / 37.7) + ((i * 2654435761) % 1000) / 1000 - 0.5\np = prices.tolist()                       # a plain Python list for the pure-Python versions\n\ndef ma_naive(p, w):\n    \"\"\"Re-add the whole window for every tick: w additions per tick.\"\"\"\n    out = []\n    for k in range(w - 1, len(p)):\n        s = 0.0\n        for j in range(k - w + 1, k + 1):\n            s += p[j]\n        out.append(s / w)\n    return out\n\ndef ma_running(p, w):\n    \"\"\"Keep a running sum: add the newest price, drop the oldest. 2 operations per tick.\"\"\"\n    s = sum(p[:w])\n    out = [s / w]\n    for k in range(w, len(p)):\n        s += p[k] - p[k - w]\n        out.append(s / w)\n    return out\n\ndef ma_cumsum(a, w):\n    \"\"\"numpy: one cumulative sum, then each window is a difference of two entries.\"\"\"\n    c = np.cumsum(np.concatenate(([0.0], a)))\n    return (c[w:] - c[:-w]) / w\n\ndef ma_windows(a, w):\n    \"\"\"numpy: a view of every window (no copying), then the mean of each row.\"\"\"\n    return sliding_window_view(a, w).mean(axis=1)\n\ndef timed(f, *args, repeat=1):\n    best = float(\"inf\")\n    for _ in range(repeat):\n        t0 = time.perf_counter()\n        out = f(*args)\n        best = min(best, time.perf_counter() - t0)\n    return out, best\n\nNAIVE_TICKS = min(n, 50_000)             # the naive loop is too slow for the full series\nnaive, t_naive = timed(ma_naive, p[:NAIVE_TICKS], w)\nrunning, t_running = timed(ma_running, p, w)\ncums, t_cumsum = timed(ma_cumsum, prices, w, repeat=3)\nwins, t_windows = timed(ma_windows, prices, w, repeat=3)\n\nreference = wins                          # every window summed afresh: no drift\nresults = [\n    {\"method\": \"Python, naive loop\", \"ns\": t_naive / NAIVE_TICKS * 1e9, \"ticks\": NAIVE_TICKS,\n     \"error\": float(np.max(np.abs(np.array(naive) - reference[:len(naive)])))},\n    {\"method\": \"Python, running sum\", \"ns\": t_running / n * 1e9, \"ticks\": n,\n     \"error\": float(np.max(np.abs(np.array(running) - reference)))},\n    {\"method\": \"numpy cumsum\", \"ns\": t_cumsum / n * 1e9, \"ticks\": n,\n     \"error\": float(np.max(np.abs(cums - reference)))},\n    {\"method\": \"numpy sliding windows\", \"ns\": t_windows / n * 1e9, \"ticks\": n, \"error\": 0.0},\n]\nprint(f\"{n:,} ticks, window {w}\")\nprint(f\"{'method':24s} {'ns per tick':>12s} {'ticks timed':>12s} {'largest error':>14s}\")\nfor r in results:\n    print(f\"{r['method']:24s} {r['ns']:12.1f} {r['ticks']:12,d} {r['error']:14.2e}\")\n\nnb[\"fp_py\"] = {\"n\": n, \"w\": w, \"results\": results, \"check\": float(np.sum(reference))}\nnb[\"fp_sample\"] = {\"price\": [round(x, 3) for x in p[:3000]],\n                   \"ma\": [None] * (w - 1) + [round(float(x), 3) for x in wins[:3000 - w + 1]]}\n",
+      "metadata": {
+        "ai": {
+          "prompt": "In Python, make nb.fp_ticks synthetic prices with numpy from a formula (100 + 10 sin(i/500) + 3 sin(i/37.7) + a hash of i scaled to ±0.5) so another language can rebuild them exactly. Compute a moving average over nb.fp_window ticks four ways: a pure-Python loop that re-adds the whole window (on the first 50,000 ticks only), a pure-Python running sum, numpy cumsum differences, and numpy sliding_window_view means. Time each with perf_counter, report nanoseconds per tick and the largest difference from the sliding-window answer, and publish nb.fp_py = {n, w, results, check} and the first 3,000 prices and averages as nb.fp_sample.",
+          "kind": "py",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "2d67719d",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex001-md04",
+      "kind": "md",
+      "source": "## 3. The same running sum in C\n\n> In C, read nb.fp_ticks and nb.fp_window with <nb.h>, build the same synthetic prices with the same formula, compute the running-sum moving average, time it with clock() averaged over 10 passes, print nanoseconds per tick and the sum of all the averages as a check, and publish nb.fp_c = {ns, ticks, check} with a `__NB_SET__` line.\n\n- **The same formula** builds the same prices, so the answers can be compared to many decimal places.\n- **`clock()`** only ticks every millisecond or so, which is why the loop runs 10 times and takes the average.\n- **This is what numpy is doing for you**: a tight loop over a contiguous array of doubles, compiled ahead of time."
+    },
+    {
+      "id": "c-ex001-c01",
+      "kind": "c",
+      "source": "#include <stdio.h>\n#include <stdlib.h>\n#include <math.h>\n#include <time.h>\n#include <nb.h>\n\n/* The same synthetic prices and the same running-sum moving average, in C. */\nint main() {\n    int n = (int)nb_get_int(\"fp_ticks\", 1000000);\n    int w = (int)nb_get_int(\"fp_window\", 50);\n    double *p = malloc(sizeof(double) * n);\n    double *ma = malloc(sizeof(double) * n);\n    for (long long i = 0; i < n; i++)\n        p[i] = 100 + 10 * sin(i / 500.0) + 3 * sin(i / 37.7) + ((i * 2654435761LL) % 1000) / 1000.0 - 0.5;\n\n    int repeats = 10;                   /* the clock is coarse, so time several passes */\n    clock_t t0 = clock();\n    for (int r = 0; r < repeats; r++) {\n        double s = 0;\n        for (int k = 0; k < w; k++) s += p[k];\n        ma[w - 1] = s / w;\n        for (int k = w; k < n; k++) {\n            s += p[k] - p[k - w];       /* add the newest, drop the oldest */\n            ma[k] = s / w;\n        }\n    }\n    double seconds = (double)(clock() - t0) / CLOCKS_PER_SEC / repeats;\n\n    double check = 0;\n    for (int k = w - 1; k < n; k++) check += ma[k];\n    printf(\"C, running sum: %.2f ns per tick (%d ticks, window %d, averaged over %d passes)\\n\",\n           seconds / n * 1e9, n, w, repeats);\n    printf(\"sum of all the averages: %.6f\\n\", check);\n    printf(\"__NB_SET__ {\\\"key\\\":\\\"fp_c\\\",\\\"value\\\":{\\\"ns\\\":%.4f,\\\"ticks\\\":%d,\\\"check\\\":%.6f}}\\n\", seconds / n * 1e9, n, check);\n    free(p); free(ma);\n    return 0;\n}\n",
+      "metadata": {
+        "ai": {
+          "prompt": "In C, read nb.fp_ticks and nb.fp_window with <nb.h>, build the same synthetic prices with the same formula, compute the running-sum moving average, time it with clock() averaged over 10 passes, print nanoseconds per tick and the sum of all the averages as a check, and publish nb.fp_c = {ns, ticks, check} with a __NB_SET__ line.",
+          "kind": "c",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "1c3997b9",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex001-md05",
+      "kind": "md",
+      "source": "## 4. Side by side\n\n> In JavaScript, compare all five methods from nb.fp_py and nb.fp_c: print nanoseconds per tick and how many times faster each is than the naive loop, and check that the C and numpy sums of the averages agree. Return two Vega-Lite charts one above the other: a log-scale bar chart of nanoseconds per tick coloured by pure Python, numpy or C, and the first 3,000 prices with their moving average.\n\nThe chart's scale is logarithmic: each step along it is ten times faster."
+    },
+    {
+      "id": "c-ex001-js01",
+      "kind": "js",
+      "source": "// Put the five methods side by side, per tick, and check C against numpy.\nconst py = nb.get('fp_py'), c = nb.get('fp_c'), sample = nb.get('fp_sample');\nif (!py) return 'Run the Python cell first.';\n\nconst rows = py.results.map(r => ({ method: r.method, ns: r.ns, lang: r.method.startsWith('numpy') ? 'numpy' : 'pure Python' }));\nif (c) rows.push({ method: 'C, running sum', ns: c.ns, lang: 'C' });\nconst slowest = Math.max(...rows.map(r => r.ns));\nconsole.log('method                   ns per tick   times faster than the naive loop');\nfor (const r of rows) console.log(r.method.padEnd(24) + r.ns.toFixed(1).padStart(12) + (slowest / r.ns).toFixed(0).padStart(14) + 'x');\nif (c && c.ticks === py.n) {\n  console.log('\\nC and numpy agree: sums of all the averages differ by ' +\n    (Math.abs(c.check - py.check) / py.check).toExponential(1) + ' of the total');\n} else if (c) {\n  console.log('\\nRun the C cell again: it used a different number of ticks from the Python cell.');\n}\n\nconst bars = {\n  width: 700, height: 200,\n  title: 'Nanoseconds per tick (log scale): shorter is faster',\n  data: { values: rows },\n  mark: 'bar',\n  encoding: {\n    y: { field: 'method', type: 'nominal', sort: '-x', title: null },\n    x: { field: 'ns', type: 'quantitative', scale: { type: 'log' }, title: 'ns per tick' },\n    x2: { datum: 1 },          // a log-scale bar needs somewhere to start\n    color: { field: 'lang', type: 'nominal', title: null, scale: { domain: ['pure Python', 'numpy', 'C'], range: ['#f59e0b', '#3b82f6', '#22c55e'] } },\n  },\n};\nconst line = sample && {\n  width: 700, height: 180,\n  title: 'The first 3,000 synthetic ticks and their ' + py.w + '-tick moving average',\n  data: { values: sample.price.flatMap((p, i) => [{ tick: i, value: p, series: 'price' }].concat(sample.ma[i] == null ? [] : [{ tick: i, value: sample.ma[i], series: 'moving average' }])) },\n  mark: { type: 'line', strokeWidth: 1.2 },\n  encoding: {\n    x: { field: 'tick', type: 'quantitative' },\n    y: { field: 'value', type: 'quantitative', scale: { zero: false }, title: 'price' },\n    color: { field: 'series', type: 'nominal', title: null, scale: { range: ['#94a3b8', '#f59e0b'] } },\n  },\n};\n// vconcat charts can't stretch to the cell's width, so they get a fixed one\nreturn { $schema: 'https://vega.github.io/schema/vega-lite/v5.json', vconcat: line ? [bars, line] : [bars] };\n",
+      "metadata": {
+        "ai": {
+          "prompt": "In JavaScript, compare all five methods from nb.fp_py and nb.fp_c: print nanoseconds per tick and how many times faster each is than the naive loop, and check that the C and numpy sums of the averages agree. Return two Vega-Lite charts one above the other: a log-scale bar chart of nanoseconds per tick coloured by pure Python, numpy or C, and the first 3,000 prices with their moving average.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "aa0734ee",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex001-md06",
+      "kind": "md",
+      "source": "## What the run shows\n\nTwo runs in Chrome on a desktop, 1,000,000 ticks and a window of 50 (your numbers will differ; the ratios hold):\n\n| method | ns per tick | times faster than the naive loop |\n|---|---|---|\n| Python, naive loop | about 2,000 | 1 |\n| Python, running sum | 95–97 | about 20 |\n| numpy sliding windows | 20.4 | about 98 |\n| numpy cumsum | 4.0 | about 500 |\n| C, running sum | 2.6–3.4 | 590–770 |\n\n- **The algorithm buys 20 times.** The running sum does 2 operations per tick instead of 50, still in plain Python.\n- **Leaving the interpreter buys another 25 times.** numpy's cumsum does the same O(n) job as the running sum, but in compiled code: 4 ns per tick against 95.\n- **The sliding-window view is 5 times slower than cumsum**, because it really does add up all 50 prices of every window, just in compiled code. Vectorising a slow algorithm only gets you so far.\n- **C is only a little faster than the best numpy**, because numpy's cumsum *is* a tight compiled loop. Writing C pays off when the work can't be expressed as whole-array operations.\n- **Fastest isn't most accurate.** The cumsum answer is out by up to 2.8 × 10⁻⁹: subtracting two cumulative sums near 100 million loses digits. The running sum drifts by 4.7 × 10⁻¹² over a million ticks; the naive loop and the sliding windows don't drift at all. For prices that's harmless; for a cumulative P&L over years of ticks, it's a reason to re-sum from scratch now and then.\n- **C and numpy compute the same averages** from the same synthetic prices: the sums of all million averages differ by 1.6 × 10⁻¹⁴ of the total.\n\n\n## Try this\n\nEach of these is a prompt. Press **✨** in a cell's header to change its prompt and generate it again, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **Predict, then slide.** Set the window to 500. Which methods get slower, and which don't? Then run the cells.\n- **An exponential average.** Press ✨ on the Python cell and add: *\"Also compute an exponential moving average with alpha 0.05, in a Python loop and with numpy, and time both.\"* Why is it harder to vectorise?\n- **Fix the drift.** Press ✨ on the Python cell and add: *\"Recompute the running sum from scratch every 10,000 ticks, and report the largest error again.\"*\n- **Rolling volatility.** Press **⚡ AI Generate New Cell** and ask: *\"In Python with numpy, compute a 50-tick rolling standard deviation of the tick-to-tick returns without a loop.\"*\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the Python cell and ask why `np.cumsum` is so much faster than the running-sum loop when both do the same arithmetic."
+    }
+  ],
+  "createdAt": "2026-11-01T00:00:00.000Z",
+  "updatedAt": "2026-11-01T00:00:00.000Z"
+}

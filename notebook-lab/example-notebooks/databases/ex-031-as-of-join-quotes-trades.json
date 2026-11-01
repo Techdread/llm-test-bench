@@ -1,0 +1,161 @@
+{
+  "title": "As-Of Joins: Which Quote Was Live?",
+  "cells": [
+    {
+      "id": "c-ex031-md01",
+      "kind": "md",
+      "source": "# As-Of Joins: Which Quote Was Live?\n\nMarket data comes in two streams: **quotes** (the best bid and ask, updated many times a second) and **trades**. To judge a trade (was it at a good price? who started it?) you need **the quote that was live when it happened**: the latest quote at or before the trade's time. That's an **as-of join**, and it's one of the most common queries in finance.\n\nOrdinary SQL joins match equal keys; an as-of join matches \"the last one before\". kdb+ has `aj`, pandas has `merge_asof`, DuckDB has `ASOF JOIN`; in standard SQL you have to build it. The question: **how do you build it so it's both right and fast, and how do you know it's right?**\n\nHow the cells run:\n\n- **JavaScript** makes 30 minutes of synthetic quotes and trades and saves them in `nb`.\n- **SQL cells** run in your browser (SQLite, through sql.js); `nb.quotes` and `nb.trades` become tables.\n- **JavaScript** redoes the join a third way and compares.\n\nEverything here is **synthetic**: made-up symbols and seeded random prices.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it.\n\nPress **Run all**."
+    },
+    {
+      "id": "c-ex031-md02",
+      "kind": "md",
+      "source": "## 1. Quotes and trades\n\n> In JavaScript, make 30 minutes of synthetic quotes and trades for two made-up symbols with a seeded generator, timestamps in milliseconds: a quote (id, symbol, ts, bid, ask, spread of 2, 4 or 6 cents around a drifting mid) every 50 to 550 ms, and a trade every 0.3 to 2.7 seconds at the ask, the bid or the mid of the quote then in force. Save them as nb.quotes and nb.trades.\n\n- **Timestamps are whole milliseconds**, so ties are possible: a quote and a trade in the same millisecond. Deciding what happens then is part of getting an as-of join right.\n- **Each trade is printed at the live quote's ask, bid or mid**, so later we can check the classification gets it right."
+    },
+    {
+      "id": "c-ex031-js01",
+      "kind": "js",
+      "source": "// Synthetic quotes and trades for two made-up symbols over 30 minutes, timestamps in ms.\nfunction mulberry32(seed) {\n  return () => {\n    seed = (seed + 0x6D2B79F5) | 0;\n    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);\n    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;\n    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n  };\n}\nconst rand = mulberry32(31);\nconst MINUTES = 30, END = MINUTES * 60 * 1000;\nconst quotes = [], trades = [];\nfor (const [symbol, start] of [['ACME', 50], ['BOLT', 120]]) {\n  let mid = start, ts = 0, quoteId = 0;\n  const cents = x => Math.round(x * 100) / 100;\n  const book = [];                                   // this symbol's quotes, for the trades\n  while ((ts += 50 + Math.floor(rand() * 500)) < END) {   // a new quote every 50 to 550 ms\n    mid += (rand() - 0.5) * 0.02;\n    const half = 0.01 * (1 + Math.floor(rand() * 3));      // spread of 2, 4 or 6 cents\n    const q = { quote_id: ++quoteId, symbol, ts, bid: cents(mid - half), ask: cents(mid + half) };\n    quotes.push(q); book.push(q);\n  }\n  let k = 0, tradeId = 0;\n  ts = 0;\n  while ((ts += 300 + Math.floor(rand() * 2400)) < END) {  // a trade every 0.3 to 2.7 s\n    while (k + 1 < book.length && book[k + 1].ts <= ts) k++;\n    const q = book[k];\n    if (q.ts > ts) continue;                               // no quote yet\n    const r = rand();                                      // at the ask, at the bid, or inside\n    const price = r < 0.45 ? q.ask : r < 0.9 ? q.bid : cents((q.bid + q.ask) / 2);\n    trades.push({ trade_id: symbol + '-' + (++tradeId), symbol, ts, price, qty: 100 * (1 + Math.floor(rand() * 10)) });\n  }\n}\nnb.set('quotes', quotes);\nnb.set('trades', trades);\nconsole.log(quotes.length + ' quotes and ' + trades.length + ' trades over ' + MINUTES + ' minutes');\nconsole.log('first quote: ' + JSON.stringify(quotes[0]));\nconsole.log('first trade: ' + JSON.stringify(trades[0]));",
+      "metadata": {
+        "ai": {
+          "prompt": "In JavaScript, make 30 minutes of synthetic quotes and trades for two made-up symbols with a seeded generator, timestamps in milliseconds: a quote (id, symbol, ts, bid, ask, spread of 2, 4 or 6 cents around a drifting mid) every 50 to 550 ms, and a trade every 0.3 to 2.7 seconds at the ask, the bid or the mid of the quote then in force. Save them as nb.quotes and nb.trades.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "d362cb01",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex031-md03",
+      "kind": "md",
+      "source": "## 2. Ask the planner\n\n> Ask SQLite with EXPLAIN QUERY PLAN how it would find, for every trade, the latest quote in the same symbol at or before the trade, then create an index on quotes (symbol, ts) and ask again.\n\n- **`EXPLAIN QUERY PLAN`** shows how SQLite *will* run a query, without running it.\n- **Without the index**, the subquery scans every quote, for every trade: thousands of trades times thousands of quotes.\n- **With the index on (symbol, ts)**, it can jump straight to the symbol, then to the last quote at or before the time, a few steps down a B-tree. The plan says `SEARCH ... USING INDEX` instead of `SCAN`."
+    },
+    {
+      "id": "c-ex031-sql01",
+      "kind": "sql",
+      "source": "-- How will SQLite find the latest quote at or before a trade? Ask it, before and after an index.\nEXPLAIN QUERY PLAN\nSELECT (SELECT bid FROM quotes q WHERE q.symbol = t.symbol AND q.ts <= t.ts ORDER BY q.ts DESC LIMIT 1)\nFROM trades t;\n\nCREATE INDEX IF NOT EXISTS quotes_by_symbol_time ON quotes (symbol, ts);\n\nEXPLAIN QUERY PLAN\nSELECT (SELECT bid FROM quotes q WHERE q.symbol = t.symbol AND q.ts <= t.ts ORDER BY q.ts DESC LIMIT 1)\nFROM trades t;",
+      "metadata": {
+        "ai": {
+          "prompt": "Ask SQLite with EXPLAIN QUERY PLAN how it would find, for every trade, the latest quote in the same symbol at or before the trade, then create an index on quotes (symbol, ts) and ask again.",
+          "kind": "sql",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "e1f08bfd",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex031-md04",
+      "kind": "md",
+      "source": "## 3. As-of join, the subquery way\n\n> Using the trades and quotes tables, join each trade to the latest quote in the same symbol at or before it (an as-of join) with a correlated subquery, using the index on quotes (symbol, ts). Give the trade, the quote's id, time, bid and ask, and how old the quote was. Save the result as matched.\n\n- **`ORDER BY ts DESC LIMIT 1`** with `ts <= t.ts` picks the latest quote not after the trade. With the index it's one search per trade.\n- **`quote_age_ms`** is how long that quote had been live: a stale quote makes a poor reference price."
+    },
+    {
+      "id": "c-ex031-sql02",
+      "kind": "sql",
+      "source": "-- As-of join, way 1: for each trade, the latest quote in the same symbol at or before it.\n-- save as: matched\nCREATE INDEX IF NOT EXISTS quotes_by_symbol_time ON quotes (symbol, ts);\nSELECT t.trade_id, t.symbol, t.ts, t.price, t.qty,\n  q.quote_id, q.ts AS quote_ts, t.ts - q.ts AS quote_age_ms, q.bid, q.ask\nFROM trades t\nJOIN quotes q ON q.quote_id = (\n  SELECT quote_id FROM quotes\n  WHERE symbol = t.symbol AND ts <= t.ts\n  ORDER BY ts DESC LIMIT 1\n) AND q.symbol = t.symbol\nORDER BY t.symbol, t.ts;",
+      "metadata": {
+        "ai": {
+          "prompt": "Using the trades and quotes tables, join each trade to the latest quote in the same symbol at or before it (an as-of join) with a correlated subquery, using the index on quotes (symbol, ts). Give the trade, the quote's id, time, bid and ask, and how old the quote was. Save the result as matched.",
+          "kind": "sql",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "01c62d4c",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex031-md05",
+      "kind": "md",
+      "source": "## 4. As-of join, the window way\n\n> Do the same as-of join a second way, without a subquery: put quotes and trades into one time line per symbol (quotes first within the same millisecond), carry the latest quote id forward with a running MAX over a window, and count how many trades get the same quote as in matched.\n\n- **One time line**: `UNION ALL` stacks quotes and trades; `kind` 0 puts a quote before a trade in the same millisecond.\n- **`MAX(quote_id) OVER (... ROWS ... CURRENT ROW)`** carries the latest quote id forward. That works because quote ids only grow with time within a symbol; it's the same trick as a \"forward fill\".\n- **Two methods, one answer**: the last column counts the trades where both ways chose the same quote."
+    },
+    {
+      "id": "c-ex031-sql03",
+      "kind": "sql",
+      "source": "-- As-of join, way 2: no subquery. Put quotes and trades in one time line per symbol,\n-- and carry the latest quote_id forward with a running MAX over a window.\n-- Quotes sort before trades in the same millisecond, so a quote at the same time counts.\nWITH events AS (\n  SELECT symbol, ts, 0 AS kind, quote_id, NULL AS trade_id FROM quotes\n  UNION ALL\n  SELECT symbol, ts, 1 AS kind, NULL, trade_id FROM trades\n),\ncarried AS (\n  SELECT *, MAX(quote_id) OVER (PARTITION BY symbol ORDER BY ts, kind\n                                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS last_quote\n  FROM events\n)\nSELECT COUNT(*) AS trades_matched,\n  SUM(c.last_quote = m.quote_id) AS same_quote_as_way_1\nFROM carried c\nJOIN matched m ON m.trade_id = c.trade_id\nWHERE c.kind = 1;",
+      "metadata": {
+        "ai": {
+          "prompt": "Do the same as-of join a second way, without a subquery: put quotes and trades into one time line per symbol (quotes first within the same millisecond), carry the latest quote id forward with a running MAX over a window, and count how many trades get the same quote as in matched.",
+          "kind": "sql",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "7829b1aa",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex031-md06",
+      "kind": "md",
+      "source": "## 5. Who started each trade?\n\n> Using matched, classify each trade as buyer-initiated (above the quote's mid), seller-initiated (below) or at the mid, and for each symbol and class give the trades, the shares, the average effective spread in basis points (twice the distance from the mid over the mid) and the average quote age. Save it as spreads.\n\n- **The quote rule** (part of the Lee–Ready method): a trade above the mid was probably a buyer paying the ask; below, a seller hitting the bid.\n- **Effective spread** measures what crossing the spread cost, in basis points (hundredths of a percent). Trading desks track it to judge execution quality."
+    },
+    {
+      "id": "c-ex031-sql04",
+      "kind": "sql",
+      "source": "-- Who started each trade? At or above the mid: a buyer crossed the spread. Below: a seller.\n-- The effective spread is twice the distance from the mid, as a share of the mid.\n-- save as: spreads\nSELECT symbol,\n  CASE WHEN price > (bid + ask) / 2.0 THEN 'buyer'\n       WHEN price < (bid + ask) / 2.0 THEN 'seller'\n       ELSE 'at the mid' END AS initiated_by,\n  COUNT(*) AS trades,\n  SUM(qty) AS shares,\n  ROUND(AVG(2.0 * ABS(price - (bid + ask) / 2.0) / ((bid + ask) / 2.0)) * 10000, 2) AS effective_spread_bp,\n  ROUND(AVG(quote_age_ms)) AS average_quote_age_ms\nFROM matched\nGROUP BY symbol, initiated_by\nORDER BY symbol, trades DESC;",
+      "metadata": {
+        "ai": {
+          "prompt": "Using matched, classify each trade as buyer-initiated (above the quote's mid), seller-initiated (below) or at the mid, and for each symbol and class give the trades, the shares, the average effective spread in basis points (twice the distance from the mid over the mid) and the average quote age. Save it as spreads.",
+          "kind": "sql",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "67670724",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex031-md07",
+      "kind": "md",
+      "source": "## 6. Check it a third way\n\n> In JavaScript, redo the as-of join with a binary search over each symbol's quotes sorted by time, and count the trades the SQL missed or matched to a different quote. Print the median, 90th percentile and oldest quote age, and return a Vega-Lite histogram of quote age in 25 ms bins.\n\nA binary search over each symbol's quotes, sorted by time, finds the same \"last at or before\" in a completely different way from either SQL query."
+    },
+    {
+      "id": "c-ex031-js02",
+      "kind": "js",
+      "source": "// Redo the as-of match with a binary search per trade, and compare with the SQL.\nconst quotes = nb.get('quotes'), trades = nb.get('trades'), matched = nb.get('matched');\nif (!quotes || !trades || !matched) return 'Run the cells above first.';\n\nconst bySymbol = {};\nfor (const q of quotes) (bySymbol[q.symbol] = bySymbol[q.symbol] || []).push(q);\nfor (const list of Object.values(bySymbol)) list.sort((a, b) => a.ts - b.ts);\n\n// the last quote with ts <= t: binary search for the first quote after t, step back one\nfunction asOf(symbol, t) {\n  const list = bySymbol[symbol];\n  let lo = 0, hi = list.length;\n  while (lo < hi) { const mid = (lo + hi) >> 1; if (list[mid].ts <= t) lo = mid + 1; else hi = mid; }\n  return lo ? list[lo - 1] : null;\n}\nconst sqlByTrade = Object.fromEntries(matched.map(m => [m.trade_id, m.quote_id]));\nlet differ = 0, missing = 0;\nfor (const t of trades) {\n  const q = asOf(t.symbol, t.ts);\n  if (!(t.trade_id in sqlByTrade)) missing++;\n  else if (!q || q.quote_id !== sqlByTrade[t.trade_id]) differ++;\n}\nconsole.log(trades.length + ' trades: SQL matched ' + matched.length + ', ' + missing + ' missing, ' + differ + ' matched to a different quote');\n\nconst ages = matched.map(m => m.quote_age_ms).sort((a, b) => a - b);\nconst pct = p => ages[Math.min(ages.length - 1, Math.floor(p / 100 * ages.length))];\nconsole.log('quote age at the trade: median ' + pct(50) + ' ms, 90th percentile ' + pct(90) + ' ms, oldest ' + ages.at(-1) + ' ms');\n\nconst bins = [];\nfor (let lo = 0; lo < 600; lo += 25) bins.push({ lo, hi: lo + 25, trades: ages.filter(a => a >= lo && a < lo + 25).length });\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  width: 'container',\n  height: 220,\n  title: 'How old was the quote each trade was matched to?',\n  data: { values: bins },\n  mark: { type: 'bar', color: '#3b82f6' },\n  encoding: {\n    x: { field: 'lo', type: 'quantitative', bin: { binned: true, step: 25 }, title: 'quote age at the trade (ms)' },\n    x2: { field: 'hi' },\n    y: { field: 'trades', type: 'quantitative' },\n  },\n};",
+      "metadata": {
+        "ai": {
+          "prompt": "In JavaScript, redo the as-of join with a binary search over each symbol's quotes sorted by time, and count the trades the SQL missed or matched to a different quote. Print the median, 90th percentile and oldest quote age, and return a Vega-Lite histogram of quote age in 25 ms bins.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "040372d3",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex031-md08",
+      "kind": "md",
+      "source": "## What the run shows\n\n- **12,100 quotes and 2,425 trades** in two made-up symbols over 30 minutes.\n- **The index changes the plan, not the answer.** Without it SQLite plans to `SCAN q` and sort, for every trade: 2,425 trades times 12,100 quotes. With an index on (symbol, ts) the plan becomes `SEARCH q USING INDEX quotes_by_symbol_time (symbol=? AND ts<?)`, a few steps down a B-tree per trade.\n- **Three methods, one answer.** The indexed subquery, the window forward-fill and a JavaScript binary search all match every one of the 2,425 trades to the same quote: 0 missing, 0 different.\n- **The quotes behind the trades were fresh, but not instant.** The quote a trade was matched to had been live for 164 ms at the median, 373 ms at the 90th percentile, and 535 ms at most. A risk system that reads \"the current price\" a second late would be using a quote two or three updates old.\n- **The classification recovers how the trades were made.** In ACME, 550 trades were buyer-initiated, 580 seller-initiated and 89 at the mid; in BOLT 601, 535 and 70. The effective spread is about 7.8 basis points in ACME (around 50) and 3.2 in BOLT (around 120): the same few cents of spread costs less on a dearer share.\n\n\n## Try this\n\nEach of these is a prompt. Press **✨** in a cell's header to change its prompt and generate it again, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **Predict, then run.** If the subquery used `ts < t.ts` instead of `ts <= t.ts`, how many trades would change quote? Edit the SQL and run the check cell.\n- **A staleness limit.** Press ✨ on the as-of cell and add: *\"Leave the quote empty when it is more than 250 ms old.\"* How many trades lose their quote?\n- **Mark-outs.** Press **⚡ AI Generate New Cell** and ask: *\"In SQL, for each trade in matched, find the mid of the latest quote 5 seconds later, and average the move in basis points for buyer- and seller-initiated trades.\"* That's how desks measure price impact.\n- **pandas.** Press **⚡ AI Generate New Cell** and ask: *\"In Python with pandas, load nb.quotes and nb.trades and do the same join with merge_asof by symbol, then count the trades whose quote differs from nb.matched.\"*\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the window-way cell and ask why the quotes must sort before trades in the same millisecond."
+    }
+  ],
+  "createdAt": "2026-11-01T00:00:00.000Z",
+  "updatedAt": "2026-11-01T00:00:00.000Z"
+}

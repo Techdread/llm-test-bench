@@ -1,0 +1,161 @@
+{
+  "title": "Window Functions on a Trade Tape",
+  "cells": [
+    {
+      "id": "c-ex030-md01",
+      "kind": "md",
+      "source": "# Window Functions on a Trade Tape\n\n**Window functions** are the SQL feature trading and risk teams use most, and the one interviews ask about. An ordinary aggregate (`SUM`, `COUNT`) collapses rows into one; a window function keeps every row and adds a value computed over **other rows near it**: the ones before it, the ones in the same group, the ones in the last five minutes.\n\nThe question: **what can a window answer that `GROUP BY` can't, and can we trust the answers?** Running positions, price moves from the previous trade, rolling volume and rankings are all one query each.\n\nHow the cells run:\n\n- **JavaScript** makes a synthetic day of trades and saves it in `nb`.\n- **SQL cells** run in your browser (SQLite, through sql.js). Every list of objects in `nb` is a table with the same name, so `nb.trades` is the `trades` table. A line `-- save as: name` saves a cell's last result back into `nb`.\n- **JavaScript** recomputes the answers with plain loops, to check them.\n\nThe trades are **synthetic**: made-up symbols, traders and prices from a seeded random walk.\n\n> ✨ The code cells were written by an AI model from prompts, and each prompt is saved in its cell: press **✨** in a cell's header to see it.\n\nPress **Run all**."
+    },
+    {
+      "id": "c-ex030-md02",
+      "kind": "md",
+      "source": "## 1. A day of trades\n\n> In JavaScript, make a synthetic trade tape with a seeded generator: 3,000 trades over one day from 09:00, about one every 9.5 seconds, in three made-up symbols (ACME from 50, BOLT from 120, CRUX from 8.5, each a small random walk), by traders T1 to T4, each a BUY or SELL of 100 to 2,000 shares. Give each trade an id, ts (seconds after 09:00), a clock time, symbol, trader, side, qty and price, and save them as nb.trades.\n\n- **`ts`** is seconds after 09:00, a number SQL can do arithmetic on; `time` is the same moment as a clock time for reading.\n- **The generator is seeded**, so every run makes the same 3,000 trades and the numbers in this notebook can be checked."
+    },
+    {
+      "id": "c-ex030-js01",
+      "kind": "js",
+      "source": "// A synthetic trade tape: 3 made-up symbols, 4 traders, one trading day from 09:00.\nfunction mulberry32(seed) {\n  return () => {\n    seed = (seed + 0x6D2B79F5) | 0;\n    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);\n    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;\n    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n  };\n}\nconst rand = mulberry32(30);\nconst price = { ACME: 50, BOLT: 120, CRUX: 8.5 };   // starting prices\nconst symbols = Object.keys(price), traders = ['T1', 'T2', 'T3', 'T4'];\nconst clock = s => {\n  const t = 9 * 3600 + s;\n  return [Math.floor(t / 3600), Math.floor(t / 60) % 60, t % 60].map(x => String(x).padStart(2, '0')).join(':');\n};\n\nconst trades = [];\nlet ts = 0;\nfor (let id = 1; id <= 3000; id++) {\n  ts += 1 + Math.floor(rand() * 18);                 // about one trade every 9.5 seconds\n  const symbol = symbols[Math.floor(rand() * symbols.length)];\n  price[symbol] *= 1 + (rand() - 0.5) * 0.002;       // a small random walk\n  trades.push({\n    trade_id: id, ts, time: clock(ts), symbol,\n    trader: traders[Math.floor(rand() * traders.length)],\n    side: rand() < 0.5 ? 'BUY' : 'SELL',\n    qty: 100 * (1 + Math.floor(rand() * 20)),\n    price: Math.round(price[symbol] * 10000) / 10000,\n  });\n}\nnb.set('trades', trades);\nconsole.log(trades.length + ' trades from ' + trades[0].time + ' to ' + trades.at(-1).time);\nconsole.log('first trade: ' + JSON.stringify(trades[0]));\nconst per = symbols.map(s => s + ' ' + trades.filter(t => t.symbol === s).length);\nconsole.log('trades per symbol: ' + per.join(', '));",
+      "metadata": {
+        "ai": {
+          "prompt": "In JavaScript, make a synthetic trade tape with a seeded generator: 3,000 trades over one day from 09:00, about one every 9.5 seconds, in three made-up symbols (ACME from 50, BOLT from 120, CRUX from 8.5, each a small random walk), by traders T1 to T4, each a BUY or SELL of 100 to 2,000 shares. Give each trade an id, ts (seconds after 09:00), a clock time, symbol, trader, side, qty and price, and save them as nb.trades.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "a03c2eb5",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex030-md03",
+      "kind": "md",
+      "source": "## 2. Running position: SUM as a window\n\n> Using the trades table, give each trader's running position in each symbol, trade by trade (buys add shares, sells take them away), with SUM over a window partitioned by trader and symbol and ordered by time. Save the result as positions.\n\n- **`PARTITION BY trader, symbol`** starts a separate running total for every trader and symbol, like a `GROUP BY` that keeps the rows.\n- **`ORDER BY ts, trade_id`** decides what \"so far\" means. With an `ORDER BY`, the default window is every row from the start of the partition up to this one.\n- **`trade_id` breaks ties** when two trades share a second, so the order is always the same."
+    },
+    {
+      "id": "c-ex030-sql01",
+      "kind": "sql",
+      "source": "-- Each trader's running position in each symbol, trade by trade.\n-- save as: positions\nSELECT trade_id, ts, time, trader, symbol, side, qty, price,\n  SUM(CASE side WHEN 'BUY' THEN qty ELSE -qty END)\n    OVER (PARTITION BY trader, symbol ORDER BY ts, trade_id) AS position\nFROM trades\nORDER BY trader, symbol, ts, trade_id;",
+      "metadata": {
+        "ai": {
+          "prompt": "Using the trades table, give each trader's running position in each symbol, trade by trade (buys add shares, sells take them away), with SUM over a window partitioned by trader and symbol and ordered by time. Save the result as positions.",
+          "kind": "sql",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "4b523224",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex030-md04",
+      "kind": "md",
+      "source": "## 3. Price moves: LAG\n\n> Using the trades table and LAG over a window per symbol in time order, work out each trade's percentage move from the previous trade in the same symbol, then for each symbol show the number of moves, the average size of a move, the biggest rise and fall, and the low and high price.\n\n- **`LAG(price)`** reads the previous row's price in the window: the trade before this one in the same symbol. The first trade of each symbol has no previous price, so its move is `NULL`, and `COUNT(change_pct)` skips it.\n- **`WINDOW w AS (…)`** names a window once so several functions can share it.\n- **A window inside a `WITH`, then a `GROUP BY`**: window functions can't go inside an aggregate directly, so the moves are computed first and summarised after."
+    },
+    {
+      "id": "c-ex030-sql02",
+      "kind": "sql",
+      "source": "-- How far did each trade move the price from the trade before it in the same symbol?\nWITH moves AS (\n  SELECT symbol, trade_id, time, price,\n    LAG(price) OVER w AS previous_price,\n    100.0 * (price / LAG(price) OVER w - 1) AS change_pct\n  FROM trades\n  WINDOW w AS (PARTITION BY symbol ORDER BY ts, trade_id)\n)\nSELECT symbol,\n  COUNT(change_pct) AS moves,\n  ROUND(AVG(ABS(change_pct)), 4) AS average_move_pct,\n  ROUND(MAX(change_pct), 4) AS biggest_rise_pct,\n  ROUND(MIN(change_pct), 4) AS biggest_fall_pct,\n  MIN(price) AS low, MAX(price) AS high\nFROM moves\nGROUP BY symbol\nORDER BY symbol;",
+      "metadata": {
+        "ai": {
+          "prompt": "Using the trades table and LAG over a window per symbol in time order, work out each trade's percentage move from the previous trade in the same symbol, then for each symbol show the number of moves, the average size of a move, the biggest rise and fall, and the low and high price.",
+          "kind": "sql",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "9433872b",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex030-md05",
+      "kind": "md",
+      "source": "## 4. Rolling volume: a RANGE frame\n\n> Using the trades table, give for each trade the shares traded in the same symbol in the 5 minutes up to and including it, and how many trades that was, with a RANGE window of 299 seconds before. Show the 300 busiest and save them as volume5.\n\n- **`ROWS`** frames count rows (\"the last 10 trades\"); **`RANGE`** frames measure the `ORDER BY` value (\"the last 300 seconds\"). Trades arrive unevenly, so for a time window only `RANGE` is right.\n- **`299 PRECEDING`** plus the current second makes exactly 300 seconds.\n- **Trades in the same second are peers**: `CURRENT ROW` in a `RANGE` frame includes all of them."
+    },
+    {
+      "id": "c-ex030-sql03",
+      "kind": "sql",
+      "source": "-- Volume traded in the 5 minutes up to and including each trade, per symbol.\n-- RANGE counts seconds of ts, not rows: 299 seconds before, plus this second.\n-- save as: volume5\nSELECT symbol, trade_id, ts, time, qty,\n  SUM(qty) OVER five AS volume_5min,\n  COUNT(*) OVER five AS trades_5min\nFROM trades\nWINDOW five AS (PARTITION BY symbol ORDER BY ts RANGE BETWEEN 299 PRECEDING AND CURRENT ROW)\nORDER BY volume_5min DESC, symbol, ts\nLIMIT 300;",
+      "metadata": {
+        "ai": {
+          "prompt": "Using the trades table, give for each trade the shares traded in the same symbol in the 5 minutes up to and including it, and how many trades that was, with a RANGE window of 299 seconds before. Show the 300 busiest and save them as volume5.",
+          "kind": "sql",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "e619bb43",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex030-md06",
+      "kind": "md",
+      "source": "## 5. Ranking: RANK and ROW_NUMBER\n\n> Using the trades table, rank the traders in each symbol by the money they traded (qty times price) with RANK over the grouped totals, and then list the three biggest single trades in each symbol using ROW_NUMBER.\n\n- **A window over a `GROUP BY`**: the grouping happens first, so `RANK()` can order by `SUM(qty * price)`.\n- **`RANK`** gives tied values the same rank and then skips; **`ROW_NUMBER`** never ties, which is what \"the top 3 in each group\" needs.\n- **This cell has two queries**: SQL cells show every result."
+    },
+    {
+      "id": "c-ex030-sql04",
+      "kind": "sql",
+      "source": "-- Who traded the most money in each symbol? RANK runs over the GROUP BY result.\nSELECT symbol, trader,\n  COUNT(*) AS trades,\n  ROUND(SUM(qty * price)) AS notional,\n  RANK() OVER (PARTITION BY symbol ORDER BY SUM(qty * price) DESC) AS rank_in_symbol\nFROM trades\nGROUP BY symbol, trader\nORDER BY symbol, rank_in_symbol;\n\n-- And the three biggest single trades in each symbol: number the rows, keep 1 to 3.\nSELECT symbol, place, trade_id, time, trader, side, qty, price, ROUND(qty * price) AS notional\nFROM (\n  SELECT *, ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY qty * price DESC, trade_id) AS place\n  FROM trades\n)\nWHERE place <= 3\nORDER BY symbol, place;",
+      "metadata": {
+        "ai": {
+          "prompt": "Using the trades table, rank the traders in each symbol by the money they traded (qty times price) with RANK over the grouped totals, and then list the three biggest single trades in each symbol using ROW_NUMBER.",
+          "kind": "sql",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "ebbe82af",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex030-md07",
+      "kind": "md",
+      "source": "## 6. Check it, chart it\n\n> In JavaScript, check the SQL: recompute every trader's running position and the 5-minute volume of every saved row from nb.trades with plain loops, count the rows that differ, and print the busiest 5 minutes and the closing positions. Return a Vega-Lite step chart of each trader's position in ACME through the day.\n\nWindow functions are easy to get subtly wrong: a missing tie-break, `ROWS` where `RANGE` was meant. Recomputing them a completely different way is the cheapest test there is."
+    },
+    {
+      "id": "c-ex030-js02",
+      "kind": "js",
+      "source": "// Recompute the SQL answers in plain JavaScript, then chart the positions.\nconst trades = nb.get('trades'), positions = nb.get('positions'), volume = nb.get('volume5');\nif (!trades || !positions || !volume) return 'Run the cells above first.';\n\n// 1. Running positions: walk the trades in time order, keeping a total per trader and symbol.\nconst ordered = [...trades].sort((a, b) => a.ts - b.ts || a.trade_id - b.trade_id);\nconst running = {}, mine = {};\nfor (const t of ordered) {\n  const key = t.trader + ' ' + t.symbol;\n  running[key] = (running[key] || 0) + (t.side === 'BUY' ? t.qty : -t.qty);\n  mine[t.trade_id] = running[key];\n}\nconst posMismatch = positions.filter(p => p.position !== mine[p.trade_id]).length;\nconsole.log('running positions: ' + positions.length + ' rows checked, ' + posMismatch + ' differ');\n\n// 2. Rolling 5-minute volume: for each saved row, add up that symbol's trades in [ts - 299, ts].\nconst volMismatch = volume.filter(v => {\n  const sum = trades.filter(t => t.symbol === v.symbol && t.ts >= v.ts - 299 && t.ts <= v.ts)\n    .reduce((s, t) => s + t.qty, 0);\n  return sum !== v.volume_5min;\n}).length;\nconsole.log('rolling 5-minute volume: ' + volume.length + ' rows checked, ' + volMismatch + ' differ');\nconst top = volume[0];\nconsole.log('busiest 5 minutes: ' + top.symbol + ' up to ' + top.time + ', ' + top.volume_5min + ' shares in ' + top.trades_5min + ' trades');\n\nconst closing = Object.entries(running).map(([k, v]) => k + ' ' + v).join(', ');\nconsole.log('closing positions: ' + closing);\n\nconst acme = positions.filter(p => p.symbol === 'ACME').map(p => ({ hour: 9 + p.ts / 3600, position: p.position, trader: p.trader }));\nreturn {\n  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',\n  width: 'container',\n  height: 260,\n  title: 'Each trader\\'s position in ACME through the day',\n  data: { values: acme },\n  mark: { type: 'line', interpolate: 'step-after', strokeWidth: 1.8 },\n  encoding: {\n    x: { field: 'hour', type: 'quantitative', title: 'time of day (hours)', scale: { domain: [9, 17] } },\n    y: { field: 'position', type: 'quantitative', title: 'shares held (negative = short)' },\n    color: { field: 'trader', type: 'nominal', title: null },\n  },\n};",
+      "metadata": {
+        "ai": {
+          "prompt": "In JavaScript, check the SQL: recompute every trader's running position and the 5-minute volume of every saved row from nb.trades with plain loops, count the rows that differ, and print the busiest 5 minutes and the closing positions. Return a Vega-Lite step chart of each trader's position in ACME through the day.",
+          "kind": "js",
+          "providerId": "cli-agent:claude-code",
+          "modelId": "claude-opus-5-5",
+          "useWebSearch": false,
+          "createdAt": "2026-11-01T12:00:00.000Z",
+          "updatedAt": "2026-11-01T12:00:00.000Z",
+          "generatedSourceHash": "8a632277",
+          "backend": "cli-agent",
+          "agentId": "claude-code"
+        }
+      }
+    },
+    {
+      "id": "c-ex030-md08",
+      "kind": "md",
+      "source": "## What the run shows\n\n- **3,000 synthetic trades** between 09:00:16 and 16:56:16: 949 in ACME, 993 in BOLT and 1,058 in CRUX.\n- **One query gives every running position.** The check walked the same trades with a plain loop and agreed on all 3,000 rows. By the close, T4 is short 28,100 ACME and T3 is long 24,300 BOLT; the chart shows how each position wandered through the day.\n- **LAG turns a tape into moves.** The average move from one trade to the next is about 0.05% in every symbol, never more than 0.1%: the generator's random walk, found again by the query. ACME ranged from 48.49 to 50.08.\n- **The busiest 5 minutes were in CRUX, up to 11:09:13**: 25,800 shares in 23 trades. All 300 rolling totals the cell saved match a brute-force count of the trades in each 300-second window.\n- **Rankings are close because the traders are random.** T2 traded the most ACME (13.1 million) and CRUX (2.45 million), T3 the most BOLT (31.9 million). The biggest single trades are all the maximum 2,000 shares, so among them the higher price makes the bigger notional and comes first.\n\n\n## Try this\n\nEach of these is a prompt. Press **✨** in a cell's header to change its prompt and generate it again, or **⚡ AI Generate New Cell** at the bottom to add a new one.\n\n- **Predict, then run.** Change `RANGE` to `ROWS` in the rolling-volume cell (keeping 299). What does the window mean now? Run it and the check cell.\n- **P&L.** Press **⚡ AI Generate New Cell** and ask: *\"In SQL, using the trades table, work out each trader's cash flow (sells add qty times price, buys take it away) as a running total per trader, and their position value at the last price of each symbol.\"*\n- **Sessions.** Press **⚡ AI Generate New Cell** and ask: *\"In SQL, give each symbol's open, high, low and close for each hour of the day, using FIRST_VALUE and LAST_VALUE over a window.\"*\n- **NTILE.** Press **⚡ AI Generate New Cell** and ask: *\"In SQL, split each symbol's trades into 4 size bands with NTILE(4) and count the trades and shares in each.\"*\n- **Understand the code.** Press the speech bubble (**Explain this cell**) on the rolling-volume cell and ask why a `ROWS` frame would give the wrong answer here."
+    }
+  ],
+  "createdAt": "2026-11-01T00:00:00.000Z",
+  "updatedAt": "2026-11-01T00:00:00.000Z"
+}

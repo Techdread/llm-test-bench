@@ -1,5 +1,118 @@
 [
   {
+    "file": "fast-python/ex-001-moving-average-five-ways.json",
+    "id": "ex-001",
+    "title": "One Moving Average, Five Ways",
+    "description": "The same moving average over a million synthetic ticks in pure Python, numpy and C compiled in the browser, timed per tick, with the rounding drift of running sums measured.",
+    "category": "fast-python",
+    "langs": [
+      "ui",
+      "py",
+      "c",
+      "js"
+    ],
+    "features": [
+      "nb-read",
+      "nb-emit",
+      "numpy",
+      "interactive",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
+  },
+  {
+    "file": "fast-python/ex-002-order-book-matching-engine.json",
+    "id": "ex-002",
+    "title": "An Order Book and Matching Engine",
+    "description": "A price-time-priority matching engine in Python on two heaps with lazy cancels, raced against a sorted-list book on the same synthetic order flow, with a live price ladder and a check that the book never crosses.",
+    "category": "fast-python",
+    "langs": [
+      "ui",
+      "py",
+      "html",
+      "js"
+    ],
+    "features": [
+      "nb-read",
+      "nb-html-bridge",
+      "interactive",
+      "animation",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
+  },
+  {
+    "file": "databases/ex-030-window-functions-trade-tape.json",
+    "id": "ex-030",
+    "title": "Window Functions on a Trade Tape",
+    "description": "SQL window functions on a synthetic day of trades: running positions with SUM OVER, price moves with LAG, rolling 5-minute volume with a RANGE frame, and rankings, each checked by recomputing it in JavaScript.",
+    "category": "databases",
+    "langs": [
+      "js",
+      "sql"
+    ],
+    "features": [
+      "nb-emit",
+      "sql",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
+  },
+  {
+    "file": "databases/ex-031-as-of-join-quotes-trades.json",
+    "id": "ex-031",
+    "title": "As-Of Joins: Which Quote Was Live?",
+    "description": "Match each synthetic trade to the quote live when it happened, two ways in SQL (an indexed subquery and a window forward-fill), read the query plans, classify buyer- and seller-initiated trades, and check every match with a binary search.",
+    "category": "databases",
+    "langs": [
+      "js",
+      "sql"
+    ],
+    "features": [
+      "nb-emit",
+      "sql",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
+  },
+  {
+    "file": "databases/ex-040-cache-aside-hit-rate-staleness.json",
+    "id": "ex-040",
+    "title": "Cache-Aside: Hit Rate and Staleness",
+    "description": "A Redis-style cache in front of a slow, changing database, simulated live: choose the size, LRU, LFU, FIFO or random eviction, a TTL and what happens on a write, and watch the hit rate, the tail latency and the stale reads.",
+    "category": "databases",
+    "langs": [
+      "ui",
+      "html",
+      "js"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "interactive",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
+  },
+  {
+    "file": "cloud/ex-060-partitioned-log-consumer-lag.json",
+    "id": "ex-060",
+    "title": "A Partitioned Log and Consumer Lag",
+    "description": "A Kafka-style topic simulated live: skewed keys, a traffic burst and a consumer crash, with sliders for partitions, consumers and speeds, and a sweep that shows why adding consumers stops helping.",
+    "category": "cloud",
+    "langs": [
+      "ui",
+      "html",
+      "js"
+    ],
+    "features": [
+      "nb-html-bridge",
+      "interactive",
+      "animation",
+      "prompt-built"
+    ],
+    "addedAt": "2026-11-01"
+  },
+  {
     "file": "data-structures/ex-101-hash-map-from-scratch.json",
     "id": "ex-101",
     "title": "Hash Map from Scratch",
