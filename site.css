@@ -26,6 +26,48 @@ body {
     radial-gradient(circle at 86% 17%, rgba(205, 82, 177, 0.13), transparent 25rem),
     var(--bg);
 }
+/* Fixed backdrop behind every page: the hub's grid, faded out towards the
+   edges, over slow-drifting colour glows that stay put while content scrolls. */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+}
+body::before {
+  inset: -20vmax;
+  background:
+    radial-gradient(38vmax 30vmax at 22% 18%, rgba(80, 112, 255, 0.26), transparent 70%),
+    radial-gradient(34vmax 28vmax at 82% 30%, rgba(205, 82, 177, 0.20), transparent 70%),
+    radial-gradient(40vmax 30vmax at 60% 82%, rgba(118, 224, 173, 0.11), transparent 70%),
+    radial-gradient(30vmax 26vmax at 14% 78%, rgba(168, 134, 255, 0.18), transparent 70%);
+  animation: backdrop-drift 60s ease-in-out infinite alternate;
+}
+body::after {
+  inset: 0;
+  background-size: 56px 56px;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 35%, #000 20%, transparent 100%);
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 35%, #000 20%, transparent 100%);
+}
+.plexus-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+@keyframes backdrop-drift {
+  from { transform: translate3d(0, 0, 0) rotate(0deg); }
+  to   { transform: translate3d(-4vmax, 3vmax, 0) rotate(8deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
+}
 a { color: inherit; }
 
 .site-header,
