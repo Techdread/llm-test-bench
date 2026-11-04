@@ -1,14 +1,17 @@
 import { html } from 'htm/preact';
 import { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'preact/hooks';
 import { injectPreviewConsole, PREVIEW_CONSOLE_MESSAGE } from '../services/previewConsole.js';
+import { captureThumbnail, withThumbnailShim } from '../services/thumbnail.js';
 
 let loadCounter = 0;
 
 /**
  * Live preview of the Create response. Its errors and warnings are posted to
  * `onConsoleEntry`; `onConsoleReset` fires whenever a new document loads.
+ * `registerCapture` receives a function that snapshots the page as gallery
+ * thumbnail bytes (or null), for saving beside the generation.
  */
-export function PreviewPane({ htmlContent, onConsoleEntry, onConsoleReset }) {
+export function PreviewPane({ htmlContent, onConsoleEntry, onConsoleReset, registerCapture }) {
   const [srcdoc, setSrcdoc] = useState(htmlContent);
   const timerRef = useRef(null);
   const frameRef = useRef(null);
@@ -27,7 +30,7 @@ export function PreviewPane({ htmlContent, onConsoleEntry, onConsoleReset }) {
   const load = useMemo(() => {
     if (!srcdoc) return null;
     const channel = `pg-preview-${++loadCounter}`;
-    return { channel, doc: injectPreviewConsole(srcdoc, channel) };
+    return { channel, doc: injectPreviewConsole(withThumbnailShim(srcdoc), channel) };
   }, [srcdoc]);
 
   // Layout effects run in the same commit that sets srcdoc, so they are in
@@ -47,6 +50,11 @@ export function PreviewPane({ htmlContent, onConsoleEntry, onConsoleReset }) {
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
   }, [load?.channel]);
+
+  useEffect(() => {
+    registerCapture?.(() => captureThumbnail(frameRef.current));
+    return () => registerCapture?.(null);
+  }, [registerCapture]);
 
   return html`
     <div class="preview-container">

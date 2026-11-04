@@ -79,3 +79,46 @@ export async function resolveShowcaseRoute(opts = {}) {
 export function showcaseBackHref(id) {
   return `../showcase.html${id ? `#${encodeURIComponent(id)}` : ''}`;
 }
+
+async function fetchList(doFetch, url) {
+  try {
+    const res = await doFetch(url);
+    if (!res.ok) return null;
+    const list = (await res.json())?.showcase;
+    return Array.isArray(list) && list.length ? list : null;
+  } catch {
+    return null;
+  }
+}
+
+// The backend answers with site-relative URLs (or absolute media ones); the
+// apps live one folder down, so a site-relative path needs `../`.
+const fromSite = (url) => (!url || /^(?:[a-z]+:|\/|\.\.\/)/i.test(url) ? url || '' : `../${url}`);
+
+/**
+ * The showcase items for one bench (all benches when `bench` is empty), each
+ * with `posterUrl` (the picture chosen in the admin console) or `artUrl` (an
+ * SVG that is its own picture), resolved for use from inside an app. The live
+ * backend is asked first on the public build; the baked index is the fallback.
+ *
+ * @param {{ bench?: string, base?: string, apiBase?: string, useApi?: boolean, fetchImpl?: typeof fetch }} [opts]
+ */
+export async function listShowcaseItems(opts = {}) {
+  const doFetch = opts.fetchImpl ?? globalThis.fetch;
+  if (typeof doFetch !== 'function') return [];
+  const base = opts.base ?? '../_showcase';
+  let items = null;
+  if (opts.useApi ?? isPublicDistribution()) {
+    const live = await fetchList(doFetch, opts.apiBase ?? '../api/showcase');
+    if (live) items = live.map((it) => ({ ...it, posterUrl: fromSite(it.posterUrl), artUrl: fromSite(it.artUrl) }));
+  }
+  if (!items) {
+    const baked = await fetchList(doFetch, `${base}/index.json`);
+    items = (baked || []).map((it) => ({
+      ...it,
+      posterUrl: it.poster ? `${base}/${it.poster}` : '',
+      artUrl: it.poster ? '' : `${base}/${it.id}${it.ext || '.svg'}`,
+    }));
+  }
+  return opts.bench ? items.filter((it) => it.bench === opts.bench) : items;
+}

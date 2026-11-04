@@ -2,6 +2,8 @@
 // New format: each folder has one prompt.md (shared) and multiple variant files:
 //   {sanitizedModel}_{shortId}.html  +  {sanitizedModel}_{shortId}.json
 // Legacy format (auto-detected): response.html + metadata.json
+// Either may have a gallery thumbnail beside it: {variantKey}.thumb.jpg (or
+// response.thumb.jpg), a picture of the page so the gallery need not run it.
 import * as fs from '../../shared/services/fs.js';
 import { mapPool } from '../../shared/services/async-pool.js';
 import { STANDARD_SUBFOLDERS } from '../../shared/services/data-root-manager.js';
@@ -24,6 +26,13 @@ function sanitizeModelName(model) {
 
 function makeVariantKey(model) {
   return `${sanitizeModelName(model)}_${shortId()}`;
+}
+
+const THUMB_SUFFIX = '.thumb.jpg';
+
+/** The thumbnail file that sits beside a variant (or a legacy response.html). */
+export function thumbnailFileName(variantKey) {
+  return `${variantKey || 'response'}${THUMB_SUFFIX}`;
 }
 
 /** Split a composite ID like "folder/variantKey" into parts */
@@ -265,6 +274,7 @@ export async function listGenerations(rootHandle) {
     // Scan folder for variant .json files and legacy metadata.json
     const variantJsons = [];
     const pages = new Set();
+    const thumbs = new Set();
     let hasLegacyMeta = false;
 
     for await (const [fileName, fileHandle] of handle) {
@@ -275,6 +285,8 @@ export async function listGenerations(rootHandle) {
         variantJsons.push({ key: fileName.replace(/\.json$/, ''), handle: fileHandle });
       } else if (fileName.endsWith('.html')) {
         pages.add(fileName);
+      } else if (fileName.endsWith(THUMB_SUFFIX)) {
+        thumbs.add(fileName);
       }
     }
 
@@ -292,6 +304,7 @@ export async function listGenerations(rootHandle) {
             prompt,
             response: responseCache.get(id) || '',
             hasResponse: pages.has(`${vj.key}.html`),
+            hasThumbnail: thumbs.has(thumbnailFileName(vj.key)),
             metadata,
           });
         } catch (e) { /* skip invalid */ }
@@ -308,6 +321,7 @@ export async function listGenerations(rootHandle) {
           prompt,
           response: responseCache.get(name) || '',
           hasResponse: pages.has('response.html'),
+          hasThumbnail: thumbs.has(thumbnailFileName(null)),
           metadata,
         });
       } catch (e) { /* not a valid generation folder */ }
@@ -337,6 +351,7 @@ export async function deleteGeneration(rootHandle, id) {
   // Remove variant files
   try { await dirHandle.removeEntry(`${variantKey}.html`); } catch (e) { /* ok */ }
   try { await dirHandle.removeEntry(`${variantKey}.json`); } catch (e) { /* ok */ }
+  try { await dirHandle.removeEntry(thumbnailFileName(variantKey)); } catch (e) { /* none */ }
 
   // Check if any variants remain (anything besides prompt.md)
   let remaining = 0;
@@ -347,5 +362,35 @@ export async function deleteGeneration(rootHandle, id) {
   if (remaining === 0) {
     // No variants left — remove the whole folder
     await rootHandle.removeEntry(folderId, { recursive: true });
+  }
+}
+
+/**
+ * Write a generation's gallery thumbnail (JPEG bytes). Additive: an existing
+ * thumbnail is kept unless `replace` is set. Returns true if it was written.
+ */
+export async function saveThumbnail(rootHandle, id, bytes, { replace = false } = {}) {
+  const { folderId, variantKey } = parseId(id);
+  const dirHandle = await rootHandle.getDirectoryHandle(folderId);
+  const name = thumbnailFileName(variantKey);
+  if (!replace) {
+    try { await dirHandle.getFileHandle(name); return false; } catch (e) { /* none yet */ }
+  }
+  const file = await dirHandle.getFileHandle(name, { create: true });
+  const w = await file.createWritable();
+  await w.write(bytes);
+  await w.close();
+  return true;
+}
+
+/** A generation's thumbnail as a Blob, or null when it has none. */
+export async function loadThumbnail(rootHandle, id) {
+  const { folderId, variantKey } = parseId(id);
+  try {
+    const dirHandle = await rootHandle.getDirectoryHandle(folderId);
+    const file = await (await dirHandle.getFileHandle(thumbnailFileName(variantKey))).getFile();
+    return new Blob([await file.arrayBuffer()], { type: 'image/jpeg' });
+  } catch (e) {
+    return null;
   }
 }

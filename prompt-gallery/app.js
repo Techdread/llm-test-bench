@@ -122,6 +122,9 @@ function App() {
   const [refineSession, setRefineSession] = useState(null);
   const [createRunStatus, setCreateRunStatus] = useState(null); // sandbox result for the Create preview
   const createRunTokenRef = useRef(0);
+  // Snapshots the Create preview as a gallery thumbnail (set by PreviewPane).
+  const previewCaptureRef = useRef(null);
+  const registerPreviewCapture = useCallback((capture) => { previewCaptureRef.current = capture; }, []);
   // What the live Create preview has reported, and whether the bottom-left
   // panel shows the code or those errors.
   const [previewConsole, setPreviewConsole] = useState([]);
@@ -473,6 +476,7 @@ function App() {
 
   // The gallery scan leaves pages on disk; this is how the views fetch one.
   const loadHtml = useCallback((id) => (rootHandle ? meta.loadResponse(rootHandle, id) : Promise.resolve('')), [rootHandle]);
+  const loadThumbnail = useCallback((id) => (rootHandle ? meta.loadThumbnail(rootHandle, id) : Promise.resolve(null)), [rootHandle]);
 
   const refreshGenerations = useCallback(async () => {
     if (!rootHandle) return;
@@ -571,7 +575,13 @@ function App() {
         }
       }
       const metadata = meta.createMetadata(modelName, tags);
+      // Picture the page as it is on screen now; a page with no canvas gives
+      // null and its card runs live until the thumbnail backfill reaches it.
+      const thumbnail = await Promise.resolve(previewCaptureRef.current?.()).catch(() => null);
       const result = await meta.saveGeneration(rootHandle, folderName, prompt, response, metadata);
+      if (thumbnail) {
+        await meta.saveThumbnail(rootHandle, result.id, thumbnail).catch((e) => console.warn('Thumbnail not saved:', e));
+      }
       setShowSaveDialog(false);
       setEditingId(result.folderId);
       if (result.redirectedFolder) {
@@ -1372,6 +1382,7 @@ function App() {
         return html`<${GalleryView}
           generations=${generations}
           loadHtml=${loadHtml}
+          loadThumbnail=${loadThumbnail}
           selectedFolder=${decodeRouteParam(route.param)}
           onOpenProject=${handleOpenGalleryProject}
           onBackProject=${handleBackFromGalleryProject}
@@ -1524,6 +1535,7 @@ function App() {
                 htmlContent=${response}
                 onConsoleEntry=${handlePreviewConsoleEntry}
                 onConsoleReset=${handlePreviewConsoleReset}
+                registerCapture=${registerPreviewCapture}
               />
             </div>
           </div>

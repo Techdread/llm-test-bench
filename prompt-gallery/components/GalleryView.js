@@ -14,6 +14,8 @@ import {
   sortVariants,
 } from '../services/gallery.js';
 import { VerificationBadge } from './VerificationBadge.js';
+import { ShowcaseGrid } from '../../shared/components/ShowcaseGrid.js';
+import { isPublicDistribution } from '../../shared/services/distribution.js';
 
 const MAX_LIVE_THUMBS = 6;
 const OFFSCREEN_UNMOUNT_MS = 1500;
@@ -44,10 +46,21 @@ function deactivate(id) {
   subscribers.get(id)?.setLive(false);
 }
 
-function LazyThumb({ id, srcdoc, title, genId, loadHtml }) {
+// Object URLs for thumbnails already read this session, by generation id, so
+// scrolling back or reopening the gallery does not read the file again.
+const thumbUrls = new Map();
+
+// A card's picture. With a saved thumbnail ({variantKey}.thumb.jpg) it is a
+// plain image, fetched when the card nears the viewport. Without one, the page
+// itself runs in an iframe, and only MAX_LIVE_THUMBS of those at a time.
+function LazyThumb({ id, srcdoc, title, genId, loadHtml, hasThumbnail = false, loadThumbnail }) {
   const [live, setLive] = useState(false);
+  const [near, setNear] = useState(false);
+  const [thumbUrl, setThumbUrl] = useState(() => thumbUrls.get(genId) || '');
+  const [thumbMissing, setThumbMissing] = useState(false);
   const wrapRef = useRef(null);
   const offTimerRef = useRef(null);
+  const usePicture = hasThumbnail && !!loadThumbnail && !!genId && !thumbMissing;
 
   useEffect(() => {
     subscribers.set(id, { setLive });
@@ -62,32 +75,53 @@ function LazyThumb({ id, srcdoc, title, genId, loadHtml }) {
     const node = wrapRef.current;
     if (!node) return;
     const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          clearTimeout(offTimerRef.current);
-          tryActivate(id);
-        } else {
-          clearTimeout(offTimerRef.current);
-          offTimerRef.current = setTimeout(() => deactivate(id), OFFSCREEN_UNMOUNT_MS);
-        }
-      }
+      for (const entry of entries) setNear(entry.isIntersecting);
     }, { rootMargin: '200px' });
     observer.observe(node);
     return () => observer.disconnect();
   }, [id]);
 
+  // Live pages: only for cards with no picture, and only while near the viewport.
+  useEffect(() => {
+    clearTimeout(offTimerRef.current);
+    if (usePicture) {
+      deactivate(id);
+    } else if (near) {
+      tryActivate(id);
+    } else {
+      offTimerRef.current = setTimeout(() => deactivate(id), OFFSCREEN_UNMOUNT_MS);
+    }
+  }, [near, usePicture, id]);
+
+  useEffect(() => {
+    if (!usePicture || !near || thumbUrl) return undefined;
+    let current = true;
+    Promise.resolve(loadThumbnail(genId)).then((blob) => {
+      if (!current) return;
+      if (!blob) { setThumbMissing(true); return; }
+      const url = URL.createObjectURL(blob);
+      thumbUrls.set(genId, url);
+      setThumbUrl(url);
+    }).catch(() => { if (current) setThumbMissing(true); });
+    return () => { current = false; };
+  }, [usePicture, near, thumbUrl, genId, loadThumbnail]);
+
   // The page itself is fetched only once this thumbnail is live, so opening the
   // gallery costs a list of metadata rather than every generation's HTML.
-  const { html: loaded } = useLazyHtml(genId, loadHtml, { enabled: live, initial: srcdoc || '' });
+  const { html: loaded } = useLazyHtml(genId, loadHtml, { enabled: live && !usePicture, initial: srcdoc || '' });
 
-  return html`
-    <div class="gallery-thumb" ref=${wrapRef}>
-      ${live
-        ? html`<iframe srcdoc=${loaded || ''} sandbox="allow-scripts" title=${title} tabindex="-1"></iframe>`
-        : html`<div class="gallery-thumb-placeholder"><i class="fa-solid fa-image"></i></div>`
-      }
-    </div>
-  `;
+  let body;
+  if (usePicture) {
+    body = thumbUrl
+      ? html`<img class="gallery-thumb-img" src=${thumbUrl} alt="" draggable="false" />`
+      : html`<div class="gallery-thumb-placeholder"><i class="fa-solid fa-image"></i></div>`;
+  } else {
+    body = live
+      ? html`<iframe srcdoc=${loaded || ''} sandbox="allow-scripts" title=${title} tabindex="-1"></iframe>`
+      : html`<div class="gallery-thumb-placeholder"><i class="fa-solid fa-image"></i></div>`;
+  }
+
+  return html`<div class="gallery-thumb" ref=${wrapRef}>${body}</div>`;
 }
 
 function formatDate(dateStr, includeTime = false) {
@@ -107,7 +141,7 @@ function shortVariantKey(variantKey) {
   return suffix.slice(-6);
 }
 
-function ProjectCard({ project, onOpen, loadHtml }) {
+function ProjectCard({ project, onOpen, loadHtml, loadThumbnail }) {
   const representative = project.representative;
   return html`
     <article
@@ -127,6 +161,8 @@ function ProjectCard({ project, onOpen, loadHtml }) {
         id=${`project:${project.folderId}:${representative?.id || 'empty'}`}
         genId=${representative?.id || ''}
         loadHtml=${loadHtml}
+        hasThumbnail=${!!representative?.hasThumbnail}
+        loadThumbnail=${loadThumbnail}
         srcdoc=${representative?.response || ''}
         title=${project.title}
       />
@@ -158,7 +194,7 @@ function ProjectCard({ project, onOpen, loadHtml }) {
   `;
 }
 
-function VariantCard({ generation, projectTitle, onSelect, onMorph, onDelete, onArchive, onCompare, loadHtml }) {
+function VariantCard({ generation, projectTitle, onSelect, onMorph, onDelete, onArchive, onCompare, loadHtml, loadThumbnail }) {
   const meta = generation.metadata || {};
   const archived = Boolean(meta.archivedAt);
   const refined = Boolean(meta.derivedFrom || meta.refine?.kind);
@@ -180,6 +216,7 @@ function VariantCard({ generation, projectTitle, onSelect, onMorph, onDelete, on
         title="Open generation"
       >
         <${LazyThumb} id=${generation.id} genId=${generation.id} loadHtml=${loadHtml}
+          hasThumbnail=${!!generation.hasThumbnail} loadThumbnail=${loadThumbnail}
           srcdoc=${generation.response} title=${`${projectTitle} - ${model}`} />
       </div>
       <div class="gallery-card-body">
@@ -219,7 +256,7 @@ function VariantCard({ generation, projectTitle, onSelect, onMorph, onDelete, on
   `;
 }
 
-function ProjectDetail({ project, onBack, onSelect, onMorph, onDelete, onArchive, onCompare, loadHtml }) {
+function ProjectDetail({ project, onBack, onSelect, onMorph, onDelete, onArchive, onCompare, loadHtml, loadThumbnail }) {
   const [showArchived, setShowArchived] = useState(false);
   const visibleVariants = project.variants.filter(generation => showArchived || !generation.metadata?.archivedAt);
 
@@ -273,6 +310,7 @@ function ProjectDetail({ project, onBack, onSelect, onMorph, onDelete, onArchive
             ${visibleVariants.map(generation => html`
               <${VariantCard}
                 loadHtml=${loadHtml}
+                loadThumbnail=${loadThumbnail}
                 key=${generation.id}
                 generation=${generation}
                 projectTitle=${project.title}
@@ -293,6 +331,7 @@ function ProjectDetail({ project, onBack, onSelect, onMorph, onDelete, onArchive
 export function GalleryView({
   generations,
   loadHtml,
+  loadThumbnail,
   selectedFolder,
   onOpenProject,
   onBackProject,
@@ -357,13 +396,20 @@ export function GalleryView({
   };
 
   if (!hasDirectory) {
+    const connect = html`
+      <div class="gallery-empty">
+        <i class="fa-solid fa-folder-open"></i>
+        <p>Connect a directory to browse your prompt generations</p>
+        <button class="btn btn-primary" onClick=${onPickDirectory}><i class="fa-solid fa-folder-plus"></i> Pick Directory</button>
+      </div>
+    `;
+    // On the public site a visitor has no folder yet: show the curated
+    // showcase rather than an empty page.
     return html`
       <div class="gallery-view">
-        <div class="gallery-empty">
-          <i class="fa-solid fa-folder-open"></i>
-          <p>Connect a directory to browse your prompt generations</p>
-          <button class="btn btn-primary" onClick=${onPickDirectory}><i class="fa-solid fa-folder-plus"></i> Pick Directory</button>
-        </div>
+        ${isPublicDistribution()
+          ? html`<${ShowcaseGrid} bench="prompt-gallery" onConnect=${onPickDirectory} fallback=${connect} />`
+          : connect}
       </div>
     `;
   }
@@ -374,6 +420,7 @@ export function GalleryView({
         <${ProjectDetail}
           project=${selectedProject}
           loadHtml=${loadHtml}
+          loadThumbnail=${loadThumbnail}
           onBack=${onBackProject}
           onSelect=${onSelect}
           onMorph=${onMorph}
@@ -421,7 +468,7 @@ export function GalleryView({
         : viewMode === 'projects'
           ? html`
             <div class="gallery-grid project-grid">
-              ${filteredProjects.map(project => html`<${ProjectCard} key=${project.id} project=${project} onOpen=${onOpenProject} loadHtml=${loadHtml} />`)}
+              ${filteredProjects.map(project => html`<${ProjectCard} key=${project.id} project=${project} onOpen=${onOpenProject} loadHtml=${loadHtml} loadThumbnail=${loadThumbnail} />`)}
             </div>
           `
           : html`
@@ -429,6 +476,7 @@ export function GalleryView({
               ${filteredVariants.map(generation => html`
                 <${VariantCard}
                   loadHtml=${loadHtml}
+                  loadThumbnail=${loadThumbnail}
                   key=${generation.id}
                   generation=${generation}
                   projectTitle=${projectByFolder.get(generation.folderId)?.title || generation.folderId || generation.id}

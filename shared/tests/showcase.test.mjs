@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { loadShowcaseItem, resolveShowcaseRoute, showcaseBackHref, showcaseIdFromHash } from '../services/showcase.js';
+import { listShowcaseItems, loadShowcaseItem, resolveShowcaseRoute, showcaseBackHref, showcaseIdFromHash } from '../services/showcase.js';
 
 // A fetch stub that answers from a url -> body map and records what was asked.
 function stubFetch(routes) {
@@ -87,4 +87,25 @@ test('other routes are left alone and fetch nothing', async () => {
 test('the back link returns to the tile on the showcase page', () => {
   assert.equal(showcaseBackHref('mini-planet'), '../showcase.html#mini-planet');
   assert.equal(showcaseBackHref(''), '../showcase.html');
+});
+
+test('the gallery lists one bench from the backend, with posters chosen in admin', async () => {
+  const { fetchImpl, calls } = stubFetch({ '../api/showcase': { showcase: [
+    { id: 'a', bench: 'prompt-gallery', posterUrl: 'https://media.example/a.jpg' },
+    { id: 'b', bench: 'svg-benchmark', artUrl: '_showcase/b.svg' },
+    { id: 'c', bench: 'prompt-gallery', posterUrl: 'api/posters/c.jpg' },
+  ] } });
+  const items = await listShowcaseItems({ bench: 'prompt-gallery', useApi: true, fetchImpl });
+  assert.deepEqual(items.map(it => [it.id, it.posterUrl]), [['a', 'https://media.example/a.jpg'], ['c', '../api/posters/c.jpg']]);
+  assert.deepEqual(calls, ['../api/showcase']);
+});
+
+test('without the backend the baked index supplies the posters', async () => {
+  const { fetchImpl } = stubFetch({ '../_showcase/index.json': { showcase: [
+    { id: 'a', bench: 'prompt-gallery', poster: 'a.jpg' },
+    { id: 'b', bench: 'svg-benchmark', ext: '.svg' },
+  ] } });
+  const all = await listShowcaseItems({ useApi: true, fetchImpl });
+  assert.deepEqual(all.map(it => [it.id, it.posterUrl, it.artUrl]), [['a', '../_showcase/a.jpg', ''], ['b', '', '../_showcase/b.svg']]);
+  assert.deepEqual(await listShowcaseItems({ fetchImpl: stubFetch({}).fetchImpl }), []);
 });
