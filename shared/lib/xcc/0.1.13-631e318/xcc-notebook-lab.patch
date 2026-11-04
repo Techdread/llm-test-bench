@@ -1,5 +1,5 @@
 diff --git a/include/time.h b/include/time.h
-index d33b24e..037ed72 100644
+index d33b24e5..037ed726 100644
 --- a/include/time.h
 +++ b/include/time.h
 @@ -1,6 +1,10 @@
@@ -27,7 +27,7 @@ index d33b24e..037ed72 100644
 +double difftime(time_t end, time_t start);
 diff --git a/libsrc/_wasm/unistd/clock.c b/libsrc/_wasm/unistd/clock.c
 new file mode 100644
-index 0000000..54c4a9e
+index 00000000..54c4a9e7
 --- /dev/null
 +++ b/libsrc/_wasm/unistd/clock.c
 @@ -0,0 +1,22 @@
@@ -54,10 +54,10 @@ index 0000000..54c4a9e
 +  return (double)(end - start);
 +}
 diff --git a/libsrc/stdio/vfprintf.c b/libsrc/stdio/vfprintf.c
-index 5a69730..c6f7fe9 100644
+index 5a69730a..f9f2ea1d 100644
 --- a/libsrc/stdio/vfprintf.c
 +++ b/libsrc/stdio/vfprintf.c
-@@ -114,91 +114,190 @@ static long double pow10(int order) {
+@@ -114,91 +114,197 @@ static long double pow10(int order) {
    return a;
  }
  
@@ -154,25 +154,30 @@ index 5a69730..c6f7fe9 100644
    long double x = *px;
 -  int exp = 0;
 -  if (x >= 1e6) {
--    do {
++  int e = 0;
++  if (x >= 10) {
+     do {
 -      x /= 10;
 -      ++exp;
 -    } while (x >= 10);
 -  }
 -  if (x > 0 && x <= 1e-4) {
--    do {
++      ++e;
++    } while (x >= pow10(e + 1));
++    x /= pow10(e);
++  } else if (x < 1) {
++    // Multiply in steps: 10^309 and up overflow, which broke 1e-310.
++    for (; x < 1e-300; e -= 300)
++      x *= pow10(300);
++    int d = 0;
+     do {
 -      x *= 10;
 -      --exp;
 -    } while (x < 1.0);
-+  int e = 0;
-+  if (x >= 10) {
-+    while (x >= pow10(e + 1))
-+      ++e;
-+    x /= pow10(e);
-+  } else if (x < 1) {
-+    while (x * pow10(-e) < 1)
-+      --e;
-+    x *= pow10(-e);
++      ++d;
++    } while (x * pow10(d) < 1);
++    x *= pow10(d);
++    e -= d;
    }
    *px = x;
 -  return exp;
@@ -266,7 +271,7 @@ index 5a69730..c6f7fe9 100644
 +    char probe[400];
 +    if (x != 0)
 +      put_scientific(probe, x, P - 1, false, upper, &e);
-+    if (e < -4 || e >= P) {
++    if (e < -4 || e >= P || x >= 1e18) {   // put_fixed needs x < 1e18
 +      p = put_scientific(p, x, P - 1, alt, upper, NULL);
 +      if (!alt) {
 +        // Strip zeros from the mantissa only.
@@ -315,7 +320,7 @@ index 5a69730..c6f7fe9 100644
  }
  #endif
  
-@@ -222,17 +321,18 @@ int vfprintf(FILE *fp, const char *fmt_, va_list ap) {
+@@ -222,17 +328,18 @@ int vfprintf(FILE *fp, const char *fmt_, va_list ap) {
      // Handle '%'
      char padding = ' ';
      int order = 0, suborder = 0;
@@ -339,7 +344,7 @@ index 5a69730..c6f7fe9 100644
        c = fmt[++i];
      }
      if (c == '0') {
-@@ -248,6 +348,7 @@ int vfprintf(FILE *fp, const char *fmt_, va_list ap) {
+@@ -248,6 +355,7 @@ int vfprintf(FILE *fp, const char *fmt_, va_list ap) {
        c = fmt[++i];
      }
      if (c == '.') {
@@ -347,7 +352,7 @@ index 5a69730..c6f7fe9 100644
        c = fmt[++i];
        if (isdigit(c)) {
          do {
-@@ -358,24 +459,14 @@ int vfprintf(FILE *fp, const char *fmt_, va_list ap) {
+@@ -358,24 +466,14 @@ int vfprintf(FILE *fp, const char *fmt_, va_list ap) {
        ++o;
        break;
  #ifndef __NO_FLONUM
@@ -375,10 +380,10 @@ index 5a69730..c6f7fe9 100644
        break;
  #endif
 diff --git a/libsrc/stdlib/strtod.c b/libsrc/stdlib/strtod.c
-index 6ff80ff..4d74047 100644
+index 6ff80ff8..1f932d9a 100644
 --- a/libsrc/stdlib/strtod.c
 +++ b/libsrc/stdlib/strtod.c
-@@ -30,24 +30,69 @@ static double strtod_i(const char *p, const char **pp) {
+@@ -30,24 +30,70 @@ static double strtod_i(const char *p, const char **pp) {
    return result;
  }
  
@@ -392,11 +397,12 @@ index 6ff80ff..4d74047 100644
 -    if (c != '0')
 -      r = q;
 +
-+// Decimal text to double, correctly rounded for the usual case. The digits are gathered into one integer, then scaled by a single
-+// power of ten; when the integer is at most 2^53 and the power is at most
-+// 10^22, both are exact doubles, so the one multiply or divide rounds
-+// correctly (Clinger's fast path). The old digit-by-digit sum read 0.15 as
-+// 0.15000000000000002. Longer or more extreme numbers use the old approximation.
++// Decimal text to double, correctly rounded for the usual case. The digits
++// are gathered into one integer, then scaled by a single power of ten; when
++// the integer is at most 2^53 and the power is at most 10^22, both are exact
++// doubles, so the one multiply or divide rounds correctly (Clinger's fast
++// path). The old digit-by-digit sum read 0.15 as 0.15000000000000002.
++// Longer or more extreme numbers are only approximated.
 +static double strtod_dec(const char *p, const char **pp) {
 +  unsigned long long mantissa = 0;
 +  int digits = 0, exp10 = 0;
@@ -443,14 +449,14 @@ index 6ff80ff..4d74047 100644
 +    }
 +  }
 +  *pp = p;
++  if (mantissa == 0)
++    return 0;  // avoid 0 * inf = NaN for 0e400
  
 -  double result = 0;
 -  for (size_t order = r - p; r > p; --order) {
 -    char c = *(--r);
 -    result += (c - '0') / ipow(10, order);
 +  double m = (double)mantissa;
-+  if (mantissa <= (1ULL << 53) && exp10 >= -22 && exp10 <= 22)
-+    return exp10 < 0 ? m / ipow(10, -exp10) : m * ipow(10, exp10);
 +  if (exp10 < 0) {
 +    // Divide in steps so 10^-exp10 never overflows to infinity.
 +    for (; exp10 < -300; exp10 += 300)
@@ -463,7 +469,7 @@ index 6ff80ff..4d74047 100644
  }
  
  #define strtod_h(p, pp)  strtoull(p, (char**)(pp), 16)
-@@ -113,26 +158,7 @@ double strtod(const char *restrict p_, char **restrict pp) {
+@@ -113,26 +159,7 @@ double strtod(const char *restrict p_, char **restrict pp) {
      result = strtod_hex(p, &p);
    } else {
      op = p;

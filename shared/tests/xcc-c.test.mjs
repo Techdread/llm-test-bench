@@ -47,6 +47,14 @@ int main(void) { printf("[%8.2f][%-6.1f][%08.2f][%.0f][%5.1f][%e][%g][%.1f]\\n",
   assert.equal(r.stdout, '[    3.14][2.5   ][-0003.14][2][ -0.1][1.234568e+04][0.0001234][0.1]\n');
 });
 
+test('zero and subnormal edge cases (xcc#270 review)', async () => {
+  // The literal is read by the compiler's own strtod, the string by the program's.
+  const r = await compileAndRun(`#include <stdio.h>
+#include <stdlib.h>
+int main(void) { double z = 0e400; printf("[%g][%g][%e][%g]\\n", z, strtod("0e400", NULL), 1e-310, 1e-310); return 0; }`);
+  assert.equal(r.stdout, '[0][0][1.000000e-310][1e-310]\n');
+});
+
 test('stdin, clock() and exit codes', async () => {
   const r = await compileAndRun(`#include <stdio.h>
 #include <time.h>
