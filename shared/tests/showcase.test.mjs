@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { loadShowcaseItem, showcaseIdFromHash } from '../services/showcase.js';
+import { loadShowcaseItem, resolveShowcaseRoute, showcaseBackHref, showcaseIdFromHash } from '../services/showcase.js';
 
 // A fetch stub that answers from a url -> body map and records what was asked.
 function stubFetch(routes) {
@@ -45,4 +45,46 @@ test('the private hub never asks a backend it does not have', async () => {
   const { fetchImpl, calls } = stubFetch({});
   assert.equal(await loadShowcaseItem('tetris', { fetchImpl }), null); // node: no document => private hub
   assert.deepEqual(calls, ['../_showcase/tetris.json']);
+});
+
+// resolveShowcaseRoute reads and writes location.hash; give it a stand-in.
+async function withHash(hash, fn) {
+  const had = Object.prototype.hasOwnProperty.call(globalThis, 'location');
+  const saved = globalThis.location;
+  globalThis.location = { hash };
+  try { return await fn(globalThis.location); } finally {
+    if (had) globalThis.location = saved; else delete globalThis.location;
+  }
+}
+
+test('a showcase link resolves to its item and keeps the permalink', async () => {
+  const { fetchImpl } = stubFetch({ '../_showcase/tetris.json': payload('baked') });
+  await withHash('#/showcase/tetris', async (location) => {
+    const found = await resolveShowcaseRoute({ fetchImpl });
+    assert.equal(found.id, 'tetris');
+    assert.equal(found.item.code, 'baked');
+    assert.equal(location.hash, '#/showcase/tetris');
+  });
+});
+
+test('an unknown showcase id moves the app to Create', async () => {
+  const { fetchImpl } = stubFetch({});
+  await withHash('#/showcase/nope', async (location) => {
+    assert.equal(await resolveShowcaseRoute({ fetchImpl }), null);
+    assert.equal(location.hash, '#/create');
+  });
+});
+
+test('other routes are left alone and fetch nothing', async () => {
+  const { fetchImpl, calls } = stubFetch({});
+  await withHash('#/gallery', async (location) => {
+    assert.equal(await resolveShowcaseRoute({ fetchImpl }), null);
+    assert.equal(location.hash, '#/gallery');
+    assert.deepEqual(calls, []);
+  });
+});
+
+test('the back link returns to the tile on the showcase page', () => {
+  assert.equal(showcaseBackHref('mini-planet'), '../showcase.html#mini-planet');
+  assert.equal(showcaseBackHref(''), '../showcase.html');
 });

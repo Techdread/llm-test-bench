@@ -360,6 +360,95 @@ body::before {
   position: relative;
 }
 
+/* ── Showcase landing (shared/components/ShowcaseLanding.js) ── */
+.showcase-landing {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.showcase-landing-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.showcase-landing-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.showcase-landing-back:hover {
+  color: var(--text-primary);
+}
+
+.showcase-landing-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.showcase-landing-title {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 14px;
+}
+
+.showcase-landing-model,
+.showcase-landing-rating {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.showcase-landing-rating i {
+  color: var(--warning, #f59e0b);
+}
+
+.showcase-landing-prompt {
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.showcase-landing-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+}
+
+.showcase-landing-stage > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.showcase-landing-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 24px;
+}
+
+@media (max-width: 640px) {
+  .showcase-landing-bar { flex-wrap: wrap; gap: 8px 12px; }
+  .showcase-landing-info { order: 3; flex-basis: 100%; }
+  .showcase-landing-open { margin-left: auto; }
+}
+
 /* ── Modal / Dialog ── */
 .modal-overlay {
   position: fixed;

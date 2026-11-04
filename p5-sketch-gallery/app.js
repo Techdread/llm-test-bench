@@ -22,7 +22,7 @@ import { HelpDialog } from '../shared/components/HelpDialog.js';
 import { ensureAppNamespace, getRoot, connectRoot, setRoot } from '../shared/services/data-root-manager.js';
 import { isPublicDistribution } from '../shared/services/distribution.js';
 import * as modelProviders from '../shared/services/model-providers.js';
-import { consumeShowcaseRoute } from '../shared/services/showcase.js';
+import { ShowcaseLanding, useShowcaseRoute } from '../shared/components/ShowcaseLanding.js';
 
 import { defaultSketchCode, defaultParams } from './services/runtime/sketchRunner.js';
 import { extractParams, syncParamsWithCode } from './services/runtime/paramExtract.js';
@@ -156,18 +156,11 @@ function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  // Showcase deep-link: a tile on the landing page opens this app with the
-  // sketch already loaded. No directory needed — it lands in the editor.
-  useEffect(() => {
-    let cancelled = false;
-    consumeShowcaseRoute().then((item) => {
-      if (cancelled || !item) return;
-      setPrompt(item.prompt || '');
-      setCode(item.code);
-      setRoute(getRoute());
-    });
-    return () => { cancelled = true; };
-  }, []);
+  // Showcase deep-link: a tile on the landing page opens the sketch running
+  // full-size (#/showcase/<id>); its prompt and code load into Create only
+  // when the visitor asks. No directory needed.
+  const showcase = useShowcaseRoute(route.name, route.param);
+  const showcaseParams = useMemo(() => defaultParams(), []);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -241,6 +234,17 @@ function App() {
   }, []);
 
   const navigate = useCallback((r) => { window.location.hash = '#/' + r; }, []);
+
+  const handleOpenShowcaseInCreate = useCallback(() => {
+    if (!showcase) return;
+    setPrompt(showcase.item.prompt || '');
+    setCode(showcase.item.code);
+    setParams(defaultParams());   // as the landing view ran it
+    setSeed(1);
+    setEditingId('');
+    setParentId(null);
+    navigate('create');
+  }, [showcase, navigate]);
   const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), []);
 
   const refreshPromptLibrary = useCallback(async () => {
@@ -789,6 +793,21 @@ function App() {
         onCompareIdsChange=${setCompareIds}
         rootHandle=${rootHandle}
       />`;
+    }
+    if (route.name === 'showcase') {
+      return html`<${ShowcaseLanding}
+        id=${route.param}
+        item=${showcase?.item}
+        onOpenCreate=${handleOpenShowcaseInCreate}
+      >
+        <${CanvasPreview}
+          key=${showcase?.id}
+          code=${showcase?.item.code || ''}
+          params=${showcaseParams}
+          seed=${1}
+          playing=${true}
+        />
+      </${ShowcaseLanding}>`;
     }
     if (route.name === 'runs') {
       return html`<${RunsView}

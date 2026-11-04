@@ -1,9 +1,10 @@
 // Showcase deep-links — the landing page's curated tiles.
 //
 // A tile on the public site links to `<app>/#/showcase/<id>`. The app calls
-// consumeShowcaseRoute() once on mount; if the hash names a showcase item it
-// fetches the payload and hands back the prompt and code so the app can drop
-// straight into its editor. On the public build the showcase backend
+// resolveShowcaseRoute() whenever its route is `showcase`; if the hash names a
+// showcase item it fetches the payload, and the app shows the piece running
+// full-size (shared/components/ShowcaseLanding.js) with a button that loads the
+// prompt and code into its editor. On the public build the showcase backend
 // (`api/showcase/<id>`, spec 342) is asked first; `_showcase/<id>.json`, which
 // tools/build-public-mvp.mjs bakes into every build, is the fallback.
 //
@@ -58,16 +59,23 @@ export async function loadShowcaseItem(id, opts = {}) {
 }
 
 /**
- * One-shot helper for app mount: if the hash is a showcase route, resolve the
- * payload and rewrite the hash to `#/create` so a reload does not re-apply it
- * over the user's subsequent edits. Returns the payload, or null.
+ * Resolve the showcase item named by the current hash. The hash is left as it
+ * is, so the landing view stays a shareable permalink and survives a reload.
+ * A bad id (or a build with no showcase, such as the private hub) moves the app
+ * to `#/create`: it should not be stranded on a route no view can render.
+ *
+ * @returns {Promise<{ id: string, item: object } | null>}
  */
-export async function consumeShowcaseRoute(opts = {}) {
+export async function resolveShowcaseRoute(opts = {}) {
   const id = showcaseIdFromHash();
   if (!id) return null;
   const item = await loadShowcaseItem(id, opts);
-  // Clear the route either way: a bad id should not strand the app on a hash
-  // no view knows how to render.
-  if (globalThis.location) globalThis.location.hash = '#/create';
-  return item;
+  if (item) return { id, item };
+  if (globalThis.location && showcaseIdFromHash() === id) globalThis.location.hash = '#/create';
+  return null;
+}
+
+/** Where the landing view's back link goes: the item's tile on the site's showcase page. */
+export function showcaseBackHref(id) {
+  return `../showcase.html${id ? `#${encodeURIComponent(id)}` : ''}`;
 }

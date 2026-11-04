@@ -6,6 +6,7 @@ import { PromptPanel } from './components/PromptPanel.js';
 import { PromptLibraryView } from './components/PromptLibraryView.js';
 import { SvgEditor } from './components/SvgEditor.js';
 import { SvgPreview } from './components/SvgPreview.js';
+import { SvgImage } from './components/SvgImage.js';
 import { ReferencePanel } from './components/ReferencePanel.js';
 import { ScorePanel } from './components/ScorePanel.js';
 import { DiffOverlay } from './components/DiffOverlay.js';
@@ -40,7 +41,7 @@ import { analyzeSvg, compareSvgToReference, renderSvgToCanvas } from './services
 import { checkAnimation } from './services/animationCheck.js';
 import { exportSvgAsGif } from '../shared/services/gif-export.js';
 import { crossAppHandoffsEnabled, isPublicDistribution } from '../shared/services/distribution.js';
-import { consumeShowcaseRoute } from '../shared/services/showcase.js';
+import { ShowcaseLanding, useShowcaseRoute } from '../shared/components/ShowcaseLanding.js';
 
 const CODE_MORPH_SOURCE = 'svg-benchmark';
 
@@ -169,18 +170,10 @@ function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
-  // Showcase deep-link: a tile on the landing page opens this app with the
-  // submission already loaded. No directory needed — it lands in the editor.
-  useEffect(() => {
-    let cancelled = false;
-    consumeShowcaseRoute().then((item) => {
-      if (cancelled || !item) return;
-      setPrompt(item.prompt || '');
-      setSvgCode(item.code);
-      setRoute(getRoute());
-    });
-    return () => { cancelled = true; };
-  }, []);
+  // Showcase deep-link: a tile on the landing page opens the submission
+  // full-size (#/showcase/<id>); its prompt and code load into Create only
+  // when the visitor asks. No directory needed.
+  const showcase = useShowcaseRoute(route.name, route.param);
 
   // Theme
   useEffect(() => {
@@ -306,6 +299,13 @@ function App() {
   const navigate = useCallback((r) => {
     window.location.hash = '#/' + r;
   }, []);
+
+  const handleOpenShowcaseInCreate = useCallback(() => {
+    if (!showcase) return;
+    setPrompt(showcase.item.prompt || '');
+    setSvgCode(showcase.item.code);
+    navigate('create');
+  }, [showcase, navigate]);
 
   const toggleTheme = useCallback(() => {
     setPref(APP_ID, 'theme', theme === 'dark' ? 'light' : 'dark');
@@ -998,6 +998,17 @@ function App() {
           onDeleteBenchmark=${handleDeleteBenchmark}
           allowHandoffs=${crossAppHandoffsEnabled(undefined, 'code-morph-lab-v3')}
         />`;
+
+      case 'showcase':
+        return html`<${ShowcaseLanding}
+          id=${route.param}
+          item=${showcase?.item}
+          onOpenCreate=${handleOpenShowcaseInCreate}
+        >
+          <div class="svg-preview-container">
+            <${SvgImage} svg=${showcase?.item.code || ''} alt=${showcase?.item.title || ''} />
+          </div>
+        </${ShowcaseLanding}>`;
 
       case 'create':
       default:
