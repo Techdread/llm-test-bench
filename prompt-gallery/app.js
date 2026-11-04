@@ -126,6 +126,7 @@ function App() {
   // panel shows the code or those errors.
   const [previewConsole, setPreviewConsole] = useState([]);
   const [responseView, setResponseView] = useState('code');
+  const [fullscreenPreview, setFullscreenPreview] = useState(false);
   const handlePreviewConsoleEntry = useCallback(entry => setPreviewConsole(list => addConsoleEntry(list, entry)), []);
   const handlePreviewConsoleReset = useCallback(() => setPreviewConsole([]), []);
 
@@ -170,6 +171,12 @@ function App() {
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
+
+  // The full-screen preview belongs to Create: leaving closes it, so it does
+  // not reopen over the editor on the way back.
+  useEffect(() => {
+    if (route.name !== 'create') setFullscreenPreview(false);
+  }, [route.name]);
 
   // Showcase deep-link: a tile on the landing page opens the generation
   // running full-size (#/showcase/<id>); its prompt and code load into Create
@@ -1471,6 +1478,8 @@ function App() {
               responseView=${responseView}
               onResponseViewChange=${setResponseView}
               onClearConsole=${handlePreviewConsoleReset}
+              showFullscreenPreview=${fullscreenPreview}
+              onFullscreenPreviewChange=${setFullscreenPreview}
             />
             <div class="create-right">
               <${AgentRunTrace} run=${agentRun} />
@@ -1501,6 +1510,10 @@ function App() {
                     </button>
                   `}
                   <span class="library-card-actions-spacer"></span>
+                  <button class="btn btn-sm" onClick=${() => setFullscreenPreview(true)} title="Show the page full screen (Esc to come back)">
+                    <i class="fa-solid fa-eye"></i>
+                    Full screen
+                  </button>
                   <button class="btn btn-sm" onClick=${handleRefineCurrent} title="Open in the Refine tab to heal errors or add features">
                     <i class="fa-solid fa-screwdriver-wrench"></i>
                     ${checkFailed || previewErrors > 0 ? 'Heal in Refine' : 'Refine'}

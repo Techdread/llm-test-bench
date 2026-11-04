@@ -24,12 +24,14 @@ export function PromptEditor({
   responseView = 'code',
   onResponseViewChange,
   onClearConsole,
+  showFullscreenPreview = false,   // the full-screen preview is controlled by the app,
+  onFullscreenPreviewChange,       // so a button outside the editor can open it too
 }) {
   const editorRef = useRef(null);
   const containerRef = useRef(null);
   const silentUpdate = useRef(false);
   const copyTimerRef = useRef(null);
-  const [showFullscreenPreview, setShowFullscreenPreview] = useState(false);
+  const setShowFullscreenPreview = (open) => onFullscreenPreviewChange?.(open);
   const [copiedTarget, setCopiedTarget] = useState('');
   const [rateClock, setRateClock] = useState(Date.now());
 
@@ -250,7 +252,7 @@ export function PromptEditor({
             <button
               class=${`btn-icon ${showFullscreenPreview ? 'active' : ''}`}
               onClick=${() => setShowFullscreenPreview(true)}
-              title="Preview rendered HTML"
+              title="Full screen preview"
               disabled=${!response}
               style=${{ fontSize: '12px' }}
             >
