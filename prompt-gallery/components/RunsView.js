@@ -57,6 +57,16 @@ export function RunsView({ generations, hasDirectory, onPickDirectory, onOpen, o
     [runs, selectedIds],
   );
   const mergeCompatible = useMemo(() => canMergeRuns(compareRuns), [compareRuns]);
+  // Runs launched together by a multi-model batch, by group id.
+  const runsByGroup = useMemo(() => {
+    const groups = new Map();
+    for (const r of runs) {
+      if (!r.groupId) continue;
+      if (!groups.has(r.groupId)) groups.set(r.groupId, []);
+      groups.get(r.groupId).push(r.id);
+    }
+    return groups;
+  }, [runs]);
 
   // Fetch the pages of whichever runs are on screen, a few at a time so one
   // big run cannot flood the connection.
@@ -165,6 +175,13 @@ export function RunsView({ generations, hasDirectory, onPickDirectory, onOpen, o
     onRouteRun?.('');
   }, [onRouteRun]);
 
+  const compareGroup = useCallback((groupId) => {
+    const ids = (runsByGroup.get(groupId) || []).slice(0, MAX_COMPARE);
+    if (ids.length < 2) return;
+    setSelectedIds(new Set(ids));
+    setMode('compare');
+  }, [runsByGroup]);
+
   const openCompare = useCallback(() => {
     if (compareRuns.length < 2) { addToast?.('Pick at least two runs to compare', 'info'); return; }
     setMode('compare');
@@ -236,6 +253,8 @@ export function RunsView({ generations, hasDirectory, onPickDirectory, onOpen, o
   if (mode === 'compare' && compareRuns.length >= 2) {
     return html`<${CompareRuns}
       compareRuns=${compareRuns}
+      pageOf=${pageOf}
+      loadingPages=${loadingPages}
       onBack=${() => setMode('list')}
       onOpen=${onOpen}
       onRate=${onRate}
@@ -309,6 +328,12 @@ export function RunsView({ generations, hasDirectory, onPickDirectory, onOpen, o
                       <i class="fa-solid fa-chevron-right"></i>
                     </span>
                   </button>
+                  ${(runsByGroup.get(r.groupId)?.length || 0) > 1 && html`
+                    <button class="btn btn-sm runs-group-compare" onClick=${() => compareGroup(r.groupId)}
+                      title="This run is one model of a multi-model batch: compare every model in it side by side">
+                      <i class="fa-solid fa-table-columns"></i> Compare all ${runsByGroup.get(r.groupId).length} models
+                    </button>
+                  `}
                 </div>
               `;
             })}
@@ -320,7 +345,7 @@ export function RunsView({ generations, hasDirectory, onPickDirectory, onOpen, o
 
 // Per-prompt side-by-side comparison: one prompt at a time, every selected run
 // in its own column, with a prompt list on the left and ‹ › to step through.
-function CompareRuns({ compareRuns, onBack, onOpen, onRate }) {
+function CompareRuns({ compareRuns, pageOf, loadingPages, onBack, onOpen, onRate }) {
   const [pos, setPos] = useState(0);
   const [zoom, setZoom] = useState(null);
 

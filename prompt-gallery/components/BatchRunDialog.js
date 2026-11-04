@@ -7,6 +7,32 @@ import { HtmlLightbox } from './BatchReview.js';
 import { runBatch } from '../services/batchRunner.js';
 import { PROMPT_SETS, promptSetOf } from '../services/library.js';
 import {
+  addBatchModel,
+  batchModelKey,
+  combineSummaries,
+  planBatchLanes,
+  runLanes,
+  snapshotModel,
+} from '../services/batchPlan.js';
+
+// The multi-model list and lane mode outlive the dialog, so a rerun of the same
+// comparison is one click.
+const MODELS_KEY = 'prompt-gallery-batch-models';
+const LANE_MODE_KEY = 'prompt-gallery-batch-lane-mode';
+
+function readStored(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw == null ? fallback : JSON.parse(raw);
+  } catch (e) {
+    return fallback;
+  }
+}
+
+function writeStored(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* optional */ }
+}
+import {
   completionTokenCount,
   estimatedTokenCount,
   formatTokensPerSecond,
@@ -79,6 +105,14 @@ export function BatchRunDialog({
   const [apiRetries, setApiRetries] = useState(1);
   const [delaySec, setDelaySec] = useState(0);
   const [showLiveOutput, setShowLiveOutput] = useState(true);
+  // Several models in one launch: empty means "just the model picked above".
+  const [batchModels, setBatchModels] = useState(() => {
+    const stored = readStored(MODELS_KEY, []);
+    return Array.isArray(stored) ? stored.filter(m => m?.providerId && m?.modelId) : [];
+  });
+  const [laneMode, setLaneMode] = useState(() => (readStored(LANE_MODE_KEY, 'parallel') === 'sequential' ? 'sequential' : 'parallel'));
+  useEffect(() => writeStored(MODELS_KEY, batchModels), [batchModels]);
+  useEffect(() => writeStored(LANE_MODE_KEY, laneMode), [laneMode]);
 
   // Run state
   const [items, setItems] = useState([]);       // aligned to the run list
@@ -95,7 +129,9 @@ export function BatchRunDialog({
   const [rateClock, setRateClock] = useState(() => Date.now());
   const stopRef = useRef(false);
   const pauseRequestedRef = useRef(false);
-  const pauseResolverRef = useRef(null);
+  // One resolver per lane waiting at a pause boundary (lanes can run side by side).
+  const pauseResolversRef = useRef([]);
+  const runningLanesRef = useRef(0);
   const listEndRef = useRef(null);
   const activeIndexRef = useRef(-1);
   const followActiveRef = useRef(true);
@@ -109,17 +145,26 @@ export function BatchRunDialog({
   const activeProviderId = selectedProviderId || (activeBackend === 'model' ? model?.providerId : '');
   const activeModelId = selectedModelId || (activeBackend === 'model' ? model?.modelId : '');
   const hasModel = !!(model?.providerId && model?.modelId);
+  const runModels = useMemo(() => {
+    if (batchModels.length) return batchModels;
+    const snap = snapshotModel(model);
+    return snap ? [snap] : [];
+  }, [batchModels, model]);
+  const isMulti = runModels.length > 1;
+  const canRun = runModels.length > 0;
+  const selectedInList = hasModel && batchModels.some(m => batchModelKey(m) === batchModelKey(model));
   const selectedCount = setPrompts.filter(p => selectedIds.has(p.id)).length;
 
   const alreadyRunCount = useMemo(() => {
-    if (!hasModel) return 0;
     let n = 0;
-    for (const p of setPrompts) {
-      if (!selectedIds.has(p.id)) continue;
-      try { if (deps.hasExistingForModel?.(p, model)) n++; } catch (e) { /* ignore */ }
+    for (const m of runModels) {
+      for (const p of setPrompts) {
+        if (!selectedIds.has(p.id)) continue;
+        try { if (deps.hasExistingForModel?.(p, m)) n++; } catch (e) { /* ignore */ }
+      }
     }
     return n;
-  }, [setPrompts, selectedIds, model, hasModel, deps]);
+  }, [setPrompts, selectedIds, runModels, deps]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -231,21 +276,30 @@ export function BatchRunDialog({
   const waitAtPauseBoundary = useCallback(async (context) => {
     if (!pauseRequestedRef.current || stopRef.current) return;
     setPauseContext(context || null);
-    setPauseState('paused');
-    await new Promise(resolve => { pauseResolverRef.current = resolve; });
-    pauseResolverRef.current = null;
+    await new Promise(resolve => {
+      pauseResolversRef.current.push(resolve);
+      // "Paused" only once no lane still has a model call in flight.
+      if (pauseResolversRef.current.length >= runningLanesRef.current) setPauseState('paused');
+    });
   }, []);
 
+  const releasePaused = () => {
+    const waiting = pauseResolversRef.current;
+    pauseResolversRef.current = [];
+    for (const resolve of waiting) resolve();
+  };
+
   const start = useCallback(async () => {
-    if (!hasModel) { addToast('Select a model first', 'error'); return; }
+    if (!canRun) { addToast('Select a model first', 'error'); return; }
     if (!hasDirectory) { addToast('Connect a directory first — generations are saved there', 'error'); return; }
     const list = setPrompts.filter(p => selectedIds.has(p.id));
     if (list.length === 0) { addToast('Select at least one prompt', 'error'); return; }
 
-    setRunList(list);
-    setItems(list.map(() => ({ status: 'queued' })));
-    setOutputs(showLiveOutput ? list.map(() => '') : []);
-    setOutputStats(showLiveOutput ? list.map(() => null) : []);
+    const plan = planBatchLanes({ prompts: list, models: runModels, runId });
+    setRunList(plan.runList);
+    setItems(plan.runList.map(() => ({ status: 'queued' })));
+    setOutputs(showLiveOutput ? plan.runList.map(() => '') : []);
+    setOutputStats(showLiveOutput ? plan.runList.map(() => null) : []);
     setSummary(null);
     fullscreenIndexRef.current = -1;
     setFullscreenIndex(-1);
@@ -256,45 +310,65 @@ export function BatchRunDialog({
     followActiveRef.current = true;
     stopRef.current = false;
     pauseRequestedRef.current = false;
-    pauseResolverRef.current?.();
-    pauseResolverRef.current = null;
+    releasePaused();
     setPauseState('running');
     setPauseContext(null);
     setPhase('running');
 
+    // Each lane is one model over the whole list, reporting into its own slice
+    // of the run list. Its 'done' is held back: the summary covers every lane.
+    const runOne = async (lane) => {
+      runningLanesRef.current += 1;
+      try {
+        return await runBatch({
+          prompts: lane.prompts,
+          model: lane.model,
+          options: {
+            mode,
+            heal: mode === 'runtime-heal',
+            healAttempts,
+            maxRepairRounds,
+            saveBothOnHeal,
+            skipExisting,
+            delayMs: Math.max(0, Math.round(delaySec * 1000)),
+            apiRetries,
+            runId: lane.model.batchRunId,
+          },
+          deps,
+          onEvent: (event) => {
+            if (event.type === 'done') return;
+            handleEvent(typeof event.index === 'number' ? { ...event, index: event.index + lane.offset } : event);
+          },
+          shouldStop: () => stopRef.current,
+          shouldPause: () => pauseRequestedRef.current,
+          waitIfPaused: waitAtPauseBoundary,
+        });
+      } catch (e) {
+        addToast(`Batch run error${plan.multi ? ` (${lane.model.label || lane.model.modelId})` : ''}: ${e.message}`, 'error');
+        return null;
+      } finally {
+        runningLanesRef.current -= 1;
+        // A lane that ends while others are parked completes the pause.
+        if (pauseRequestedRef.current && pauseResolversRef.current.length >= runningLanesRef.current && runningLanesRef.current > 0) {
+          setPauseState('paused');
+        }
+      }
+    };
+
     try {
-      await runBatch({
-        prompts: list,
-        model,
-        options: {
-          mode,
-          heal: mode === 'runtime-heal',
-          healAttempts,
-          maxRepairRounds,
-          saveBothOnHeal,
-          skipExisting,
-          delayMs: Math.max(0, Math.round(delaySec * 1000)),
-          apiRetries,
-          runId,
-        },
-        deps,
-        onEvent: handleEvent,
-        shouldStop: () => stopRef.current,
-        shouldPause: () => pauseRequestedRef.current,
-        waitIfPaused: waitAtPauseBoundary,
-      });
+      const summaries = await runLanes({ lanes: plan.lanes, mode: laneMode, runOne, shouldStop: () => stopRef.current });
+      setSummary(combineSummaries(summaries.filter(Boolean)));
     } catch (e) {
       addToast('Batch run error: ' + e.message, 'error');
     } finally {
       pauseRequestedRef.current = false;
-      pauseResolverRef.current?.();
-      pauseResolverRef.current = null;
+      releasePaused();
       setPauseState('running');
       setPauseContext(null);
       setActiveIndex(-1);
       setPhase('done');
     }
-  }, [hasModel, hasDirectory, setPrompts, selectedIds, model, mode, healAttempts, maxRepairRounds, saveBothOnHeal,
+  }, [canRun, hasDirectory, setPrompts, selectedIds, runModels, laneMode, mode, healAttempts, maxRepairRounds, saveBothOnHeal,
       skipExisting, delaySec, apiRetries, showLiveOutput, runId, deps, handleEvent, waitAtPauseBoundary, addToast]);
 
   const pause = useCallback(() => {
@@ -309,18 +383,14 @@ export function BatchRunDialog({
     pauseRequestedRef.current = false;
     setPauseState('running');
     setPauseContext(null);
-    const resolve = pauseResolverRef.current;
-    pauseResolverRef.current = null;
-    resolve?.();
+    releasePaused();
     addToast('Batch resumed', 'info');
   }, [addToast]);
 
   const stop = useCallback(() => {
     stopRef.current = true;
     pauseRequestedRef.current = false;
-    const resolve = pauseResolverRef.current;
-    pauseResolverRef.current = null;
-    resolve?.();
+    releasePaused();
     addToast('Stopping after the current operation…', 'info');
   }, [addToast]);
 
@@ -341,9 +411,11 @@ export function BatchRunDialog({
     rateClock,
   );
   const displayedTokenRateLabel = formatTokensPerSecond(displayedTokenRate);
-  const inspectedTitle = inspectedIndex >= 0 ? (runList[inspectedIndex]?.title || '') : '';
+  const runIsMulti = useMemo(() => new Set(runList.map(p => p.laneIndex ?? 0)).size > 1, [runList]);
+  const rowTitle = (p) => (p ? (runIsMulti && p.modelLabel ? `${p.title} · ${p.modelLabel}` : p.title) : '');
+  const inspectedTitle = inspectedIndex >= 0 ? rowTitle(runList[inspectedIndex]) : '';
   const fullscreenHtml = fullscreenIndex >= 0 ? (outputs[fullscreenIndex] || '') : '';
-  const fullscreenTitle = fullscreenIndex >= 0 ? (runList[fullscreenIndex]?.title || 'Generation') : '';
+  const fullscreenTitle = fullscreenIndex >= 0 ? (rowTitle(runList[fullscreenIndex]) || 'Generation') : '';
   const fullscreenIsActive = phase === 'running' && fullscreenIndex === activeIndex;
   const fullscreenSubtitle = fullscreenIsActive
     ? 'Live generation · the batch continues in the background'
@@ -440,6 +512,51 @@ export function BatchRunDialog({
         />
       </div>
 
+      <div class="batch-section batch-models">
+        <div class="batch-section-head">
+          <span><i class="fa-solid fa-users-gear"></i> Models (${runModels.length})</span>
+          <span class="batch-select-actions">
+            <button class="btn btn-xs" onClick=${() => setBatchModels(list => addBatchModel(list, model))}
+              disabled=${!hasModel || selectedInList}
+              title=${selectedInList ? 'Already in the list' : 'Add the model picked above to this batch'}>
+              <i class="fa-solid fa-plus"></i> Add selected model
+            </button>
+            ${batchModels.length > 0 && html`
+              <button class="btn btn-xs" onClick=${() => setBatchModels([])} title="Back to running just the model picked above">Clear</button>
+            `}
+          </span>
+        </div>
+        ${batchModels.length === 0
+          ? html`<div class="batch-models-hint">Runs the model picked above. To compare several, pick a model and press <strong>Add selected model</strong>, then pick the next.</div>`
+          : html`
+            <div class="batch-model-chips">
+              ${batchModels.map((m, i) => html`
+                <span class="batch-model-chip" key=${batchModelKey(m)}>
+                  <span class="batch-model-lane">${i + 1}</span>
+                  <span class="batch-model-name" title=${m.label || m.modelId}>${m.label || m.modelId}</span>
+                  <button class="btn-icon" title="Remove from this batch" aria-label=${`Remove ${m.label || m.modelId}`}
+                    onClick=${() => setBatchModels(list => list.filter(x => batchModelKey(x) !== batchModelKey(m)))}>
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </span>
+              `)}
+            </div>
+          `}
+        ${isMulti && html`
+          <div class="batch-options batch-lane-modes" role="radiogroup" aria-label="How the models run">
+            <label class="batch-opt batch-mode-opt">
+              <input type="radio" name="batch-lane-mode" value="parallel" checked=${laneMode === 'parallel'} onChange=${() => setLaneMode('parallel')} />
+              <span><strong>All at once</strong><small>Every model works through the list at the same time. Fastest for CLI agents and cloud models.</small></span>
+            </label>
+            <label class="batch-opt batch-mode-opt">
+              <input type="radio" name="batch-lane-mode" value="sequential" checked=${laneMode === 'sequential'} onChange=${() => setLaneMode('sequential')} />
+              <span><strong>One after another</strong><small>Finish each model before starting the next. Use this when they share one local GPU.</small></span>
+            </label>
+          </div>
+        `}
+        ${isMulti && html`<div class="batch-note"><i class="fa-solid fa-layer-group"></i> Each model is saved as its own run, grouped together in Runs for comparison.</div>`}
+      </div>
+
       ${!hasDirectory && html`
         <div class="batch-dir-hint">
           <i class="fa-solid fa-circle-info"></i>
@@ -478,14 +595,14 @@ export function BatchRunDialog({
               <label class="batch-prompt-row" key=${p.id}>
                 <input type="checkbox" checked=${selectedIds.has(p.id)} onChange=${() => toggleOne(p.id)} />
                 <span class="batch-prompt-title" title=${p.title}>${p.title}</span>
-                ${hasModel && (() => { try { return deps.hasExistingForModel?.(p, model); } catch (e) { return false; } })()
+                ${!isMulti && runModels[0] && (() => { try { return deps.hasExistingForModel?.(p, runModels[0]); } catch (e) { return false; } })()
                   ? html`<span class="batch-prompt-badge" title="Already has a generation for this model">has run</span>`
                   : null}
               </label>
             `)}
         </div>
         ${skipExisting && alreadyRunCount > 0 && html`
-          <div class="batch-note"><i class="fa-solid fa-forward"></i> ${alreadyRunCount} selected prompt${alreadyRunCount === 1 ? '' : 's'} will be skipped (already run for this model).</div>
+          <div class="batch-note"><i class="fa-solid fa-forward"></i> ${alreadyRunCount} selected prompt${alreadyRunCount === 1 ? '' : 's'} will be skipped (already run for ${isMulti ? 'that model' : 'this model'}).</div>
         `}
       </div>
 
@@ -556,8 +673,8 @@ export function BatchRunDialog({
 
     <div class="modal-footer">
       <button class="btn" onClick=${onClose}>Cancel</button>
-      <button class="btn btn-primary btn-generate" onClick=${start} disabled=${!hasModel || !hasDirectory || selectedCount === 0}>
-        <i class="fa-solid fa-play"></i> Go — run ${selectedCount} prompt${selectedCount === 1 ? '' : 's'}
+      <button class="btn btn-primary btn-generate" onClick=${start} disabled=${!canRun || !hasDirectory || selectedCount === 0}>
+        <i class="fa-solid fa-play"></i> Go — run ${selectedCount} prompt${selectedCount === 1 ? '' : 's'}${isMulti ? ` × ${runModels.length} models` : ''}
       </button>
     </div>
   `;
@@ -609,7 +726,7 @@ export function BatchRunDialog({
             return html`
               <div
                 class=${`batch-run-item ${m.cls} ${isActive ? 'is-active' : ''} ${isInspected ? 'is-inspected' : ''} ${canInspect ? 'is-inspectable' : ''}`}
-                key=${p.id}
+                key=${p.runKey || p.id}
                 role=${canInspect ? 'button' : undefined}
                 tabIndex=${canInspect ? 0 : undefined}
                 aria-current=${isInspected ? 'true' : undefined}
@@ -623,7 +740,7 @@ export function BatchRunDialog({
                 } : undefined}
               >
                 <i class=${`batch-run-icon fa ${m.icon} ${m.cls === 'active' ? 'fa-fade' : ''}`}></i>
-                <span class="batch-run-title" title=${p.title}>${p.title}</span>
+                <span class="batch-run-title" title=${rowTitle(p)}>${p.title}${runIsMulti && p.modelLabel ? html`<span class="batch-run-model">${p.modelLabel}</span>` : null}</span>
                 <span class="batch-run-status">
                   ${it.status === 'healing' && it.healAttempt ? `heal ${it.healAttempt}`
                     : it.status === 'repairing' && it.repairRound ? `Repairing · round ${it.repairRound}` : m.label}
@@ -717,6 +834,7 @@ export function BatchRunDialog({
       <div class="batch-summary">
         <div class="batch-summary-icon"><i class="fa-solid fa-flag-checkered"></i></div>
         <div class="batch-summary-grid">
+          ${runIsMulti ? html`<div class="batch-stat"><strong>${summary?.lanes || 0}</strong><span>models</span></div>` : null}
           <div class="batch-stat"><strong>${summary?.generated || 0}</strong><span>generated</span></div>
           <div class="batch-stat"><strong>${summary?.healed || 0}</strong><span>healed</span></div>
           <div class="batch-stat"><strong>${summary?.saved || 0}</strong><span>saved</span></div>
@@ -740,9 +858,9 @@ export function BatchRunDialog({
           const it = items[idx] || { status: 'queued' };
           const m = STATUS_META[it.status] || STATUS_META.queued;
           return html`
-            <div class=${`batch-run-item ${m.cls}`} key=${p.id}>
+            <div class=${`batch-run-item ${m.cls}`} key=${p.runKey || p.id}>
               <i class=${`batch-run-icon fa ${m.icon}`}></i>
-              <span class="batch-run-title" title=${p.title}>${p.title}</span>
+              <span class="batch-run-title" title=${rowTitle(p)}>${p.title}${runIsMulti && p.modelLabel ? html`<span class="batch-run-model">${p.modelLabel}</span>` : null}</span>
               <span class="batch-run-status">
                 ${m.label}${it.healed ? html` <span class="batch-healed-chip">healed</span>` : null}
                 ${it.repairRound ? html` <span class="batch-healed-chip">${it.repairRound} repair${it.repairRound === 1 ? '' : 's'}</span>` : null}
@@ -763,9 +881,9 @@ export function BatchRunDialog({
         <i class="fa-solid fa-images"></i> View in Gallery
       </button>
       ${onOpenRuns && html`
-        <button class="btn btn-primary" onClick=${() => { onOpenRuns(runId); onClose(); }}
-          title="Open this run's generations in the Runs tab">
-          <i class="fa-solid fa-layer-group"></i> Review This Run
+        <button class="btn btn-primary" onClick=${() => { onOpenRuns(runIsMulti ? '' : runId); onClose(); }}
+          title=${runIsMulti ? "Open the Runs tab, where each model's run sits in this batch's group" : "Open this run's generations in the Runs tab"}>
+          <i class="fa-solid fa-layer-group"></i> ${runIsMulti ? 'Review These Runs' : 'Review This Run'}
         </button>
       `}
     </div>

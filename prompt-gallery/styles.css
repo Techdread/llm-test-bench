@@ -2490,6 +2490,7 @@ button.create-run-label:hover { text-decoration: underline; }
 .batch-set-count { margin-left: 4px; opacity: 0.75; font-variant-numeric: tabular-nums; }
 .batch-set-hint { font-size: 11px; color: var(--text-muted); }
 .library-badge-advanced { color: #f59e0b; border-color: #f59e0b; }
+.library-badge-flagship { color: #a78bfa; border-color: #a78bfa; }
 .library-set-chips { padding-left: 10px; border-left: 1px solid var(--border-color); }
 .runs-set-badge {
   font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600;
@@ -2532,6 +2533,23 @@ button.create-run-label:hover { text-decoration: underline; }
 .batch-note { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
 
 .batch-options { display: flex; flex-direction: column; gap: 10px; }
+
+/* Multi-model batches */
+.batch-models-hint { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.batch-model-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.batch-model-chip {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+  padding: 2px 4px 2px 6px; border: 1px solid var(--border-color); border-radius: 999px;
+  background: var(--bg-tertiary); font-size: 12px;
+}
+.batch-model-lane {
+  display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; flex: none;
+}
+.batch-model-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.batch-model-chip .btn-icon { padding: 2px 5px; font-size: 11px; }
+.batch-lane-modes { margin-top: 10px; }
+.batch-run-model { margin-left: 8px; font-size: 11px; color: var(--text-muted); }
 .batch-opt {
   display: flex;
   align-items: center;
@@ -2849,6 +2867,7 @@ button.create-run-label:hover { text-decoration: underline; }
   border-bottom: 1px solid var(--border-color);
 }
 .runs-row:last-child { border-bottom: 0; }
+.runs-group-compare { align-self: center; margin: 0 10px; white-space: nowrap; }
 .runs-row.is-checked { background: color-mix(in srgb, var(--accent) 10%, transparent); }
 .runs-check {
   display: flex; align-items: center; padding: 0 12px; cursor: pointer;

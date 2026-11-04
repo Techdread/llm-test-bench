@@ -51,6 +51,7 @@ function normalizeText(text) {
 export const PROMPT_SETS = [
   { id: 'core', label: 'Core', icon: 'fa-layer-group', hint: 'The original prompts' },
   { id: 'advanced', label: 'Advanced', icon: 'fa-mountain', hint: 'Harder briefs: each builds on a core prompt with numbered requirements' },
+  { id: 'flagship', label: 'Flagship Sims', icon: 'fa-rocket', hint: 'Large, graphically ambitious simulations written for the strongest models' },
 ];
 
 export function promptSetOf(prompt) {
@@ -66,6 +67,7 @@ export function promptSetLabel(id) {
 const SEED_FILES = [
   { url: './data/library.json', set: 'core' },
   { url: './data/library-advanced.json', set: 'advanced' },
+  { url: './data/library-flagship.json', set: 'flagship' },
 ];
 
 let seedsCache = null;

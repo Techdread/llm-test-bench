@@ -25,6 +25,9 @@ function PromptCard({ prompt, stats, onUse, onRun, onEdit, onRemove, isGeneratin
         ${promptSetOf(prompt) === 'advanced' && html`
           <span class="library-badge library-badge-advanced" title="Advanced set: builds on a core prompt with numbered requirements">advanced</span>
         `}
+        ${promptSetOf(prompt) === 'flagship' && html`
+          <span class="library-badge library-badge-flagship" title="Flagship Sims: large simulations for the strongest models">flagship</span>
+        `}
       </div>
       ${showCategory && html`
         <div class="library-card-category">

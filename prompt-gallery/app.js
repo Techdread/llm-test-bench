@@ -1265,14 +1265,17 @@ function App() {
         providerId: mdl.providerId,
         aiGenerated: true,
         batch: {
-          id: batchIdRef.current, kind, healAttempts: healAttempts || 0,
+          // A multi-model batch gives each model its own run (lane) id and ties
+          // them with groupId; a one-model batch has neither and uses the dialog's id.
+          id: mdl.batchRunId || batchIdRef.current, kind, healAttempts: healAttempts || 0,
           promptSet: library.promptSetOf(prompt), generatedAt: new Date().toISOString(),
+          ...(mdl.batchGroupId ? { groupId: mdl.batchGroupId } : {}),
         },
         ...(verification ? {
           schemaVersion: 2,
           source: 'verified-generation',
           derivedFrom: derivedFrom || '',
-          verification: { ...verification, runId: verification.runId || batchIdRef.current },
+          verification: { ...verification, runId: verification.runId || mdl.batchRunId || batchIdRef.current },
         } : {}),
       };
       return meta.saveGeneration(rootHandle, folder, promptText, response, metadata);

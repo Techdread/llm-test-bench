@@ -119,6 +119,8 @@ export function buildRuns(generations) {
         promptSets: new Set(),
         mergedAt: m.batch?.mergedAt || '',
         mergedFrom: Array.isArray(m.batch?.mergedFrom) ? m.batch.mergedFrom : [],
+        // Set when this run is one model's lane of a multi-model batch.
+        groupId: m.batch?.groupId || '',
         items: [],
       });
     }
@@ -169,6 +171,7 @@ export function buildRuns(generations) {
       mixedModels: modelKeys.length > 1,
       mergedAt: run.mergedAt,
       mergedFrom: run.mergedFrom,
+      groupId: run.groupId,
       items: run.items,
       count: run.items.length,
       ratedCount: run.items.filter(item => item.rating > 0).length,
