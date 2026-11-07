@@ -9,9 +9,9 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="theme-color" content="#080b12">
-  <link rel="stylesheet" href="site.css?v=3b2749e850">
+  <link rel="stylesheet" href="site.css?v=45ff6b1521">
   <script src="plexus.js?v=af28b17aab" defer></script>
-  <script type="module" src="settings.js?v=e86323d1ac"></script>
+  <script type="module" src="settings.js?v=57120366f5"></script>
 </head>
 <body>
   <header class="site-header">
@@ -49,6 +49,15 @@
 
       <button class="button primary folder-button" id="choose-folder" type="button" disabled>Choose folder</button>
       <p class="setting-help" id="browser-help">Chrome or Edge will show a secure system folder picker. You can revoke access later in your browser's site settings.</p>
+
+      <div class="browser-storage" id="browser-storage" hidden>
+        <p class="setting-label">Browser storage</p>
+        <h3 id="browser-storage-title">Work saved in this browser</h3>
+        <p id="browser-storage-detail">Counting…</p>
+        <button class="button folder-button" id="copy-into-folder" type="button" disabled>Copy into folder</button>
+        <p class="setting-help" id="copy-status" role="status" aria-live="polite"></p>
+        <p class="setting-help">Copying never overwrites or deletes anything. Files already in the folder are kept; if one differs, the browser's version is saved beside it with “(from browser)” in its name. The browser copy stays where it is, so you can copy again later.</p>
+      </div>
     </section>
 
     <section class="settings-card model-settings-card" aria-labelledby="models-title">

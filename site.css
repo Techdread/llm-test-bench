@@ -213,6 +213,11 @@ footer { display: flex; justify-content: space-between; gap: 20px; padding: 28px
 .folder-status[data-status="unsupported"] .status-dot { background: #ff7f96; box-shadow: 0 0 0 5px rgba(255,127,150,.10); }
 .folder-status p { margin: 5px 0 0; color: var(--muted); line-height: 1.55; }
 .folder-button { min-width: 160px; }
+.folder-status[data-status="browser"] .status-dot { background: #7cb8ff; box-shadow: 0 0 0 5px rgba(124,184,255,.12); }
+.browser-storage { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); }
+.browser-storage h3 { margin: 4px 0 6px; font-size: 1.05rem; }
+.browser-storage > p:not(.setting-label):not(.setting-help) { margin: 0 0 16px; color: var(--muted); line-height: 1.55; }
+.browser-storage[data-offer="true"] { border-top-color: rgba(124,184,255,.45); }
 .setting-help { margin: 16px 0 0; color: var(--muted); font-size: .86rem; line-height: 1.55; }
 .folder-explainer { display: grid; grid-template-columns: .8fr 1.2fr; gap: 40px; align-items: start; margin-top: 42px; padding-top: 42px; border-top: 1px solid var(--line); }
 .folder-explainer h2 { font-size: clamp(1.7rem, 4vw, 2.5rem); }

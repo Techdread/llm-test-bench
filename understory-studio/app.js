@@ -175,10 +175,14 @@ function App() {
     try { root = await pickDataFolder(); }
     catch (pickError) { notify(`Could not use that folder: ${pickError.message}`); return; }
     if (!root) { notify('No folder chosen. Your work stays where it was.'); return; }
+    // Leaving browser storage: what was made there stays there until copied.
+    if (rootName === 'Browser storage' && !root.browser) {
+      notify(`New work now saves to "${root.name}". To bring earlier work across, use "Copy into folder" in the site's Settings.`);
+    }
     setRootName(root.name || 'data root');
     setAppHandle(await ensureAppNamespace(APP_ID).catch(() => null));
     refreshProjects();
-  }, [notify, refreshProjects]);
+  }, [notify, refreshProjects, rootName]);
 
   // ── Project state ────────────────────────────────────────────────────────
   const [project, setProject] = useState(() => newProject());

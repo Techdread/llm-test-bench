@@ -1,4 +1,6 @@
-import { getRootStatus, setRoot } from './shared/services/data-root-manager.js';
+import { connectRoot, getRootStatus, setRoot } from './shared/services/data-root-manager.js';
+import { browserRoot } from './shared/services/browser-data-root.js';
+import { copyStorageInto, summarizeStorage } from './shared/services/browser-storage-copy.js';
 import * as modelProviders from './shared/services/model-providers.js';
 import { createProvider as createLmStudioProvider } from './shared/services/providers-lmstudio.js';
 import {
@@ -11,6 +13,14 @@ const statusTitle = document.querySelector('#status-title');
 const statusDetail = document.querySelector('#status-detail');
 const chooseButton = document.querySelector('#choose-folder');
 const browserHelp = document.querySelector('#browser-help');
+const storageBox = document.querySelector('#browser-storage');
+const storageTitle = document.querySelector('#browser-storage-title');
+const storageDetail = document.querySelector('#browser-storage-detail');
+const copyButton = document.querySelector('#copy-into-folder');
+const copyStatus = document.querySelector('#copy-status');
+let folderReady = false;
+let folderName = '';
+let storedFiles = 0;
 const endpointForm = document.querySelector('#model-endpoint-form');
 const providerType = document.querySelector('#model-provider-type');
 const providerName = document.querySelector('#model-provider-name');
@@ -32,8 +42,9 @@ function showStatus(kind, title, detail, buttonLabel) {
 
 async function refreshStatus() {
   if (typeof window.showDirectoryPicker !== 'function') {
+    folderReady = false;
     showStatus(
-      'unsupported',
+      'browser',
       'Your work is saved in this browser',
       'The apps keep what you make in this browser’s private storage, so nothing needs setting up. Saving to a folder on your disk needs a current version of Chrome or Edge.',
       'Folder access unavailable',
@@ -45,14 +56,76 @@ async function refreshStatus() {
 
   chooseButton.disabled = false;
   const status = await getRootStatus();
+  folderReady = status.status === 'ready';
+  folderName = status.name || '';
   if (status.status === 'ready') {
-    showStatus('ready', `Saving to “${status.name}”`, 'Each app keeps its work in its own subfolder here. Work saved in the browser before you chose this folder stays in the browser.', 'Change folder');
+    showStatus('ready', `Saving to “${status.name}”`, 'Each app keeps its work in its own subfolder here. Anything saved in the browser before you chose this folder can be copied in below.', 'Change folder');
   } else if (status.status === 'needs-permission') {
     showStatus('attention', `“${status.name}” needs permission`, 'Choose it again, or select a different working folder.', 'Reconnect folder');
   } else {
-    showStatus('empty', 'Your work is saved in this browser', 'Until you choose a folder, the apps keep what you make in this browser’s private storage. Choose a folder to save files on your disk instead.', 'Choose folder');
+    showStatus('browser', 'Your work is saved in this browser', 'Until you choose a folder, the apps keep what you make in this browser’s private storage. Choose a folder to save files on your disk instead.', 'Choose folder');
+  }
+  // The storage count may have finished first; the button depends on both.
+  if (storedFiles) updateCopyButton();
+}
+
+// ── Browser storage → folder ──────────────────────────────────────────────
+function formatBytes(bytes) {
+  if (bytes < 1024) return `${bytes} bytes`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+async function refreshBrowserStorage() {
+  const root = await browserRoot();
+  if (!root) { storageBox.hidden = true; return; }
+  const summary = await summarizeStorage(root).catch(() => ({ files: 0, bytes: 0, apps: [] }));
+  storedFiles = summary.files;
+  if (!summary.files) { storageBox.hidden = true; return; }
+  storageBox.hidden = false;
+  storageTitle.textContent = `${summary.files} file${summary.files === 1 ? '' : 's'} saved in this browser`;
+  storageDetail.textContent = `${formatBytes(summary.bytes)} from ${summary.apps.join(', ') || 'the apps'}.`;
+  updateCopyButton();
+}
+
+function updateCopyButton() {
+  const canCopy = folderReady && storedFiles > 0;
+  copyButton.disabled = !canCopy;
+  copyButton.textContent = folderReady ? `Copy into “${folderName}”` : 'Copy into folder';
+  storageBox.dataset.offer = canCopy ? 'true' : 'false';
+  if (!folderReady && !copyStatus.textContent) {
+    copyStatus.textContent = typeof window.showDirectoryPicker === 'function'
+      ? 'Choose a folder above, then copy your browser work into it.'
+      : 'Copying into a folder needs Chrome or Edge.';
   }
 }
+
+copyButton.addEventListener('click', async () => {
+  copyButton.disabled = true;
+  copyStatus.textContent = 'Getting access to the folder…';
+  try {
+    const [source, folder] = await Promise.all([browserRoot(), connectRoot()]);
+    if (!source) throw new Error('Browser storage is not available.');
+    if (!folder) throw new Error('The folder is not connected. Choose it again above.');
+    const report = await copyStorageInto(source, folder, {
+      onProgress: ({ done }) => { copyStatus.textContent = `Copying… ${done} of ${storedFiles}`; },
+    });
+    const parts = [`Copied ${report.copied} file${report.copied === 1 ? '' : 's'} into “${folder.name}”.`];
+    if (report.identical) parts.push(`${report.identical} ${report.identical === 1 ? 'was' : 'were'} already there.`);
+    if (report.keptBoth.length) {
+      parts.push(`${report.keptBoth.length} differed from the folder's version and ${report.keptBoth.length === 1 ? 'was' : 'were'} saved beside it with “(from browser)” in the name.`);
+    }
+    if (report.settingsKept) parts.push(`The folder's own settings were kept.`);
+    if (report.failed.length) parts.push(`${report.failed.length} could not be copied: ${report.failed.slice(0, 3).map(f => f.path).join(', ')}${report.failed.length > 3 ? '…' : ''}.`);
+    parts.push('Your browser copy is kept.');
+    copyStatus.textContent = parts.join(' ');
+  } catch (error) {
+    copyStatus.textContent = `The copy stopped: ${error?.message || error}`;
+  } finally {
+    await refreshStatus().catch(() => {});
+    updateCopyButton();
+  }
+});
 
 chooseButton.addEventListener('click', async () => {
   chooseButton.disabled = true;
@@ -60,6 +133,9 @@ chooseButton.addEventListener('click', async () => {
   try {
     await setRoot();
     await refreshStatus();
+    copyStatus.textContent = '';
+    await refreshBrowserStorage();
+    if (storedFiles) copyStatus.textContent = `New work now saves to this folder. Your ${storedFiles} earlier file${storedFiles === 1 ? ' is' : 's are'} still in the browser: copy ${storedFiles === 1 ? 'it' : 'them'} in with the button below.`;
   } catch (error) {
     if (error?.name === 'AbortError') {
       await refreshStatus();
@@ -74,6 +150,7 @@ refreshStatus().catch((error) => {
   showStatus('error', 'Folder status could not be read', error?.message || 'Please reload and try again.', 'Try again');
   chooseButton.disabled = false;
 });
+refreshBrowserStorage().catch(() => { storageBox.hidden = true; });
 
 function setModelStatus(kind, message) {
   modelStatus.dataset.status = kind || '';
