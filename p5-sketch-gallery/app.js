@@ -21,6 +21,8 @@ import { ProviderSettingsDialog } from '../shared/components/ProviderSettingsDia
 import { HelpDialog } from '../shared/components/HelpDialog.js';
 import { ensureAppNamespace, getRoot, connectRoot, setRoot } from '../shared/services/data-root-manager.js';
 import { isPublicDistribution } from '../shared/services/distribution.js';
+import { loadDefaultAppDemo, shouldOpenAppDemo } from '../shared/services/app-demos.js';
+import { DemoNote } from '../shared/components/DemoNote.js';
 import * as modelProviders from '../shared/services/model-providers.js';
 import { ShowcaseLanding, useShowcaseRoute } from '../shared/components/ShowcaseLanding.js';
 
@@ -182,6 +184,35 @@ function App() {
           setRootHandle(handle);
         }
       } catch (e) {/* user will pick later */}
+    })();
+  }, []);
+
+  // ── Demo ──
+  // On the public site a visitor with no saved sketches starts with a finished
+  // one running in Create instead of the plain starter, credited to its model.
+  const [demo, setDemo] = useState(null);
+  const editorsRef = useRef({ prompt: '', code: '' });
+  editorsRef.current = { prompt, code };
+  useEffect(() => {
+    if (!isPublicDistribution()) return;
+    (async () => {
+      let savedCount = 0;
+      try {
+        if (await getRoot()) savedCount = (await projectStore.listProjects(await ensureAppNamespace(APP_ID))).length;
+      } catch { /* nothing readable: treat as nothing saved */ }
+      const loaded = await loadDefaultAppDemo();
+      if (!loaded) return;
+      const current = editorsRef.current;
+      // The starter sketch counts as empty: it is what the demo replaces.
+      const code = current.code === defaultSketchCode() ? '' : current.code;
+      if (!shouldOpenAppDemo({ savedCount, prompt: current.prompt, code, hash: location.hash })) return;
+      setPrompt(loaded.prompt);
+      setCode(loaded.code);
+      setParams(defaultParams());
+      setSeed(1);
+      setEditingId('');
+      setParentId(null);
+      setDemo(loaded);
     })();
   }, []);
 
@@ -835,6 +866,8 @@ function App() {
           <${SketchEditor} code=${code} onChange=${setCode} theme=${theme} />
         </div>
         <div class="create-center">
+          ${demo && code === demo.code && html`
+            <${DemoNote} demo=${demo} onClear=${() => { setPrompt(''); setCode(defaultSketchCode()); setParams(defaultParams()); setDemo(null); }} />`}
           <${CanvasPreview}
             code=${code}
             params=${params}

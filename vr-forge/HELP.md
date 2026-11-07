@@ -12,6 +12,10 @@ reproduces. VR Forge converts the biggest part of that — *did it actually ente
 VR and render two eyes?* — from a claim into a measurement, and is explicit
 about the part it cannot answer.
 
+## The demo
+
+The top of the **Library** has a finished VR game to try: a seated cockpit space-flight sim built by GPT-6.1 Sol through Codex. **Play** opens it full-window. Without a headset it runs in its desktop mode: W/S throttle, arrow keys to steer, Space to fire, drag to look. Then pick a brief, choose a model and press **Build** to make your own. The **×** hides the card, and it stays hidden.
+
 ## Setup
 
 1. Pick a provider/model, or a CLI agent (Claude Code, Codex, Antigravity) from

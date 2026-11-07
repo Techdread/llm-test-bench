@@ -50,6 +50,8 @@ import * as modelProviders from '../shared/services/model-providers.js';
 import { prefs, hydrateAppPrefs, setPref, setPrefs, subscribeAppPrefs } from '../shared/services/app-prefs.js';
 import { subscribeSuite } from '../shared/services/suite-prefs.js';
 import { crossAppHandoffsEnabled, isPublicDistribution } from '../shared/services/distribution.js';
+import { loadDefaultAppDemo, shouldOpenAppDemo } from '../shared/services/app-demos.js';
+import { DemoNote } from '../shared/components/DemoNote.js';
 import { ShowcaseLanding, useShowcaseRoute } from '../shared/components/ShowcaseLanding.js';
 import { mountGenerationStatus } from '../shared/components/GenerationStatus.js';
 
@@ -265,6 +267,32 @@ function App() {
       window.location.hash = '#/create';
     }
     addToast(`Loaded prompt from ${inbound.source || 'another app'}`, 'success');
+  }, []);
+
+  // ── Demo ──
+  // On the public site a visitor with nothing saved, and nothing handed over,
+  // starts with a finished page in Create: its prompt on the left, running on
+  // the right, credited to the model that made it. The private hub never does.
+  const [demo, setDemo] = useState(null);
+  const editorsRef = useRef({ prompt: '', response: '' });
+  editorsRef.current = { prompt, response };
+  useEffect(() => {
+    if (!isPublicDistribution()) return;
+    (async () => {
+      let savedCount = 0;
+      try {
+        if (await getRoot()) savedCount = (await meta.listGenerations(await ensureAppNamespace(APP_ID))).length;
+      } catch { /* nothing readable: treat as nothing saved */ }
+      const loaded = await loadDefaultAppDemo();
+      if (!loaded) return;
+      const { prompt: currentPrompt, response: currentCode } = editorsRef.current;
+      if (!shouldOpenAppDemo({ savedCount, prompt: currentPrompt, code: currentCode, hash: location.hash })) return;
+      setPrompt(loaded.prompt);
+      setResponse(loaded.code);
+      setResponseMetrics({ stats: null, timing: null });
+      setEditingId('');
+      setDemo(loaded);
+    })();
   }, []);
 
   // Load models from all enabled providers on startup. Auto-pick is handled
@@ -1528,6 +1556,8 @@ function App() {
               onFullscreenPreviewChange=${setFullscreenPreview}
             />
             <div class="create-right">
+              ${demo && response === demo.code && html`
+                <${DemoNote} demo=${demo} onClear=${() => { setPrompt(''); setResponse(''); setDemo(null); }} />`}
               <${AgentRunTrace} run=${agentRun} />
               ${response && !isGenerating && html`
                 <div class="create-run-strip">

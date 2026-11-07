@@ -41,6 +41,8 @@ import { analyzeSvg, compareSvgToReference, renderSvgToCanvas } from './services
 import { checkAnimation } from './services/animationCheck.js';
 import { exportSvgAsGif } from '../shared/services/gif-export.js';
 import { crossAppHandoffsEnabled, isPublicDistribution } from '../shared/services/distribution.js';
+import { loadDefaultAppDemo, shouldOpenAppDemo } from '../shared/services/app-demos.js';
+import { DemoNote } from '../shared/components/DemoNote.js';
 import { ShowcaseLanding, useShowcaseRoute } from '../shared/components/ShowcaseLanding.js';
 
 const CODE_MORPH_SOURCE = 'svg-benchmark';
@@ -206,6 +208,28 @@ function App() {
           setRootHandle(handle);
         }
       } catch (e) { /* user will need to pick directory */ }
+    })();
+  }, []);
+
+  // ── Demo ──
+  // On the public site a visitor with nothing saved starts with a finished
+  // drawing in Create, its prompt above, credited to the model that drew it.
+  const [demo, setDemo] = useState(null);
+  const editorsRef = useRef({ prompt: '', code: '' });
+  editorsRef.current = { prompt, code: svgCode };
+  useEffect(() => {
+    if (!isPublicDistribution()) return;
+    (async () => {
+      let savedCount = 0;
+      try {
+        if (await getRoot()) savedCount = (await benchmarks.listBenchmarks(await ensureAppNamespace(APP_ID))).length;
+      } catch { /* nothing readable: treat as nothing saved */ }
+      const loaded = await loadDefaultAppDemo();
+      if (!loaded) return;
+      if (!shouldOpenAppDemo({ savedCount, ...editorsRef.current, hash: location.hash })) return;
+      setPrompt(loaded.prompt);
+      setSvgCode(loaded.code);
+      setDemo(loaded);
     })();
   }, []);
 
@@ -1029,6 +1053,8 @@ function App() {
               />
             </div>
             <div class="create-center">
+              ${demo && svgCode === demo.code && html`
+                <${DemoNote} demo=${demo} onClear=${() => { setPrompt(''); setSvgCode(''); setDemo(null); }} />`}
               <${SvgPreview} svgContent=${svgCode} />
               ${showDiff && referenceUrl && svgCode && html`
                 <${DiffOverlay}

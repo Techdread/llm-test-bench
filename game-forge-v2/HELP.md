@@ -5,6 +5,10 @@ run and compare) with the **Tool Calling Lab** (an agentic loop that writes real
 files). Here the model builds a **complete, multi-file game project** — then you run,
 rate, and compare the results.
 
+## The demo
+
+The top of the **Library** has a finished game to play: a survivors-style arena built by Claude Opus 5 through Claude Code from the brief shown on the card. **Play** opens it full-window, with its prompt beside it; close the player to come back. Then pick a brief, choose a model and press **Build** to make your own. The **×** hides the card, and it stays hidden.
+
 ## Setup
 
 1. Pick a provider/model. Every in-app model build uses the multi-file tool

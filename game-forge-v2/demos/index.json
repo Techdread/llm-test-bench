@@ -1,0 +1,13 @@
+{
+  "default": "survivors",
+  "demos": [
+    {
+      "slug": "survivors",
+      "title": "Survivors-style arena",
+      "model": "Claude Opus 5 · Claude Code",
+      "prompt": "Build a Vampire-Survivors style bullet-heaven survival game as a multi-file web game. The player only moves; weapons auto-fire; endless waves of enemies swarm toward the player and scale up over time; killed enemies drop XP gems that level you up, presenting a CHOICE of 3 upgrades (new weapons or stat boosts); a survival timer and a boss at a time milestone. Hundreds of on-screen enemies should stay smooth.",
+      "file": "survivors.json",
+      "poster": "posters/survivors.jpg"
+    }
+  ]
+}

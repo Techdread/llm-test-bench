@@ -3,12 +3,23 @@
   "title": "p5 Sketch Gallery",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-08-15T23:04:36.698Z",
+  "generatedAt": "2026-11-07T19:10:22.142Z",
   "slides": [
     {
       "kind": "title",
       "title": "p5 Sketch Gallery",
       "html": "<p>A creative-coding library: store, preview, tag and remix p5.js sketches as living\ncanvases (not static HTML). Same collect-and-compare loop as Prompt Gallery,\nbut with tunable parameters, fixed seeds, motion thumbnails and remix lineage.</p>"
+    },
+    {
+      "kind": "shot",
+      "title": "The app",
+      "image": "shot-app.webp",
+      "html": "<p>This is the app as it opens. Every screenshot in this deck is captured from the running app, not drawn by hand.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "The demo",
+      "html": "<p>On the public website, a first visit with no saved sketches opens <strong>Create</strong> on a finished sketch instead of the plain starter: a Barnes-Hut galaxy simulation written by Codex (GPT-5.6 Sol) from the prompt shown. Change its parameters, edit the prompt and press <strong>Generate</strong> to make your own, or press <strong>Start empty</strong> to go back to the starter. The private hub does not show it.</p>"
     },
     {
       "kind": "text",

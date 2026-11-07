@@ -3,12 +3,23 @@
   "title": "Prompt Gallery — Help",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-10-26T11:01:00.836Z",
+  "generatedAt": "2026-11-07T19:10:00.146Z",
   "slides": [
     {
       "kind": "title",
       "title": "Prompt Gallery — Help",
       "html": "<p>A searchable library of prompts you can browse, run, save, and refine.</p>"
+    },
+    {
+      "kind": "shot",
+      "title": "The app",
+      "image": "shot-app.webp",
+      "html": "<p>This is the app as it opens. Every screenshot in this deck is captured from the running app, not drawn by hand.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "The demo",
+      "html": "<p>On the public website, a first visit with nothing saved opens <strong>Create</strong> on a finished page: a chess game with an AI opponent, written by Codex (GPT-6.1 Sol) from the prompt shown on the left. It runs in the preview, and a note above it says what it is. Edit the prompt, pick a model and press <strong>Generate</strong> to make your own, or press <strong>Start empty</strong>. The demo never replaces anything you have saved, and the private hub does not show it.</p>"
     },
     {
       "kind": "text",

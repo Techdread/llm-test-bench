@@ -10,6 +10,7 @@
 import { html, render } from 'htm/preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { loadShowcaseItem, showcaseIdFromHash } from '../../services/showcase.js';
+import { demoSlugFromHash, loadForgeDemoItem } from '../services/forgeDemos.js';
 import { loadPreviewerSource, parseBundle, resolveBundleFiles, runnerSrcdoc, startRunner } from '../services/showcaseProject.js';
 
 /**
@@ -83,7 +84,7 @@ function statusText(status) {
   return '';
 }
 
-function Player({ id, appTitle, onClose }) {
+function Player({ id, appTitle, onClose, demo = false }) {
   const [item, setItem] = useState(undefined);   // undefined = loading, null = not found
   const [bundle, setBundle] = useState(null);
   const [problem, setProblem] = useState('');
@@ -95,7 +96,7 @@ function Player({ id, appTitle, onClose }) {
   useEffect(() => {
     let live = true;
     setItem(undefined); setBundle(null); setProblem('');
-    loadShowcaseItem(id).then((found) => {
+    (demo ? loadForgeDemoItem(id) : loadShowcaseItem(id)).then((found) => {
       if (!live) return;
       setItem(found);
       if (!found) return;
@@ -103,7 +104,7 @@ function Player({ id, appTitle, onClose }) {
       try { setBundle(parseBundle(found.code)); } catch (error) { setProblem(error.message); }
     });
     return () => { live = false; };
-  }, [id]);
+  }, [id, demo]);
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape' && !document.fullscreenElement) onClose(); };
@@ -115,7 +116,7 @@ function Player({ id, appTitle, onClose }) {
   return html`
     <div class="showcase-player" role="dialog" aria-modal="true" aria-label=${item?.title || 'Showcase project'}>
       <div class="showcase-player-bar">
-        <span class="sp-chip">${appTitle} showcase</span>
+        <span class="sp-chip">${appTitle} ${demo ? 'demo' : 'showcase'}</span>
         <h1>${item?.title || (item === null ? 'Not found' : 'Loading…')}</h1>
         ${item?.note && html`<span class="sp-sub">${item.note}</span>`}
         ${item?.rating && html`<span class="sp-sub" title="Maintainer rating">${item.rating}</span>`}
@@ -128,7 +129,7 @@ function Player({ id, appTitle, onClose }) {
         <button type="button" onClick=${onClose}>Open ${appTitle}</button>
       </div>
       ${item === undefined && html`<div class="showcase-player-msg">Loading…</div>`}
-      ${item === null && html`<div class="showcase-player-msg">There is no published project called “${id}”.</div>`}
+      ${item === null && html`<div class="showcase-player-msg">${demo ? `There is no demo called “${id}”.` : `There is no published project called “${id}”.`}</div>`}
       ${problem && html`<div class="showcase-player-msg">${problem}</div>`}
       ${bundle && html`
         <div class="showcase-player-body" ref=${body}>
@@ -139,6 +140,7 @@ function Player({ id, appTitle, onClose }) {
               <pre>${item.prompt || 'No prompt was published with this project.'}</pre>
               <h2>About</h2>
               <p>Built by ${item.note || 'a model'} in ${appTitle}: the model wrote every file of this project, and the forge ran and checked it. It plays here in a sandbox that cannot read this site's storage.</p>
+              ${item.demo && html`<p>To build your own, close this and pick a brief in the Library, choose a model, and press Build.</p>`}
               <p>${bundle.files.length} files, opening ${bundle.entry}.</p>
             </aside>`}
           ${text && html`<div class=${`showcase-player-status ${status.state === 'failed' || status.errors ? 'is-bad' : ''}`}>${text}</div>`}
@@ -147,7 +149,8 @@ function Player({ id, appTitle, onClose }) {
 }
 
 /**
- * Watch for `#/showcase/<id>` and show the player over the app while it is set.
+ * Watch for `#/showcase/<id>` (a published run) and `#/demo/<slug>` (a demo
+ * bundled with the app) and show the player over the app while one is set.
  * @param {{ appTitle: string }} options
  */
 export function mountShowcasePlayer({ appTitle }) {
@@ -164,8 +167,12 @@ export function mountShowcasePlayer({ appTitle }) {
   };
   function sync() {
     const id = showcaseIdFromHash();
-    document.documentElement.classList.toggle('showcase-player-open', Boolean(id));
-    render(id ? html`<${Player} key=${id} id=${id} appTitle=${appTitle} onClose=${close} />` : null, host);
+    const demo = id ? '' : demoSlugFromHash();
+    const open = id || demo;
+    document.documentElement.classList.toggle('showcase-player-open', Boolean(open));
+    render(open
+      ? html`<${Player} key=${`${demo ? 'demo' : 'showcase'}:${open}`} id=${open} demo=${Boolean(demo)} appTitle=${appTitle} onClose=${close} />`
+      : null, host);
   }
   addEventListener('hashchange', sync);
   sync();

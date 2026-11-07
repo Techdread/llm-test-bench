@@ -3,7 +3,7 @@
   "title": "Game Forge V2 — Help",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-11-06T17:36:04.523Z",
+  "generatedAt": "2026-11-07T19:10:32.729Z",
   "slides": [
     {
       "kind": "title",
@@ -15,6 +15,11 @@
       "title": "The app",
       "image": "shot-app.webp",
       "html": "<p>This is the app as it opens. Every screenshot in this deck is captured from the running app, not drawn by hand.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "The demo",
+      "html": "<p>The top of the <strong>Library</strong> has a finished game to play: a survivors-style arena built by Claude Opus 5 through Claude Code from the brief shown on the card. <strong>Play</strong> opens it full-window, with its prompt beside it; close the player to come back. Then pick a brief, choose a model and press <strong>Build</strong> to make your own. The <strong>×</strong> hides the card, and it stays hidden.</p>"
     },
     {
       "kind": "text",

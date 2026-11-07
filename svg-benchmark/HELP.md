@@ -2,6 +2,10 @@
 
 A tool for generating, scoring, and comparing SVG outputs across different AI models. Create prompts, generate SVGs, compare them against reference images, and track results in organised benchmarks.
 
+## The demo
+
+On the public website, a first visit with nothing saved opens **Create** on a finished drawing: a pelican riding a bike, drawn by Claude Code from the one-line prompt shown. Edit the prompt, pick a model and press **Generate** to draw your own, or press **Start empty**. The demo never replaces anything you have saved, and the private hub does not show it.
+
 ## Getting started
 
 1. Connect a working directory (folder icon in the toolbar) to save benchmarks to disk — Chrome or Edge required for the File System Access API.

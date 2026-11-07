@@ -1,0 +1,11 @@
+{
+  "default": "pelican-bike",
+  "demos": [
+    {
+      "slug": "pelican-bike",
+      "title": "Pelican riding a bike",
+      "model": "Claude Code CLI",
+      "file": "pelican-bike.json"
+    }
+  ]
+}

@@ -4,6 +4,10 @@ A creative-coding library: store, preview, tag and remix p5.js sketches as livin
 canvases (not static HTML). Same collect-and-compare loop as Prompt Gallery,
 but with tunable parameters, fixed seeds, motion thumbnails and remix lineage.
 
+## The demo
+
+On the public website, a first visit with no saved sketches opens **Create** on a finished sketch instead of the plain starter: a Barnes-Hut galaxy simulation written by Codex (GPT-5.6 Sol) from the prompt shown. Change its parameters, edit the prompt and press **Generate** to make your own, or press **Start empty** to go back to the starter. The private hub does not show it.
+
 ## Getting started
 
 1. Open **Settings → Data Root** and pick the folder where your sketches will live.

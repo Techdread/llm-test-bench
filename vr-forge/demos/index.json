@@ -1,0 +1,13 @@
+{
+  "default": "cockpit-flight",
+  "demos": [
+    {
+      "slug": "cockpit-flight",
+      "title": "Cockpit space flight",
+      "model": "GPT-6.1 Sol · Codex",
+      "prompt": "Build a seated space-flight game. The player sits in a cockpit with physical instruments: a throttle lever and a stick that are grabbed and moved, switches that flip, and readouts that update. Flying is Newtonian with thrust and drag-free inertia. Asteroids drift past and can be shot with a trigger-fired cannon; the ship takes damage and the hull readout falls. Comfort is the point of the brief: the cockpit frame is always visible and static relative to the player, and a vignette closes in during hard acceleration.",
+      "file": "cockpit-flight.json",
+      "poster": "posters/cockpit-flight.jpg"
+    }
+  ]
+}

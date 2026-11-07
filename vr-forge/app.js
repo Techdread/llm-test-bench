@@ -40,6 +40,7 @@ import {
 } from '../shared/forge/services/runConcurrency.js';
 import { mountGenerationStatus } from '../shared/components/GenerationStatus.js';
 import { mountShowcasePlayer } from '../shared/forge/components/ShowcasePlayer.js';
+import { ForgeDemoStrip } from '../shared/forge/components/ForgeDemoStrip.js';
 
 const DOMAIN_ADAPTER = getDomainAdapter('vr');
 const FORGE = createForgeKernel(DOMAIN_ADAPTER);
@@ -1091,6 +1092,7 @@ function App() {
       }}
     />
     <div class="gf-body">
+      ${view === 'library' && html`<${ForgeDemoStrip} appId=${APP_ID} noun="game" />`}
       ${view === 'library' && html`
         <${LibraryView}
           onBuild=${handleBuildFromLibrary}

@@ -1,0 +1,11 @@
+{
+  "default": "chess-with-ai",
+  "demos": [
+    {
+      "slug": "chess-with-ai",
+      "title": "Chess with an AI opponent",
+      "model": "Codex CLI / gpt-6.1-sol",
+      "file": "chess-with-ai.json"
+    }
+  ]
+}

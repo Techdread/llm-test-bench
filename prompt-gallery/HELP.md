@@ -2,6 +2,10 @@
 
 A searchable library of prompts you can browse, run, save, and refine.
 
+## The demo
+
+On the public website, a first visit with nothing saved opens **Create** on a finished page: a chess game with an AI opponent, written by Codex (GPT-6.1 Sol) from the prompt shown on the left. It runs in the preview, and a note above it says what it is. Edit the prompt, pick a model and press **Generate** to make your own, or press **Start empty**. The demo never replaces anything you have saved, and the private hub does not show it.
+
 ## Prompts tab
 
 - Browse curated starter prompts plus your own saved ones.

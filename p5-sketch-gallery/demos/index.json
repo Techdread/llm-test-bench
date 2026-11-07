@@ -1,0 +1,11 @@
+{
+  "default": "barnes-hut-galaxy",
+  "demos": [
+    {
+      "slug": "barnes-hut-galaxy",
+      "title": "Barnes-Hut galaxy",
+      "model": "Codex CLI / GPT-5.6-Sol",
+      "file": "barnes-hut-galaxy.json"
+    }
+  ]
+}
