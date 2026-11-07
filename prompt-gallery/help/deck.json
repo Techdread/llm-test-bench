@@ -3,7 +3,7 @@
   "title": "Prompt Gallery — Help",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-11-07T19:10:00.146Z",
+  "generatedAt": "2026-11-07T20:26:17.339Z",
   "slides": [
     {
       "kind": "title",
@@ -59,7 +59,7 @@
     {
       "kind": "text",
       "title": "Refine tab",
-      "html": "<ul>\n<li>Take an existing prompt and <strong>heal/improve</strong> it in a sandbox. Refinements are\nverified before being saved as a new <code>derivedFrom</code> variant — the original is\nleft untouched, so you can compare versions.</li>\n</ul>"
+      "html": "<ul>\n<li>Take an existing prompt and <strong>heal/improve</strong> it in a sandbox. Refinements are\nverified before being saved as a new <code>derivedFrom</code> variant — the original is\nleft untouched, so you can compare versions.</li>\n</ul>\n<h3>Playing every version</h3>\n<p>The big green <strong>Play</strong> button at the top of Refine plays the page full window, starting on the step you are looking at. Its <strong>Version</strong> list holds every step: <strong>1 · Original</strong>, then each Heal and Improve step, numbered, with how its last sandbox check went (<em>ran clean</em>, <em>2 errors</em>, …). The newest step is marked <em>latest</em>. Switch versions to compare them, <strong>Restart</strong> to start one again, and <strong>Back to Refine</strong> to return exactly where you were. Steps added while the player is open appear in the list straight away. Once the page has the keyboard, keys such as Esc go to the page, so use <strong>Back to Refine</strong> to leave.</p>"
     },
     {
       "kind": "text",

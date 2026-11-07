@@ -1,5 +1,7 @@
 import { html } from 'htm/preact';
-import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'preact/hooks';
+import { PlayOverlay } from '../../shared/components/PlayOverlay.js';
+import { refineDisplayTitle, refineVersions } from '../services/refineVersions.js';
 import { runHtmlSandbox, runStatusLabel } from '../services/sandboxRunner.js';
 import * as refine from '../services/refine.js';
 
@@ -87,11 +89,14 @@ export function RefineView({
 }) {
   const [attempts, setAttempts] = useState(1);
   const [errorsOpen, setErrorsOpen] = useState(false);
+  // Full-window play of any step; `opened` keys a fresh player per opening.
+  const [playing, setPlaying] = useState(null);
 
   const steps = session?.steps || [];
   const activeIndex = Math.min(session?.activeIndex || 0, steps.length - 1);
   const activeStep = steps[activeIndex] || null;
   const busy = session?.busy || null;
+  const versions = useMemo(() => refineVersions(steps), [steps]);
 
   // ── session update helpers (always functional — async ops outlive renders) ──
 
@@ -277,14 +282,29 @@ export function RefineView({
     <div class="refine-view">
       <div class="refine-left">
         <div class="refine-header">
-          <div class="refine-title" title=${session.title}>
-            <i class="fa-solid fa-screwdriver-wrench"></i> ${session.title}
+          <div class="refine-title" title=${refineDisplayTitle(session)}>
+            <i class="fa-solid fa-screwdriver-wrench"></i> ${refineDisplayTitle(session)}
           </div>
           <div class="refine-source">
             ${session.model && html`<span class="model-badge"><i class="fa-solid fa-robot"></i> ${session.model}</span>`}
             ${session.folderId && html`<span class="refine-source-folder">${session.folderId}</span>`}
           </div>
         </div>
+
+        <!-- Play: the active step full window, with every step to choose from -->
+        ${versions.length > 0 && html`
+          <button
+            class="btn-play btn-play-wide refine-play"
+            type="button"
+            onClick=${() => setPlaying({ initialId: `step-${activeIndex}`, opened: Date.now() })}
+            title="Play full window; switch between the original and every refined step"
+          >
+            <i class="fa-solid fa-play"></i>
+            <span>Play${versions.length > 1 ? ` · ${versions.length} versions` : ''}<span class="btn-play-sub">${versions.length > 1
+              ? 'Full window, starting on the step you are looking at. Switch to any other version there.'
+              : 'Full window. Heal or improve it and each new step is added as a version.'}</span></span>
+          </button>
+        `}
 
         <!-- Run status -->
         <div class=${`refine-status ${!status ? 'pending' : hasErrors || status.timedOut ? 'error' : 'ok'}`}>
@@ -435,6 +455,15 @@ export function RefineView({
           </div>
         `}
       </div>
+      ${playing && html`
+        <${PlayOverlay}
+          key=${playing.opened}
+          versions=${versions}
+          initialId=${playing.initialId}
+          title=${refineDisplayTitle(session)}
+          backLabel="Back to Refine"
+          onClose=${() => setPlaying(null)}
+        />`}
     </div>
   `;
 }

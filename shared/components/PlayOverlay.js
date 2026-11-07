@@ -1,15 +1,20 @@
 import { html } from 'htm/preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { playableHtml } from '../services/versions.js';
+import { playableHtml } from '../services/playable-html.js';
 
 /**
- * Full-window player for a morph's HTML: the imported original, any iteration,
- * or the final workspace, picked from one list. Closing it returns to the lab
- * exactly as it was; nothing here changes the session.
+ * Full-window player for generated HTML, with a list of versions to choose
+ * from: in Code Morph Lab the imported original, each iteration and the final
+ * workspace; in Prompt Gallery's Refine the original and each Heal / Improve
+ * step. Closing it returns to the app exactly as it was; nothing is changed.
  *
- * @param {{ versions: {id,label,detail,files,latest?}[], initialId?: string, title?: string, onClose: () => void }} props
+ * A version carries either `html` (one page) or `files` (a workspace, played
+ * through playableHtml).
+ *
+ * @param {{ versions: {id,label,detail?,html?,files?,latest?}[], initialId?: string, title?: string,
+ *           backLabel?: string, onClose: () => void }} props
  */
-export function PlayOverlay({ versions, initialId = '', title = '', onClose }) {
+export function PlayOverlay({ versions, initialId = '', title = '', backLabel = 'Back', onClose }) {
   const fallback = versions.find(v => v.latest)?.id || versions.at(-1)?.id || '';
   const [selected, setSelected] = useState(versions.some(v => v.id === initialId) ? initialId : fallback);
   const [restarts, setRestarts] = useState(0);
@@ -17,11 +22,10 @@ export function PlayOverlay({ versions, initialId = '', title = '', onClose }) {
   const closeRef = useRef(null);
 
   const version = versions.find(v => v.id === selected) || versions[0];
-  const srcdoc = useMemo(() => (version ? playableHtml(version.files) : ''), [version]);
+  const srcdoc = useMemo(() => (version ? (typeof version.html === 'string' ? version.html : playableHtml(version.files)) : ''), [version]);
 
   // Esc closes only while the bar has focus: once the game has the keyboard,
-  // Esc is the game's (pause menus use it), and "Back to Code Morph" is the
-  // way out.
+  // Esc is the game's (pause menus use it), and the back button is the way out.
   // Runs once: the parent passes a fresh onClose each render, and re-running
   // would pull focus back to this button, away from the game, on every render
   // of a running morph.
@@ -64,8 +68,8 @@ export function PlayOverlay({ versions, initialId = '', title = '', onClose }) {
         <button class="btn" type="button" onClick=${() => frameRef.current?.requestFullscreen?.()} title="Fill the screen">
           <i class="fa-solid fa-expand"></i> Fullscreen
         </button>
-        <button class="btn btn-primary" type="button" ref=${closeRef} onClick=${onClose} title="Back to Code Morph">
-          <i class="fa-solid fa-arrow-left"></i> Back to Code Morph
+        <button class="btn btn-primary" type="button" ref=${closeRef} onClick=${onClose} title=${backLabel}>
+          <i class="fa-solid fa-arrow-left"></i> ${backLabel}
         </button>
       </div>
       <iframe

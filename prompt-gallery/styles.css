@@ -2996,3 +2996,6 @@ button.create-run-label:hover { text-decoration: underline; }
   .runs-view .batch-run-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
   .runs-view .batch-run-left { max-height: 40vh; }
 }
+
+/* Refine: the big Play button under the title (shared .btn-play). */
+.refine-play { text-align: left; margin: 2px 0 4px; }

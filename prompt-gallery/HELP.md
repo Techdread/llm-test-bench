@@ -123,6 +123,10 @@ You don't need the browser's DevTools to see why a generated page is broken.
   verified before being saved as a new `derivedFrom` variant — the original is
   left untouched, so you can compare versions.
 
+### Playing every version
+
+The big green **Play** button at the top of Refine plays the page full window, starting on the step you are looking at. Its **Version** list holds every step: **1 · Original**, then each Heal and Improve step, numbered, with how its last sandbox check went (*ran clean*, *2 errors*, …). The newest step is marked *latest*. Switch versions to compare them, **Restart** to start one again, and **Back to Refine** to return exactly where you were. Steps added while the player is open appear in the list straight away. Once the page has the keyboard, keys such as Esc go to the page, so use **Back to Refine** to leave.
+
 ## Gallery tab
 
 - **Projects** is the default view. It groups all generations made from the

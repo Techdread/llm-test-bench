@@ -10,7 +10,7 @@ import { HelpDialog } from '../shared/components/HelpDialog.js';
 import { WelcomeGate } from './components/WelcomeGate.js';
 import { DEMO_SOURCE, loadDemo, loadDemoIndex } from './services/demos.js';
 import { buildPlayableVersions, htmlEntry } from './services/versions.js';
-import { PlayOverlay } from './components/PlayOverlay.js';
+import { PlayOverlay } from '../shared/components/PlayOverlay.js';
 import { Toolbar } from './components/Toolbar.js';
 import { StartView } from './components/StartView.js';
 import { MorphView } from './components/MorphView.js';
@@ -758,6 +758,7 @@ function App() {
       key=${playing.opened}
       versions=${playing.versions}
       title=${playing.title}
+      backLabel="Back to Code Morph"
       onClose=${() => setPlaying(null)}
     />`;
 
