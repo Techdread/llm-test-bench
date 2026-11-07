@@ -50,7 +50,10 @@ async function scanPromptGallery(reader, onProgress) {
       out.push({
         bench: 'prompt-gallery', kind: 'html', run: slug,
         source: join(dir, name), prompt: names.includes('prompt.md') ? join(dir, 'prompt.md') : '',
-        thumb: '', title: titleCase(slug),
+        // The gallery thumbnail beside the page (Prompt Gallery's {variantKey}.thumb.jpg)
+        // becomes the poster, so publishing needs no capture.
+        thumb: names.includes(`${stem}.thumb.jpg`) ? join(dir, `${stem}.thumb.jpg`) : '',
+        title: titleCase(slug),
         model: meta.model || meta.modelDisplayLabel || stem.split('_')[0],
         created: meta.createdAt || '',
         ...rated(meta.rating, Number(meta.ratingScale) || 5),

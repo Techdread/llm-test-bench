@@ -70,7 +70,7 @@ export function BatchRunDialog({
   onProviderSettingsClick,
   hasDirectory,
   onPickDirectory,
-  deps,                  // { generate, runSandbox, heal, save, load, hasExistingForModel }
+  deps,                  // { generate, runSandbox, heal, save, load, hasExistingForModel, beginRun, abortInFlight }
   runId,
   theme = 'dark',
   onOpenGallery,
@@ -309,6 +309,7 @@ export function BatchRunDialog({
     activeIndexRef.current = -1;
     followActiveRef.current = true;
     stopRef.current = false;
+    deps.beginRun?.();
     pauseRequestedRef.current = false;
     releasePaused();
     setPauseState('running');
@@ -387,12 +388,16 @@ export function BatchRunDialog({
     addToast('Batch resumed', 'info');
   }, [addToast]);
 
+  // Stop cancels the calls in flight rather than waiting them out: a CLI agent
+  // runs with no time limit, so a hung run would otherwise hold the batch
+  // forever. Work already saved stays saved; the interrupted item is 'stopped'.
   const stop = useCallback(() => {
     stopRef.current = true;
     pauseRequestedRef.current = false;
     releasePaused();
-    addToast('Stopping after the current operation…', 'info');
-  }, [addToast]);
+    deps.abortInFlight?.();
+    addToast('Stopping — cancelling the run in progress…', 'info');
+  }, [addToast, deps]);
 
   const doneCount = items.filter(it => ['saved', 'skipped', 'error', 'stopped', 'verified', 'warned', 'no_progress'].includes(it.status)).length;
   const progressPct = runList.length ? Math.round((doneCount / runList.length) * 100) : 0;

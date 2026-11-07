@@ -151,6 +151,17 @@ function App() {
   const [agentModels, setAgentModels] = useState(() => prefs(APP_ID, { defaults: PREFS_DEFAULTS }).agentModels || {});
   const agentRun = useCodingAgentRun({ appId: APP_ID });
   const [isGenerating, setIsGenerating] = useState(false);
+  // Stop for a model-path Generate. CLI agents picked as a model run with no
+  // time limit, so this abort (which cancels the run on the bridge) is what
+  // ends one that will not finish.
+  const generateAbortRef = useRef(null);
+  const [modelRunActive, setModelRunActive] = useState(false);
+  const [modelStopping, setModelStopping] = useState(false);
+  const stopModelRun = useCallback(() => {
+    if (!generateAbortRef.current) return;
+    setModelStopping(true);
+    generateAbortRef.current.abort();
+  }, []);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [apiKeySet, setApiKeySet] = useState(() => openrouter.hasApiKey());
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
@@ -164,6 +175,9 @@ function App() {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showBatchDialog, setShowBatchDialog] = useState(false);
   const batchIdRef = useRef('');
+  // One controller per batch: Stop aborts every in-flight call (all lanes), so
+  // a CLI-agent run with no time limit cannot hold the batch open.
+  const batchAbortRef = useRef(new AbortController());
   const [toasts, setToasts] = useState([]);
   const toastIdRef = useRef(0);
   const returnHandoffBusyRef = useRef(false);
@@ -660,6 +674,12 @@ function App() {
     setIsGenerating(true);
     setResponse('');
     const responseStartedAt = Date.now();
+    const abort = backend === 'agent' ? null : new AbortController();
+    if (abort) {
+      generateAbortRef.current = abort;
+      setModelStopping(false);
+      setModelRunActive(true);
+    }
     setResponseMetrics({ stats: null, timing: { startedAt: responseStartedAt, endedAt: null } });
     setCreateRunStatus(null);
     try {
@@ -709,6 +729,8 @@ function App() {
           (stats) => setResponseMetrics(current => current.timing?.startedAt === responseStartedAt
             ? { ...current, stats }
             : current),
+          undefined,
+          { signal: abort.signal },
         );
         // Auto-set the model label
         const modelInfo = allModels.find(m => m.providerId === selectedProviderId && m.modelId === selectedModelId);
@@ -727,8 +749,14 @@ function App() {
         });
       }
     } catch (e) {
-      if (!agentRun.wasCancelled()) addToast('Generation failed: ' + e.message, 'error');
+      if (abort?.signal.aborted) addToast('Generation stopped', 'info');
+      else if (!agentRun.wasCancelled()) addToast('Generation failed: ' + e.message, 'error');
     } finally {
+      if (abort && generateAbortRef.current === abort) {
+        generateAbortRef.current = null;
+        setModelRunActive(false);
+        setModelStopping(false);
+      }
       setIsGenerating(false);
       setResponseMetrics(current => current.timing?.startedAt === responseStartedAt
         ? { ...current, timing: { ...current.timing, endedAt: Date.now() } }
@@ -1215,6 +1243,8 @@ function App() {
   // Injected operations the batch runner drives. Rebuilt when the model,
   // directory, or the generations snapshot (skip/has-run data) changes.
   const batchDeps = useMemo(() => ({
+    beginRun: () => { batchAbortRef.current = new AbortController(); },
+    abortInFlight: () => batchAbortRef.current.abort(),
     generate: async (promptText, { model: mdl, promptItem, checklist, onChunk, onStats } = {}) => {
       const target = batchTarget(mdl);
       let finalHtml = '';
@@ -1227,24 +1257,26 @@ function App() {
       await openrouter.generateHtml(generationPrompt, target.providerId, target.modelId, (partial) => {
         finalHtml = stripCodeFences(partial);
         onChunk?.(finalHtml);
-      }, onStats, target.params);
+      }, onStats, target.params, { signal: batchAbortRef.current.signal });
       return finalHtml;
     },
     runSandbox: (h) => runHtmlSandbox(h),
     heal: ({ model: mdl, prompt, html: htmlDoc, errors, onChunk, onStats }) => {
       const target = batchTarget(mdl);
-      return healHtml({ ...target, prompt, html: htmlDoc, errors, onChunk, onStats });
+      return healHtml({ ...target, prompt, html: htmlDoc, errors, onChunk, onStats, signal: batchAbortRef.current.signal });
     },
     audit: ({ model: mdl, promptItem, checklist, html: htmlDoc, sandbox, onStats }) => {
       const target = batchTarget(mdl);
       return auditHtml({
         ...target, prompt: promptItem.prompt, notes: promptItem.notes || '', checklist, html: htmlDoc, sandbox, onStats,
+        signal: batchAbortRef.current.signal,
       });
     },
     repair: ({ model: mdl, promptItem, html: htmlDoc, sandbox, failedChecks, repairTasks, onChunk, onStats }) => {
       const target = batchTarget(mdl);
       return repairAgainstAudit({
         ...target, prompt: promptItem.prompt, html: htmlDoc, sandbox, failedChecks, repairTasks, onChunk, onStats,
+        signal: batchAbortRef.current.signal,
       });
     },
     load: (id) => meta.loadGeneration(rootHandle, id),
@@ -1573,9 +1605,9 @@ function App() {
       agentModelId=${agentModels[selectedAgentId] || ''}
       onExecutorChange=${handleExecutorChange}
       onGenerate=${handleGenerate}
-      onCancelAgent=${agentRun.cancel}
-      agentRunning=${agentRun.running}
-      agentCancelling=${agentRun.cancelling}
+      onCancelAgent=${agentRun.running ? agentRun.cancel : stopModelRun}
+      agentRunning=${agentRun.running || modelRunActive}
+      agentCancelling=${agentRun.running ? agentRun.cancelling : modelStopping}
       isGenerating=${isGenerating}
       modelsLoading=${pickerLoading}
       hasApiKey=${apiKeySet}

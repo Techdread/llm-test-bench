@@ -504,3 +504,19 @@ test('testConnection reports a down bridge as a plain unreachable', async () => 
   assert.equal(result.ok, false);
   assert.match(result.error, /serve\.py/);
 });
+
+test('agentBudgets lifts the time limits on both chat entry points', async () => {
+  for (const call of [streamChat, streamChatCompletion]) {
+    runEvents = [{ type: 'message', text: 'done' }, { type: 'done', summary: 'done', exitCode: 0 }];
+    await call({
+      provider: providerFromId('cli-agent:claude-code'), modelId: 'm',
+      userPrompt: 'Build it', messages: [{ role: 'user', content: 'Build it' }],
+      agentBudgets: { maxAgentSeconds: 0, idleTimeoutSeconds: 0 },
+    });
+    // This fake bridge does not advertise `unlimited-time-budgets`, so "no
+    // limit" is negotiated to its highest limits (7200/1800) — not the
+    // provider defaults (900/180) a dropped agentBudgets would leave.
+    assert.equal(lastRunBody.budgets.maxAgentSeconds, 7200, call.name);
+    assert.equal(lastRunBody.budgets.idleTimeoutSeconds, 1800, call.name);
+  }
+});

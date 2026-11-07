@@ -360,6 +360,7 @@ async function runAgentChat({ provider, modelId, prompt, attachments, onChunk, s
  */
 export async function streamChat({
   provider, modelId, systemPrompt, userPrompt, onChunk, signal, params, onStats, telemetry, onAgentEvent, onAgentLive,
+  agentBudgets,
 }) {
   const prompt = messagesToPrompt([
     { role: 'system', content: systemPrompt },
@@ -367,6 +368,7 @@ export async function streamChat({
   ]);
   const { text, stats } = await runAgentChat({
     provider, modelId, prompt, onChunk, signal, params, telemetry, onEvent: onAgentEvent, onLive: onAgentLive,
+    budgets: agentBudgets,
   });
   onStats?.(stats.finish());
   return text;
@@ -400,7 +402,7 @@ export async function chatCompletion({ provider, modelId, messages, tools, telem
   return toOpenAiResponse(text);
 }
 
-export async function streamChatCompletion({ provider, modelId, messages, tools, onChunk, returnResponse = false, signal, params, telemetry }) {
+export async function streamChatCompletion({ provider, modelId, messages, tools, onChunk, returnResponse = false, signal, params, telemetry, agentBudgets }) {
   refuseTools(provider, tools);
   const { text } = await runAgentChat({
     provider,
@@ -410,6 +412,7 @@ export async function streamChatCompletion({ provider, modelId, messages, tools,
     signal,
     params,
     telemetry,
+    budgets: agentBudgets,
     onChunk: onChunk ? (accumulated => onChunk(accumulated, { content: accumulated, toolCalls: [] })) : null,
   });
   return returnResponse ? toOpenAiResponse(text) : text;

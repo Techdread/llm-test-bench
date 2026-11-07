@@ -574,21 +574,52 @@ export function setDefaultModel(providerId, modelId) {
  */
 export async function streamChat({
   providerId, modelId, systemPrompt, userPrompt, onChunk, appTitle, params, onStats, telemetryMeta,
-  onAgentEvent, onAgentLive,
+  onAgentEvent, onAgentLive, signal, agentBudgets,
 }) {
   const provider = getProvider(providerId);
   if (!provider) throw new Error(`Provider "${providerId}" not found`);
   if (provider.enabled === false) throw new Error(`Provider "${provider.name}" is disabled`);
+  throwIfAborted(signal);
 
   const adapter = getAdapter(provider.type);
+  // `signal` stops the call. CLI agents and ensembles cancel the real run; an
+  // adapter that cannot abort its stream is detached instead — the caller gets
+  // an AbortError at once and no further chunks. `agentBudgets` overrides the
+  // CLI-agent run budgets (e.g. `{ maxAgentSeconds: 0, idleTimeoutSeconds: 0 }`
+  // for no time limit); every other adapter ignores it.
+  const guardedChunk = signal && onChunk
+    ? (...args) => { if (!signal.aborted) onChunk(...args); }
+    : onChunk;
   return withTelemetry(telemetryFields({
     entry: 'streamChat', provider, modelId, appTitle, params, streamed: !!onChunk,
-    promptText: joinPrompt(systemPrompt, userPrompt), telemetryMeta,
-  }), (telemetry) => adapter.streamChat({
+    promptText: joinPrompt(systemPrompt, userPrompt), telemetryMeta, signal,
+  }), (telemetry) => raceAbort(adapter.streamChat({
     provider, modelId, systemPrompt, userPrompt, appTitle, params, onStats,
-    onChunk: telemetry ? telemetry.wrapOnChunk(onChunk) : onChunk,
-    telemetry, onAgentEvent, onAgentLive,
-  }));
+    onChunk: telemetry ? telemetry.wrapOnChunk(guardedChunk) : guardedChunk,
+    telemetry, onAgentEvent, onAgentLive, signal, agentBudgets,
+  }), signal));
+}
+
+function abortError() {
+  return new DOMException('The generation was stopped', 'AbortError');
+}
+
+function throwIfAborted(signal) {
+  if (signal?.aborted) throw abortError();
+}
+
+/** Settle as soon as `signal` aborts, whether or not `promise` ever does. */
+function raceAbort(promise, signal) {
+  if (!signal) return promise;
+  return new Promise((resolve, reject) => {
+    const onAbort = () => reject(abortError());
+    if (signal.aborted) { onAbort(); return; }
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then(
+      (value) => { signal.removeEventListener('abort', onAbort); resolve(value); },
+      (error) => { signal.removeEventListener('abort', onAbort); reject(error); },
+    );
+  });
 }
 
 // ── Generation telemetry (spec 340) ──
@@ -692,7 +723,7 @@ function rawChatCompletion(provider, { modelId, messages, tools, appTitle, telem
  * @returns {Promise<string|Object>} Full accumulated assistant text by default,
  * or an OpenAI-style response object when `returnResponse` is true.
  */
-export async function streamChatCompletion({ providerId, modelId, messages, tools, toolChoice, appTitle, onChunk, returnResponse = false, signal, params, timeouts, telemetryMeta }) {
+export async function streamChatCompletion({ providerId, modelId, messages, tools, toolChoice, appTitle, onChunk, returnResponse = false, signal, params, timeouts, telemetryMeta, agentBudgets }) {
   const provider = getProvider(providerId);
   if (!provider) throw new Error(`Provider "${providerId}" not found`);
   if (provider.enabled === false) throw new Error(`Provider "${provider.name}" is disabled`);
@@ -706,7 +737,7 @@ export async function streamChatCompletion({ providerId, modelId, messages, tool
     if (adapter.streamChatCompletion) {
       return adapter.streamChatCompletion({
         provider, modelId, messages, tools, toolChoice, appTitle, onChunk: chunk, returnResponse, signal,
-        params, timeouts, telemetry,
+        params, timeouts, telemetry, agentBudgets,
       });
     }
 

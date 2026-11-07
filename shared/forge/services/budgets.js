@@ -6,11 +6,16 @@
 
 export const BUDGET_STORAGE_KEY = 'forge-budgets';
 
+// Time budgets default to "no limit" (0). Hard builds outlast any fixed number —
+// a high-effort model can think for many minutes before its first write, and
+// the old 15-minute total / 3-minute idle defaults were killing them. The
+// Forge's Stop / Hard stop (a bridge cancel) is the bound; a user can still
+// set a limit in the Budgets dialog.
 export function defaultBudgets() {
   return {
     maxTurns: 40,
-    maxAgentSeconds: 900,
-    idleTimeoutSeconds: 180,
+    maxAgentSeconds: 0,
+    idleTimeoutSeconds: 0,
     maxFiles: 100,
     maxTotalBytes: 8 * 1024 * 1024,
     maxFileBytes: 1024 * 1024,
@@ -21,6 +26,10 @@ export function defaultBudgets() {
     maxNativeSeconds: 60,
   };
 }
+
+// What "No timeout" un-ticked switches back on. The defaults above are already
+// "no limit", so the build-bar toggle needs a real pair of numbers to restore.
+export const TIME_LIMITS_WHEN_ON = Object.freeze({ maxAgentSeconds: 900, idleTimeoutSeconds: 180 });
 
 // Time budgets that accept 0 as "no limit at all". A slow local model can take
 // many minutes to produce its first token on a long context, and no wall-clock
@@ -116,9 +125,29 @@ export function validateBudgets(value) {
   return errors;
 }
 
+// Saved settings carry this version from the "no time limit" defaults onward.
+export const BUDGETS_VERSION = 2;
+
+// The time defaults before BUDGETS_VERSION 2. Every save wrote the whole
+// normalized object, so a saved 900/180 is (almost always) the old default
+// riding along rather than a choice — it is lifted to "no limit" on load. Any
+// other value the user set is kept, and once saved under version 2 even a
+// deliberate 900/180 sticks.
+const LEGACY_TIME_DEFAULTS = TIME_LIMITS_WHEN_ON;
+
+/** Lift pre-version-2 saved time budgets that still hold the old defaults. */
+export function migrateSavedBudgets(saved = {}) {
+  if (!saved || typeof saved !== 'object' || Number(saved.budgetsVersion) >= BUDGETS_VERSION) return saved;
+  const next = { ...saved };
+  for (const [key, legacy] of Object.entries(LEGACY_TIME_DEFAULTS)) {
+    if (Number(next[key]) === legacy) next[key] = 0;
+  }
+  return next;
+}
+
 export function loadBudgets(storageKey = BUDGET_STORAGE_KEY, storage = globalThis.localStorage, base = defaultBudgets()) {
   try {
-    return normalizeBudgets(JSON.parse(storage?.getItem(storageKey) || '{}'), base);
+    return normalizeBudgets(migrateSavedBudgets(JSON.parse(storage?.getItem(storageKey) || '{}')), base);
   } catch {
     return normalizeBudgets({}, base);
   }
@@ -126,7 +155,7 @@ export function loadBudgets(storageKey = BUDGET_STORAGE_KEY, storage = globalThi
 
 export function saveBudgets(value, storageKey = BUDGET_STORAGE_KEY, storage = globalThis.localStorage, base = defaultBudgets()) {
   const next = normalizeBudgets(value, base);
-  storage?.setItem(storageKey, JSON.stringify(next));
+  storage?.setItem(storageKey, JSON.stringify({ ...next, budgetsVersion: BUDGETS_VERSION }));
   return next;
 }
 

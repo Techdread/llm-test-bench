@@ -5,6 +5,7 @@
 
 import { streamChat } from '../../shared/services/model-providers.js';
 import { streamHtmlDocument } from './htmlOutput.js';
+import { PROMPT_GALLERY_CHAT_AGENT_BUDGETS } from './codingAgent.js';
 
 const HEAL_SYSTEM = `You are an expert web developer fixing a broken single-page HTML document.
 You will receive the original prompt the page was generated from, the current HTML, and the runtime errors captured when the page ran in a sandbox.
@@ -56,6 +57,12 @@ Rules:
 - Do not claim success in prose. Return HTML only, with no code fences.
 - The standalone artefact must not reference repo-relative shared/lib paths.`;
 
+// Every Refine call can be stopped, and a CLI agent behind it runs with no
+// time limit (see PROMPT_GALLERY_CHAT_AGENT_BUDGETS).
+function callLimits(signal) {
+  return { signal, agentBudgets: PROMPT_GALLERY_CHAT_AGENT_BUDGETS };
+}
+
 function stripCodeFences(text) {
   let s = text || '';
   s = s.replace(/^\s*```(?:html)?\s*\n?/, '');
@@ -76,7 +83,7 @@ function buildContext(prompt, htmlContent) {
  * Fix the captured runtime errors. Streams the corrected document.
  * onChunk receives the accumulated text so far (not deltas).
  */
-export async function healHtml({ providerId, modelId, prompt, html, errors, onChunk, onStats, params }) {
+export async function healHtml({ providerId, modelId, prompt, html, errors, onChunk, onStats, params, signal }) {
   const parts = buildContext(prompt, html);
   parts.push(`RUNTIME ERRORS CAPTURED IN SANDBOX:\n${errors.map((e, i) => `${i + 1}. ${e}`).join('\n')}`);
   parts.push('Fix these errors and return the complete corrected HTML document.');
@@ -88,6 +95,7 @@ export async function healHtml({ providerId, modelId, prompt, html, errors, onCh
     systemPrompt: HEAL_SYSTEM,
     userPrompt: parts.join('\n\n'),
     appTitle: 'Prompt Gallery',
+    ...callLimits(signal),
     params,
     onStats,
     onChunk: (text) => {
@@ -102,7 +110,7 @@ export async function healHtml({ providerId, modelId, prompt, html, errors, onCh
  * Ask for a numbered list of improvement ideas. Streams the list so the UI can
  * fill the editor live. onChunk receives the accumulated text so far (not deltas).
  */
-export async function suggestImprovements({ providerId, modelId, prompt, html, onChunk }) {
+export async function suggestImprovements({ providerId, modelId, prompt, html, onChunk, signal }) {
   const parts = buildContext(prompt, html);
   parts.push('Suggest improvements for this page as a numbered list.');
   let accumulated = '';
@@ -112,6 +120,7 @@ export async function suggestImprovements({ providerId, modelId, prompt, html, o
     systemPrompt: SUGGEST_SYSTEM,
     userPrompt: parts.join('\n\n'),
     appTitle: 'Prompt Gallery',
+    ...callLimits(signal),
     onChunk: (text) => {
       accumulated = text || '';
       onChunk?.(accumulated);
@@ -124,7 +133,7 @@ export async function suggestImprovements({ providerId, modelId, prompt, html, o
  * Apply (possibly user-edited) improvement instructions. Streams the
  * updated document. onChunk receives accumulated text.
  */
-export async function applyImprovements({ providerId, modelId, prompt, html, instructions, onChunk }) {
+export async function applyImprovements({ providerId, modelId, prompt, html, instructions, onChunk, signal }) {
   const parts = buildContext(prompt, html);
   parts.push(`IMPROVEMENT INSTRUCTIONS:\n${instructions.trim()}`);
   parts.push('Implement these improvements and return the complete updated HTML document.');
@@ -136,6 +145,7 @@ export async function applyImprovements({ providerId, modelId, prompt, html, ins
     systemPrompt: APPLY_SYSTEM,
     userPrompt: parts.join('\n\n'),
     appTitle: 'Prompt Gallery',
+    ...callLimits(signal),
     onChunk: (text) => {
       accumulated = text || '';
       onChunk?.(stripCodeFences(accumulated));
@@ -157,7 +167,7 @@ function compactSandbox(status) {
 }
 
 /** Fresh acceptance-auditor call. Parsing and host verdicts live in acceptance.js. */
-export async function auditHtml({ providerId, modelId, prompt, notes, checklist, html, sandbox, onStats, params }) {
+export async function auditHtml({ providerId, modelId, prompt, notes, checklist, html, sandbox, onStats, params, signal }) {
   const userPrompt = [
     `ORIGINAL PROMPT:\n${String(prompt || '').trim()}`,
     notes ? `WATCH FOR:\n${String(notes).trim()}` : '',
@@ -172,6 +182,7 @@ export async function auditHtml({ providerId, modelId, prompt, notes, checklist,
     systemPrompt: AUDIT_SYSTEM,
     userPrompt,
     appTitle: 'Prompt Gallery',
+    ...callLimits(signal),
     onStats,
     params,
   });
@@ -179,7 +190,7 @@ export async function auditHtml({ providerId, modelId, prompt, notes, checklist,
 
 /** Fresh focused repair call. Streams accumulated corrected HTML. */
 export async function repairAgainstAudit({
-  providerId, modelId, prompt, html, sandbox, failedChecks, repairTasks, onChunk, onStats, params,
+  providerId, modelId, prompt, html, sandbox, failedChecks, repairTasks, onChunk, onStats, params, signal,
 }) {
   const errors = sandbox?.timedOut
     ? ['Execution timed out — possible infinite loop or blocked load']
@@ -199,6 +210,7 @@ export async function repairAgainstAudit({
     systemPrompt: REPAIR_AUDIT_SYSTEM,
     userPrompt,
     appTitle: 'Prompt Gallery',
+    ...callLimits(signal),
     onStats,
     params,
     onChunk: text => {

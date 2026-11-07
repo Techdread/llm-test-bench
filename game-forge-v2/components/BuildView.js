@@ -11,7 +11,8 @@ import { ValidationPanel } from './ValidationPanel.js';
 import { ProjectLibraryBadges } from '../../shared/forge/components/ProjectLibraryPicker.js';
 import { BriefReconcileDialog } from '../../shared/forge/components/BriefReconcileDialog.js';
 import { normalizeDraftResult } from '../services/promptDrafting.js';
-import { defaultBudgets, normalizeBudgets } from '../services/budgets.js';
+import { normalizeBudgets } from '../services/budgets.js';
+import { TIME_LIMITS_WHEN_ON } from '../../shared/forge/services/budgets.js';
 import { TurnLimitInput } from '../../shared/forge/components/TurnLimitInput.js';
 
 export function BuildView({
@@ -41,9 +42,9 @@ export function BuildView({
   const agent = AGENTS.find(a => a.id === agentId);
 
   // "No timeout" is not a separate setting: it is the two time budgets set to 0.
-  // Un-ticking restores the shipped defaults rather than whatever they were,
-  // since the previous values are gone once they have been zeroed.
-  const fallback = defaultBudgets();
+  // Ticked is the default. Un-ticking switches on 900s agent time / 180s idle
+  // (the previous values are gone once zeroed); edit them in Budgets.
+  const fallback = TIME_LIMITS_WHEN_ON;
   const noTimeout = !budgets?.idleTimeoutSeconds && !budgets?.maxAgentSeconds;
 
   // 'pausing' = the pause is requested but the run has not reached a safe point

@@ -3,7 +3,7 @@
   "title": "Game Forge V2 — Help",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-09-22T13:32:10.573Z",
+  "generatedAt": "2026-11-06T17:36:04.523Z",
   "slides": [
     {
       "kind": "title",
@@ -94,7 +94,7 @@
     {
       "kind": "text",
       "title": "Build (cont.)",
-      "html": "<p><strong>No timeout</strong> (build bar, or <code>0</code> in either time field of the Budgets dialog)\nremoves the two <em>time</em> budgets — the idle timeout and the agent time cap — for\nbuilds where no wall-clock number is honest. A local model can spend many\nminutes on prompt processing before its first token, and killing the turn at\nthat point throws away work that was progressing normally. With it ticked, the\nturn ends when the model finishes or when you press <strong>Hard stop</strong>, and nothing\nelse. Every other budget — turns, files, bytes, images, tokens, cost — still\napplies unchanged, so a runaway build is still bounded.</p>\n<p>The setting reaches all the way down: the build loop arms no idle timer, it\ntells the provider adapter to disable its own stream watchdog (which would\notherwise cut in at ten minutes regardless), and the <code>serve.py</code> bridge skips\nboth time checks for external CLI agents. Un-ticking restores the shipped\ndefaults (180s idle, 900s agent time).</p>"
+      "html": "<p><strong>No timeout</strong> (build bar, or <code>0</code> in either time field of the Budgets dialog)\nremoves the two <em>time</em> budgets — the idle timeout and the agent time cap — for\nbuilds where no wall-clock number is honest. It is <strong>on by default</strong>: hard\nbuilds were being killed by the old 15-minute / 3-minute limits. A local model can spend many\nminutes on prompt processing before its first token, and killing the turn at\nthat point throws away work that was progressing normally. With it ticked, the\nturn ends when the model finishes or when you press <strong>Hard stop</strong>, and nothing\nelse. Every other budget — turns, files, bytes, images, tokens, cost — still\napplies unchanged, so a runaway build is still bounded.</p>\n<p>The setting reaches all the way down: the build loop arms no idle timer, it\ntells the provider adapter to disable its own stream watchdog (which would\notherwise cut in at ten minutes regardless), and the <code>serve.py</code> bridge skips\nboth time checks for external CLI agents. Un-ticking switches on 180s idle and\n900s agent time, which you can then change in Budgets.</p>"
     },
     {
       "kind": "text",

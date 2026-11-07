@@ -3,6 +3,20 @@ import { useState, useEffect, useCallback, useRef } from 'preact/hooks';
 import { runHtmlSandbox, runStatusLabel } from '../services/sandboxRunner.js';
 import * as refine from '../services/refine.js';
 
+// The Refine call in flight. Module-level rather than a ref: the session (and
+// its `busy` flag) outlives this view when the user switches tabs mid-call, and
+// Stop must still reach the call on return. Only one call runs at a time.
+let refineAbort = null;
+
+function beginRefineCall() {
+  refineAbort = new AbortController();
+  return refineAbort;
+}
+
+function endRefineCall(abort) {
+  if (refineAbort === abort) refineAbort = null;
+}
+
 // Same trick as the gallery's ViewIframe: apply srcdoc only after layout so
 // pages that capture window size at boot (THREE.js etc.) don't start at 0x0.
 const RESIZE_SHIM = `<script>
@@ -131,6 +145,7 @@ export function RefineView({
       return;
     }
     patchSession({ busy: 'heal', streamBytes: 0 });
+    const abort = beginRefineCall();
     try {
       const baseLen = steps.length;
       let currentHtml = activeStep.html;
@@ -142,6 +157,7 @@ export function RefineView({
           html: currentHtml,
           errors: currentErrors,
           onChunk: (text) => patchSession({ streamBytes: text.length }),
+          signal: abort.signal,
         });
         if (!healed || !healed.trim()) throw new Error('Model returned an empty document');
         const stepIndex = baseLen + (n - 1);
@@ -163,8 +179,10 @@ export function RefineView({
       }
       addToast(`Still ${currentErrors.length} error${currentErrors.length === 1 ? '' : 's'} after ${attempts} attempt${attempts === 1 ? '' : 's'}`, 'error');
     } catch (e) {
-      addToast('Heal failed: ' + e.message, 'error');
+      if (abort.signal.aborted) addToast('Heal stopped', 'info');
+      else addToast('Heal failed: ' + e.message, 'error');
     } finally {
+      endRefineCall(abort);
       patchSession({ busy: null, streamBytes: 0 });
     }
   }, [activeStep, busy, hasModel, attempts, providerId, modelId, session?.prompt, steps.length, patchSession, patchStep, appendStep, runStep, addToast]);
@@ -175,19 +193,23 @@ export function RefineView({
     if (!activeStep || busy) return;
     if (!hasModel) { addToast('Select a model first', 'error'); return; }
     patchSession({ busy: 'suggest', suggestions: '' });
+    const abort = beginRefineCall();
     try {
       const out = await refine.suggestImprovements({
         providerId, modelId,
         prompt: session.prompt,
         html: activeStep.html,
         onChunk: (text) => patchSession({ suggestions: text }),
+        signal: abort.signal,
       });
       if (!out) throw new Error('Model returned no suggestions');
       patchSession({ suggestions: out });
       addToast('Suggestions ready — edit the list, then Apply', 'success');
     } catch (e) {
-      addToast('Suggest failed: ' + e.message, 'error');
+      if (abort.signal.aborted) addToast('Suggest stopped', 'info');
+      else addToast('Suggest failed: ' + e.message, 'error');
     } finally {
+      endRefineCall(abort);
       patchSession({ busy: null });
     }
   }, [activeStep, busy, hasModel, providerId, modelId, session?.prompt, patchSession, addToast]);
@@ -198,6 +220,7 @@ export function RefineView({
     const instructions = (session.suggestions || '').trim();
     if (!instructions) { addToast('No improvement instructions to apply', 'error'); return; }
     patchSession({ busy: 'apply', streamBytes: 0 });
+    const abort = beginRefineCall();
     try {
       const improved = await refine.applyImprovements({
         providerId, modelId,
@@ -205,6 +228,7 @@ export function RefineView({
         html: activeStep.html,
         instructions,
         onChunk: (text) => patchSession({ streamBytes: text.length }),
+        signal: abort.signal,
       });
       if (!improved || !improved.trim()) throw new Error('Model returned an empty document');
       const stepIndex = steps.length;
@@ -219,8 +243,10 @@ export function RefineView({
       await runStep(stepIndex, improved);
       addToast('Improvements applied', 'success');
     } catch (e) {
-      addToast('Apply failed: ' + e.message, 'error');
+      if (abort.signal.aborted) addToast('Apply stopped — your instructions are kept', 'info');
+      else addToast('Apply failed: ' + e.message, 'error');
     } finally {
+      endRefineCall(abort);
       patchSession({ busy: null, streamBytes: 0 });
     }
   }, [activeStep, busy, hasModel, providerId, modelId, session?.prompt, session?.suggestions, steps.length, patchSession, appendStep, runStep, addToast]);
@@ -314,6 +340,14 @@ export function RefineView({
             <option value="2">2 attempts</option>
             <option value="3">3 attempts</option>
           </select>
+          ${['heal', 'suggest', 'apply'].includes(busy) && html`
+            <button
+              class="btn btn-danger"
+              onClick=${() => refineAbort?.abort()}
+              title="Stop the running model call (a CLI agent here has no time limit)"
+            >
+              <i class="fa-solid fa-stop"></i> Stop
+            </button>`}
           <span class="library-card-actions-spacer"></span>
           <button
             class="btn"

@@ -350,7 +350,8 @@ closed.
 
 **No timeout** (build bar, or `0` in either time field of the Budgets dialog)
 removes the two *time* budgets — the idle timeout and the agent time cap — for
-builds where no wall-clock number is honest. A local model can spend many
+builds where no wall-clock number is honest. It is **on by default**: hard
+builds were being killed by the old 15-minute / 3-minute limits. A local model can spend many
 minutes on prompt processing before its first token, and killing the turn at
 that point throws away work that was progressing normally. With it ticked, the
 turn ends when the model finishes or when you press **Hard stop**, and nothing
@@ -360,8 +361,8 @@ applies unchanged, so a runaway build is still bounded.
 The setting reaches all the way down: the build loop arms no idle timer, it
 tells the provider adapter to disable its own stream watchdog (which would
 otherwise cut in at ten minutes regardless), and the `serve.py` bridge skips
-both time checks for external CLI agents. Un-ticking restores the shipped
-defaults (180s idle, 900s agent time).
+both time checks for external CLI agents. Un-ticking switches on 180s idle and
+900s agent time, which you can then change in Budgets.
 
 For CLI-agent builds the bridge is a separate long-lived process, so the page
 can easily be newer than the `serve.py` answering it. An older bridge clamps an

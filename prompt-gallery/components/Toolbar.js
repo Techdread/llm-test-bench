@@ -79,7 +79,7 @@ export function Toolbar({
             // must still be stoppable after navigating away from Create.
             ? html`
               <button class="btn" onClick=${onCancelAgent} disabled=${agentCancelling}
-                title="Stop the running CLI agent">
+                title="Stop the running generation">
                 <i class="fa-solid fa-stop"></i>
                 <span class="btn-label">${agentCancelling ? 'Stopping…' : 'Stop'}</span>
               </button>`
