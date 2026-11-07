@@ -12,6 +12,8 @@ import {
   getCurrentOrigin,
 } from './storage.js';
 import { serverRoot, serverRootStatus } from './server-data-root.js';
+import { browserRoot } from './browser-data-root.js';
+import { browserStorageFallbackEnabled } from './distribution.js';
 
 export const REGISTRY_FILENAME = 'data-root.json';
 export const REGISTRY_VERSION = 1;
@@ -109,6 +111,17 @@ export async function getServerRootStatus({ refresh = false } = {}) {
   return serverProbe;
 }
 
+// ── Browser storage ─────────────────────────────────────────────────────────
+// On the public site a visitor who has NEVER picked a folder saves into the
+// browser's own storage, so no app has to stop and ask for one. Only "never
+// picked" qualifies: a folder whose permission lapsed on this page load stays
+// the root (and reads as needs-permission), so work never splits silently
+// between the folder and the browser.
+async function browserFallback() {
+  if (!browserStorageFallbackEnabled()) return null;
+  return browserRoot();
+}
+
 function validateAppId(appId) {
   if (typeof appId !== 'string' || !APP_ID_RE.test(appId)) {
     throw new Error(`Invalid appId: ${appId}. Must match ${APP_ID_RE}`);
@@ -128,7 +141,7 @@ export async function getRoot() {
     // its own, so a picked folder (if any) is still better than nothing.
   }
   const handle = await loadHandle();
-  if (!handle) return null;
+  if (!handle) return browserFallback();
   try {
     const perm = await handle.queryPermission({ mode: 'readwrite' });
     if (perm !== 'granted') return null;
@@ -172,7 +185,14 @@ export async function getRootStatus() {
     console.error('[data-root-manager] getRootStatus loadHandle failed:', e);
     return { status: 'none', error: (e && e.message) || String(e), currentOrigin };
   }
-  if (!handle) return { status: 'none', currentOrigin };
+  if (!handle) {
+    const browser = await browserFallback();
+    if (browser) {
+      return { status: 'ready', handle: browser, name: browser.name, browser: true,
+        savedOrigin: currentOrigin, currentOrigin, originMismatch: false };
+    }
+    return { status: 'none', currentOrigin };
+  }
   let savedOrigin = null;
   try {
     savedOrigin = await loadHandleOrigin();
@@ -234,7 +254,11 @@ export async function connectRoot() {
     console.error('[data-root-manager] loadHandle failed:', e);
     return null;
   }
-  if (!handle) return null;
+  if (!handle) {
+    const browser = await browserFallback();
+    if (browser) await ensureRegistry(browser);
+    return browser;
+  }
   try {
     let perm = await handle.queryPermission({ mode: 'readwrite' });
     if (perm === 'prompt') {
@@ -247,6 +271,26 @@ export async function connectRoot() {
     console.error('[data-root-manager] connectRoot permission/registry step failed:', e);
     return null;
   }
+}
+
+/**
+ * An app's own "choose a folder" button. In the private hub the root is shared
+ * and set in Settings, so this is connectRoot(): it never opens a picker. On the
+ * public site, where a visitor may be saving into browser storage, it opens the
+ * system folder picker (it must be called from a click) and the folder becomes
+ * the root from then on. Work already in browser storage stays there.
+ * @returns {Promise<FileSystemDirectoryHandle|null>} null when cancelled.
+ */
+export async function pickDataFolder() {
+  if (browserStorageFallbackEnabled() && folderPickerSupported()) {
+    try {
+      return await setRoot();
+    } catch (e) {
+      if (e?.name === 'AbortError') return null;
+      throw e;
+    }
+  }
+  return connectRoot();
 }
 
 /**

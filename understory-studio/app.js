@@ -24,7 +24,7 @@ import { Wan2gpImageLibraryDialog } from '../shared/components/Wan2gpImageLibrar
 import * as modelProviders from '../shared/services/model-providers.js';
 import { filterVisionModels } from '../shared/services/model-vision.js';
 import { subscribeSuite } from '../shared/services/suite-prefs.js';
-import { connectRoot, ensureAppNamespace, getRoot } from '../shared/services/data-root-manager.js';
+import { ensureAppNamespace, getRoot, pickDataFolder } from '../shared/services/data-root-manager.js';
 import { payloadToFile, takeImageHandoff } from '../shared/services/image-handoff.js';
 
 import { MAX_REFERENCES, addReferences } from './services/referenceImage.js';
@@ -151,25 +151,30 @@ function App() {
     finally { setProjectsLoading(false); }
   }, []);
 
-  // Settles to whether a data root was found at boot. The default example waits
-  // on it (and on the handoff below): it only opens for someone with nothing
-  // of their own to look at.
+  // Settles to whether there are saved projects at boot. The default example
+  // waits on it (and on the handoff below): it only opens for someone with
+  // nothing of their own to look at. On the public site the root is usually
+  // the browser's own storage, so "has a root" no longer means "has work".
   const rootCheckRef = useRef(null);
   useEffect(() => {
     rootCheckRef.current = (async () => {
       const root = await getRoot().catch(() => null);
-      if (root) {
-        setRootName(root.name || 'data root');
-        setAppHandle(await ensureAppNamespace(APP_ID).catch(() => null));
-        refreshProjects();
-      }
-      return Boolean(root);
+      if (!root) return false;
+      setRootName(root.name || 'data root');
+      setAppHandle(await ensureAppNamespace(APP_ID).catch(() => null));
+      setProjectsLoading(true);
+      const list = await listProjects().catch(() => []);
+      setProjects(list);
+      setProjectsLoading(false);
+      return list.length > 0;
     })();
-  }, [refreshProjects]);
+  }, []);
 
   const pickDirectory = useCallback(async () => {
-    const root = await connectRoot();
-    if (!root) { notify('No data root connected. Set one in Settings → Data Root.'); return; }
+    let root;
+    try { root = await pickDataFolder(); }
+    catch (pickError) { notify(`Could not use that folder: ${pickError.message}`); return; }
+    if (!root) { notify('No folder chosen. Your work stays where it was.'); return; }
     setRootName(root.name || 'data root');
     setAppHandle(await ensureAppNamespace(APP_ID).catch(() => null));
     refreshProjects();
@@ -531,18 +536,18 @@ function App() {
     }
   }, [examples, showDesign, resetCleanup, applyCleanupSettings]);
 
-  // Runs once at boot. Someone with no data root (every visitor to the public
-  // site) and no picture handed over would otherwise land on an empty
-  // viewport, so the default example opens for them.
+  // Runs once at boot. Someone with no saved projects (every first-time
+  // visitor to the public site) and no picture handed over would otherwise
+  // land on an empty viewport, so the default example opens for them.
   useEffect(() => {
     (async () => {
       const index = await loadExampleIndex();
       setExamples(index.examples);
-      const [hasRoot, handedOff] = await Promise.all([
+      const [hasProjects, handedOff] = await Promise.all([
         rootCheckRef.current ?? false,
         handoffRef.current ?? false,
       ]);
-      if (!hasRoot && !handedOff && index.default) openExample(index.default, index.examples);
+      if (!hasProjects && !handedOff && index.default) openExample(index.default, index.examples);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

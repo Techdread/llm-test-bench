@@ -1,0 +1,34 @@
+{
+  "default": "ascii-roguelike",
+  "demos": [
+    {
+      "slug": "ascii-roguelike",
+      "title": "ASCII Roguelike",
+      "model": "Qwen3.6 27B, running locally in LM Studio",
+      "source": "Prompt Gallery",
+      "language": "html",
+      "files": [
+        "index.html"
+      ],
+      "prompt": "Build a turn-based ASCII roguelike as a single HTML page in vanilla JavaScript — no libraries. Procedurally generate dungeons with connected rooms and corridors across at least 5 descending levels. Include field-of-view with fog of war (explored-but-unseen areas dimmed), monsters with simple chase AI that take turns when you move, melee combat with HP/attack/defense, healing potions and weapon pickups, an inventory, a message log, stairs down, a final goal item, and permadeath with a run summary. Render in a monospace grid with colour.",
+      "suggestions": [
+        {
+          "label": "Archer enemy",
+          "text": "Add a ranged enemy: an archer that shoots arrows at the player when it can see them, and keeps its distance."
+        },
+        {
+          "label": "Floor colour themes",
+          "text": "Give each dungeon floor its own colour theme for walls, floors and the fog of war."
+        },
+        {
+          "label": "Mini-map",
+          "text": "Add a mini-map of the explored dungeon in the corner of the sidebar."
+        },
+        {
+          "label": "Stacking potions",
+          "text": "Make potions stack in the inventory and show a count beside each item."
+        }
+      ]
+    }
+  ]
+}

@@ -4,11 +4,18 @@ A reimagined iterative code-generation loop — describe what you want, pick a m
 
 ## Getting started
 
-1. Connect a data root when prompted (folder picker on first launch).
-2. Configure a model provider via the key / server buttons in the toolbar.
-3. On the **Start** screen, type a prompt describing what the code should do.
-4. Choose the language (HTML or Python) and max iterations.
-5. Press **Generate** to kick off the morph loop.
+1. Configure a model provider via the key / server buttons in the toolbar.
+2. On the **Start** screen, type a prompt describing what the code should do, or change the demo that is already loaded (below).
+3. Choose the language (HTML or Python) and max iterations.
+4. Press **Generate & Morph** to kick off the morph loop.
+
+Sessions are saved in the hub's data root. On the public website, until you choose a folder, they are saved in this browser's own storage; the toolbar says **Browser storage**, and clicking it lets you pick a folder instead (Chrome and Edge). Morphs already saved in the browser stay there.
+
+## The demo
+
+If nothing was handed over from another app and you have no morphs yet, the Start screen opens with a demo already loaded: an **ASCII Roguelike** from the Prompt Gallery, written by Qwen3.6 27B running locally. Its original prompt and code are shown, and **Try one** offers four ready-made changes (an archer enemy, a colour theme per floor, a mini-map, stacking potions). Pick one or write your own, choose a model and press **Generate & Morph**. Close the demo with the **×** in the Import panel; **Load the ASCII Roguelike demo** brings it back.
+
+A demo has no app to **Send back** to, so that button does not appear for it.
 
 ## Start view
 
@@ -54,7 +61,9 @@ Code Morph Lab v3 can receive code or prompts from other apps in the hub via a h
 
 ## Troubleshooting
 
-- *Welcome gate won't dismiss* — you must connect a data root folder (Chrome / Edge only — File System Access API).
+- *Welcome gate won't dismiss* — in the private hub you must connect a data root folder (Chrome / Edge only — File System Access API). The public website saves in browser storage and skips it.
 - *Generation produces empty output* — try a more capable model; some free models struggle with tool-call prompts.
+- *No CLI agents in the model list* — on purpose. The morph loop gives the model the lab's own tools (read, write, run), and CLI agents such as Claude Code, Codex or Antigravity bring their own and refuse those requests. Use an API model (OpenRouter) or a local one (LM Studio).
+- *A run stops after one iteration with an API Error* — the provider refused the request itself (bad key, unknown model, a model without tool support). Retrying could not fix it, so the loop stops instead of using up every iteration.
 - *Python mode errors on first run* — Pyodide loads on demand and may take a few seconds; check the browser console.
 - *Fork button missing* — fork is only available on completed (success / failed) sessions, not while running.

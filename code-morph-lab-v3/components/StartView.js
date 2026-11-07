@@ -2,6 +2,7 @@ import { html } from 'htm/preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { RecentMorphsList } from './RecentMorphsList.js';
 import { WorkspacePanel } from './WorkspacePanel.js';
+import { crossAppHandoffsEnabled } from '../../shared/services/distribution.js';
 
 /**
  * Start view — centered prompt composer + imports row + (later) recent morphs.
@@ -23,6 +24,7 @@ export function StartView({
   maxIterations, onMaxIterationsChange,
   canGenerate, onGenerate,
   arrivedImport, onDismissImport,
+  demo = null, onLoadDemo,
   recentSessions, onOpenSession, onDeleteSession,
 }) {
   const importedFiles = arrivedImport?.kind === 'code' ? (arrivedImport.files || []) : [];
@@ -39,13 +41,20 @@ export function StartView({
     if (selectedImportFile !== nextFile) setSelectedImportFile(nextFile);
   }, [importedFileNames, selectedImportFile]);
 
+  const suggestions = arrivedImport?.kind === 'code' && Array.isArray(arrivedImport.meta?.suggestions)
+    ? arrivedImport.meta.suggestions
+    : [];
+  const isDemo = arrivedImport?.meta?.demo;
+
+  // Only apps that exist in this distribution: the public site ships two of
+  // the five, and a link to one it does not ship is a 404.
   const sources = [
     { id: 'prompt-gallery', label: 'Prompt Gallery', path: '../prompt-gallery/' },
     { id: 'three-prompt-lab', label: 'Three Prompt Lab', path: '../three-prompt-lab/' },
     { id: 'model-eval-lab', label: 'Model Eval Lab', path: '../model-eval-lab/' },
     { id: 'svg-benchmark', label: 'SVG Benchmark', path: '../svg-benchmark/' },
     { id: 'code-arena', label: 'Code Arena', path: '../code-arena/' },
-  ];
+  ].filter(source => crossAppHandoffsEnabled(globalThis.document, source.id));
 
   return html`
     <div class="start-view">
@@ -68,6 +77,17 @@ export function StartView({
                   value=${prompt}
                   onInput=${(e) => onPromptChange(e.target.value)}
                 ></textarea>
+                ${suggestions.length > 0 && html`
+                  <div class="change-suggestions" aria-label="Suggested changes">
+                    <span class="change-suggestions-label">Try one:</span>
+                    ${suggestions.map(({ label, text }) => html`
+                      <button key=${label} type="button" title=${text}
+                              class=${`suggestion-chip ${prompt === text ? 'active' : ''}`}
+                              aria-pressed=${prompt === text ? 'true' : 'false'}
+                              onClick=${() => onPromptChange(text)}>${label}</button>
+                    `)}
+                  </div>
+                `}
               </div>
             `
             : html`
@@ -150,19 +170,27 @@ export function StartView({
               ? html`
                 <div class="arrival-chip">
                   <div class="arrival-chip-head">
-                    <span>Imported from <strong>${arrivedImport.source}</strong></span>
+                    <span>${isDemo
+                      ? html`Demo from the <strong>${arrivedImport.meta.origin || 'Prompt Gallery'}</strong>`
+                      : html`Imported from <strong>${arrivedImport.source}</strong>`}</span>
                     <button class="btn-icon btn-sm" onClick=${onDismissImport} title="Dismiss import">
                       <i class="fa-solid fa-xmark"></i>
                     </button>
                   </div>
                   ${arrivedImport.title && html`<div class="arrival-chip-title">${arrivedImport.title}</div>`}
-                  ${arrivedImport.prompt && html`<div class="arrival-chip-body">${arrivedImport.prompt}</div>`}
+                  ${isDemo && arrivedImport.meta.model && html`<div class="arrival-chip-body">Built by ${arrivedImport.meta.model}. Pick a change, choose a model and press Generate & Morph.</div>`}
+                  ${arrivedImport.prompt && !isDemo && html`<div class="arrival-chip-body">${arrivedImport.prompt}</div>`}
                 </div>
               `
               : html`
                 <div class="start-empty">
                   <i class="fa-solid fa-arrow-up-right-from-square"></i>
                   <p>Start from another tool when you want to continue an existing prompt or code result.</p>
+                  ${demo && onLoadDemo && html`
+                    <button class="btn btn-sm" type="button" onClick=${onLoadDemo}>
+                      <i class="fa-solid fa-gamepad"></i> Load the ${demo.title} demo
+                    </button>
+                  `}
                 </div>
               `}
             <div class="source-grid">

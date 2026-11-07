@@ -34,11 +34,11 @@ async function refreshStatus() {
   if (typeof window.showDirectoryPicker !== 'function') {
     showStatus(
       'unsupported',
-      'Folder access is not supported in this browser',
-      'Open this website in a current version of Chrome or Edge to save projects directly to a folder.',
+      'Your work is saved in this browser',
+      'The apps keep what you make in this browser’s private storage, so nothing needs setting up. Saving to a folder on your disk needs a current version of Chrome or Edge.',
       'Folder access unavailable',
     );
-    browserHelp.textContent = 'You can still explore the bundled samples, but durable folder-backed saving requires the File System Access API.';
+    browserHelp.textContent = 'Browser storage belongs to this website on this browser. Clearing the site’s data in your browser settings removes it.';
     chooseButton.disabled = true;
     return;
   }
@@ -46,11 +46,11 @@ async function refreshStatus() {
   chooseButton.disabled = false;
   const status = await getRootStatus();
   if (status.status === 'ready') {
-    showStatus('ready', `Connected to “${status.name}”`, 'The three galleries can now create their own app folders here.', 'Change folder');
+    showStatus('ready', `Saving to “${status.name}”`, 'Each app keeps its work in its own subfolder here. Work saved in the browser before you chose this folder stays in the browser.', 'Change folder');
   } else if (status.status === 'needs-permission') {
     showStatus('attention', `“${status.name}” needs permission`, 'Choose it again, or select a different working folder.', 'Reconnect folder');
   } else {
-    showStatus('empty', 'No folder connected yet', 'Choose a folder you own and are happy for the galleries to organise.', 'Choose folder');
+    showStatus('empty', 'Your work is saved in this browser', 'Until you choose a folder, the apps keep what you make in this browser’s private storage. Choose a folder to save files on your disk instead.', 'Choose folder');
   }
 }
 

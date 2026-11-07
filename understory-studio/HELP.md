@@ -14,7 +14,7 @@ sees what it actually built, not what it thought it described, and corrects it.
 Five finished assets ship with the app, each built from one reference picture
 in a real run: a rigged and animated astronaut, a field radio, a Norse
 longhouse, a knight and an insect creature. They are under **Examples** on the
-Projects tab. With no data root connected, the astronaut opens on its own, so
+Projects tab. With no saved projects yet, the astronaut opens on its own, so
 there is always something on screen to turn, light, inspect at every level of
 detail and export, even before you have picked a model.
 

@@ -22,6 +22,16 @@ export function isPublicDistribution(documentRef = globalThis.document) {
 }
 
 /**
+ * Whether a browser that has never picked a data folder should save into its
+ * own private storage instead (shared/services/browser-data-root.js). The
+ * public build sets `data-browser-storage="on"` on app pages only: the site's
+ * Settings and admin pages must see the real folder state, never the stand-in.
+ */
+export function browserStorageFallbackEnabled(documentRef = globalThis.document) {
+  return documentRef?.documentElement?.dataset?.browserStorage === 'on';
+}
+
+/**
  * @param {Document} [documentRef]
  * @param {string} [targetApp]  The receiving app's folder name. Given one, a
  *   distribution that switched handoffs off still allows it when the target is

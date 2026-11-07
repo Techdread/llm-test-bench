@@ -1,12 +1,14 @@
 import { html, render } from 'htm/preact';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'preact/hooks';
-import { ensureAppNamespace, getRoot, connectRoot } from '../shared/services/data-root-manager.js';
+import { ensureAppNamespace, getRoot, pickDataFolder } from '../shared/services/data-root-manager.js';
+import { isBrowserRoot } from '../shared/services/browser-data-root.js';
 import { ProviderModelSelector } from '../shared/components/ProviderModelSelector.js';
 import { ProviderSettingsDialog } from '../shared/components/ProviderSettingsDialog.js';
 import * as modelProviders from '../shared/services/model-providers.js';
 import { hasApiKey } from '../shared/services/providers-openrouter.js';
 import { HelpDialog } from '../shared/components/HelpDialog.js';
 import { WelcomeGate } from './components/WelcomeGate.js';
+import { DEMO_SOURCE, loadDemo, loadDemoIndex } from './services/demos.js';
 import { Toolbar } from './components/Toolbar.js';
 import { StartView } from './components/StartView.js';
 import { MorphView } from './components/MorphView.js';
@@ -22,12 +24,17 @@ import { saveMorphNotebook } from './services/notebookExport.js';
 const APP_ID = 'code-morph-lab-v3';
 
 const SOURCE_LABELS = {
+  [DEMO_SOURCE]: 'Demo',
   'prompt-gallery': 'Prompt Gallery',
   'three-prompt-lab': 'Three Prompt Lab',
   'model-eval-lab': 'Model Eval Lab',
   'svg-benchmark': 'SVG Benchmark',
   'code-arena': 'Code Arena',
 };
+
+function isCliAgentProvider(providerId) {
+  return String(providerId || '').startsWith('cli-agent:');
+}
 
 function sourceLabel(source) {
   return SOURCE_LABELS[source] || source || 'source app';
@@ -258,12 +265,15 @@ function App() {
   useEffect(() => {
     (async () => {
       try {
-        if (await getRoot()) {
+        const root = await getRoot();
+        if (root) {
+          setSavingIn(isBrowserRoot(root));
           const h = await ensureAppNamespace(APP_ID);
           setHandle(h);
           sessionStoreRef.current = createSessionStore(h);
           const consumed = readHandoff();
           if (consumed) applyHandoff(consumed);
+          await prepareDemos(sessionStoreRef.current, { open: !consumed });
         }
       } finally {
         setBootComplete(true);
@@ -271,12 +281,45 @@ function App() {
     })();
   }, []);
 
+  // ── Demo ────────────────────────────────────────────────────────────────
+  // Someone arriving with nothing handed over and no morphs of their own
+  // starts with the bundled demo's code already loaded, so the first screen
+  // has something to change rather than an empty prompt.
+  const [demoIndex, setDemoIndex] = useState({ default: '', demos: [] });
+
+  // True while morphs are saved in browser storage rather than a folder (the
+  // public site, before a folder is chosen). The toolbar says so, and its
+  // folder button is how a visitor moves to a folder of their own.
+  const [savingInBrowser, setSavingIn] = useState(false);
+  const openDemo = useCallback(async (slug, index = demoIndex) => {
+    const demo = index.demos.find(entry => entry.slug === slug);
+    if (!demo) return;
+    try {
+      applyHandoff(await loadDemo(demo));
+    } catch (e) {
+      console.warn('demo load failed', e);
+    }
+  }, [demoIndex]);
+
+  async function prepareDemos(store, { open }) {
+    const index = await loadDemoIndex();
+    setDemoIndex(index);
+    if (!open || !index.default || !store) return;
+    const sessions = await store.listSessions().catch(() => []);
+    if (!sessions.length) await openDemo(index.default, index);
+  }
+
   const loadModels = useCallback(async () => {
     setModelsLoading(true);
     try {
-      const models = await modelProviders.fetchEnabledModels({ freeOnly: false });
+      // The morph loop drives the model through the lab's own tools (read,
+      // write, run). CLI agents bring their own tools and refuse tool-calling
+      // requests outright, so none of them can morph: they are left out of
+      // this picker rather than offered and failed.
+      const models = (await modelProviders.fetchEnabledModels({ freeOnly: false }))
+        .filter(model => !isCliAgentProvider(model.providerId));
       setAllModels(models);
-      if (!selectedProviderId && models.length > 0) {
+      if ((!selectedProviderId || isCliAgentProvider(selectedProviderId)) && models.length > 0) {
         setSelectedProviderId(models[0].providerId);
         setSelectedModelId(models[0].modelId);
       }
@@ -299,16 +342,18 @@ function App() {
     setPickerRunning(true);
     setPickerError(null);
     try {
-      const root = await connectRoot();
+      const root = await pickDataFolder();
       if (!root) {
-        setPickerError('No data root configured — go to Settings → Data Root.');
+        setPickerError('No folder chosen.');
         return;
       }
+      setSavingIn(isBrowserRoot(root));
       const appHandle = await ensureAppNamespace(APP_ID);
       setHandle(appHandle);
       sessionStoreRef.current = createSessionStore(appHandle);
       const consumed = readHandoff();
       if (consumed) applyHandoff(consumed);
+      await prepareDemos(sessionStoreRef.current, { open: !consumed });
     } catch (e) {
       setPickerError(e.message || String(e));
     } finally {
@@ -330,6 +375,20 @@ function App() {
   useEffect(() => {
     if (handle) loadRecentSessions();
   }, [handle, loadRecentSessions]);
+
+  const changeFolder = useCallback(async () => {
+    try {
+      const root = await pickDataFolder();
+      if (!root) return;
+      setSavingIn(isBrowserRoot(root));
+      const appHandle = await ensureAppNamespace(APP_ID);
+      setHandle(appHandle);
+      sessionStoreRef.current = createSessionStore(appHandle);
+      await loadRecentSessions();
+    } catch (e) {
+      alert('Could not use that folder: ' + (e.message || e));
+    }
+  }, [loadRecentSessions]);
 
   const handleDeleteSession = useCallback(async (id, goal) => {
     const store = sessionStoreRef.current;
@@ -692,7 +751,8 @@ function App() {
         providerSelector=${providerSelector}
         theme=${theme}
         onToggleTheme=${() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-        folderName=${handle.name}
+        folderName=${savingInBrowser ? 'Browser storage' : handle.name}
+        onFolderClick=${savingInBrowser ? changeFolder : undefined}
         route="start"
         apiKeySet=${apiKeySet}
         onProviderSettingsClick=${() => setShowProviderSettings(true)}
@@ -710,6 +770,8 @@ function App() {
         onGenerate=${handleGenerate}
         arrivedImport=${arrivedImport}
         onDismissImport=${() => setArrivedImport(null)}
+        demo=${demoIndex.demos.find(entry => entry.slug === demoIndex.default) || null}
+        onLoadDemo=${() => openDemo(demoIndex.default)}
         recentSessions=${recentSessions}
         onOpenSession=${handleOpenSession}
         onDeleteSession=${handleDeleteSession}
@@ -739,7 +801,8 @@ function App() {
       providerSelector=${providerSelector}
       theme=${theme}
       onToggleTheme=${() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-      folderName=${handle.name}
+      folderName=${savingInBrowser ? 'Browser storage' : handle.name}
+      onFolderClick=${savingInBrowser ? changeFolder : undefined}
       route="morph"
       apiKeySet=${apiKeySet}
       onProviderSettingsClick=${() => setShowProviderSettings(true)}
@@ -766,7 +829,7 @@ function App() {
       readOnly=${readOnlyView}
       onFork=${handleFork}
       onExport=${handleExport}
-      onSendBack=${session?.importedFrom ? handleSendBack : null}
+      onSendBack=${session?.importedFrom && session.importedFrom.source !== DEMO_SOURCE ? handleSendBack : null}
       onSendToNotebook=${handleSendToNotebook}
       sourceLabel=${sourceLabel(session?.importedFrom?.source)}
       previewFullscreen=${previewFullscreen}

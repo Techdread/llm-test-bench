@@ -89,3 +89,19 @@ export function buildErrorSummary(runResult, errorInfo) {
   parts.push((runResult.stdout || '(empty)').slice(-1000));
   return parts.join('\n');
 }
+
+// A model call that failed in a way another attempt cannot fix: the provider
+// refused the request itself (a CLI agent asked to call the lab's tools, a
+// model with no tool support, a bad key, a model that no longer exists).
+// Retrying these burns every remaining iteration in milliseconds and buries
+// the one useful message under copies of itself.
+const PERMANENT_STATUSES = new Set([400, 401, 403, 404]);
+const PERMANENT_MESSAGES = /tool-calling requests are not supported|agent bridge unreachable|Unknown CLI agent|support tool use|does not support tools|was deleted or does not exist|invalid api key|no auth credentials|\b(401|403)\b[^\n]*(unauthori[sz]ed|forbidden)/i;
+
+export function isPermanentModelError(error) {
+  if (!error) return false;
+  if (error.permanent === true) return true;
+  const status = Number(error.status ?? error.statusCode);
+  if (PERMANENT_STATUSES.has(status)) return true;
+  return PERMANENT_MESSAGES.test(String(error.message || error));
+}

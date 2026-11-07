@@ -3,7 +3,7 @@
   "title": "Code Morph Lab v3",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-07-18T22:26:04.366Z",
+  "generatedAt": "2026-11-07T18:01:02.949Z",
   "slides": [
     {
       "kind": "title",
@@ -19,7 +19,12 @@
     {
       "kind": "text",
       "title": "Getting started",
-      "html": "<ol>\n<li>Connect a data root when prompted (folder picker on first launch).</li>\n<li>Configure a model provider via the key / server buttons in the toolbar.</li>\n<li>On the <strong>Start</strong> screen, type a prompt describing what the code should do.</li>\n<li>Choose the language (HTML or Python) and max iterations.</li>\n<li>Press <strong>Generate</strong> to kick off the morph loop.</li>\n</ol>"
+      "html": "<ol>\n<li>Configure a model provider via the key / server buttons in the toolbar.</li>\n<li>On the <strong>Start</strong> screen, type a prompt describing what the code should do, or change the demo that is already loaded (below).</li>\n<li>Choose the language (HTML or Python) and max iterations.</li>\n<li>Press <strong>Generate &amp; Morph</strong> to kick off the morph loop.</li>\n</ol>\n<p>Sessions are saved in the hub&#39;s data root. On the public website, until you choose a folder, they are saved in this browser&#39;s own storage; the toolbar says <strong>Browser storage</strong>, and clicking it lets you pick a folder instead (Chrome and Edge). Morphs already saved in the browser stay there.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "The demo",
+      "html": "<p>If nothing was handed over from another app and you have no morphs yet, the Start screen opens with a demo already loaded: an <strong>ASCII Roguelike</strong> from the Prompt Gallery, written by Qwen3.6 27B running locally. Its original prompt and code are shown, and <strong>Try one</strong> offers four ready-made changes (an archer enemy, a colour theme per floor, a mini-map, stacking potions). Pick one or write your own, choose a model and press <strong>Generate &amp; Morph</strong>. Close the demo with the <strong>×</strong> in the Import panel; <strong>Load the ASCII Roguelike demo</strong> brings it back.</p>\n<p>A demo has no app to <strong>Send back</strong> to, so that button does not appear for it.</p>"
     },
     {
       "kind": "text",
@@ -54,7 +59,7 @@
     {
       "kind": "text",
       "title": "Troubleshooting",
-      "html": "<ul>\n<li><em>Welcome gate won&#39;t dismiss</em> — you must connect a data root folder (Chrome / Edge only — File System Access API).</li>\n<li><em>Generation produces empty output</em> — try a more capable model; some free models struggle with tool-call prompts.</li>\n<li><em>Python mode errors on first run</em> — Pyodide loads on demand and may take a few seconds; check the browser console.</li>\n<li><em>Fork button missing</em> — fork is only available on completed (success / failed) sessions, not while running.</li>\n</ul>"
+      "html": "<ul>\n<li><em>Welcome gate won&#39;t dismiss</em> — in the private hub you must connect a data root folder (Chrome / Edge only — File System Access API). The public website saves in browser storage and skips it.</li>\n<li><em>Generation produces empty output</em> — try a more capable model; some free models struggle with tool-call prompts.</li>\n<li><em>No CLI agents in the model list</em> — on purpose. The morph loop gives the model the lab&#39;s own tools (read, write, run), and CLI agents such as Claude Code, Codex or Antigravity bring their own and refuse those requests. Use an API model (OpenRouter) or a local one (LM Studio).</li>\n<li><em>A run stops after one iteration with an API Error</em> — the provider refused the request itself (bad key, unknown model, a model without tool support). Retrying could not fix it, so the loop stops instead of using up every iteration.</li>\n<li><em>Python mode errors on first run</em> — Pyodide loads on demand and may take a few seconds; check the browser console.</li>\n<li><em>Fork button missing</em> — fork is only available on completed (success / failed) sessions, not while running.</li>\n</ul>"
     }
   ]
 }

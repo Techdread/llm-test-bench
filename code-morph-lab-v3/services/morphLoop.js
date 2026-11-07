@@ -3,7 +3,7 @@
 // in Phase 3 we replace it with a real shared/model-providers call.
 
 import { getToolDefinitions, executeTool } from './toolRegistry.js';
-import { classifyError, buildErrorSummary } from './errorClassifier.js';
+import { classifyError, buildErrorSummary, isPermanentModelError } from './errorClassifier.js';
 import { computeDiff } from './workspaceStore.js';
 
 /**
@@ -145,6 +145,7 @@ export async function runMorphLoop({
           timedOut: false,
         };
         iteration.errorInfo = { kind: 'unknown', label: 'API Error', color: '#ef4444', location: null };
+        iteration.permanent = isPermanentModelError(e);
       }
     }
 
@@ -167,6 +168,9 @@ export async function runMorphLoop({
     await onIterationEnd?.(iteration, after);
 
     if (iteration.success) break;
+    // The provider refused the request itself; the next attempt would be
+    // refused the same way, so stop with the one error rather than five.
+    if (iteration.permanent) break;
 
     // Push feedback so the next iteration has context about what happened.
     if (!iteration.success) {

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 
 import { listShowcaseItems } from '../services/showcase.js';
 
-// A bench's gallery for a visitor with no folder connected (public site): the
+// A bench's gallery for a visitor with nothing saved yet (public site): the
 // curated showcase items, each shown by the poster chosen in the admin console,
 // opening the full-size showcase view. `fallback` renders when the build has
 // no showcase for this bench, so the old "connect a folder" page still shows.
@@ -26,7 +26,7 @@ export function ShowcaseGrid({ bench, onConnect, fallback = null }) {
       <div class="showcase-gallery-intro">
         <div>
           <h2>Showcase</h2>
-          <p>Hand-picked generations, each with the model that made it. Open one to see it running, then its prompt and code. Connect a folder to save and browse your own.</p>
+          <p>Hand-picked generations, each with the model that made it. Open one to see it running, then its prompt and code. Generations you save appear here in place of the showcase.</p>
         </div>
         ${onConnect && html`
           <button class="btn" onClick=${onConnect}><i class="fa-solid fa-folder-plus"></i> Connect a folder</button>

@@ -395,16 +395,23 @@ export function GalleryView({
     setCollection('all');
   };
 
-  if (!hasDirectory) {
-    const connect = html`
+  // On the public site a visitor saves into browser storage from the start, so
+  // "has a directory" no longer means "has work": until they save a generation
+  // of their own, the gallery is the curated showcase.
+  const showShowcase = isPublicDistribution() && generations.length === 0;
+  if (!hasDirectory || showShowcase) {
+    const connect = hasDirectory ? html`
+      <div class="gallery-empty">
+        <i class="fa-solid fa-images"></i>
+        <p>No generations yet. Create your first one!</p>
+      </div>
+    ` : html`
       <div class="gallery-empty">
         <i class="fa-solid fa-folder-open"></i>
         <p>Connect a directory to browse your prompt generations</p>
         <button class="btn btn-primary" onClick=${onPickDirectory}><i class="fa-solid fa-folder-plus"></i> Pick Directory</button>
       </div>
     `;
-    // On the public site a visitor has no folder yet: show the curated
-    // showcase rather than an empty page.
     return html`
       <div class="gallery-view">
         ${isPublicDistribution()

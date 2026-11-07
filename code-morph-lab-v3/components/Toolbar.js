@@ -62,8 +62,13 @@ export function Toolbar({
       </div>
 
       <div class="toolbar-right">
-        ${onFolderClick && html`
-          <button class="btn-icon" onClick=${onFolderClick} title=${folderName || 'Pick folder'}>
+        ${onFolderClick && folderName && html`
+          <button class="btn btn-directory" onClick=${onFolderClick} title=${`Saving to: ${folderName} (click to choose a folder)`}>
+            <i class="fa-solid fa-folder"></i> ${folderName}
+          </button>
+        `}
+        ${onFolderClick && !folderName && html`
+          <button class="btn-icon" onClick=${onFolderClick} title="Pick folder">
             <i class="fa-solid fa-folder"></i>
           </button>
         `}
