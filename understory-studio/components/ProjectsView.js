@@ -4,8 +4,49 @@ import { MAX_NAME } from '../services/projectStore.js';
 
 const KIND_ICONS = { object: 'fa-cube', character: 'fa-person', scene: 'fa-mountain-sun' };
 
+/** Finished projects that ship with the app. Shown whether or not a data root
+ *  is connected: they are how someone with no folder and no key sees what the
+ *  studio makes. */
+function ExamplesSection({ examples, onOpenExample, openingExample }) {
+  if (!examples?.length) return null;
+  return html`
+    <section class="us-examples" aria-labelledby="us-examples-title">
+      <h3 id="us-examples-title">Examples</h3>
+      <p class="us-note">
+        Finished assets from real runs, each built from one reference picture. Open one to turn it,
+        switch levels of detail, play its animations or export it. Opening an example starts a new
+        project; the example itself is never changed.
+      </p>
+      <div class="us-project-grid">
+        ${examples.map(example => html`
+          <div class="us-card us-example-card" key=${example.slug}>
+            ${example.poster && html`
+              <img class="us-example-poster" src=${example.poster} alt=${`Render of ${example.name}`}
+                   loading="lazy" width="360" height="360" />`}
+            <h4>
+              <i class=${`fas ${KIND_ICONS[example.kind] || 'fa-cube'}`}></i>
+              <span class="us-card-name">${example.name}</span>
+            </h4>
+            <div class="us-card-meta">
+              <span class="us-chip">${example.versions} version${example.versions === 1 ? '' : 's'}</span>
+              ${example.rigging === 'animated' && html`<span class="us-chip">Animated</span>`}
+              <span class="us-chip">${example.approved ? 'Reviewed' : 'Needs refinement'}</span>
+            </div>
+            ${example.model && html`<div class="us-card-meta">Built by ${example.model}</div>`}
+            <div class="us-card-actions">
+              <button class="us-btn us-btn-sm us-primary" disabled=${Boolean(openingExample)}
+                      onClick=${() => onOpenExample(example.slug)}>
+                ${openingExample === example.slug ? 'Opening…' : 'Open'}
+              </button>
+            </div>
+          </div>`)}
+      </div>
+    </section>`;
+}
+
 export function ProjectsView({
   projects, loading, rootConnected, onOpen, onNew, onDelete, onRename, onPickDirectory,
+  examples = [], onOpenExample, openingExample = '',
 }) {
   // Which card is being renamed, and the text so far. Editing in place rather
   // than in a dialog keeps the rest of the card — versions, model, date —
@@ -40,6 +81,7 @@ export function ProjectsView({
             <i class="fas fa-plus"></i> Start without saving
           </button>
         </div>
+        <${ExamplesSection} examples=${examples} onOpenExample=${onOpenExample} openingExample=${openingExample} />
       </div>`;
   }
 
@@ -108,5 +150,6 @@ export function ProjectsView({
       <p class="us-note" style="margin-top:14px">
         Deleting moves a project aside in the data root rather than erasing it, so a mis-click costs nothing.
       </p>
+      <${ExamplesSection} examples=${examples} onOpenExample=${onOpenExample} openingExample=${openingExample} />
     </div>`;
 }

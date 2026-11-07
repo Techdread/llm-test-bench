@@ -217,6 +217,14 @@ body {
 }
 .us-card-meta { font-size: 11px; color: var(--text-secondary); display: flex; gap: 8px; flex-wrap: wrap; }
 .us-card-actions { display: flex; gap: 6px; margin-top: 4px; }
+/* Examples sit under the saved projects (or under the connect prompt), each
+   card led by its front render. */
+.us-examples { margin-top: 28px; }
+.us-examples h3 { margin: 0 0 4px; font-size: 15px; }
+.us-example-poster {
+  width: 100%; height: auto; aspect-ratio: 1; object-fit: cover;
+  border-radius: 6px; border: 1px solid var(--border); background: #ebe7df;
+}
 .us-chip {
   font-size: 10px; padding: 2px 7px; border-radius: 999px;
   background: var(--bg-hover); color: var(--text-secondary); border: 1px solid var(--border);

@@ -1,0 +1,60 @@
+{
+  "default": "astronaut",
+  "examples": [
+    {
+      "slug": "astronaut",
+      "name": "Astronaut (rigged and animated)",
+      "kind": "character",
+      "rigging": "animated",
+      "model": "gpt-6-astra",
+      "versions": 3,
+      "approved": false,
+      "file": "astronaut.json",
+      "poster": "posters/astronaut.jpg"
+    },
+    {
+      "slug": "field-radio",
+      "name": "Field radio",
+      "kind": "object",
+      "rigging": "none",
+      "model": "swe-2-high",
+      "versions": 1,
+      "approved": true,
+      "file": "field-radio.json",
+      "poster": "posters/field-radio.jpg"
+    },
+    {
+      "slug": "norse-longhouse",
+      "name": "Norse longhouse with a turf roof",
+      "kind": "object",
+      "rigging": "none",
+      "model": "qwen/qwen3.8-27b",
+      "versions": 2,
+      "approved": true,
+      "file": "norse-longhouse.json",
+      "poster": "posters/norse-longhouse.jpg"
+    },
+    {
+      "slug": "spear-knight",
+      "name": "Plumed knight with a spear",
+      "kind": "character",
+      "rigging": "none",
+      "model": "qwen/qwen3.8-27b",
+      "versions": 2,
+      "approved": false,
+      "file": "spear-knight.json",
+      "poster": "posters/spear-knight.jpg"
+    },
+    {
+      "slug": "insect",
+      "name": "Insect creature",
+      "kind": "object",
+      "rigging": "none",
+      "model": "gpt-6-astra",
+      "versions": 2,
+      "approved": false,
+      "file": "insect.json",
+      "poster": "posters/insect.jpg"
+    }
+  ]
+}

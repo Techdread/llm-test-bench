@@ -39,6 +39,7 @@ import {
   appendExchange, deleteProject, listProjects, loadProject,
   newProject, readExchanges, renameProject, saveProject,
 } from './services/projectStore.js';
+import { loadExample, loadExampleIndex } from './services/examples.js';
 
 const APP_ID = 'understory-studio';
 
@@ -150,14 +151,19 @@ function App() {
     finally { setProjectsLoading(false); }
   }, []);
 
+  // Settles to whether a data root was found at boot. The default example waits
+  // on it (and on the handoff below): it only opens for someone with nothing
+  // of their own to look at.
+  const rootCheckRef = useRef(null);
   useEffect(() => {
-    (async () => {
+    rootCheckRef.current = (async () => {
       const root = await getRoot().catch(() => null);
       if (root) {
         setRootName(root.name || 'data root');
         setAppHandle(await ensureAppNamespace(APP_ID).catch(() => null));
         refreshProjects();
       }
+      return Boolean(root);
     })();
   }, [refreshProjects]);
 
@@ -204,20 +210,24 @@ function App() {
   // A picture sent from another lab ("Send to Understory Studio" in the image
   // viewers of Game Art Studio, Identity Studio, the inpaint canvas and the
   // rest) is claimed once at boot and becomes the first reference.
+  // Settles to whether a picture arrived, so the default example never opens
+  // over a reference someone just sent.
+  const handoffRef = useRef(null);
   useEffect(() => {
-    (async () => {
+    handoffRef.current = (async () => {
       const payload = await takeImageHandoff(APP_ID).catch(() => null);
-      if (!payload) return;
+      if (!payload) return false;
       const file = payloadToFile(payload);
-      if (!file) return;
+      if (!file) return false;
       const added = await addReferenceFiles([file]);
-      if (!added) return;
+      if (!added) return false;
       setView('studio');
       // The sender's prompt is a starting brief, never a replacement for one
       // you have already written.
       if (payload.prompt) setBrief(current => current || payload.prompt);
       setStatus(`Reference received from ${payload.source || 'another lab'}. Pick a model and generate.`);
       notify(`Reference received from ${payload.source || 'another lab'}.`);
+      return true;
     })();
     // Runs once: a handoff is consumed on arrival, and re-running would be a
     // second claim of something already taken.
@@ -479,12 +489,71 @@ function App() {
     }
   }, [showDesign, resetCleanup, applyCleanupSettings]);
 
+  // ── Examples ─────────────────────────────────────────────────────────────
+  const [examples, setExamples] = useState([]);
+  const [openingExample, setOpeningExample] = useState('');
+  // The versions array an example opened with. While `versions` is still that
+  // very array nothing has been made yet, so leaving it loses nothing.
+  const exampleBaselineRef = useRef(null);
+
+  const openExample = useCallback(async (slug, list = examples) => {
+    const entry = list.find(example => example.slug === slug);
+    if (!entry) return;
+    setError('');
+    setOpeningExample(slug);
+    try {
+      const loaded = await loadExample(entry);
+      setProject(loaded);
+      setReferences(loaded.references); referencesRef.current = loaded.references;
+      setBrief(loaded.brief);
+      setKind(loaded.kind);
+      setRigging(loaded.rigging);
+      setVersions(loaded.versions);
+      exampleBaselineRef.current = loaded.versions;
+      setExchanges([]);
+      setView('studio');
+      const latest = loaded.versions.length - 1;
+      const version = loaded.versions[latest];
+      setSelectedVersion(latest);
+      setStatus(version.rigging === 'animated'
+        ? 'Rigging the example and loading its animations…'
+        : 'Building the example…');
+      resetCleanup();
+      await showDesign(version.code, version.rigging || 'none', undefined, loaded.kind);
+      setViews(version.views || []);
+      setStatus(`Example: "${loaded.name}", built by ${version.model || 'a model'} from the reference picture on the left. `
+        + 'Pick a model and Generate to refine it, or start a new project with your own picture.');
+      applyCleanupSettings(version.cleanup);
+    } catch (openError) {
+      setError(openError.message);
+    } finally {
+      setOpeningExample('');
+    }
+  }, [examples, showDesign, resetCleanup, applyCleanupSettings]);
+
+  // Runs once at boot. Someone with no data root (every visitor to the public
+  // site) and no picture handed over would otherwise land on an empty
+  // viewport, so the default example opens for them.
+  useEffect(() => {
+    (async () => {
+      const index = await loadExampleIndex();
+      setExamples(index.examples);
+      const [hasRoot, handedOff] = await Promise.all([
+        rootCheckRef.current ?? false,
+        handoffRef.current ?? false,
+      ]);
+      if (!hasRoot && !handedOff && index.default) openExample(index.default, index.examples);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const startNewProject = useCallback(() => {
     // Versions reach the data root as they are made, so starting over normally
     // costs nothing — the old project is still in the Projects tab. Without a
     // root there is nothing to go back to, which is the one case worth asking
     // about.
-    if (!rootName && versions.length
+    const untouchedExample = versions === exampleBaselineRef.current;
+    if (!rootName && versions.length && !untouchedExample
         && !confirm('Start a new project? Nothing is saved without a data root, so this design will be lost.')) {
       return;
     }
@@ -500,7 +569,7 @@ function App() {
     setError('');
     setStatus('New project. Add a reference picture and pick a model.');
     setView('studio');
-  }, [rootName, versions.length, resetCleanup]);
+  }, [rootName, versions, resetCleanup]);
 
   // Renaming touches one field of project.json — the directory is the project
   // id, never its name — so it cannot orphan a run log, and a project that has
@@ -690,6 +759,7 @@ function App() {
           onOpen=${openProject} onNew=${startNewProject} onDelete=${removeProject}
           onRename=${renameSaved}
           onPickDirectory=${pickDirectory}
+          examples=${examples} onOpenExample=${openExample} openingExample=${openingExample}
         />`}
 
       ${view === 'runs' && html`

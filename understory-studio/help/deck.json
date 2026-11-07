@@ -1,0 +1,115 @@
+{
+  "version": "hub-help-deck-v1",
+  "title": "Understory Studio — Help",
+  "generatedFrom": "HELP.md",
+  "generatedBy": "help-decks",
+  "generatedAt": "2026-11-07T12:59:28.874Z",
+  "slides": [
+    {
+      "kind": "title",
+      "title": "Understory Studio — Help",
+      "html": "<p>Give it one to three pictures. It gives you back an <strong>editable 3D asset</strong> at five\nlevels of detail, with procedural materials — and, for characters, a working\nskeleton and 87 animations.</p>\n<p>The thing that makes the output good is the second half of the loop: after\nbuilding, the app renders the result from the <strong>front, side and back</strong> and shows\nthose renders back to the same model, beside your original reference. The model\nsees what it actually built, not what it thought it described, and corrects it.</p>"
+    },
+    {
+      "kind": "shot",
+      "title": "The app",
+      "image": "shot-app.webp",
+      "html": "<p>This is the app as it opens. Every screenshot in this deck is captured from the running app, not drawn by hand.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Examples",
+      "html": "<p>Five finished assets ship with the app, each built from one reference picture\nin a real run: a rigged and animated astronaut, a field radio, a Norse\nlonghouse, a knight and an insect creature. They are under <strong>Examples</strong> on the\nProjects tab. With no data root connected, the astronaut opens on its own, so\nthere is always something on screen to turn, light, inspect at every level of\ndetail and export, even before you have picked a model.</p>\n<p>Opening an example starts a <strong>new project</strong>: its reference, versions and review\ncome with it, and <strong>Generate</strong> refines it with your model. With a data root\nconnected, that refinement is saved as a project of your own. The bundled\nexample itself never changes. Examples have no <strong>Runs</strong> log; only the finished\nversions were kept.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Quick start",
+      "html": "<ol>\n<li>Pick a <strong>provider and model</strong> in the toolbar. Vision-capable models do much\nbetter — the review step is the point, and it needs a model that can see.\nCLI agents (Claude Code, Codex, Antigravity, Devin, Cursor) work too; the hub\nstages your images as files for them.</li>\n<li><strong>Connect a data root</strong> (folder icon) if you want projects saved. Without one\neverything still works, but nothing survives closing the tab.</li>\n<li><strong>Studio</strong> tab → give it 1–3 reference pictures, any of three ways:<ul>\n<li>drop them on the reference panel, or click it to browse;</li>\n<li><strong>Choose from WAN2GP</strong> (also the WAN2GP button in the toolbar) — picks from\nthe images this hub&#39;s WAN2GP node has already generated;</li>\n<li>send one in from another lab: Game Art Studio, Identity Studio, the\nInpaint/Outpaint Canvas, Style Atlas and Composition Studio all offer\n<strong>Send to Understory Studio</strong> on an image. The sender&#39;s prompt is dropped\ninto your brief if you have not written one.</li>\n</ul>\n</li>\n<li>Choose a <strong>subject</strong> — Object, Character, or Scene — write a short brief, and\npick how many automatic refinements you&#39;ll allow.</li>\n<li><strong>Generate &amp; review</strong> — from the brief panel or the toolbar. While a run is\ngoing, the same button is <strong>Stop</strong>, on every tab.</li>\n</ol>"
+    },
+    {
+      "kind": "text",
+      "title": "Quick start (cont.)",
+      "html": "<p><strong>Using a model that cannot see.</strong> Tick <em>Describe the pictures with another\nmodel</em> (step 01b) and pick a vision-capable model. That model becomes the eyes\nfor the whole run: it writes a structured description of your reference pictures\n— form, parts, proportions, materials, details, and what the pictures do not\nshow — and it judges every render. The model in the toolbar then never receives\nan image at all; it builds from those words and from the review findings, so it\ncan be a text-only coding model. Both models are named on each saved version and\non every call in the Runs tab.</p>\n<p>It costs one extra call at the start of a run, and the description is written\nonce and reused for every refinement. The catch is honest: the builder can only\nbe as right as the description, and anything the describer leaves out is\ninvented. Leave the box unticked and a single vision model does both jobs, which\nis still the better result when you have one.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Quick start (cont.)",
+      "html": "<p><strong>Renaming.</strong> Every project starts as <em>Untitled asset</em>. Rename the open one in\nthe <strong>Project name</strong> field at the top of the Studio rail (Enter or click away to\nsave), or any saved one with the pencil beside its name on the Projects tab. The\nname is a label only — the project&#39;s folder is named by its id, so renaming moves\nnothing and cannot break a saved run. It also does not touch the &quot;last worked on&quot;\ndate the list is sorted by.</p>\n<p><strong>New project</strong> (toolbar, and on the Projects tab) starts over: brief, subject,\nreferences, versions, review and the viewport all go back to empty. Saved\nprojects are untouched — they are still on the Projects tab. Without a data root\nnothing is saved, so there it asks first.</p>\n<p><strong>Record</strong> (toolbar) captures a video of the tab — a turntable, a rig\nadjustment, a whole build — and saves it under <code>recordings/</code> in your data root,\nor downloads it if no root is connected.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "What the model is actually asked for",
+      "html": "<p>Not three.js, and not vertices. The model writes a small seeded function that\n<strong>returns a JSON description</strong>:</p>\n<pre><code class=\"language-js\">{\n  name: &quot;Fox lantern&quot;,\n  materials: { brass: { color: &quot;#b08d57&quot;, roughness: 0.35, texture: &quot;bark&quot; } },\n  objects: [\n    { name: &quot;Body&quot;, parts: [{ type: &quot;box&quot;, material: &quot;brass&quot;, position: [0,1,0], scale: [1,2,1] }] }\n  ]\n}\n</code></pre>\n<p>Parts come from six types: <code>box</code>, <code>ellipsoid</code>, <code>tube</code> (a tapered curve sweep),\n<code>lathe</code>, <code>extrude</code>, and <code>mesh</code> (raw buffers, five levels). A trusted builder in\nthe app validates the description and constructs the geometry.</p>\n<p>This is deliberate. Models are unreliable at hundreds of mutually-consistent\nfloating-point numbers and reliable at constructive, parametric description —\n&quot;a tapered tube through these five points&quot; instead of nine hundred vertices.</p>\n<p><strong>You never run generated code.</strong> It is evaluated in a throwaway worker inside a\nsandboxed frame with no network, no DOM and no access to your projects. All it\ncan do is return data.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Five levels from one description",
+      "html": "<p>The design is written once; Master and LOD 0–3 are derived from it by scaling\ntessellation. A part can declare <code>lastLevel</code> to retire after a given level.</p>\n<p>Placements are <strong>identical across all five</strong> — a lower level omits detail, it\nnever moves anything. That is what makes the set usable as a real LOD chain.</p>\n<p>Box-heavy designs can end up with the same triangle count at every level. That&#39;s\nhonest: this is procedural LOD, not automatic retopology, and the app won&#39;t\npretend otherwise.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "The review loop",
+      "html": "<ul>\n<li>The model&#39;s issues from a failed review become the next pass&#39;s instructions.</li>\n<li>A design that <strong>won&#39;t build</strong> is a <em>repair</em> round, not a failure. The\nvalidator&#39;s complaint goes back to the model, twice, before giving up — and a\nrepair doesn&#39;t use up one of your refinements.</li>\n<li>Every completed pass is saved as a version, <strong>including</strong> ones that still need\nwork. Selecting an older version and generating branches from it.</li>\n<li>At the refinement limit, outstanding issues stay on screen and the version is\n<strong>not</strong> marked reviewed.</li>\n</ul>\n<p>A model approving its own work is its assessment, not proof. Hidden sides are\ninferred — the back of your subject is an interpretation, not an observation.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Characters",
+      "html": "<p>Set <strong>Subject → Character</strong> for three output targets:</p>\n<table>\n<thead>\n<tr>\n<th>Target</th>\n<th>What you get</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><strong>Static sculpt</strong></td>\n<td>Follows the pose in your reference.</td>\n</tr>\n<tr>\n<td><strong>T-pose · unrigged</strong></td>\n<td>One neutral bipedal humanoid, connected joints, separated limbs, no scenery or props. Export FBX → upload to Mixamo.</td>\n</tr>\n<tr>\n<td><strong>Animated humanoid · Mesh2Motion</strong></td>\n<td>The above, plus a locally fitted skeleton, skin weights and 87 clips.</td>\n</tr>\n</tbody></table>\n<p>For the animated lane the model additionally supplies <strong>18 joint positions</strong> —\nand only those. It does not invent skin weights or bone hierarchies; the trusted\npath fits the bundled skeleton, runs the Mesh2Motion solver in a cancellable\nworker, and validates every weight on the way back.</p>\n<p>Joints are checked before anything is fitted: the spine ordered head-above-neck-\nabove-chest-above-pelvis, hips above knees above ankles, arms actually in a\nT-pose with anatomical left at +X, no zero-length bones, and everything inside\nthe mesh. A failure here is a specific, actionable message back to the model.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Characters (cont.)",
+      "html": "<p>Movement review gets <strong>six</strong> images: the neutral three, plus walk, crouch and\narm-bend tests at LOD 1.</p>\n<p><strong>Adjust rig</strong> lets you move the joints by hand and save a new version. Without\na model selected, that version stays explicitly unreviewed — the joints changed,\nso the last review no longer describes what&#39;s on screen.</p>\n<p>Whole hands only. No finger rig, no facial rig, no blending, no clip import.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Triangle clean-up",
+      "html": "<p>Designs overlap parts on purpose: joints pushed into bodies, bulges sunk into\narmour, plates resting on torsos. A lot of the triangles that produces can never\nbe seen. On the saved projects so far that was 15–83% of them. <strong>Triangle\nclean-up</strong> (right rail, under Versions) removes them, and more, after\ngeneration.</p>\n<p>It is <strong>off</strong> until you switch it on, and it never changes what was generated.\nEvery level gets a <em>cleaned copy</em> beside the original. <strong>Original / Cleaned</strong>\nflips the viewport between them, and switching the clean-up off shows exactly\nthe models the generator produced. The settings are saved on the version.\nThe visual review always looks at the originals.</p>\n<p>Three steps run in a fixed order. Each has its own switch and strength:</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Triangle clean-up (cont.)",
+      "html": "<table>\n<thead>\n<tr>\n<th>Step</th>\n<th>What it does</th>\n<th>Strength</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><strong>Weld seams</strong></td>\n<td>Joins duplicate vertices along seams and drops zero-area triangles</td>\n<td><em>Tight → Loose</em>: how close two vertices must be to join</td>\n</tr>\n<tr>\n<td><strong>Remove hidden triangles</strong></td>\n<td>Drops triangles that lie entirely inside another part</td>\n<td><em>Careful → Thorough</em>: how many points per triangle must be buried, and how deep</td>\n</tr>\n<tr>\n<td><strong>Simplify</strong></td>\n<td>Merges small triangles where the surface barely changes (meshoptimizer)</td>\n<td><em>Light → Strong</em>: how far the surface may drift; lower levels are simplified harder. Tick <em>Set each level separately</em> for five sliders</td>\n</tr>\n</tbody></table>\n<p>Weld is always on while Simplify is. Without it, seams tear open.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Triangle clean-up (cont.)",
+      "html": "<p><strong>Animated characters.</strong> A shoulder buried at rest can show once the arm\nlifts, so for an animated character a triangle is only removed if it stays\nhidden at rest <strong>and</strong> in every checked pose: 12 wide-range clips at 4 frames\neach by default, or all 87 clips (slow). Expect about a minute for a dense\nMaster; the levels run in parallel and <strong>Cancel</strong> stops it. Clips outside the\nchecked set are not guaranteed, so play a few before exporting. A character\nprepared for <strong>Mixamo</strong> is rigged elsewhere, so its poses can&#39;t be checked. Keep\nRemove hidden near <em>Careful</em>, or leave it off.</p>\n<p>The table lists original and cleaned triangle counts for every level. Hover a\nrow for the breakdown.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Exporting",
+      "html": "<table>\n<thead>\n<tr>\n<th>Button</th>\n<th>What it produces</th>\n</tr>\n</thead>\n<tbody><tr>\n<td><strong>Selected .glb</strong></td>\n<td>One level, original textured materials</td>\n</tr>\n<tr>\n<td><strong>All levels .zip</strong></td>\n<td>Five GLBs plus a <code>manifest.json</code> with triangles, meshes, bounds, rig and clip names</td>\n</tr>\n<tr>\n<td><strong>Selected .fbx</strong></td>\n<td>The <em>same GLB</em>, converted by your local Blender</td>\n</tr>\n<tr>\n<td><strong>Send to Blender</strong></td>\n<td>The selected level added to a Blender you already have open</td>\n</tr>\n<tr>\n<td><strong>PNG</strong></td>\n<td>Viewport capture</td>\n</tr>\n</tbody></table>\n<p>With a clean-up applied, <strong>Which levels</strong> picks <em>Original + cleaned (both)</em>\n(the default), <em>Original only</em> or <em>Cleaned only</em>. Cleaned files carry a\n<code>-clean</code> suffix (<code>knight-master-clean.glb</code>), so nothing replaces an original.\nThe ZIP then holds ten GLBs, and its manifest marks each level&#39;s <code>variant</code> and\nrecords the clean-up settings.</p>\n<p>Two rules hold throughout: exports always use the <strong>original materials</strong> even\nwhen the viewport is in clay or wireframe, and always start from the <strong>bind\npose</strong> regardless of playback time.</p>\n<p>FBX is not a second exporter — it&#39;s a conversion of the GLB you already have, so\nthe two can&#39;t describe different geometry.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Exporting (cont.)",
+      "html": "<h3>The two Blender buttons need different things</h3>\n<ul>\n<li><strong>Selected .fbx</strong> needs a <code>blender</code> binary on your PATH. The app can detect\nthat, so the button is disabled with a reason when it&#39;s missing.</li>\n<li><strong>Send to Blender</strong> needs a Blender <strong>already open</strong> with the MCP add-on&#39;s\nserver started (press <kbd>N</kbd> in the 3D viewport, then its <em>MCP for\nBlender</em> tab). Nothing can detect that without connecting to it, so the button\nstays enabled and reports for itself.</li>\n</ul>\n<p>Both need the hub running under <code>serve.py</code> — a plain static server has no\n<code>/__blender</code> endpoints.</p>\n<h3>Mixamo</h3>\n<p>Choose <strong>T-pose · unrigged</strong>, export <strong>Selected .fbx</strong>, then use <em>Upload\nCharacter</em> at <a href=\"https://www.mixamo.com/\">Mixamo</a>. GLB and the levels ZIP are not\nMixamo upload formats.</p>\n<p>The app validates geometry and the single-object structure. It cannot prove\nhuman anatomy, welded topology, good deformation, or that Mixamo will accept the\nfile.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Runs",
+      "html": "<p>Every generation, repair and review call, with its prompt, its images <strong>in the\norder they were sent</strong>, the raw response, timing and status. Failed and\ncancelled calls are kept — those are the ones worth reading.</p>\n<p>Responses are stored <em>before</em> parsing, so a malformed answer, a reasoning-only\nreply or a truncated response is still inspectable.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Projects",
+      "html": "<p>Saved under your data root at <code>understory-studio/projects/&lt;id&gt;/</code>. A draft is\nwritten <strong>before</strong> generation starts, so an attempt that fails or is stopped is\nstill in the list afterwards with its failure recorded — a project with zero\ncompleted versions opens normally on purpose.</p>\n<p>Up to 30 versions per project. Deleting moves a project aside rather than\nerasing it.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Stopping a run",
+      "html": "<p><strong>Stop generation</strong> aborts the request, which is what actually stops the model:\nthe provider fetch is cancelled, or the bridge kills the CLI process. There&#39;s no\ntime limit — stopping is how a run is bounded. Saved versions are kept.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Known limits",
+      "html": "<ul>\n<li>Hidden sides are inferred, not observed.</li>\n<li>Assembled parametric parts are <strong>not watertight</strong> and not fabrication-ready.</li>\n<li>No automatic retopology, and no high-to-low normal baking — the procedural\nnormal maps are generated surfaces, not geometry bakes.</li>\n<li>Extreme proportions, intersecting parts and loose decoration can deform badly\nand may need weight painting or cleanup in Blender.</li>\n<li>Movement review samples three poses at LOD 1. Inspect the specific clip and\nlevel you intend to ship.</li>\n<li>Playback speed affects the preview, not the exported clip&#39;s timing.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Credits",
+      "html": "<p>Local rigging and animation by <a href=\"https://github.com/Mesh2Motion/mesh2motion-app\">Mesh2Motion</a>\n— solver MIT © Scott Petrovic, core assets CC0, vendored at\n<code>shared/lib/mesh2motion/1.0.0/</code>. No account, hosted service or analytics.</p>\n<p>Ported from the standalone Understory project. Spec 336.</p>"
+    }
+  ]
+}

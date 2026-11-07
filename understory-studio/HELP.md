@@ -9,6 +9,21 @@ building, the app renders the result from the **front, side and back** and shows
 those renders back to the same model, beside your original reference. The model
 sees what it actually built, not what it thought it described, and corrects it.
 
+## Examples
+
+Five finished assets ship with the app, each built from one reference picture
+in a real run: a rigged and animated astronaut, a field radio, a Norse
+longhouse, a knight and an insect creature. They are under **Examples** on the
+Projects tab. With no data root connected, the astronaut opens on its own, so
+there is always something on screen to turn, light, inspect at every level of
+detail and export, even before you have picked a model.
+
+Opening an example starts a **new project**: its reference, versions and review
+come with it, and **Generate** refines it with your model. With a data root
+connected, that refinement is saved as a project of your own. The bundled
+example itself never changes. Examples have no **Runs** log; only the finished
+versions were kept.
+
 ## Quick start
 
 1. Pick a **provider and model** in the toolbar. Vision-capable models do much
