@@ -3,7 +3,7 @@
   "title": "Code Morph Lab v3",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-11-07T18:01:02.949Z",
+  "generatedAt": "2026-11-07T20:07:24.460Z",
   "slides": [
     {
       "kind": "title",
@@ -35,6 +35,16 @@
       "kind": "text",
       "title": "Morph view",
       "html": "<p>Once the loop starts you see:</p>\n<ul>\n<li><strong>Iteration timeline</strong> — each iteration card shows tool calls, files changed, diffs, and run results.</li>\n<li><strong>Workspace panel</strong> — the current state of all files. During model calls, a <code>model-stream.md</code> tab shows streamed assistant text and tool-call arguments while the model is still responding.</li>\n<li><strong>Output inspector</strong> — console output, error details, and a live HTML preview (HTML mode).</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Playing a version",
+      "html": "<p>HTML code can be played full window at any point, and closing the player (<strong>Back to Code Morph</strong>) returns you exactly where you were.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Playing a version (cont.)",
+      "html": "<ul>\n<li><strong>Before morphing:</strong> imported code (including the demo) gets a big green <strong>Play it first</strong> button under the Import card. Try the original before deciding what to change.</li>\n<li><strong>During and after a morph:</strong> the green <strong>Play</strong> button at the top of the Morph screen opens the player with a <strong>Version</strong> list: the <strong>Original</strong> as it was imported, the workspace <strong>after each iteration</strong> that changed something (with whether it ran clean), and the final workspace if it differs. The newest morphed version is selected first, marked <em>latest</em>. Switch versions to compare them; <strong>Restart</strong> starts the current one again.</li>\n<li>Once the game has the keyboard, keys such as Esc go to the game, so use <strong>Back to Code Morph</strong> to leave.</li>\n<li>Sessions started from an import keep the original, so reopening one later from <strong>Recent morphs</strong> still offers it. Sessions saved before this change have no original to offer.</li>\n<li>The player runs the entry page in a sandbox, with the workspace&#39;s own CSS and JS files inlined, so a project split across files plays too. Python sessions have no player.</li>\n</ul>"
     },
     {
       "kind": "text",

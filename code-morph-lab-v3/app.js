@@ -9,6 +9,8 @@ import { hasApiKey } from '../shared/services/providers-openrouter.js';
 import { HelpDialog } from '../shared/components/HelpDialog.js';
 import { WelcomeGate } from './components/WelcomeGate.js';
 import { DEMO_SOURCE, loadDemo, loadDemoIndex } from './services/demos.js';
+import { buildPlayableVersions, htmlEntry } from './services/versions.js';
+import { PlayOverlay } from './components/PlayOverlay.js';
 import { Toolbar } from './components/Toolbar.js';
 import { StartView } from './components/StartView.js';
 import { MorphView } from './components/MorphView.js';
@@ -418,6 +420,7 @@ function App() {
         maxIterations: full.maxIterations,
         status: full.status,
         importedFrom: full.importedFrom || null,
+        startingFiles: full.startingFiles || null,
       });
       const normalized = full.iterations.map(it => ({
         number: it.number,
@@ -485,6 +488,11 @@ function App() {
       maxIterations,
       status: 'running',
       importedFrom,
+      // Kept so the original can still be played beside the morphed versions
+      // when this session is reopened.
+      ...(arrivedImport?.kind === 'code' && arrivedImport.files?.length
+        ? { startingFiles: Object.fromEntries(arrivedImport.files.map(f => [f.name, f.content])) }
+        : {}),
     };
     await store.createSession(sessionMeta);
     setSession(sessionMeta);
@@ -716,6 +724,43 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshotVersion]);
 
+  // ── Play ──
+  // A full-window player over the lab. On the Start screen it plays the
+  // imported code; on the Morph screen any version: the original, each
+  // iteration, or the final workspace. Closing it changes nothing.
+  const [playing, setPlaying] = useState(null);
+  const importedFiles = useMemo(() => (
+    arrivedImport?.kind === 'code' && Array.isArray(arrivedImport.files)
+      ? Object.fromEntries(arrivedImport.files.map(f => [f.name, f.content || '']))
+      : null
+  ), [arrivedImport]);
+  const importVersions = useMemo(() => (
+    language === 'html' && importedFiles && htmlEntry(importedFiles)
+      ? buildPlayableVersions({ startingFiles: importedFiles })
+      : []
+  ), [importedFiles, language]);
+  const morphVersions = useMemo(() => {
+    if (!session || session.language !== 'html') return [];
+    const live = { ...liveSnapshot };
+    delete live['model-stream.md'];
+    return buildPlayableVersions({
+      startingFiles: session.startingFiles || null,
+      iterations,
+      finalFiles: live,
+      running,
+    });
+  }, [session, iterations, liveSnapshot, running]);
+  const playTitle = arrivedImport?.title || session?.importedFrom?.title || '';
+  // Keyed per opening, so a player opened for new versions starts on the
+  // newest instead of keeping the last one's selection.
+  const playOverlay = playing && html`
+    <${PlayOverlay}
+      key=${playing.opened}
+      versions=${playing.versions}
+      title=${playing.title}
+      onClose=${() => setPlaying(null)}
+    />`;
+
   if (!bootComplete) return html`<div style="padding:2rem;color:#777;">Loading…</div>`;
 
   if (!handle) {
@@ -772,6 +817,7 @@ function App() {
         onDismissImport=${() => setArrivedImport(null)}
         demo=${demoIndex.demos.find(entry => entry.slug === demoIndex.default) || null}
         onLoadDemo=${() => openDemo(demoIndex.default)}
+        onPlayImport=${importVersions.length ? () => setPlaying({ versions: importVersions, title: playTitle, opened: Date.now() }) : null}
         recentSessions=${recentSessions}
         onOpenSession=${handleOpenSession}
         onDeleteSession=${handleDeleteSession}
@@ -789,6 +835,7 @@ function App() {
           onClose=${() => setShowHelp(false)}
         />
       `}
+      ${playOverlay}
     `;
   }
 
@@ -834,7 +881,10 @@ function App() {
       sourceLabel=${sourceLabel(session?.importedFrom?.source)}
       previewFullscreen=${previewFullscreen}
       onTogglePreviewFullscreen=${() => setPreviewFullscreen(v => !v)}
+      playVersions=${morphVersions}
+      onPlay=${() => setPlaying({ versions: morphVersions, title: playTitle || session?.importedFrom?.title || '', opened: Date.now() })}
     />
+    ${playOverlay}
     ${showProviderSettings && html`
       <${ProviderSettingsDialog}
         onClose=${() => setShowProviderSettings(false)}

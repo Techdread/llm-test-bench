@@ -21,6 +21,7 @@ export function MorphView({
   liveSnapshot, liveModelStream, latestRunResult, latestErrorInfo, readOnly, onFork, onExport,
   onSendBack, onSendToNotebook, sourceLabel,
   previewFullscreen, onTogglePreviewFullscreen,
+  playVersions = [], onPlay,
 }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [pinnedIteration, setPinnedIteration] = useState(null);
@@ -51,7 +52,19 @@ export function MorphView({
   const errorInfo = latestErrorInfo;
   const previewDataUrl = runResult?.previewDataUrl || null;
 
+  // Playing is offered whenever there is a page to play, even mid-run: the
+  // original can be tried while the model is still working on the change.
+  const morphedCount = playVersions.filter(v => v.id !== 'original').length;
+  const playButton = onPlay && playVersions.length > 0 ? html`
+    <button class="btn-play" type="button" onClick=${onPlay}
+            title=${playVersions.length > 1 ? 'Play any version: the original, each iteration, or the final result' : 'Play it full window'}>
+      <i class="fa-solid fa-play"></i>
+      ${morphedCount > 0 && playVersions.length > 1 ? `Play (${playVersions.length} versions)` : 'Play'}
+    </button>
+  ` : null;
+
   const actions = !running ? html`
+    ${playButton}
     ${onSendToNotebook && html`
       <button class="btn btn-primary" onClick=${onSendToNotebook} title="Save this prompt and output as a Notebook Lab notebook">
         <i class="fa-solid fa-book"></i> Notebook
@@ -72,7 +85,7 @@ export function MorphView({
         <i class="fa-solid fa-file-export"></i> Export
       </button>
     `}
-  ` : null;
+  ` : playButton;
 
   const canFullscreenPreview = session.language === 'html';
   const fullscreenActive = !!previewFullscreen && canFullscreenPreview;

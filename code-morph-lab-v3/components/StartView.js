@@ -24,7 +24,7 @@ export function StartView({
   maxIterations, onMaxIterationsChange,
   canGenerate, onGenerate,
   arrivedImport, onDismissImport,
-  demo = null, onLoadDemo,
+  demo = null, onLoadDemo, onPlayImport,
   recentSessions, onOpenSession, onDeleteSession,
 }) {
   const importedFiles = arrivedImport?.kind === 'code' ? (arrivedImport.files || []) : [];
@@ -66,7 +66,7 @@ export function StartView({
           ${arrivedImport?.kind === 'code'
             ? html`
               <div class="import-prompt-stack">
-                <div class="import-original-prompt">
+                <div class="import-original-prompt" tabIndex="0" role="region" aria-label="Original prompt">
                   <label>Original prompt</label>
                   <div>${arrivedImport.prompt || 'No original prompt was supplied with this import.'}</div>
                 </div>
@@ -141,6 +141,7 @@ export function StartView({
             <div class="start-control">
               <label>Max iterations</label>
               <select
+                aria-label="Max iterations"
                 class="form-input"
                 value=${maxIterations}
                 onChange=${(e) => onMaxIterationsChange(parseInt(e.target.value, 10))}
@@ -150,6 +151,7 @@ export function StartView({
             </div>
             <button
               class="btn btn-generate start-generate"
+              aria-label="Generate & Morph"
               disabled=${!canGenerate}
               onClick=${onGenerate}
             >
@@ -181,6 +183,12 @@ export function StartView({
                   ${isDemo && arrivedImport.meta.model && html`<div class="arrival-chip-body">Built by ${arrivedImport.meta.model}. Pick a change, choose a model and press Generate & Morph.</div>`}
                   ${arrivedImport.prompt && !isDemo && html`<div class="arrival-chip-body">${arrivedImport.prompt}</div>`}
                 </div>
+                ${onPlayImport && html`
+                  <button class="btn-play btn-play-wide import-play" type="button" onClick=${onPlayImport}>
+                    <i class="fa-solid fa-play"></i>
+                    <span>Play it first<span class="btn-play-sub">See the imported code running, full window. Come back any time.</span></span>
+                  </button>
+                `}
               `
               : html`
                 <div class="start-empty">
@@ -208,7 +216,7 @@ export function StartView({
           <div class="section-header">
             <span><i class="fa-solid fa-clock-rotate-left"></i> Recent morphs</span>
           </div>
-          <div class="start-side-body">
+          <div class="start-side-body" tabIndex="0" role="region" aria-label="Recent morphs">
             <${RecentMorphsList} sessions=${recentSessions} onOpen=${onOpenSession} onDelete=${onDeleteSession} />
           </div>
         </section>

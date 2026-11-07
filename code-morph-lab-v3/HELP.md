@@ -33,6 +33,16 @@ Once the loop starts you see:
 - **Workspace panel** — the current state of all files. During model calls, a `model-stream.md` tab shows streamed assistant text and tool-call arguments while the model is still responding.
 - **Output inspector** — console output, error details, and a live HTML preview (HTML mode).
 
+## Playing a version
+
+HTML code can be played full window at any point, and closing the player (**Back to Code Morph**) returns you exactly where you were.
+
+- **Before morphing:** imported code (including the demo) gets a big green **Play it first** button under the Import card. Try the original before deciding what to change.
+- **During and after a morph:** the green **Play** button at the top of the Morph screen opens the player with a **Version** list: the **Original** as it was imported, the workspace **after each iteration** that changed something (with whether it ran clean), and the final workspace if it differs. The newest morphed version is selected first, marked *latest*. Switch versions to compare them; **Restart** starts the current one again.
+- Once the game has the keyboard, keys such as Esc go to the game, so use **Back to Code Morph** to leave.
+- Sessions started from an import keep the original, so reopening one later from **Recent morphs** still offers it. Sessions saved before this change have no original to offer.
+- The player runs the entry page in a sandbox, with the workspace's own CSS and JS files inlined, so a project split across files plays too. Python sessions have no player.
+
 ## Sessions
 
 Every morph run is automatically saved to your data root as a session.
