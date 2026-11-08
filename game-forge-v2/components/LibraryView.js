@@ -10,8 +10,9 @@ import {
   getAllPrompts, filterPrompts, softDelete, addUserPrompt, groupPromptVariants,
   promptGameSlug, promptRunCounts, savePromptEdit,
   listHiddenPrompts, restorePrompt,
-  downloadPromptLibrary, exportPromptLibrary, importPromptLibrary,
+  downloadPromptLibrary, exportPromptLibrary, importPromptLibrary, loadSeeds,
 } from '../services/library.js';
+import { PROMPT_LEVELS, levelsFor, loadPromptLevels } from '../services/promptLevels.js';
 import { listGames } from '../services/runStore.js';
 import { getAllLanes, laneLabel } from '../services/lanes.js';
 import { VariantSweepDialog } from './VariantSweepDialog.js';
@@ -70,6 +71,10 @@ export function LibraryView({
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
   const [message, setMessage] = useState('');
+  // Brief and Design doc versions of library games, by base game id, and the
+  // level each card is showing (Sketch unless the user picked another).
+  const [levelsByBase, setLevelsByBase] = useState(() => new Map());
+  const [levelChoice, setLevelChoice] = useState({});
   const importRef = useRef(null);
 
   const reload = async () => {
@@ -85,6 +90,7 @@ export function LibraryView({
     // Directory counts only — no run metadata is read, so this stays cheap for
     // the whole library. Absent without a data root, which is not an error.
     listGames().then(setGames).catch(() => setGames([]));
+    loadSeeds().then(seeds => loadPromptLevels(seeds)).then(setLevelsByBase).catch(() => {});
   }, []);
 
   const toggleExpanded = id => setExpanded(current => {
@@ -111,10 +117,46 @@ export function LibraryView({
     } catch (error) { setMessage(`Import failed: ${error.message}`); }
   };
 
-  const facets = promptFacetValues(prompts);
+  // A level the user has edited lives in the custom layer under the level's
+  // id: it shows inside its game's level switch, never as a card of its own.
+  const levelPrompts = [...levelsByBase.values()].flat();
+  const levelIds = new Set(levelPrompts.map(level => level.id));
+  const promptById = new Map(prompts.map(item => [item.id, item]));
+  const gridPrompts = levelIds.size ? prompts.filter(item => !levelIds.has(item.id)) : prompts;
+  const levelOf = base => {
+    const levels = levelsFor(base, levelsByBase);
+    const chosen = levels.find(level => level.level === (levelChoice[base.id] || 'sketch'));
+    if (!chosen || chosen.level === 'sketch') return base;
+    const edited = promptById.get(chosen.id);
+    return edited ? { ...edited, level: chosen.level, basedOn: base.id, inspiredBy: chosen.inspiredBy } : chosen;
+  };
+  const levelSwitch = base => {
+    const levels = levelsFor(base, levelsByBase);
+    if (!levels.length) return null;
+    const current = levelChoice[base.id] || 'sketch';
+    return html`
+      <div class="gf-level-switch" role="group" aria-label=${`Prompt level for ${base.title}`}>
+        ${PROMPT_LEVELS.filter(level => levels.some(item => item.level === level.id)).map(level => html`
+          <button key=${level.id} type="button"
+            class=${`gf-level ${current === level.id ? 'active' : ''}`}
+            aria-pressed=${current === level.id ? 'true' : 'false'}
+            title=${level.hint}
+            onClick=${() => setLevelChoice(choice => ({ ...choice, [base.id]: level.id }))}>
+            ${level.label}
+          </button>`)}
+      </div>`;
+  };
+  // Card text for a Markdown level: no markers, no maze grids.
+  const cardText = text => String(text || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/[*#`|]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const facets = promptFacetValues(gridPrompts);
   const categoryMap = new Map(taxonomy.categories.map(item => [item.id, item]));
   const collectionMap = new Map(taxonomy.collections.map(item => [item.id, item]));
-  const filtered = filterPrompts(prompts, {
+  const filtered = filterPrompts(gridPrompts, {
     query, tag, category, collection, stack, library: libraryId, kind,
   });
   // The strip under a card always shows that game's complete lane set, so it is
@@ -129,7 +171,7 @@ export function LibraryView({
   const showFlat = flat || Boolean(lane) || kind === 'variant';
   const shown = showFlat ? laneFiltered : groupPromptVariants(laneFiltered).bases;
   const laneFacet = [...new Set(prompts.map(prompt => prompt.derivation?.laneId).filter(Boolean))].sort();
-  const runCounts = promptRunCounts(prompts, games);
+  const runCounts = promptRunCounts([...prompts, ...levelPrompts.filter(level => !promptById.has(level.id))], games);
   const activeFilters = [category, collection, stack, tag, lane, libraryId, kind].filter(Boolean).length;
 
   return html`
@@ -257,17 +299,21 @@ export function LibraryView({
                   <span class="gf-era" title=${`Derived from ${p.derivation.parentPromptId || 'another prompt'} v${p.derivation.parentPromptVersion || 1}`}>
                     <i class="fas fa-code-branch"></i> variant
                   </span>`}
-              <${RunCountBadge} prompt=${p} counts=${runCounts} onOpenRuns=${onOpenRuns} />
+              <${RunCountBadge} prompt=${levelOf(p)} counts=${runCounts} onOpenRuns=${onOpenRuns} />
               <${ProjectLibraryBadges} value=${p.libraries} />
               <span class="gf-stack">${p.targetStack}</span>
             </div>
-            <h3>${p.title}</h3>
-            <p class="gf-card-prompt">${p.prompt}</p>
-            ${p.watchFor && html`<p class="gf-watch"><b>Watch for:</b> ${p.watchFor}</p>`}
-            <div class="gf-card-tags">${(p.tags || []).map(t => html`<span class="gf-tag">${t}</span>`)}</div>
+            <h3>${levelOf(p).title}${levelOf(p) !== p && html` <span class="gf-inspired">inspired by ${p.title}</span>`}</h3>
+            ${levelSwitch(p)}
+            <p class="gf-card-prompt">${levelOf(p) === p ? p.prompt : cardText(levelOf(p).prompt)}</p>
+            ${levelOf(p).watchFor && html`<p class="gf-watch"><b>Watch for:</b> ${levelOf(p).watchFor}</p>`}
+            <div class="gf-card-tags">${(levelOf(p).tags || []).map(t => html`<span class="gf-tag">${t}</span>`)}</div>
             <div class="gf-card-actions">
-              <button class="gf-btn gf-primary" onClick=${() => onBuild(p)}><i class="fas fa-hammer"></i> Build</button>
-              <button class="gf-icon-btn" onClick=${() => setEditing(p)}
+              <button class="gf-btn gf-primary" onClick=${() => onBuild(levelOf(p))}
+                title=${levelOf(p) === p ? `Build ${p.title}` : `Build the ${PROMPT_LEVELS.find(level => level.id === levelOf(p).level)?.label} of ${levelOf(p).title}`}>
+                <i class="fas fa-hammer"></i> Build
+              </button>
+              <button class="gf-icon-btn" onClick=${() => setEditing(levelOf(p))}
                 title=${p.source === 'seed'
                   ? 'Edit this curated prompt. It is copied into your library as version 1 and your change is saved as version 2 — the original wording is never lost.'
                   : 'Edit as a new prompt version'}>

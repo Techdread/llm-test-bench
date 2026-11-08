@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "notes": "Prompt levels for library games. Sketch is the library prompt itself; Brief and Design doc are longer, original-world versions of the same game, written in the matching .md file.",
+  "levels": [
+    {
+      "basedOn": "pac-man",
+      "level": "brief",
+      "id": "lantern-burrow-brief",
+      "title": "Lantern Burrow",
+      "inspiredBy": "Pac-Man",
+      "file": "pac-man.brief.md",
+      "tags": [
+        "arcade",
+        "maze",
+        "ghost-ai",
+        "original-world"
+      ],
+      "watchFor": "Beetles all taking the same route; no patrol/hunt switching or no reversal at each switch; turns not buffered so cornering feels sticky; tunnel not wrapping; dazzle never ending or never flashing before it ends; the catch chain not doubling 200-400-800-1600; the maze changed from the given grid; numbers hard-coded instead of read from src/config.js."
+    },
+    {
+      "basedOn": "pac-man",
+      "level": "design",
+      "id": "lantern-burrow-design",
+      "title": "Lantern Burrow",
+      "inspiredBy": "Pac-Man",
+      "file": "pac-man.design.md",
+      "tags": [
+        "arcade",
+        "maze",
+        "ghost-ai",
+        "original-world"
+      ],
+      "watchFor": "A stage of the build order left half-done while a later one was started; beetles sharing one target rule; the mode table, nest release counts or difficulty table ignored; Rook's temper missing; no input buffering; collisions missed at speed (beetles passing through Pip); the mazes altered or only maze 1 used; no title, pause, game-over or initials screens; no sound; no ?debug target overlay."
+    },
+    {
+      "basedOn": "doom-web",
+      "level": "brief",
+      "id": "coldiron-station-brief",
+      "title": "Coldiron Station",
+      "inspiredBy": "Doom",
+      "file": "doom-web.brief.md",
+      "tags": [
+        "fps",
+        "sector-renderer",
+        "3d",
+        "original-world"
+      ],
+      "watchFor": "Movement along world axes instead of the view direction, or strafe/mouse turning reversed; speed or turning tied to frame rate; a grid raycaster instead of sectors with their own floor and ceiling heights; walls vanishing or showing through each other near corners (no per-column clipping or near-plane clip); stairs and the ledge drawn flat; the ledge reachable without the lift; collision that sticks instead of sliding; enemies drawn through walls; the level data changed instead of loaded as given."
+    },
+    {
+      "basedOn": "doom-web",
+      "level": "design",
+      "id": "coldiron-station-design",
+      "title": "Coldiron Station",
+      "inspiredBy": "Doom",
+      "file": "doom-web.design.md",
+      "tags": [
+        "fps",
+        "sector-renderer",
+        "3d",
+        "original-world"
+      ],
+      "watchFor": "Any rule of the camera and movement section broken (axes, angle direction, strafe, mouse, frame-rate independence); a later build stage started while an earlier one is half-done; a raycaster instead of the portal renderer; untextured floors and ceilings; enemies with one view instead of 8; no infighting or splash damage; doors, lift, crusher, flicker or secret missing; only one level; no automap or split-screen; numbers hard-coded instead of read from src/config.js."
+    }
+  ]
+}

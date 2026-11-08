@@ -72,6 +72,29 @@ The top of the **Library** has a finished game to play: a survivors-style arena 
   Lane rows in the variant strip carry their own counts.
 - Hit **Build** to load a game into the Build view.
 
+### Prompt levels: Sketch, Brief, Design doc
+
+Some games come in three levels of detail, chosen with the switch on the card:
+
+- **Sketch:** the short library prompt, the mechanics in a paragraph.
+- **Brief:** about a dozen numbered requirements, each of which must be visible
+  on screen, covering one finished slice of the game (for example one maze, with
+  levels that get harder), plus art direction, sound, screens, controls and a
+  **Done when** list. Tuning numbers go in a config file.
+- **Design doc:** a full design document with every number (difficulty and
+  timing tables), all the content (every maze or level), art and sound specs,
+  the file layout, a **build order** where each stage leaves a playable game,
+  and numbered **acceptance tests**.
+
+Brief and Design doc describe an **original game** in the same genre, with its
+own world, characters, art and levels, inspired by the library game. So they
+have their own titles and build into their own run folders. Smaller models do
+better with more detail and a fixed scope; the build order means a model that
+runs out of budget still leaves a working game. Levels live in `data/levels/`:
+`index.json` lists them, and each level is a Markdown file. Editing a level with
+the pencil saves your version in your library; it still shows in the card's
+switch.
+
 ### Project libraries
 
 The prompt editor and guided wizard can choose one engine/renderer, one

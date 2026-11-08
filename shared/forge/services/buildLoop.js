@@ -446,6 +446,7 @@ export function compactToolHistory(messages = []) {
   const newestToolTurn = toolTurns.at(-1);
   const out = [];
   let openToolIds = new Set();
+  let lastSummaryIndex = -1;
 
   for (let index = 0; index < messages.length; index++) {
     const message = messages[index];
@@ -464,10 +465,15 @@ export function compactToolHistory(messages = []) {
         const outcome = /error|failed|validation failed|execution error/i.test(result) ? 'failed' : 'completed';
         return `- ${name}${target}: ${outcome}`;
       });
+      // Keep the model's own words from that turn ("Now the audio system…"):
+      // without them a small model loses its place in a long plan and starts
+      // again from the top.
+      const note = String(message.content || '').trim().replace(/\s+/g, ' ').slice(0, 300);
       out.push({
         role: 'assistant',
-        content: `Earlier tool turn completed; file contents are on disk and are not repeated here.\n${lines.join('\n')}`,
+        content: `Earlier tool turn completed; file contents are on disk and are not repeated here.${note ? `\nYou wrote then: "${note}"` : ''}\n${lines.join('\n')}`,
       });
+      lastSummaryIndex = out.length - 1;
       openToolIds = new Set();
       index = cursor - 1;
       continue;
@@ -485,7 +491,170 @@ export function compactToolHistory(messages = []) {
       : []);
     out.push(clone(message));
   }
+  // The summaries drop file contents, so the newest one carries a ledger of
+  // the whole project instead: what exists, what each file declares, and what
+  // the page loads that is not written yet.
+  if (lastSummaryIndex >= 0) {
+    const ledger = projectLedger(messages);
+    if (ledger) out[lastSummaryIndex].content += `\n\n${ledger}`;
+  }
   return out;
+}
+
+const TOP_LEVEL_NAME = /^(?:var|let|const|function\*?|async\s+function|class)\s+([A-Za-z_$][\w$]*)/gm;
+const MAX_LEDGER_NAMES = 24;
+const MAX_API_ENTRIES = 30;
+
+function shortParams(params) {
+  return String(params || '').replace(/\s+/g, ' ').replace(/=[^,)]*/g, '').trim().slice(0, 60);
+}
+
+/** First-level keys of the object literal that starts at `open` (an index of "{"). */
+function objectKeys(source, open) {
+  const keys = [];
+  let depth = 0;
+  let quote = '';
+  let token = '';
+  let inValue = false; // after a key's colon, until the next comma
+  for (let i = open; i < source.length && i < open + 20000; i++) {
+    const ch = source[i];
+    if (quote) {
+      if (ch === '\\') i++;
+      else if (ch === quote) quote = '';
+      else if (depth === 1) token += ch;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') { quote = ch; continue; }
+    if (ch === '/' && source[i + 1] === '/') { const end = source.indexOf('\n', i); i = end < 0 ? source.length : end; continue; }
+    if (ch === '(' && depth === 1 && !inValue) {
+      // A method shorthand: `name() {…}`.
+      const key = token.trim();
+      if (/^[A-Za-z_$][\w$]*$/.test(key) && !keys.includes(key)) keys.push(key);
+      token = '';
+    }
+    if ('{[('.includes(ch)) { depth++; token = ''; continue; }
+    if ('}])'.includes(ch)) { depth--; if (depth === 0) break; token = ''; continue; }
+    if (depth !== 1) continue;
+    if (ch === ':' && !inValue) {
+      const key = token.trim();
+      if (/^[A-Za-z_$][\w$]*$/.test(key) && !keys.includes(key)) keys.push(key);
+      token = '';
+      inValue = true;
+    } else if (ch === ',') { token = ''; inValue = false; }
+    else token += ch;
+  }
+  return keys;
+}
+
+/**
+ * How another file can use this script: its top-level functions with their
+ * parameters, the keys of top-level object literals, and what it attaches to
+ * window or to a namespace object (the usual shape of an IIFE module).
+ */
+export function scriptApi(source) {
+  const text = String(source || '');
+  const api = [];
+  const add = entry => { if (entry && !api.includes(entry)) api.push(entry); };
+  for (const m of text.matchAll(/^(?:async\s+)?function\*?\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)/gm)) add(`${m[1]}(${shortParams(m[2])})`);
+  for (const m of text.matchAll(/^class\s+([A-Za-z_$][\w$]*)/gm)) add(`class ${m[1]}`);
+  for (const m of text.matchAll(/^(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:\(([^)]*)\)|([A-Za-z_$][\w$]*))\s*=>/gm)) add(`${m[1]}(${shortParams(m[2] ?? m[3])})`);
+  for (const m of text.matchAll(/^(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=\s*\{/gm)) {
+    const keys = objectKeys(text, m.index + m[0].length - 1);
+    add(keys.length ? `${m[1]} { ${keys.slice(0, 16).join(', ')}${keys.length > 16 ? ', …' : ''} }` : m[1]);
+  }
+  for (const m of text.matchAll(/^[ \t]*((?:window|globalThis|self|global|[A-Z][A-Za-z0-9_$]*)\.[A-Za-z_$][\w$]*)\s*=\s*(?:(?:async\s+)?function\s*[A-Za-z_$\w]*\s*\(([^)]*)\)|\(([^)]*)\)\s*=>|([A-Za-z_$][\w$]*)\s*=>|(\{))?/gm)) {
+    const [, target, p1, p2, p3, brace] = m;
+    const params = p1 ?? p2 ?? p3;
+    if (params !== undefined) add(`${target}(${shortParams(params)})`);
+    else if (brace) {
+      const keys = objectKeys(text, m.index + m[0].length - 1);
+      add(keys.length ? `${target} { ${keys.slice(0, 16).join(', ')}${keys.length > 16 ? ', …' : ''} }` : target);
+    } else add(target);
+  }
+  return api.slice(0, MAX_API_ENTRIES);
+}
+
+/** Top-level names a classic script declares (unindented declarations only). */
+export function declaredNames(source) {
+  const names = [];
+  for (const match of String(source || '').matchAll(TOP_LEVEL_NAME)) {
+    if (!names.includes(match[1])) names.push(match[1]);
+  }
+  return names;
+}
+
+/** Local scripts and stylesheets an HTML page loads, as project paths. */
+export function pageReferences(htmlText, pagePath = 'index.html') {
+  const dir = pagePath.includes('/') ? pagePath.slice(0, pagePath.lastIndexOf('/') + 1) : '';
+  const refs = [];
+  for (const match of String(htmlText || '').matchAll(/<(?:script[^>]*\ssrc|link[^>]*\shref)\s*=\s*["']([^"']+)["']/gi)) {
+    const ref = match[1];
+    if (/^(?:[a-z]+:)?\/\//i.test(ref) || ref.startsWith('data:') || ref.startsWith('#')) continue;
+    const parts = [];
+    for (const part of (dir + ref.replace(/^\.\//, '')).split('?')[0].split('/')) {
+      if (part === '..') parts.pop(); else if (part && part !== '.') parts.push(part);
+    }
+    const path = parts.join('/');
+    if (path && !refs.includes(path)) refs.push(path);
+  }
+  return refs;
+}
+
+/**
+ * The project as the model has built it so far, replayed from its own
+ * successful write_file and edit_file calls. Pure: it reads only the
+ * conversation, so it is exact for everything this build wrote.
+ * @returns {string} empty when nothing has been written yet
+ */
+export function projectLedger(messages = []) {
+  const files = new Map();
+  for (let index = 0; index < messages.length; index++) {
+    const message = messages[index];
+    if (message?.role !== 'assistant' || !message.tool_calls?.length) continue;
+    const resultById = new Map();
+    for (let cursor = index + 1; messages[cursor]?.role === 'tool'; cursor++) {
+      resultById.set(messages[cursor].tool_call_id, String(messages[cursor].content || ''));
+    }
+    for (const call of message.tool_calls) {
+      const result = resultById.get(call.id);
+      // Only a tool's own success line counts; errors start "Execution error:".
+      if (result === undefined || !/^(?:Wrote|Edited) /.test(result)) continue;
+      const args = parseArgs(call.function?.arguments).value || {};
+      const path = String(args.path || '').replace(/^\.\//, '');
+      if (!path) continue;
+      if (call.function?.name === 'write_file' && typeof args.content === 'string') {
+        files.set(path, args.content);
+      } else if (call.function?.name === 'edit_file' && files.has(path) && typeof args.old_string === 'string') {
+        files.set(path, files.get(path).replace(args.old_string, String(args.new_string ?? '')));
+      }
+    }
+  }
+  if (!files.size) return '';
+  const lines = ['PROJECT LEDGER — every file this build has written so far, rebuilt from your own successful calls:'];
+  const owner = new Map();
+  const clashes = [];
+  for (const [path, content] of [...files].sort(([a], [b]) => a.localeCompare(b))) {
+    let detail = '';
+    if (/\.(?:m?js)$/i.test(path)) {
+      const names = declaredNames(content);
+      for (const name of names) {
+        if (owner.has(name)) clashes.push(`${name} (${owner.get(name)} and ${path})`);
+        else owner.set(name, path);
+      }
+      detail = names.length
+        ? ` — declares ${names.slice(0, MAX_LEDGER_NAMES).join(', ')}${names.length > MAX_LEDGER_NAMES ? `, … ${names.length - MAX_LEDGER_NAMES} more` : ''}`
+        : '';
+      const api = scriptApi(content);
+      if (api.length) detail += `\n    API: ${api.join('; ')}`;
+    } else if (/\.html?$/i.test(path)) {
+      const refs = pageReferences(content, path);
+      if (refs.length) detail = ` — loads ${refs.map(ref => (files.has(ref) ? ref : `${ref} (NOT WRITTEN YET)`)).join(', ')}`;
+    }
+    lines.push(`- ${path} (${content.length} chars)${detail}`);
+  }
+  if (clashes.length) lines.push(`DUPLICATE GLOBALS: ${clashes.join('; ')}. Classic scripts share one global scope, so a second declaration stops that whole file from running. Fix with edit_file.`);
+  lines.push('These files exist: change them only with edit_file, never write_file. Names declared above are already global: reuse them through the API listed, do not declare them again or write a second copy of a module. Next, write a file that is still missing or marked NOT WRITTEN YET.');
+  return lines.join('\n');
 }
 
 async function projectPaths(directoryHandle) {

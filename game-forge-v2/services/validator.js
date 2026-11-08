@@ -109,7 +109,11 @@ export function validateWebStructure(files, { offline = true } = {}) {
         if (offline) issues.push(issue('warning', 'external_dependency', `Offline project references ${value}`, { path, ref: value, kind }));
         continue;
       }
-      const target = resolveProjectPath(directory(path), value);
+      let target = resolveProjectPath(directory(path), value);
+      // A link to a folder ("./", "levels/") opens that folder's index.html.
+      if (/\/(?:[?#].*)?$/.test(value) || value === '.' || target === '') {
+        target = target ? `${target.replace(/\/$/, '')}/index.html` : 'index.html';
+      }
       if (!files.has(target)) {
         issues.push(issue('error', 'missing_reference', `${path} references missing local file ${target}`, { path, ref: value, target, kind }));
       } else if (kind === 'worker' || kind === 'runtime-fetch' || kind === 'css-import') {

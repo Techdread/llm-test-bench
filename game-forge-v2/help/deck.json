@@ -3,7 +3,7 @@
   "title": "Game Forge V2 — Help",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-11-07T19:10:32.729Z",
+  "generatedAt": "2026-11-08T14:23:38.891Z",
   "slides": [
     {
       "kind": "title",
@@ -34,7 +34,17 @@
     {
       "kind": "text",
       "title": "Library (cont.)",
-      "html": "<h3>Project libraries</h3>\n<p>The prompt editor and guided wizard can choose one engine/renderer, one\nphysics library and one audio library. Available foundations include p5,\nPhaser, PixiJS, Three.js, Babylon.js, PlayCanvas, KAPLAY, Kontra and melonJS,\nwith Matter.js, Planck or Rapier physics and Tone.js or Howler audio. Choose\n<strong>None / Vanilla Canvas</strong> when a dependency would add more weight than value.</p>\n<p>Selections are version-pinned and portable. Before a build starts, Game Forge\ncopies the verified files into that run&#39;s own <code>lib/</code> folder; it never gives a\ngenerated game a <code>shared/lib</code> or CDN dependency. File sizes and SHA-256 hashes\nare checked before and after generation, and the model is not allowed to\nrewrite Forge-owned runtime files. A conflict stops preparation with a clear\nfailure. The selected versions and integrity evidence are preserved in the\nprompt snapshot, run metadata and trace.</p>"
+      "html": "<h3>Prompt levels: Sketch, Brief, Design doc</h3>\n<p>Some games come in three levels of detail, chosen with the switch on the card:</p>\n<ul>\n<li><strong>Sketch:</strong> the short library prompt, the mechanics in a paragraph.</li>\n<li><strong>Brief:</strong> about a dozen numbered requirements, each of which must be visible\non screen, covering one finished slice of the game (for example one maze, with\nlevels that get harder), plus art direction, sound, screens, controls and a\n<strong>Done when</strong> list. Tuning numbers go in a config file.</li>\n<li><strong>Design doc:</strong> a full design document with every number (difficulty and\ntiming tables), all the content (every maze or level), art and sound specs,\nthe file layout, a <strong>build order</strong> where each stage leaves a playable game,\nand numbered <strong>acceptance tests</strong>.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Library (cont.)",
+      "html": "<p>Brief and Design doc describe an <strong>original game</strong> in the same genre, with its\nown world, characters, art and levels, inspired by the library game. So they\nhave their own titles and build into their own run folders. Smaller models do\nbetter with more detail and a fixed scope; the build order means a model that\nruns out of budget still leaves a working game. Levels live in <code>data/levels/</code>:\n<code>index.json</code> lists them, and each level is a Markdown file. Editing a level with\nthe pencil saves your version in your library; it still shows in the card&#39;s\nswitch.</p>\n<h3>Project libraries</h3>\n<p>The prompt editor and guided wizard can choose one engine/renderer, one\nphysics library and one audio library. Available foundations include p5,\nPhaser, PixiJS, Three.js, Babylon.js, PlayCanvas, KAPLAY, Kontra and melonJS,\nwith Matter.js, Planck or Rapier physics and Tone.js or Howler audio. Choose\n<strong>None / Vanilla Canvas</strong> when a dependency would add more weight than value.</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Library (cont.)",
+      "html": "<p>Selections are version-pinned and portable. Before a build starts, Game Forge\ncopies the verified files into that run&#39;s own <code>lib/</code> folder; it never gives a\ngenerated game a <code>shared/lib</code> or CDN dependency. File sizes and SHA-256 hashes\nare checked before and after generation, and the model is not allowed to\nrewrite Forge-owned runtime files. A conflict stops preparation with a clear\nfailure. The selected versions and integrity evidence are preserved in the\nprompt snapshot, run metadata and trace.</p>"
     },
     {
       "kind": "text",
