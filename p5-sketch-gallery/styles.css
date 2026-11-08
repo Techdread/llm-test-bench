@@ -80,6 +80,7 @@ html, body { overflow: hidden; }
 
 /* ── Canvas preview ── */
 .create-center { gap: 8px; padding: 8px; overflow: auto; }
+.sketch-play { text-align: left; flex: 0 0 auto; }
 
 .canvas-preview {
   position: relative;

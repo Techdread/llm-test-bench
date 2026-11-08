@@ -43,6 +43,8 @@ import { exportSvgAsGif } from '../shared/services/gif-export.js';
 import { crossAppHandoffsEnabled, isPublicDistribution } from '../shared/services/distribution.js';
 import { loadDefaultAppDemo, shouldOpenAppDemo } from '../shared/services/app-demos.js';
 import { DemoNote } from '../shared/components/DemoNote.js';
+import { PlayOverlay } from '../shared/components/PlayOverlay.js';
+import { keepSvgEdits, playerSvgVersions, recordSvgVersion, startSvgHistory, svgVersions } from './services/svgVersions.js';
 import { ShowcaseLanding, useShowcaseRoute } from '../shared/components/ShowcaseLanding.js';
 
 const CODE_MORPH_SOURCE = 'svg-benchmark';
@@ -109,6 +111,10 @@ function App() {
   // Create view state
   const [prompt, setPrompt] = useState('');
   const [svgCode, setSvgCode] = useState('');
+  // Every version of the drawing in Create this session, for the player:
+  // where it started, each Generate, and hand edits a Generate replaced.
+  const [svgHistory, setSvgHistory] = useState([]);
+  const [playingSvg, setPlayingSvg] = useState(null);
   const [referenceUrl, setReferenceUrl] = useState(null);
   const [manualScore, setManualScore] = useState(0);
   const [autoScore, setAutoScore] = useState(null);
@@ -229,6 +235,7 @@ function App() {
       if (!shouldOpenAppDemo({ savedCount, ...editorsRef.current, hash: location.hash })) return;
       setPrompt(loaded.prompt);
       setSvgCode(loaded.code);
+      setSvgHistory(startSvgHistory({ code: loaded.code, label: 'Demo', detail: loaded.title || '' }));
       setDemo(loaded);
     })();
   }, []);
@@ -328,6 +335,7 @@ function App() {
     if (!showcase) return;
     setPrompt(showcase.item.prompt || '');
     setSvgCode(showcase.item.code);
+    setSvgHistory(startSvgHistory({ code: showcase.item.code, label: 'Showcase', detail: showcase.item.title || '' }));
     navigate('create');
   }, [showcase, navigate]);
 
@@ -502,10 +510,13 @@ function App() {
     }
     setIsGenerating(true);
     setLastGenerator(null);
+    // Hand edits since the last version would be lost to the new drawing: keep them.
+    setSvgHistory(h => keepSvgEdits(h, svgCode));
     setSvgCode('');
     setAutoScore(null);
+    let latest = '';
     try {
-      const onPartial = (partial) => setSvgCode(stripSvgFences(partial));
+      const onPartial = (partial) => { latest = stripSvgFences(partial); setSvgCode(latest); };
 
       if (backend === 'agent') {
         const initialFiles = hasImage
@@ -522,6 +533,7 @@ function App() {
         });
         const label = AGENTS.find(agent => agent.id === completed.agent)?.label || completed.agent;
         setSvgCode(stripSvgFences(completed.content));
+        setSvgHistory(h => recordSvgVersion(h, { code: stripSvgFences(completed.content), kind: 'generation', label: 'Generated', detail: `${label}${completed.model ? ` · ${completed.model}` : ''} CLI` }));
         setLastGenerator({
           type: 'agent',
           agentId: completed.agent,
@@ -538,13 +550,19 @@ function App() {
       } else {
         await openrouter.generateSvg(requestedPrompt, selectedProviderId, selectedModelId, onPartial);
       }
+      setSvgHistory(h => recordSvgVersion(h, {
+        code: latest,
+        kind: 'generation',
+        label: 'Generated',
+        detail: selectedModel?.displayLabel || selectedModel?.name || selectedModelId || '',
+      }));
       addToast('SVG generation complete', 'success');
     } catch (e) {
       if (!agentRun.wasCancelled()) addToast('Generation failed: ' + e.message, 'error');
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, backend, selectedProviderId, selectedModelId, selectedModel, selectedAgentId, agentModels,
+  }, [prompt, svgCode, backend, selectedProviderId, selectedModelId, selectedModel, selectedAgentId, agentModels,
       agentRun, rootHandle, handlePickDirectory, attachReference, referenceUrl, addToast]);
 
   // ── Save handlers ──
@@ -632,6 +650,7 @@ function App() {
     setCurrentBenchmarkSlug('');
     setLastGenerator(null);
     setShowDiff(false);
+    setSvgHistory([]);
     addToast('Fields cleared', 'info');
   }, [addToast]);
 
@@ -684,6 +703,7 @@ function App() {
       setCurrentBenchmarkSlug(currentBenchmark.slug);
       benchmarkPromptRef.current = currentBenchmark.prompt || '';
       setSvgCode('');
+      setSvgHistory([]);
       setManualScore(0);
       setAutoScore(null);
       navigate('create');
@@ -911,6 +931,7 @@ function App() {
     benchmarkPromptRef.current = '';
     setLastGenerator(null);
     setShowDiff(false);
+    setSvgHistory([]);
     navigate('create');
   }, [navigate]);
 
@@ -955,6 +976,16 @@ function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [route.name, handleSaveSubmission, navigate]);
+
+  const svgPlay = useMemo(
+    () => svgVersions(svgHistory, svgCode, { generating: isGenerating }),
+    [svgHistory, svgCode, isGenerating],
+  );
+  // Built only while the player is open: one page per version.
+  const svgPlayerVersions = useMemo(
+    () => (playingSvg ? playerSvgVersions(svgPlay.versions) : []),
+    [playingSvg, svgPlay],
+  );
 
   // ── Render ──
 
@@ -1010,6 +1041,7 @@ function App() {
               const submissionPrompt = sub.prompt || currentBenchmark.prompt || '';
               setPrompt(submissionPrompt);
               setSvgCode(sub.svg || '');
+              setSvgHistory(startSvgHistory({ code: sub.svg || '', label: 'Opened', detail: sub.model || sub.id || '' }));
               setReferenceUrl(currentBenchmark.referenceUrl || null);
               setManualScore(sub.manualScore || 0);
               setAutoScore(sub.autoScore || null);
@@ -1054,7 +1086,21 @@ function App() {
             </div>
             <div class="create-center">
               ${demo && svgCode === demo.code && html`
-                <${DemoNote} demo=${demo} onClear=${() => { setPrompt(''); setSvgCode(''); setDemo(null); }} />`}
+                <${DemoNote} demo=${demo} onClear=${() => { setPrompt(''); setSvgCode(''); setSvgHistory([]); setDemo(null); }} />`}
+              <button
+                class="btn-play btn-play-wide svg-play"
+                type="button"
+                disabled=${!svgPlay.versions.length}
+                onClick=${() => setPlayingSvg({ initialId: svgPlay.currentId, opened: Date.now() })}
+                title="View full window; switch between every version of this drawing"
+              >
+                <i class="fa-solid fa-play"></i>
+                <span>Play${svgPlay.versions.length > 1 ? ` · ${svgPlay.versions.length} versions` : ''}<span class="btn-play-sub">${!svgPlay.versions.length
+                  ? 'Generate or paste an SVG to view it full window.'
+                  : svgPlay.versions.length > 1
+                    ? 'Full window, starting on the drawing you see. Switch to any earlier version there.'
+                    : 'Full window. Each Generate is added as a version you can come back to.'}</span></span>
+              </button>
               <${SvgPreview} svgContent=${svgCode} />
               ${showDiff && referenceUrl && svgCode && html`
                 <${DiffOverlay}
@@ -1206,6 +1252,16 @@ function App() {
         src="./HELP.md"
         title="SVG Benchmark — Help"
         onClose=${() => setShowHelp(false)}
+      />
+    `}
+    ${playingSvg && html`
+      <${PlayOverlay}
+        key=${playingSvg.opened}
+        versions=${svgPlayerVersions}
+        initialId=${playingSvg.initialId}
+        title=${demo && svgCode === demo.code ? demo.title : ((deriveTitle(prompt, currentBenchmarkSlug) === 'Untitled' ? 'SVG drawing' : deriveTitle(prompt, currentBenchmarkSlug)))}
+        backLabel="Back to Create"
+        onClose=${() => setPlayingSvg(null)}
       />
     `}
     <${Toast} toasts=${toasts} />

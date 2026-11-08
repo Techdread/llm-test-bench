@@ -46,6 +46,21 @@ On the public website, a first visit with no saved sketches opens **Create** on 
 - **Right rail** — playback (play/pause/restart/seed), parameters (JSON +
   per-numeric sliders), tags, notes, and AI helpers.
 
+## Play and versions
+
+The big green **Play** button above the preview opens the sketch full window,
+with the parameters and seed it has now. **Back to Create** returns you to the
+editor exactly as you left it.
+
+Each sketch you work on keeps its versions for the session: where it started
+(the demo, a sketch you opened or remixed, a showcase item), then every
+**Generate**. If you edited the code by hand and then generate again, your
+edits are kept as a version of their own first. In the player, pick any version
+from the **Version** list to run it, then **Restart** or go **Fullscreen**.
+
+Versions last until you open another sketch or **Clear**, and they are not
+saved. Use **Save** to keep one in the gallery.
+
 ## Parameters come from the code
 
 A sketch declares its own controls by reading them:

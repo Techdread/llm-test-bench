@@ -23,6 +23,7 @@ import { ensureAppNamespace, getRoot, connectRoot, setRoot } from '../shared/ser
 import { isPublicDistribution } from '../shared/services/distribution.js';
 import { loadDefaultAppDemo, shouldOpenAppDemo } from '../shared/services/app-demos.js';
 import { DemoNote } from '../shared/components/DemoNote.js';
+import { PlayOverlay } from '../shared/components/PlayOverlay.js';
 import * as modelProviders from '../shared/services/model-providers.js';
 import { ShowcaseLanding, useShowcaseRoute } from '../shared/components/ShowcaseLanding.js';
 
@@ -34,6 +35,7 @@ import * as promptLibrary from './services/promptLibrary.js';
 import * as openrouter from './services/ai/openrouter.js';
 import { generateSketch, stripCodeFences } from './services/ai/sketchGenerator.js';
 import { validateSketchCode } from './services/batchRunner.js';
+import { keepHandEdits, playerVersions, recordSketchVersion, sketchVersions, startSketchHistory } from './services/sketchVersions.js';
 import { explainSketch } from './services/ai/sketchExplainer.js';
 import {
   proposeRemixes,
@@ -109,6 +111,10 @@ function App() {
   const [tags, setTags] = useState([]);
   const [editingId, setEditingId] = useState('');
   const [parentId, setParentId] = useState(null);
+  // Every version of the sketch in Create this session, for the player:
+  // where it started, each Generate, and hand edits a Generate replaced.
+  const [sketchHistory, setSketchHistory] = useState([]);
+  const [playingSketch, setPlayingSketch] = useState(null);
   const [runtimeStatus, setRuntimeStatus] = useState('');
 
   // Gallery
@@ -212,6 +218,7 @@ function App() {
       setSeed(1);
       setEditingId('');
       setParentId(null);
+      setSketchHistory(startSketchHistory({ code: loaded.code, params: defaultParams(), seed: 1, label: 'Demo', detail: loaded.title || '' }));
       setDemo(loaded);
     })();
   }, []);
@@ -274,6 +281,7 @@ function App() {
     setSeed(1);
     setEditingId('');
     setParentId(null);
+    setSketchHistory(startSketchHistory({ code: showcase.item.code, params: defaultParams(), seed: 1, label: 'Showcase', detail: showcase.item.title || '' }));
     navigate('create');
   }, [showcase, navigate]);
   const toggleTheme = useCallback(() => setTheme(t => t === 'dark' ? 'light' : 'dark'), []);
@@ -321,6 +329,13 @@ function App() {
     setGenerationMeta(generationSnapshotFromMetadata(proj.metadata));
     setEditingId(isRemix ? '' : (proj.id || ''));
     setParentId(isRemix ? proj.id : (proj.metadata?.parentId || null));
+    setSketchHistory(startSketchHistory({
+      code: proj.code || '',
+      params: proj.params || {},
+      seed: clampSeed(proj.metadata?.seed),
+      label: isRemix ? 'Remix of' : 'Opened',
+      detail: proj.metadata?.title || proj.id || '',
+    }));
     setExplainText('');
     setRemixSuggestions([]);
     navigate('create');
@@ -337,6 +352,7 @@ function App() {
     setNotes('');
     setEditingId('');
     setParentId(null);
+    setSketchHistory([]);
     setExplainText('');
     setRemixSuggestions([]);
     addToast('Cleared', 'info');
@@ -373,6 +389,8 @@ function App() {
     setRuntimeStatus('Generating...');
     let acc = '';
     const generationSnapshot = selectedModelSnapshot(allModels, selectedProviderId, selectedModelId);
+    // Hand edits since the last version would be lost to the new code: keep them.
+    setSketchHistory(h => keepHandEdits(h, { code, params, seed }));
     try {
       await generateSketch({
         prompt: promptText,
@@ -389,6 +407,14 @@ function App() {
       // A new sketch reads its own knobs — rebuild the panel from the code it
       // actually generated, or the sliders keep driving the previous sketch.
       const synced = syncParamsWithCode(acc, params);
+      setSketchHistory(h => recordSketchVersion(h, {
+        code: acc,
+        params: synced.changed ? synced.params : params,
+        seed,
+        kind: 'generation',
+        label: 'Generated',
+        detail: generationSnapshot.modelDisplayLabel || selectedModelId || '',
+      }));
       if (synced.changed) {
         setParams(synced.params);
         const n = Object.keys(synced.params).length;
@@ -407,7 +433,7 @@ function App() {
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, params, allModels, selectedProviderId, selectedModelId, addToast]);
+  }, [prompt, code, params, seed, allModels, selectedProviderId, selectedModelId, addToast]);
 
   const prepareLibraryPrompt = useCallback((item) => {
     setPrompt(item.prompt || '');
@@ -420,6 +446,7 @@ function App() {
     setGenerationMeta(null);
     setEditingId('');
     setParentId(null);
+    setSketchHistory([]);
     setExplainText('');
     setRemixSuggestions([]);
   }, []);
@@ -772,6 +799,16 @@ function App() {
     addToast(`Applied remix: ${remix.name || ''}`, 'success');
   }, [addToast]);
 
+  const sketchPlay = useMemo(
+    () => sketchVersions(sketchHistory, { code, params, seed }, { generating: isGenerating }),
+    [sketchHistory, code, params, seed, isGenerating],
+  );
+  // Built only while the player is open: one standalone page per version.
+  const sketchPlayerVersions = useMemo(
+    () => (playingSketch ? playerVersions(sketchPlay.versions) : []),
+    [playingSketch, sketchPlay],
+  );
+
   // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e) => {
@@ -867,7 +904,19 @@ function App() {
         </div>
         <div class="create-center">
           ${demo && code === demo.code && html`
-            <${DemoNote} demo=${demo} onClear=${() => { setPrompt(''); setCode(defaultSketchCode()); setParams(defaultParams()); setDemo(null); }} />`}
+            <${DemoNote} demo=${demo} onClear=${() => { setPrompt(''); setCode(defaultSketchCode()); setParams(defaultParams()); setSketchHistory([]); setDemo(null); }} />`}
+          <button
+            class="btn-play btn-play-wide sketch-play"
+            type="button"
+            disabled=${!sketchPlay.versions.length}
+            onClick=${() => setPlayingSketch({ initialId: sketchPlay.currentId, opened: Date.now() })}
+            title="Play full window; switch between every version of this sketch"
+          >
+            <i class="fa-solid fa-play"></i>
+            <span>Play${sketchPlay.versions.length > 1 ? ` · ${sketchPlay.versions.length} versions` : ''}<span class="btn-play-sub">${sketchPlay.versions.length > 1
+              ? 'Full window, starting on the sketch you see. Switch to any earlier version there.'
+              : 'Full window. Each Generate is added as a version you can come back to.'}</span></span>
+          </button>
           <${CanvasPreview}
             code=${code}
             params=${params}
@@ -1020,6 +1069,16 @@ function App() {
         busy=${brainstormBusy}
         suggestions=${brainstormSuggestions}
         error=${brainstormError}
+      />
+    `}
+    ${playingSketch && html`
+      <${PlayOverlay}
+        key=${playingSketch.opened}
+        versions=${sketchPlayerVersions}
+        initialId=${playingSketch.initialId}
+        title=${currentTitle || demo?.title || 'p5 sketch'}
+        backLabel="Back to Create"
+        onClose=${() => setPlayingSketch(null)}
       />
     `}
     <${Toast} toasts=${toasts} />

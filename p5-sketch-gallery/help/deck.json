@@ -3,7 +3,7 @@
   "title": "p5 Sketch Gallery",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-11-07T19:10:22.142Z",
+  "generatedAt": "2026-11-08T01:49:18.628Z",
   "slides": [
     {
       "kind": "title",
@@ -35,6 +35,11 @@
       "kind": "text",
       "title": "The Create screen",
       "html": "<ul>\n<li><strong>Left</strong> — prompt + sketch source code (Ace editor, JS mode).</li>\n<li><strong>Centre</strong> — live canvas preview with FPS overlay and a runtime-error banner.</li>\n<li><strong>Right rail</strong> — playback (play/pause/restart/seed), parameters (JSON +\nper-numeric sliders), tags, notes, and AI helpers.</li>\n</ul>"
+    },
+    {
+      "kind": "text",
+      "title": "Play and versions",
+      "html": "<p>The big green <strong>Play</strong> button above the preview opens the sketch full window,\nwith the parameters and seed it has now. <strong>Back to Create</strong> returns you to the\neditor exactly as you left it.</p>\n<p>Each sketch you work on keeps its versions for the session: where it started\n(the demo, a sketch you opened or remixed, a showcase item), then every\n<strong>Generate</strong>. If you edited the code by hand and then generate again, your\nedits are kept as a version of their own first. In the player, pick any version\nfrom the <strong>Version</strong> list to run it, then <strong>Restart</strong> or go <strong>Fullscreen</strong>.</p>\n<p>Versions last until you open another sketch or <strong>Clear</strong>, and they are not\nsaved. Use <strong>Save</strong> to keep one in the gallery.</p>"
     },
     {
       "kind": "text",

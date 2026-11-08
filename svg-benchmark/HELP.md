@@ -24,6 +24,21 @@ The main workspace is split into three columns:
 
 The bottom bar has **GIF** (export the current SVG as a GIF image), **Clear** (reset all fields), and **Save** (persist the current submission).
 
+## Play and versions
+
+The big green **Play** button above the preview shows the drawing full window,
+animation included. **Back to Create** returns you to the editor exactly as you
+left it.
+
+Each drawing keeps its versions for the session: where it started (the demo, a
+submission you opened, a showcase item), then every **Generate**. If you edited
+the SVG by hand and then generate again, your edits are kept as a version of
+their own first. In the player, pick any version from the **Version** list, or
+go **Fullscreen**.
+
+Versions last until you open something else or **Clear**, and they are not
+saved. Use **Save** to keep one as a submission.
+
 ## Prompts
 
 Open **Prompts** in the main toolbar to browse the same challenge catalogue used

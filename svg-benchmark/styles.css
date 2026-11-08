@@ -339,6 +339,8 @@ html, body {
 }
 
 /* ── SVG Preview ── */
+.svg-play { flex: 0 0 auto; margin: 8px 8px 0; width: calc(100% - 16px); text-align: left; }
+
 .svg-preview {
   display: flex;
   flex-direction: column;

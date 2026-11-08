@@ -3,7 +3,7 @@
   "title": "SVG Benchmark",
   "generatedFrom": "HELP.md",
   "generatedBy": "help-decks",
-  "generatedAt": "2026-11-07T19:10:10.732Z",
+  "generatedAt": "2026-11-08T02:01:23.957Z",
   "slides": [
     {
       "kind": "title",
@@ -30,6 +30,11 @@
       "kind": "text",
       "title": "Create view",
       "html": "<p>The main workspace is split into three columns:</p>\n<ul>\n<li><strong>Left</strong> — Prompt input and the Ace code editor showing the raw SVG source.</li>\n<li><strong>Centre</strong> — Live SVG preview. When a reference image is loaded, the <strong>Diff</strong> overlay (Ctrl+D) composites the SVG over the reference so you can spot differences.</li>\n<li><strong>Right</strong> — Reference image panel and score panel (auto-score + manual 1–9 rating).</li>\n</ul>\n<p>The bottom bar has <strong>GIF</strong> (export the current SVG as a GIF image), <strong>Clear</strong> (reset all fields), and <strong>Save</strong> (persist the current submission).</p>"
+    },
+    {
+      "kind": "text",
+      "title": "Play and versions",
+      "html": "<p>The big green <strong>Play</strong> button above the preview shows the drawing full window,\nanimation included. <strong>Back to Create</strong> returns you to the editor exactly as you\nleft it.</p>\n<p>Each drawing keeps its versions for the session: where it started (the demo, a\nsubmission you opened, a showcase item), then every <strong>Generate</strong>. If you edited\nthe SVG by hand and then generate again, your edits are kept as a version of\ntheir own first. In the player, pick any version from the <strong>Version</strong> list, or\ngo <strong>Fullscreen</strong>.</p>\n<p>Versions last until you open something else or <strong>Clear</strong>, and they are not\nsaved. Use <strong>Save</strong> to keep one as a submission.</p>"
     },
     {
       "kind": "text",
